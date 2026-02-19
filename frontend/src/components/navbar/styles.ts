@@ -28,6 +28,13 @@ export const NavbarContainer = styled.div<NavbarContainerProps>`
   transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
               min-width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 
+  /* ── Notebook (1025px – 1440px): menu desktop colapsável, sem rolagem ── */
+  @media (min-width: 1025px) and (max-width: 1440px) {
+    padding: 16px 0;
+    overflow-y: hidden;
+  }
+
+  /* ── Mobile / tablet (≤ 1024px): menu gaveta ── */
   @media (max-width: 1024px) {
     width: 240px;
     min-width: 240px;
@@ -87,10 +94,19 @@ export const CollapseButton = styled.button<{ $collapsed: boolean }>`
   color: #95A5A6;
   transition: background 0.3s, color 0.3s;
   margin: 0 0 0 12px;
+  position: relative;
+  z-index: 10;
 
   &:hover {
     background: #2a2a2a;
     color: #BBA188;
+  }
+
+  /* Notebook: botão menor */
+  @media (min-width: 1025px) and (max-width: 1440px) {
+    width: 34px;
+    height: 34px;
+    margin: 0 0 0 10px;
   }
 
   @media (max-width: 1024px) {
@@ -116,6 +132,11 @@ export const TopSection = styled.div<{ $collapsed: boolean }>`
               opacity 0.25s ease,
               padding-left 0.35s ease;
 
+  /* Notebook: título e saudação menores */
+  @media (min-width: 1025px) and (max-width: 1440px) {
+    max-width: ${({ $collapsed }) => ($collapsed ? '0' : '210px')};
+  }
+
   @media (max-width: 1024px) {
     max-width: 240px;
     opacity: 1;
@@ -131,6 +152,12 @@ export const TitleText = styled.h1`
   font-weight: 700;
   font-family: var(--font-cabourg-bold), 'Cabourg', serif;
   white-space: nowrap;
+
+  /* Notebook: fonte menor e margem reduzida */
+  @media (min-width: 1025px) and (max-width: 1440px) {
+    font-size: 20px;
+    margin: 6px 0 2px 0;
+  }
 `;
 
 export const GreetingText = styled.p`
@@ -138,6 +165,12 @@ export const GreetingText = styled.p`
   color: #95A5A6;
   margin: 0 0 30px 0;
   white-space: nowrap;
+
+  /* Notebook: fonte menor e margem reduzida */
+  @media (min-width: 1025px) and (max-width: 1440px) {
+    font-size: 12px;
+    margin: 0 0 10px 0;
+  }
 `;
 
 export const LogoCollapsed = styled.div<{ $collapsed: boolean }>`
@@ -148,9 +181,11 @@ export const LogoCollapsed = styled.div<{ $collapsed: boolean }>`
   opacity: ${({ $collapsed }) => ($collapsed ? '1' : '0')};
   max-height: ${({ $collapsed }) => ($collapsed ? '80px' : '0')};
   overflow: hidden;
+  /* FIX: quando escondido, remove completamente da área de clique */
   pointer-events: ${({ $collapsed }) => ($collapsed ? 'auto' : 'none')};
-  margin-top: ${({ $collapsed }) => ($collapsed ? '-110px' : '0')};
-  transition: opacity 0.25s ease, max-height 0.35s ease, margin-top 0.35s ease;
+  visibility: ${({ $collapsed }) => ($collapsed ? 'visible' : 'hidden')};
+  margin-top: ${({ $collapsed }) => ($collapsed ? '-80px' : '0')};
+  transition: opacity 0.25s ease, max-height 0.35s ease, margin-top 0.35s ease, visibility 0.35s ease;
 
   @media (max-width: 1024px) {
     display: none;
@@ -163,6 +198,12 @@ export const DividerTop = styled.div<{ $collapsed?: boolean }>`
   background-color: #645642;
   margin-top: ${({ $collapsed }) => ($collapsed ? '45px' : '15px')};
   margin-bottom: 8px;
+
+  /* Notebook: sem logo, margem igual nos dois estados */
+  @media (min-width: 1025px) and (max-width: 1440px) {
+    margin-top: 8px;
+    margin-bottom: 4px;
+  }
 `;
 
 export const Nav = styled.nav<{ $collapsed: boolean }>`
@@ -173,6 +214,12 @@ export const Nav = styled.nav<{ $collapsed: boolean }>`
   gap: 2px;
   margin-top: 4px;
   padding-left: 0;
+
+  /* Notebook: gap ainda menor para caber todos os itens */
+  @media (min-width: 1025px) and (max-width: 1440px) {
+    gap: 0px;
+    margin-top: 2px;
+  }
 
   @media (max-width: 1024px) {
     width: 100%;
@@ -203,6 +250,11 @@ export const NavLinkText = styled.span<NavProps>`
   opacity: ${({ $collapsed }) => ($collapsed ? '0' : '1')};
   transition: opacity 0.2s ease, max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
               color 0.3s ease, font-weight 0.3s ease;
+
+  /* Notebook: fonte menor */
+  @media (min-width: 1025px) and (max-width: 1440px) {
+    font-size: 12px;
+  }
 
   @media (max-width: 1024px) {
     opacity: 1;
@@ -269,6 +321,16 @@ export const NavLink = styled(Link)<NavProps>`
     gap: 11px;
   `}
 
+  /* Notebook: padding vertical menor para caber todos os itens sem scroll */
+  @media (min-width: 1025px) and (max-width: 1440px) {
+    ${({ $collapsed, $selected }) => $collapsed && `
+      padding: 7px 0;
+    `}
+    ${({ $collapsed, $selected }) => !$collapsed && `
+      padding: 7px 16px 7px 22px;
+    `}
+  }
+
   &::before {
     content: '';
     position: absolute;
@@ -293,11 +355,17 @@ export const LogoutDivider = styled.div<{ $collapsed: boolean }>`
   height: 1px;
   background-color: #645642;
   margin: 8px 0;
+
+  /* Notebook: margem menor */
+  @media (min-width: 1025px) and (max-width: 1440px) {
+    margin: 4px 0;
+  }
 `;
 
 export const LogoutButton = styled.button<{ $collapsed?: boolean }>`
   width: ${({ $collapsed }) => ($collapsed ? '90%' : '100%')};
-  margin-left: 0;
+  margin-left: ${({ $collapsed }) => ($collapsed ? 'auto' : '0')};
+  margin-right: ${({ $collapsed }) => ($collapsed ? 'auto' : '0')};
   border: none;
   background: transparent;
   padding: ${({ $collapsed }) => ($collapsed ? '10px 0' : '10px 20px 10px 28px')};
@@ -318,6 +386,12 @@ export const LogoutButton = styled.button<{ $collapsed?: boolean }>`
     color: #95A5A6;
     transition: all 0.3s;
     flex-shrink: 0;
+  }
+
+  /* Notebook: padding menor */
+  @media (min-width: 1025px) and (max-width: 1440px) {
+    padding: ${({ $collapsed }) => ($collapsed ? '7px 0' : '7px 16px 7px 22px')};
+    font-size: 12px;
   }
 
   &::before {

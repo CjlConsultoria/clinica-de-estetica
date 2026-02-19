@@ -134,8 +134,8 @@ export default function Navbar() {
             <Image
               src="/logocjl.png"
               alt="Logo"
-              width={180}
-              height={180}
+              width={160}
+              height={160}
               style={{ objectFit: 'contain', display: 'block' }}
             />
           </LogoCollapsed>
