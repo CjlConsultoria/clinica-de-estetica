@@ -1,0 +1,267 @@
+import React from 'react';
+import styled from 'styled-components';
+
+export const Container = styled.div`
+  padding: 40px;
+  width: 100%;
+  min-height: 100vh;
+  background: #f5f5f5;
+  box-sizing: border-box;
+
+  @media (max-width: 1024px) {
+    width: 100%;
+    padding: 24px 20px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 20px 16px;
+  }
+`;
+
+export const Header = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 16px;
+`;
+
+export const Title = styled.h1`
+  font-size: 2rem;
+  font-family: var(--font-cabourg-bold), 'Cabourg', serif;
+  color: #BBA188;
+  margin: 0;
+  font-weight: 600;
+`;
+
+export const ActionsRow = styled.div`
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+`;
+
+export const ToggleGroup = styled.div`
+  display: flex;
+  background: white;
+  border-radius: 50px;
+  border: 1.5px solid #e8e8e8;
+  overflow: hidden;
+`;
+
+export const ToggleBtn = styled.button<{ $active: boolean }>`
+  padding: 9px 20px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
+  font-weight: 600;
+  transition: all 0.2s;
+  background: ${({ $active }) => ($active ? '#BBA188' : 'transparent')};
+  color: ${({ $active }) => ($active ? 'white' : '#666')};
+`;
+
+export const CalendarNav = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  justify-content: center;
+
+  .nav-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1.5px solid #e8e8e8;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    transition: all 0.2s;
+
+    &:hover {
+      border-color: #BBA188;
+      color: #BBA188;
+    }
+  }
+`;
+
+export const CalendarTitle = styled.span`
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: var(--font-cabourg-bold), 'Cabourg', serif;
+  color: #1a1a1a;
+  min-width: 240px;
+  text-align: center;
+`;
+
+export const Legend = styled.div`
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+`;
+
+export const LegendItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: #666;
+  font-family: var(--font-metropolis-regular), 'Metropolis', sans-serif;
+`;
+
+export const LegendDot = styled.div<{ $color: string }>`
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: ${({ $color }) => $color};
+`;
+
+export const CalendarGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+`;
+
+export const DayHeader = styled.div`
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #f0f0f0;
+`;
+
+export const DayCell = styled.div<{ $isToday?: boolean; $isEmpty?: boolean }>`
+  min-height: 100px;
+  padding: 8px;
+  border: 1px solid #f0f0f0;
+  background: ${({ $isEmpty }) => ($isEmpty ? '#fafafa' : 'white')};
+  cursor: ${({ $isEmpty }) => ($isEmpty ? 'default' : 'pointer')};
+  transition: background 0.15s;
+
+  &:hover:not(:empty) {
+    background: #fdf9f5;
+  }
+`;
+
+export const DayNumber = styled.div<{ $isToday?: boolean }>`
+  font-size: 0.88rem;
+  font-weight: ${({ $isToday }) => ($isToday ? '700' : '500')};
+  color: ${({ $isToday }) => ($isToday ? 'white' : '#333')};
+  background: ${({ $isToday }) => ($isToday ? '#BBA188' : 'transparent')};
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-roboto-medium), 'Roboto', sans-serif;
+`;
+
+export const EventsWrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 4px;
+`;
+
+export const EventChip = styled.div<{ $color: string }>`
+  font-size: 0.68rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: ${({ $color }) => $color}22;
+  color: ${({ $color }) => $color};
+  font-weight: 600;
+  font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+export const WeekView = styled.div`
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+`;
+
+export const SlotRow = styled.div`
+  display: grid;
+  grid-template-columns: 60px repeat(7, 1fr);
+  border-bottom: 1px solid #f5f5f5;
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+export const TimeLabel = styled.div`
+  padding: 8px 8px;
+  font-size: 0.7rem;
+  color: #bbb;
+  font-family: var(--font-roboto-medium), 'Roboto', sans-serif;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  border-right: 1px solid #f5f5f5;
+`;
+
+export const TimeSlot = styled.div`
+  border-right: 1px solid #f5f5f5;
+  min-height: 52px;
+  padding: 3px;
+  position: relative;
+
+  &:last-child {
+    border-right: none;
+  }
+
+  &:hover {
+    background: #fdf9f5;
+  }
+`;
+
+export const EventBlock = styled.div<{ $color: string }>`
+  background: ${({ $color }) => $color}18;
+  border-left: 3px solid ${({ $color }) => $color};
+  border-radius: 0 6px 6px 0;
+  padding: 4px 6px;
+  height: 100%;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+
+  &:hover {
+    background: ${({ $color }) => $color}30;
+  }
+
+  strong {
+    font-size: 0.7rem;
+    color: ${({ $color }) => $color};
+    font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
+  }
+
+  span {
+    font-size: 0.65rem;
+    color: #888;
+    font-family: var(--font-inter-variable-regular), 'Inter', sans-serif;
+  }
+`;
+
+export const FormGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+`;
