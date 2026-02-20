@@ -31,16 +31,16 @@ const filterTypes = ['Todos', 'Receita', 'Despesa'];
 const filterMonths = ['Todos', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho'];
 
 const mockFinance = [
-  { id: 1, date: '18/02/2025', description: 'Botox Facial - Ana Costa', type: 'receita', category: 'Procedimento', value: 800, patient: 'Ana Costa' },
-  { id: 2, date: '18/02/2025', description: 'Preenchimento Labial - Carla M.', type: 'receita', category: 'Procedimento', value: 1200, patient: 'Carla Mendonça' },
-  { id: 3, date: '17/02/2025', description: 'Reposição de Insumos ANVISA', type: 'despesa', category: 'Insumo', value: 2340, patient: null },
-  { id: 4, date: '16/02/2025', description: 'Bioestimulador - Fernanda Lima', type: 'receita', category: 'Procedimento', value: 2500, patient: 'Fernanda Lima' },
-  { id: 5, date: '15/02/2025', description: 'Aluguel do Espaço', type: 'despesa', category: 'Aluguel', value: 3500, patient: null },
-  { id: 6, date: '14/02/2025', description: 'Fio PDO - Marina Souza', type: 'receita', category: 'Procedimento', value: 1800, patient: 'Marina Souza' },
-  { id: 7, date: '13/02/2025', description: 'Comissão Profissional - Fevereiro', type: 'despesa', category: 'Comissão', value: 1280, patient: null },
-  { id: 8, date: '12/02/2025', description: 'Microagulhamento - Patrícia A.', type: 'receita', category: 'Procedimento', value: 450, patient: 'Patrícia Alves' },
-  { id: 9, date: '10/02/2025', description: 'Toxina Botulínica - Juliana R.', type: 'receita', category: 'Procedimento', value: 600, patient: 'Juliana Rocha' },
-  { id: 10, date: '08/02/2025', description: 'Material de Escritório', type: 'despesa', category: 'Outros', value: 180, patient: null },
+  { id: 1,  date: '18/02/2025', description: 'Botox Facial - Ana Costa',           type: 'receita' as const, category: 'Procedimento', value: 800,  patient: 'Ana Costa'      },
+  { id: 2,  date: '18/02/2025', description: 'Preenchimento Labial - Carla M.',    type: 'receita' as const, category: 'Procedimento', value: 1200, patient: 'Carla Mendonça'  },
+  { id: 3,  date: '17/02/2025', description: 'Reposição de Insumos ANVISA',        type: 'despesa' as const, category: 'Insumo',       value: 2340, patient: null              },
+  { id: 4,  date: '16/02/2025', description: 'Bioestimulador - Fernanda Lima',     type: 'receita' as const, category: 'Procedimento', value: 2500, patient: 'Fernanda Lima'   },
+  { id: 5,  date: '15/02/2025', description: 'Aluguel do Espaço',                 type: 'despesa' as const, category: 'Aluguel',      value: 3500, patient: null              },
+  { id: 6,  date: '14/02/2025', description: 'Fio PDO - Marina Souza',            type: 'receita' as const, category: 'Procedimento', value: 1800, patient: 'Marina Souza'    },
+  { id: 7,  date: '13/02/2025', description: 'Comissão Profissional - Fevereiro',  type: 'despesa' as const, category: 'Comissão',     value: 1280, patient: null              },
+  { id: 8,  date: '12/02/2025', description: 'Microagulhamento - Patrícia A.',     type: 'receita' as const, category: 'Procedimento', value: 450,  patient: 'Patrícia Alves'  },
+  { id: 9,  date: '10/02/2025', description: 'Toxina Botulínica - Juliana R.',     type: 'receita' as const, category: 'Procedimento', value: 600,  patient: 'Juliana Rocha'   },
+  { id: 10, date: '08/02/2025', description: 'Material de Escritório',             type: 'despesa' as const, category: 'Outros',       value: 180,  patient: null              },
 ];
 
 const monthlyData = [
@@ -55,32 +55,88 @@ const monthlyData = [
 const fmt = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default function Finance() {
-  const [search, setSearch] = useState('');
-  const [filterType, setFilterType] = useState('Todos');
+  const [search, setSearch]           = useState('');
+  const [filterType, setFilterType]   = useState('Todos');
   const [filterMonth, setFilterMonth] = useState('Todos');
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [exporting, setExporting]     = useState(false);
 
   const totalReceita = mockFinance.filter(f => f.type === 'receita').reduce((a, f) => a + f.value, 0);
   const totalDespesa = mockFinance.filter(f => f.type === 'despesa').reduce((a, f) => a + f.value, 0);
-  const saldo = totalReceita - totalDespesa;
-  const maxBar = Math.max(...monthlyData.map(d => d.receita));
+  const saldo        = totalReceita - totalDespesa;
+  const maxBar       = Math.max(...monthlyData.map(d => d.receita));
 
   const filtered = mockFinance.filter(f => {
     const matchSearch = f.description.toLowerCase().includes(search.toLowerCase()) || (f.patient || '').toLowerCase().includes(search.toLowerCase());
-    const matchType = filterType === 'Todos' || f.type === filterType.toLowerCase();
+    const matchType   = filterType === 'Todos' || f.type === filterType.toLowerCase();
     return matchSearch && matchType;
   });
 
   const toggle = (name: string) => setOpenDropdown(prev => prev === name ? null : name);
 
+  const handleExportPDF = async () => {
+    try {
+      setExporting(true);
+      const response = await fetch('/api/relatorios/financeiro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transactions: mockFinance,
+          monthlyData,
+          month: 'Fevereiro 2025',
+          totalReceita,
+          totalDespesa,
+          saldo,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Falha ao gerar PDF');
+
+      const blob = await response.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'relatorio-financeiro-fevereiro-2025.pdf';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('[Exportar PDF]', err);
+      alert('Erro ao exportar o PDF. Tente novamente.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <Container>
       <Header>
         <Title>Financeiro</Title>
-        <Button variant="primary" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>} onClick={() => setIsModalOpen(true)}>
-          Novo Lançamento
-        </Button>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <Button
+            variant="outline"
+            loading={exporting}
+            icon={
+              !exporting ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+              ) : undefined
+            }
+            onClick={handleExportPDF}
+          >
+            {exporting ? 'Exportando...' : 'Exportar PDF'}
+          </Button>
+          <Button
+            variant="primary"
+            icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>}
+            onClick={() => setIsModalOpen(true)}
+          >
+            Novo Lançamento
+          </Button>
+        </div>
       </Header>
 
       <StatsGrid>
@@ -174,14 +230,19 @@ export default function Finance() {
                   <Td style={{ color: '#888', fontSize: '0.82rem' }}>{f.date}</Td>
                   <Td style={{ fontWeight: 500, color: '#1a1a1a' }}>{f.description}</Td>
                   <Td><Badge $bg="rgba(187,161,136,0.12)" $color="#a8906f">{f.category}</Badge></Td>
-                  <Td><TypeBadge $type={f.type}>{f.type === 'receita' ? '↑ Receita' : '↓ Despesa'}</TypeBadge></Td>
+                  <Td><TypeBadge $type={f.type}><span style={{ fontSize: '0.8rem' }}>{f.type === 'receita' ? '↑' : '↓'}</span>{f.type === 'receita' ? ' Receita' : ' Despesa'}</TypeBadge></Td>
                   <Td style={{ fontWeight: 700, color: f.type === 'receita' ? '#BBA188' : '#e74c3c', fontSize: '0.95rem' }}>
                     {f.type === 'receita' ? '+' : '-'} R$ {fmt(f.value)}
                   </Td>
                   <Td style={{ fontSize: '0.82rem', color: '#777' }}>{f.patient || '—'}</Td>
                   <Td>
                     <ActionGroup>
-                      <IconBtn><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></IconBtn>
+                      <IconBtn>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </IconBtn>
                     </ActionGroup>
                   </Td>
                 </Tr>
@@ -191,8 +252,18 @@ export default function Finance() {
         </TableWrapper>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Novo Lançamento" size="md"
-        footer={<><Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button><Button variant="primary">Salvar</Button></>}>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Novo Lançamento"
+        size="md"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+            <Button variant="primary">Salvar</Button>
+          </>
+        }
+      >
         <FormGrid>
           <Select label="Tipo" options={typeOptions} placeholder="Selecione..." />
           <Select label="Categoria" options={categoryOptions} placeholder="Selecione..." />

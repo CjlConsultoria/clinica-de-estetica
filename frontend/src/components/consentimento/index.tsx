@@ -120,6 +120,7 @@ export default function Consentimento() {
   const [isSignOpen, setIsSignOpen]       = useState(false);
   const [selected, setSelected]           = useState<Termo | null>(null);
   const [signed, setSigned]               = useState(false);
+  const [exporting, setExporting]         = useState(false);
 
   const filtered = mockTermos.filter(t => {
     const matchSearch = t.paciente.toLowerCase().includes(search.toLowerCase()) || t.procedimento.toLowerCase().includes(search.toLowerCase());
@@ -131,6 +132,44 @@ export default function Consentimento() {
   const assinados    = mockTermos.filter(t => t.status === 'assinado').length;
   const pendentes    = mockTermos.filter(t => t.status === 'pendente').length;
   const expirados    = mockTermos.filter(t => t.status === 'expirado').length;
+
+  const handleBaixarPDF = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    if (!selected) return;
+    setExporting(true);
+    let objectUrl: string | null = null;
+    try {
+      const response = await fetch('/api/relatorios/consentimento', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ termo: selected }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error((err as any).details ?? 'Erro ao gerar PDF');
+      }
+      const blob = await response.blob();
+      objectUrl  = URL.createObjectURL(blob);
+      const name = selected.paciente
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '-');
+      const link         = document.createElement('a');
+      link.href          = objectUrl;
+      link.download      = `consentimento-${name}.pdf`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Erro ao exportar consentimento:', err);
+      alert('Não foi possível gerar o PDF. Tente novamente.');
+    } finally {
+      setExporting(false);
+      if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl!), 1000);
+    }
+  };
 
   return (
     <Container>
@@ -301,8 +340,35 @@ export default function Consentimento() {
         size="lg"
         footer={
           <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'space-between' }}>
-            <Button variant="outline" icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>}>
-              Baixar PDF
+            <style>{`
+              @keyframes spin {
+                from { transform: rotate(0deg); }
+                to   { transform: rotate(360deg); }
+              }
+            `}</style>
+            <Button
+              variant="outline"
+              onClick={handleBaixarPDF}
+              disabled={exporting}
+              icon={
+                exporting ? (
+                  <svg
+                    width="15" height="15" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" strokeWidth="2"
+                    style={{ animation: 'spin 1s linear infinite' }}
+                  >
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                  </svg>
+                ) : (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                )
+              }
+            >
+              {exporting ? 'Gerando PDF...' : 'Baixar PDF'}
             </Button>
             <Button variant="outline" onClick={() => setIsViewOpen(false)}>Fechar</Button>
           </div>
