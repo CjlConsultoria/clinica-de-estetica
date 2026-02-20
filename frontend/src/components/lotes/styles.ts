@@ -251,7 +251,6 @@ export const FormGrid = styled.div`
   @media (max-width: 560px) { grid-template-columns: 1fr; }
 `;
 
-/* ── Rastreabilidade Timeline ── */
 export const TimelineList = styled.div`
   display: flex;
   flex-direction: column;
@@ -293,7 +292,6 @@ export const TimelineText = styled.div`
   line-height: 1.4;
 `;
 
-/* ── Detail Modal ── */
 export const DetailSection = styled.div`
   margin-bottom: 28px;
   &:last-child { margin-bottom: 0; }
@@ -334,7 +332,6 @@ export const DetailValue = styled.div<{ $highlight?: boolean; $warn?: boolean }>
   color: ${({ $warn, $highlight }) => $warn ? '#d68a00' : $highlight ? '#BBA188' : '#1a1a1a'};
 `;
 
-/* ── Usage Table ── */
 export const UsageTh = styled.th`
   padding: 10px 14px;
   text-align: left;

@@ -150,7 +150,6 @@ export const Badge = styled.span<{ $bg?: string; $color?: string }>`
   color: ${({ $color }) => $color || '#BBA188'};
 `;
 
-/* ── Patients Grid ── */
 export const PatientsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -243,7 +242,6 @@ export const FotoEmpty = styled.div`
   svg { color: #ddd; }
 `;
 
-/* ── Compare ── */
 export const CompareSection = styled.div``;
 
 export const CompareTitle = styled.h4`

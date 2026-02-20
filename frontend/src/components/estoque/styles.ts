@@ -1,4 +1,3 @@
-import React from 'react';
 import styled from 'styled-components';
 
 export const Container = styled.div`
@@ -35,7 +34,6 @@ export const Title = styled.h1`
   font-weight: 600;
 `;
 
-/* ── Alert Banner ── */
 export const AlertBanner = styled.div`
   display: flex;
   align-items: flex-start;
@@ -65,7 +63,6 @@ export const AlertBannerText = styled.p`
   }
 `;
 
-/* ── Stats ── */
 export const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
@@ -73,7 +70,6 @@ export const StatsGrid = styled.div`
   margin-bottom: 28px;
 `;
 
-/* ── Controls ── */
 export const Controls = styled.div`
   display: flex;
   gap: 12px;
@@ -244,7 +240,6 @@ export const SectionDivider = styled.div`
   margin: 24px 0;
 `;
 
-/* ── Tabela ── */
 export const TableWrapper = styled.div`
   width: 100%;
   overflow-x: auto;
@@ -320,7 +315,6 @@ export const IconBtn = styled.button`
   }
 `;
 
-/* ── Badge ── */
 export const Badge = styled.span<{ $bg?: string; $color?: string }>`
   display: inline-block;
   padding: 4px 10px;
@@ -332,7 +326,6 @@ export const Badge = styled.span<{ $bg?: string; $color?: string }>`
   color: ${({ $color }) => $color || '#BBA188'};
 `;
 
-/* ── Cards ── */
 export const CardsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
@@ -444,7 +437,6 @@ export const StockCardFooter = styled.div`
   gap: 10px;
 `;
 
-/* ── Modal Form ── */
 export const FormGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -455,7 +447,6 @@ export const FormGrid = styled.div`
   }
 `;
 
-/* ── Empty State ── */
 export const EmptyState = styled.div`
   display: flex;
   flex-direction: column;

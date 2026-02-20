@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
 import StatCard from '@/components/ui/statcard';
 import {
   Container, DashHeader, DashTitle, DateText,
@@ -8,7 +8,7 @@ import {
   AppointmentItem, AppointmentTime, AppointmentInfo, AppointmentName,
   AppointmentProcedure, StatusDot, AppointmentStatus,
   QuickActions, QuickAction, QuickActionIcon, QuickActionLabel,
-  ChartBar, ChartBars, ChartLabel, ChartRow, ChartLabelText, ChartValue,
+  ChartBar, ChartBars, ChartRow, ChartLabelText, ChartValue,
   AlertsList, AlertItem, AlertIcon, AlertText, AlertTime,
   RecentPatientRow, PatientAvatar, PatientName, PatientSub,
 } from './styles';
@@ -87,10 +87,12 @@ export default function Dashboard() {
 
       <QuickActions>
         {quickActions.map((qa, i) => (
-          <QuickAction key={i} href={qa.href} $color={qa.color}>
-            <QuickActionIcon $color={qa.color}>{qa.icon}</QuickActionIcon>
-            <QuickActionLabel>{qa.label}</QuickActionLabel>
-          </QuickAction>
+          <Link key={i} href={qa.href} passHref legacyBehavior>
+            <QuickAction $color={qa.color}>
+              <QuickActionIcon $color={qa.color}>{qa.icon}</QuickActionIcon>
+              <QuickActionLabel>{qa.label}</QuickActionLabel>
+            </QuickAction>
+          </Link>
         ))}
       </QuickActions>
 
