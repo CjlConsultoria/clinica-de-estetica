@@ -312,12 +312,17 @@ export const Badge = styled.span<{ $bg?: string; $color?: string }>`
 `;
 
 export const TypeBadge = styled.span<{ $type: string }>`
-  display: inline-block;
-  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px 12px;
+  min-width: 90px;
   border-radius: 20px;
   font-size: 0.74rem;
   font-weight: 700;
   font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
+  white-space: nowrap;
   background: ${({ $type }) =>
     $type === 'receita' ? 'rgba(187, 161, 136, 0.15)' : 'rgba(231, 76, 60, 0.1)'};
   color: ${({ $type }) => ($type === 'receita' ? '#BBA188' : '#e74c3c')};

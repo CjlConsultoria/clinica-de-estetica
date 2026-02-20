@@ -21,12 +21,12 @@ import {
 } from './styles';
 
 const procedureOptions = [
-  { value: 'botox', label: 'Botox Facial' },
-  { value: 'preenchimento', label: 'Preenchimento Labial' },
-  { value: 'bioestimulador', label: 'Bioestimulador' },
-  { value: 'fio-pdo', label: 'Fio de PDO' },
-  { value: 'microagulhamento', label: 'Microagulhamento' },
-  { value: 'toxina', label: 'Toxina Botulínica' },
+  { value: 'botox',          label: 'Botox Facial'          },
+  { value: 'preenchimento',  label: 'Preenchimento Labial'  },
+  { value: 'bioestimulador', label: 'Bioestimulador'        },
+  { value: 'fio-pdo',        label: 'Fio de PDO'            },
+  { value: 'microagulhamento',label: 'Microagulhamento'     },
+  { value: 'toxina',         label: 'Toxina Botulínica'     },
 ];
 
 const filterOptions = ['Todos', 'Ativos', 'Inativos', 'Alto Valor'];
@@ -46,11 +46,11 @@ const mockPatients = [
     nextVisit: '18/05/2025',
     observations: 'Paciente VIP. Alergia a lidocaína em pomada. Prefere horários matinais.',
     history: [
-      { id: 1, date: '18/02/2025', procedure: 'Botox Facial', units: '40U', value: 980, professional: 'Maria Oliveira', lote: 'BTX-2025-003', status: 'realizado' },
-      { id: 2, date: '18/11/2024', procedure: 'Botox Facial', units: '40U', value: 980, professional: 'Maria Oliveira', lote: 'BTX-2024-087', status: 'realizado' },
-      { id: 3, date: '15/08/2024', procedure: 'Preenchimento Labial', units: '1ml', value: 1200, professional: 'Clara Andrade', lote: 'PRE-2024-042', status: 'realizado' },
-      { id: 4, date: '10/05/2024', procedure: 'Bioestimulador', units: '1 frasco', value: 1800, professional: 'Maria Oliveira', lote: 'BIO-2024-011', status: 'realizado' },
-      { id: 5, date: '20/02/2024', procedure: 'Botox Facial', units: '40U', value: 980, professional: 'Maria Oliveira', lote: 'BTX-2024-015', status: 'realizado' },
+      { id: 1, date: '18/02/2025', procedure: 'Botox Facial',        units: '40U',      value: 980,  professional: 'Maria Oliveira', lote: 'BTX-2025-003', status: 'realizado' },
+      { id: 2, date: '18/11/2024', procedure: 'Botox Facial',        units: '40U',      value: 980,  professional: 'Maria Oliveira', lote: 'BTX-2024-087', status: 'realizado' },
+      { id: 3, date: '15/08/2024', procedure: 'Preenchimento Labial',units: '1ml',      value: 1200, professional: 'Clara Andrade',  lote: 'PRE-2024-042', status: 'realizado' },
+      { id: 4, date: '10/05/2024', procedure: 'Bioestimulador',      units: '1 frasco', value: 1800, professional: 'Maria Oliveira', lote: 'BIO-2024-011', status: 'realizado' },
+      { id: 5, date: '20/02/2024', procedure: 'Botox Facial',        units: '40U',      value: 980,  professional: 'Maria Oliveira', lote: 'BTX-2024-015', status: 'realizado' },
     ],
   },
   {
@@ -67,9 +67,9 @@ const mockPatients = [
     nextVisit: '15/05/2025',
     observations: 'Tende a apresentar hematomas. Usar técnica retrógrada.',
     history: [
-      { id: 1, date: '15/02/2025', procedure: 'Preenchimento Labial', units: '1ml', value: 1200, professional: 'Maria Oliveira', lote: 'PRE-2025-007', status: 'realizado' },
-      { id: 2, date: '20/09/2024', procedure: 'Botox Facial', units: '30U', value: 750, professional: 'Beatriz Santos', lote: 'BTX-2024-062', status: 'realizado' },
-      { id: 3, date: '10/04/2024', procedure: 'Preenchimento Labial', units: '1ml', value: 1200, professional: 'Maria Oliveira', lote: 'PRE-2024-029', status: 'realizado' },
+      { id: 1, date: '15/02/2025', procedure: 'Preenchimento Labial',units: '1ml',      value: 1200, professional: 'Maria Oliveira', lote: 'PRE-2025-007', status: 'realizado' },
+      { id: 2, date: '20/09/2024', procedure: 'Botox Facial',        units: '30U',      value: 750,  professional: 'Beatriz Santos', lote: 'BTX-2024-062', status: 'realizado' },
+      { id: 3, date: '10/04/2024', procedure: 'Preenchimento Labial',units: '1ml',      value: 1200, professional: 'Maria Oliveira', lote: 'PRE-2024-029', status: 'realizado' },
     ],
   },
   {
@@ -86,8 +86,8 @@ const mockPatients = [
     nextVisit: null,
     observations: '',
     history: [
-      { id: 1, date: '10/02/2025', procedure: 'Bioestimulador', units: '1 frasco', value: 1800, professional: 'Clara Andrade', lote: 'BIO-2025-003', status: 'realizado' },
-      { id: 2, date: '10/08/2024', procedure: 'Bioestimulador', units: '1 frasco', value: 1800, professional: 'Clara Andrade', lote: 'BIO-2024-049', status: 'realizado' },
+      { id: 1, date: '10/02/2025', procedure: 'Bioestimulador',      units: '1 frasco', value: 1800, professional: 'Clara Andrade',  lote: 'BIO-2025-003', status: 'realizado' },
+      { id: 2, date: '10/08/2024', procedure: 'Bioestimulador',      units: '1 frasco', value: 1800, professional: 'Clara Andrade',  lote: 'BIO-2024-049', status: 'realizado' },
     ],
   },
   {
@@ -104,9 +104,9 @@ const mockPatients = [
     nextVisit: '05/04/2025',
     observations: 'Paciente antiga. Protocolo personalizado de manutenção trimestral.',
     history: [
-      { id: 1, date: '05/01/2025', procedure: 'Fio de PDO', units: '10 fios', value: 2500, professional: 'Beatriz Santos', lote: 'FIO-2025-001', status: 'realizado' },
-      { id: 2, date: '05/10/2024', procedure: 'Botox Facial', units: '50U', value: 1200, professional: 'Maria Oliveira', lote: 'BTX-2024-081', status: 'realizado' },
-      { id: 3, date: '05/07/2024', procedure: 'Preenchimento Labial', units: '2ml', value: 2400, professional: 'Clara Andrade', lote: 'PRE-2024-055', status: 'realizado' },
+      { id: 1, date: '05/01/2025', procedure: 'Fio de PDO',          units: '10 fios',  value: 2500, professional: 'Beatriz Santos', lote: 'FIO-2025-001', status: 'realizado' },
+      { id: 2, date: '05/10/2024', procedure: 'Botox Facial',        units: '50U',      value: 1200, professional: 'Maria Oliveira', lote: 'BTX-2024-081', status: 'realizado' },
+      { id: 3, date: '05/07/2024', procedure: 'Preenchimento Labial',units: '2ml',      value: 2400, professional: 'Clara Andrade',  lote: 'PRE-2024-055', status: 'realizado' },
     ],
   },
   {
@@ -123,7 +123,7 @@ const mockPatients = [
     nextVisit: '10/04/2025',
     observations: 'Primeira sessão. Orientada sobre protocolo inicial.',
     history: [
-      { id: 1, date: '10/01/2025', procedure: 'Toxina Botulínica', units: '20U', value: 980, professional: 'Maria Oliveira', lote: 'BTX-2025-001', status: 'realizado' },
+      { id: 1, date: '10/01/2025', procedure: 'Toxina Botulínica',   units: '20U',      value: 980,  professional: 'Maria Oliveira', lote: 'BTX-2025-001', status: 'realizado' },
     ],
   },
   {
@@ -140,19 +140,19 @@ const mockPatients = [
     nextVisit: null,
     observations: 'Última sessão foi de microagulhamento. Sem retorno agendado.',
     history: [
-      { id: 1, date: '20/12/2024', procedure: 'Microagulhamento', units: '1 sessão', value: 800, professional: 'Beatriz Santos', lote: 'MIC-2024-019', status: 'realizado' },
-      { id: 2, date: '20/09/2024', procedure: 'Microagulhamento', units: '1 sessão', value: 800, professional: 'Beatriz Santos', lote: 'MIC-2024-010', status: 'realizado' },
+      { id: 1, date: '20/12/2024', procedure: 'Microagulhamento',    units: '1 sessão', value: 800,  professional: 'Beatriz Santos', lote: 'MIC-2024-019', status: 'realizado' },
+      { id: 2, date: '20/09/2024', procedure: 'Microagulhamento',    units: '1 sessão', value: 800,  professional: 'Beatriz Santos', lote: 'MIC-2024-010', status: 'realizado' },
     ],
   },
 ];
 
 const procedureColors: Record<string, string> = {
-  'Botox Facial': '#BBA188',
-  'Preenchimento Labial': '#EBD5B0',
-  'Bioestimulador': '#1b1b1b',
-  'Fio de PDO': '#a8906f',
-  'Microagulhamento': '#8a7560',
-  'Toxina Botulínica': '#BBA188',
+  'Botox Facial':        '#BBA188',
+  'Preenchimento Labial':'#EBD5B0',
+  'Bioestimulador':      '#1b1b1b',
+  'Fio de PDO':          '#a8906f',
+  'Microagulhamento':    '#8a7560',
+  'Toxina Botulínica':   '#BBA188',
 };
 
 function getInitials(name: string) {
@@ -167,39 +167,90 @@ function getAge(birthdate: string) {
 type Patient = typeof mockPatients[0];
 
 export default function HistoricoPaciente() {
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('Todos');
+  const [search,       setSearch]       = useState('');
+  const [filter,       setFilter]       = useState('Todos');
   const [openDropdown, setOpenDropdown] = useState(false);
-  const [selected, setSelected] = useState<Patient | null>(null);
+  const [selected,     setSelected]     = useState<Patient | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [isNewOpen, setIsNewOpen] = useState(false);
+  const [isNewOpen,    setIsNewOpen]    = useState(false);
+  const [exporting,    setExporting]    = useState(false);
 
   const filtered = mockPatients.filter(p => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.phone.includes(search) || p.email.toLowerCase().includes(search.toLowerCase());
+    const matchSearch =
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.phone.includes(search) ||
+      p.email.toLowerCase().includes(search.toLowerCase());
     const matchFilter =
       filter === 'Todos' ||
-      (filter === 'Ativos' && p.status === 'ativo') ||
-      (filter === 'Inativos' && p.status === 'inativo') ||
+      (filter === 'Ativos'     && p.status === 'ativo')   ||
+      (filter === 'Inativos'   && p.status === 'inativo') ||
       (filter === 'Alto Valor' && p.totalSpent >= 5000);
     return matchSearch && matchFilter;
   });
 
   const totalPacientes = mockPatients.length;
-  const ativos = mockPatients.filter(p => p.status === 'ativo').length;
-  const totalSessoes = mockPatients.reduce((a, p) => a + p.totalSessions, 0);
-  const totalReceita = mockPatients.reduce((a, p) => a + p.totalSpent, 0);
+  const ativos         = mockPatients.filter(p => p.status === 'ativo').length;
+  const totalSessoes   = mockPatients.reduce((a, p) => a + p.totalSessions, 0);
+  const totalReceita   = mockPatients.reduce((a, p) => a + p.totalSpent, 0);
 
   function openDetail(p: Patient) {
     setSelected(p);
     setIsDetailOpen(true);
   }
 
+  const handleExportFicha = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!selected) return;
+
+    setExporting(true);
+    let objectUrl: string | null = null;
+
+    try {
+      const response = await fetch('/api/relatorios/ficha-paciente', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ patient: selected }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error((err as any).details ?? 'Erro ao gerar PDF');
+      }
+
+      const blob    = await response.blob();
+      objectUrl     = URL.createObjectURL(blob);
+      const name    = selected.name
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '-');
+
+      const link         = document.createElement('a');
+      link.href          = objectUrl;
+      link.download      = `ficha-${name}.pdf`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Erro ao exportar ficha:', err);
+      alert('Não foi possível gerar a ficha. Tente novamente.');
+    } finally {
+      setExporting(false);
+      if (objectUrl) {
+        setTimeout(() => URL.revokeObjectURL(objectUrl!), 1000);
+      }
+    }
+  };
+
   return (
     <Container>
       <Header>
         <Title>Histórico de Pacientes</Title>
         <Button
+          type="button"
           variant="primary"
           icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>}
           onClick={() => setIsNewOpen(true)}
@@ -240,7 +291,10 @@ export default function HistoricoPaciente() {
       <Controls>
         <SearchBarWrapper>
           <SearchIconWrap>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
           </SearchIconWrap>
           <SearchInputStyled
             placeholder="Buscar por nome, telefone ou e-mail..."
@@ -251,14 +305,20 @@ export default function HistoricoPaciente() {
 
         <FilterRow>
           <DropdownWrapper>
-            <DropdownBtn onClick={() => setOpenDropdown(!openDropdown)}>
+            <DropdownBtn type="button" onClick={() => setOpenDropdown(!openDropdown)}>
               <span>{filter}</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
             </DropdownBtn>
             {openDropdown && (
               <DropdownList>
                 {filterOptions.map(f => (
-                  <DropdownItem key={f} $active={filter === f} onClick={() => { setFilter(f); setOpenDropdown(false); }}>
+                  <DropdownItem
+                    key={f}
+                    $active={filter === f}
+                    onClick={() => { setFilter(f); setOpenDropdown(false); }}
+                  >
                     {f}
                   </DropdownItem>
                 ))}
@@ -266,8 +326,10 @@ export default function HistoricoPaciente() {
             )}
           </DropdownWrapper>
           {filter !== 'Todos' && (
-            <ClearFilterBtn onClick={() => setFilter('Todos')}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            <ClearFilterBtn type="button" onClick={() => setFilter('Todos')}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
               Limpar
             </ClearFilterBtn>
           )}
@@ -339,7 +401,7 @@ export default function HistoricoPaciente() {
         </PatientGrid>
       )}
 
-      {/* Modal: Detalhe completo do paciente */}
+      {/* ── Modal: Detalhe completo do paciente ── */}
       <Modal
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
@@ -347,16 +409,56 @@ export default function HistoricoPaciente() {
         size="lg"
         footer={
           <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'space-between' }}>
-            <Button
-              variant="outline"
-              icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
-            >
-              Editar Ficha
+            <div style={{ display: 'flex', gap: 10 }}>
+              <Button
+                type="button"
+                variant="outline"
+                icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
+              >
+                Editar Ficha
+              </Button>
+
+              {/* ── BOTÃO EXPORTAR FICHA ── */}
+              <Button
+                type="button"
+                variant="primary"
+                onClick={handleExportFicha}
+                disabled={exporting}
+                icon={
+                  exporting ? (
+                    <svg
+                      width="15" height="15" viewBox="0 0 24 24"
+                      fill="none" stroke="currentColor" strokeWidth="2"
+                      style={{ animation: 'spin 1s linear infinite' }}
+                    >
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                    </svg>
+                  ) : (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="7 10 12 15 17 10"/>
+                      <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                  )
+                }
+              >
+                {exporting ? 'Gerando PDF...' : 'Exportar Ficha'}
+              </Button>
+            </div>
+
+            <Button type="button" variant="outline" onClick={() => setIsDetailOpen(false)}>
+              Fechar
             </Button>
-            <Button variant="outline" onClick={() => setIsDetailOpen(false)}>Fechar</Button>
           </div>
         }
       >
+        <style>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+          }
+        `}</style>
+
         {selected && (
           <DetailModal>
             <DetailHeader>
@@ -386,8 +488,13 @@ export default function HistoricoPaciente() {
             </DetailHeader>
 
             {selected.observations && (
-              <div style={{ background: '#fdf9f5', borderRadius: 10, padding: '12px 16px', border: '1px solid #f0ebe4', fontSize: '0.85rem', color: '#666', marginBottom: 24, lineHeight: 1.6 }}>
-                <strong style={{ color: '#BBA188' }}>⚠ Observações: </strong>{selected.observations}
+              <div style={{
+                background: '#fdf9f5', borderRadius: 10, padding: '12px 16px',
+                border: '1px solid #f0ebe4', fontSize: '0.85rem', color: '#666',
+                marginBottom: 24, lineHeight: 1.6,
+              }}>
+                <strong style={{ color: '#BBA188' }}>⚠ Observações: </strong>
+                {selected.observations}
               </div>
             )}
 
@@ -420,7 +527,7 @@ export default function HistoricoPaciente() {
         )}
       </Modal>
 
-      {/* Modal: Novo Paciente */}
+      {/* ── Modal: Novo Paciente ── */}
       <Modal
         isOpen={isNewOpen}
         onClose={() => setIsNewOpen(false)}
@@ -428,8 +535,8 @@ export default function HistoricoPaciente() {
         size="md"
         footer={
           <>
-            <Button variant="outline" onClick={() => setIsNewOpen(false)}>Cancelar</Button>
-            <Button variant="primary">Cadastrar Paciente</Button>
+            <Button type="button" variant="outline" onClick={() => setIsNewOpen(false)}>Cancelar</Button>
+            <Button type="button" variant="primary">Cadastrar Paciente</Button>
           </>
         }
       >
