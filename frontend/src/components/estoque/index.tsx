@@ -6,6 +6,7 @@ import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
 import StatCard from '@/components/ui/statcard';
+import Pagination from '@/components/ui/pagination';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import {
   Container, Header, Title, Controls, SearchBarWrapper, SearchIconWrap, SearchInputStyled,
@@ -58,6 +59,8 @@ const mockStock = [
   { id: 8, code: 'SKN-VIT-001', name: 'Vitamina C 20% Sérum',              category: 'Skincare/Pele',     quantity: 15, minStock: 5,  maxStock: 40,  unit: 'fr',  price: 180,  expiryDate: '2025-12-01', supplier: 'Sesderma',     status: 'normal'   },
   { id: 9, code: 'DES-AGU-001', name: 'Agulhas 30G 0.5mm',                 category: 'Descartável',       quantity: 1,  minStock: 10, maxStock: 100, unit: 'cx',  price: 45,   expiryDate: '2027-01-01', supplier: 'BD',           status: 'critico'  },
   { id: 10,code: 'DES-LUV-002', name: 'Luvas Nitrila M',                   category: 'Descartável',       quantity: 22, minStock: 5,  maxStock: 50,  unit: 'cx',  price: 38,   expiryDate: '2027-06-01', supplier: 'Medix',        status: 'normal'   },
+  { id: 11,code: 'DES-LUV-002', name: 'Luvas Nitrila M',                   category: 'Descartável',       quantity: 22, minStock: 5,  maxStock: 50,  unit: 'cx',  price: 38,   expiryDate: '2027-06-01', supplier: 'Medix',        status: 'normal'   },
+
 ];
 
 const catColors: Record<string, string> = {
@@ -147,6 +150,9 @@ const MOV_VALIDATION_FIELDS = [
   { key: 'observacaoMov' as MovField, validate: (v: string) => !v.trim()                 ? 'Observação é obrigatória'         : null },
 ];
 
+const ITEMS_PER_PAGE = 10;
+const TABLE_MIN_HEIGHT = 540;
+
 export default function Estoque() {
   const [view,             setView]             = useState<'cards' | 'tabela'>('tabela');
   const [search,           setSearch]           = useState('');
@@ -157,6 +163,7 @@ export default function Estoque() {
   const [isModalOpen,      setIsModalOpen]      = useState(false);
   const [isMovModal,       setIsMovModal]       = useState(false);
   const [selected,         setSelected]         = useState<typeof mockStock[0] | null>(null);
+  const [currentPage,      setCurrentPage]      = useState(1);
 
   const [itemForm, setItemForm] = useState<ItemForm>(ITEM_INITIAL);
   const {
@@ -180,6 +187,13 @@ export default function Estoque() {
     const matchStat   = filterStat === 'Todos' || item.status   === filterStat.toLowerCase();
     return matchSearch && matchCat && matchStat;
   });
+
+  /* ── Paginação ── */
+  const totalFiltered = filtered.length;
+  const totalPages    = Math.max(1, Math.ceil(totalFiltered / ITEMS_PER_PAGE));
+  const safePage      = Math.min(currentPage, totalPages);
+  const startIndex    = (safePage - 1) * ITEMS_PER_PAGE;
+  const paginatedData = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const totalItems   = mockStock.length;
   const lowStock     = mockStock.filter(i => i.status === 'baixo'    || i.status === 'critico').length;
@@ -310,7 +324,7 @@ export default function Estoque() {
           <SearchIconWrap>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           </SearchIconWrap>
-          <SearchInputStyled placeholder="Buscar por nome ou código..." value={search} onChange={e => setSearch(e.target.value)} />
+          <SearchInputStyled placeholder="Buscar por nome ou código..." value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }} />
         </SearchBarWrapper>
 
         <FilterRow>
@@ -322,7 +336,7 @@ export default function Estoque() {
             {openDropdownCat && (
               <DropdownList>
                 {filterCategories.map(c => (
-                  <DropdownItem key={c} $active={filterCat === c} onClick={() => { setFilterCat(c); setOpenDropdownCat(false); }}>{c}</DropdownItem>
+                  <DropdownItem key={c} $active={filterCat === c} onClick={() => { setFilterCat(c); setOpenDropdownCat(false); setCurrentPage(1); }}>{c}</DropdownItem>
                 ))}
               </DropdownList>
             )}
@@ -336,14 +350,14 @@ export default function Estoque() {
             {openDropdownStat && (
               <DropdownList>
                 {filterStatus.map(s => (
-                  <DropdownItem key={s} $active={filterStat === s} onClick={() => { setFilterStat(s); setOpenDropdownStat(false); }}>{s}</DropdownItem>
+                  <DropdownItem key={s} $active={filterStat === s} onClick={() => { setFilterStat(s); setOpenDropdownStat(false); setCurrentPage(1); }}>{s}</DropdownItem>
                 ))}
               </DropdownList>
             )}
           </DropdownWrapper>
 
           {(filterCat !== 'Todas' || filterStat !== 'Todos') && (
-            <ClearFilterBtn onClick={() => { setFilterCat('Todas'); setFilterStat('Todos'); }}>
+            <ClearFilterBtn onClick={() => { setFilterCat('Todas'); setFilterStat('Todos'); setCurrentPage(1); }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
               Limpar
             </ClearFilterBtn>
@@ -361,8 +375,8 @@ export default function Estoque() {
       </Controls>
 
       {view === 'tabela' ? (
-        <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden' }}>
-          <TableWrapper>
+        <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <TableWrapper style={{ minHeight: TABLE_MIN_HEIGHT }}>
             <Table>
               <Thead>
                 <tr>
@@ -377,13 +391,13 @@ export default function Estoque() {
                 </tr>
               </Thead>
               <Tbody>
-                {filtered.length === 0 ? (
+                {paginatedData.length === 0 ? (
                   <tr>
                     <Td colSpan={8} style={{ textAlign: 'center', padding: '48px 0', color: '#bbb' }}>
                       Nenhum item encontrado.
                     </Td>
                   </tr>
-                ) : filtered.map(item => (
+                ) : paginatedData.map(item => (
                   <Tr key={item.id}>
                     <Td><code style={{ fontSize: '0.78rem', color: '#888' }}>{item.code}</code></Td>
                     <Td style={{ fontWeight: 600, color: '#1a1a1a' }}>
@@ -422,6 +436,12 @@ export default function Estoque() {
               </Tbody>
             </Table>
           </TableWrapper>
+          <Pagination
+            currentPage={safePage}
+            totalItems={totalFiltered}
+            itemsPerPage={ITEMS_PER_PAGE}
+            onPageChange={setCurrentPage}
+          />
         </div>
       ) : (
         <CardsGrid>
@@ -495,95 +515,17 @@ export default function Estoque() {
       >
         <FormGrid>
           <div style={{ gridColumn: 'span 2' }}>
-            <Input
-              label="Nome do Item *"
-              placeholder="Ex: Toxina Botulínica Allergan..."
-              value={itemForm.nome}
-              onChange={e => handleItemChange('nome', e.target.value)}
-              maxLength={120}
-              error={itemErrors.nome}
-            />
+            <Input label="Nome do Item *" placeholder="Ex: Toxina Botulínica Allergan..." value={itemForm.nome} onChange={e => handleItemChange('nome', e.target.value)} maxLength={120} error={itemErrors.nome} />
           </div>
-
-          <Input
-            label="Código *"
-            placeholder="Ex: BTX-001"
-            value={itemForm.codigo}
-            onChange={e => handleItemChange('codigo', e.target.value.toUpperCase())}
-            maxLength={30}
-            error={itemErrors.codigo}
-          />
-
-          <Select
-            label="Categoria *"
-            options={categoryOptions}
-            placeholder="Selecione..."
-            value={itemForm.categoria}
-            onChange={v => handleItemChange('categoria', v)}
-            error={itemErrors.categoria}
-          />
-
-          <Select
-            label="Unidade *"
-            options={unitOptions}
-            placeholder="Selecione..."
-            value={itemForm.unidade}
-            onChange={v => handleItemChange('unidade', v)}
-            error={itemErrors.unidade}
-          />
-
-          <Input
-            label="Quantidade *"
-            type="number"
-            placeholder="0"
-            value={itemForm.quantidade}
-            onChange={e => handleItemChange('quantidade', e.target.value)}
-            error={itemErrors.quantidade}
-          />
-
-          <Input
-            label="Estoque Mínimo *"
-            type="number"
-            placeholder="0"
-            value={itemForm.minimo}
-            onChange={e => handleItemChange('minimo', e.target.value)}
-            error={itemErrors.minimo}
-          />
-
-          <Input
-            label="Estoque Máximo *"
-            type="number"
-            placeholder="0"
-            value={itemForm.maximo}
-            onChange={e => handleItemChange('maximo', e.target.value)}
-            error={itemErrors.maximo}
-          />
-
-          <Input
-            label="Preço Unitário (R$) *"
-            type="number"
-            placeholder="0,00"
-            value={itemForm.preco}
-            onChange={e => handleItemChange('preco', e.target.value)}
-            error={itemErrors.preco}
-          />
-
-          <Input
-            label="Fornecedor *"
-            placeholder="Nome do fornecedor"
-            value={itemForm.fornecedor}
-            onChange={e => handleItemChange('fornecedor', e.target.value)}
-            maxLength={80}
-            error={itemErrors.fornecedor}
-          />
-
-          <Input
-            label="Validade *"
-            type="date"
-            value={itemForm.validade}
-            onChange={e => handleItemDataChange(e.target.value)}
-            error={itemErrors.validade}
-          />
+          <Input label="Código *" placeholder="Ex: BTX-001" value={itemForm.codigo} onChange={e => handleItemChange('codigo', e.target.value.toUpperCase())} maxLength={30} error={itemErrors.codigo} />
+          <Select label="Categoria *" options={categoryOptions} placeholder="Selecione..." value={itemForm.categoria} onChange={v => handleItemChange('categoria', v)} error={itemErrors.categoria} />
+          <Select label="Unidade *" options={unitOptions} placeholder="Selecione..." value={itemForm.unidade} onChange={v => handleItemChange('unidade', v)} error={itemErrors.unidade} />
+          <Input label="Quantidade *" type="number" placeholder="0" value={itemForm.quantidade} onChange={e => handleItemChange('quantidade', e.target.value)} error={itemErrors.quantidade} />
+          <Input label="Estoque Mínimo *" type="number" placeholder="0" value={itemForm.minimo} onChange={e => handleItemChange('minimo', e.target.value)} error={itemErrors.minimo} />
+          <Input label="Estoque Máximo *" type="number" placeholder="0" value={itemForm.maximo} onChange={e => handleItemChange('maximo', e.target.value)} error={itemErrors.maximo} />
+          <Input label="Preço Unitário (R$) *" type="number" placeholder="0,00" value={itemForm.preco} onChange={e => handleItemChange('preco', e.target.value)} error={itemErrors.preco} />
+          <Input label="Fornecedor *" placeholder="Nome do fornecedor" value={itemForm.fornecedor} onChange={e => handleItemChange('fornecedor', e.target.value)} maxLength={80} error={itemErrors.fornecedor} />
+          <Input label="Validade *" type="date" value={itemForm.validade} onChange={e => handleItemDataChange(e.target.value)} error={itemErrors.validade} />
         </FormGrid>
       </Modal>
 
@@ -600,32 +542,9 @@ export default function Estoque() {
         }
       >
         <FormGrid style={{ gridTemplateColumns: '1fr' }}>
-          <Select
-            label="Tipo de Movimentação *"
-            options={movTypeOptions}
-            placeholder="Selecione o tipo..."
-            value={movForm.tipoMov}
-            onChange={v => handleMovChange('tipoMov', v)}
-            error={movErrors.tipoMov}
-          />
-
-          <Input
-            label="Quantidade *"
-            type="number"
-            placeholder="0"
-            value={movForm.quantidadeMov}
-            onChange={e => handleMovChange('quantidadeMov', e.target.value)}
-            error={movErrors.quantidadeMov}
-          />
-
-          <Input
-            label="Observação *"
-            placeholder="Ex: NF 1234, Procedimento da paciente Ana..."
-            value={movForm.observacaoMov}
-            onChange={e => handleMovChange('observacaoMov', e.target.value)}
-            maxLength={200}
-            error={movErrors.observacaoMov}
-          />
+          <Select label="Tipo de Movimentação *" options={movTypeOptions} placeholder="Selecione o tipo..." value={movForm.tipoMov} onChange={v => handleMovChange('tipoMov', v)} error={movErrors.tipoMov} />
+          <Input label="Quantidade *" type="number" placeholder="0" value={movForm.quantidadeMov} onChange={e => handleMovChange('quantidadeMov', e.target.value)} error={movErrors.quantidadeMov} />
+          <Input label="Observação *" placeholder="Ex: NF 1234, Procedimento da paciente Ana..." value={movForm.observacaoMov} onChange={e => handleMovChange('observacaoMov', e.target.value)} maxLength={200} error={movErrors.observacaoMov} />
         </FormGrid>
       </Modal>
     </Container>

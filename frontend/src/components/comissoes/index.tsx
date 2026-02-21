@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Button from '@/components/ui/button';
 import StatCard from '@/components/ui/statcard';
+import Pagination from '@/components/ui/pagination';
 import {
   Container, Header, Title, Controls, SearchBarWrapper, SearchIconWrap, SearchInputStyled,
   FilterRow, DropdownWrapper, DropdownBtn, DropdownList, DropdownItem, ClearFilterBtn,
@@ -27,6 +28,13 @@ const mockComissoes = [
   { id: 4, date: '14/02/2025', professional: 'Maria Oliveira', procedure: 'Microagulhamento',     patient: 'Patrícia A.', value: 450,  percentual: 20, comissao: 90,   status: 'pago'     },
   { id: 5, date: '13/02/2025', professional: 'Clara Andrade',  procedure: 'Fio PDO',              patient: 'Marina S.',   value: 1800, percentual: 20, comissao: 360,  status: 'pendente' },
   { id: 6, date: '10/02/2025', professional: 'Beatriz Santos', procedure: 'Toxina Botulínica',    patient: 'Juliana R.',  value: 600,  percentual: 25, comissao: 150,  status: 'pago'     },
+  { id: 7, date: '18/02/2025', professional: 'Maria Oliveira', procedure: 'Botox Facial',        patient: 'Ana Costa',   value: 720,  percentual: 20, comissao: 144,  status: 'pago'     },
+  { id: 8, date: '18/02/2025', professional: 'Clara Andrade',  procedure: 'Preenchimento Labial', patient: 'Carla M.',    value: 1200, percentual: 20, comissao: 240,  status: 'pendente' },
+  { id: 9, date: '16/02/2025', professional: 'Beatriz Santos', procedure: 'Bioestimulador',       patient: 'Fernanda L.', value: 2500, percentual: 25, comissao: 625,  status: 'pago'     },
+  { id: 10, date: '14/02/2025', professional: 'Maria Oliveira', procedure: 'Microagulhamento',     patient: 'Patrícia A.', value: 450,  percentual: 20, comissao: 90,   status: 'pago'     },
+  { id: 11, date: '13/02/2025', professional: 'Clara Andrade',  procedure: 'Fio PDO',              patient: 'Marina S.',   value: 1800, percentual: 20, comissao: 360,  status: 'pendente' },
+  { id: 12, date: '10/02/2025', professional: 'Beatriz Santos', procedure: 'Toxina Botulínica',    patient: 'Juliana R.',  value: 600,  percentual: 25, comissao: 150,  status: 'pago'     },
+
 ];
 
 const fmt = (v: number) =>
@@ -46,12 +54,16 @@ function getBarColor(comissao: number, meta: number): string {
   return '#96D2A0';
 }
 
+const ITEMS_PER_PAGE = 10;
+const TABLE_MIN_HEIGHT = 540;
+
 export default function Comissoes() {
   const [search,       setSearch]       = useState('');
   const [filterMonth,  setFilterMonth]  = useState('Todos');
   const [filterProf,   setFilterProf]   = useState('Todos');
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [exporting,    setExporting]    = useState(false);
+  const [currentPage,  setCurrentPage]  = useState(1);
 
   const totalComissoes = mockComissoes.reduce((a, c) => a + c.comissao, 0);
   const totalPago      = mockComissoes.filter(c => c.status === 'pago').reduce((a, c) => a + c.comissao, 0);
@@ -66,6 +78,13 @@ export default function Comissoes() {
     const matchProf = filterProf === 'Todos' || c.professional === filterProf;
     return matchSearch && matchProf;
   });
+
+  /* ── Paginação ── */
+  const totalFiltered = filtered.length;
+  const totalPages    = Math.max(1, Math.ceil(totalFiltered / ITEMS_PER_PAGE));
+  const safePage      = Math.min(currentPage, totalPages);
+  const startIndex    = (safePage - 1) * ITEMS_PER_PAGE;
+  const paginatedData = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const toggle = (name: string) =>
     setOpenDropdown(prev => (prev === name ? null : name));
@@ -233,7 +252,7 @@ export default function Comissoes() {
           <SearchInputStyled
             placeholder="Buscar por profissional, procedimento..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
           />
         </SearchBarWrapper>
 
@@ -251,7 +270,7 @@ export default function Comissoes() {
                   <DropdownItem
                     key={p}
                     $active={filterProf === p}
-                    onClick={() => { setFilterProf(p); toggle('prof'); }}
+                    onClick={() => { setFilterProf(p); toggle('prof'); setCurrentPage(1); }}
                   >
                     {p}
                   </DropdownItem>
@@ -273,7 +292,7 @@ export default function Comissoes() {
                   <DropdownItem
                     key={m}
                     $active={filterMonth === m}
-                    onClick={() => { setFilterMonth(m); toggle('month'); }}
+                    onClick={() => { setFilterMonth(m); toggle('month'); setCurrentPage(1); }}
                   >
                     {m}
                   </DropdownItem>
@@ -283,7 +302,7 @@ export default function Comissoes() {
           </DropdownWrapper>
 
           {(filterProf !== 'Todos' || filterMonth !== 'Todos') && (
-            <ClearFilterBtn type="button" onClick={() => { setFilterProf('Todos'); setFilterMonth('Todos'); }}>
+            <ClearFilterBtn type="button" onClick={() => { setFilterProf('Todos'); setFilterMonth('Todos'); setCurrentPage(1); }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 6L6 18M6 6l12 12"/>
               </svg>
@@ -293,8 +312,8 @@ export default function Comissoes() {
         </FilterRow>
       </Controls>
 
-      <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden' }}>
-        <TableWrapper>
+      <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <TableWrapper style={{ minHeight: TABLE_MIN_HEIGHT }}>
           <Table>
             <Thead>
               <tr>
@@ -309,7 +328,7 @@ export default function Comissoes() {
               </tr>
             </Thead>
             <Tbody>
-              {filtered.length === 0 ? (
+              {paginatedData.length === 0 ? (
                 <tr>
                   <td colSpan={8}>
                     <EmptyState>
@@ -318,7 +337,7 @@ export default function Comissoes() {
                     </EmptyState>
                   </td>
                 </tr>
-              ) : filtered.map((c) => {
+              ) : paginatedData.map((c) => {
                 const profIndex = mockProfessionals.findIndex(p => p.name === c.professional);
                 const prof      = mockProfessionals[profIndex];
                 const barColor  = prof ? getBarColor(prof.comissao, prof.meta) : '#BBA188';
@@ -359,6 +378,12 @@ export default function Comissoes() {
             </Tbody>
           </Table>
         </TableWrapper>
+        <Pagination
+          currentPage={safePage}
+          totalItems={totalFiltered}
+          itemsPerPage={ITEMS_PER_PAGE}
+          onPageChange={setCurrentPage}
+        />
       </div>
     </Container>
   );

@@ -6,6 +6,7 @@ import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
 import StatCard from '@/components/ui/statcard';
+import Pagination from '@/components/ui/pagination';
 import {
   Container, Header, Title, StatsGrid, Controls,
   SearchBarWrapper, SearchIconWrap, SearchInputStyled,
@@ -137,12 +138,18 @@ const filterAreas   = ['Todos', 'Técnica', 'Administrativa'];
 const STEP_LABELS   = ['Dados Básicos', 'Área', 'Cargo', 'Acesso'];
 
 const INITIAL_PROFISSIONAIS = [
-  { id: 1, name: 'Ana Beatriz Lima',   email: 'ana.lima@clinica.com',      phone: '(11) 98765-4321', registro: 'CREFITO-3 112233-F', area: 'tecnica',        cargo: 'esteticista',    especialidade: 'Estética Facial',      status: 'ativo',   atendimentos: 142, ultimoAcesso: '20/02/2025', observacoes: '' },
-  { id: 2, name: 'Dra. Clara Andrade', email: 'clara.andrade@clinica.com', phone: '(11) 97654-3210', registro: 'CRM/SP 654321',      area: 'tecnica',        cargo: 'dermatologista', especialidade: 'Dermatologia Clínica', status: 'ativo',   atendimentos: 98,  ultimoAcesso: '19/02/2025', observacoes: '' },
-  { id: 3, name: 'Juliana Ferreira',   email: 'juliana.f@clinica.com',     phone: '(31) 94321-0987', registro: 'COREN/SP 901234',    area: 'tecnica',        cargo: 'enfermeiro',     especialidade: 'Enf. Estética',        status: 'ativo',   atendimentos: 55,  ultimoAcesso: '17/02/2025', observacoes: '' },
-  { id: 4, name: 'Rafael Costa',       email: 'rafael.costa@clinica.com',  phone: '(21) 95432-1098', registro: '',                   area: 'administrativa', cargo: 'recepcionista',  especialidade: '',                     status: 'inativo', atendimentos: 0,   ultimoAcesso: '10/01/2025', observacoes: '' },
-  { id: 5, name: 'Mariana Souza',      email: 'mariana.s@clinica.com',     phone: '(21) 94321-9876', registro: 'CRBim-5 445566',     area: 'tecnica',        cargo: 'biomedico',      especialidade: 'Biomedicina Estética', status: 'ativo',   atendimentos: 76,  ultimoAcesso: '18/02/2025', observacoes: '' },
-  { id: 6, name: 'Patricia Gomes',     email: 'patricia.g@clinica.com',    phone: '(11) 93210-8765', registro: '',                   area: 'administrativa', cargo: 'gerente',        especialidade: '',                     status: 'ativo',   atendimentos: 0,   ultimoAcesso: '20/02/2025', observacoes: '' },
+  { id: 1,  name: 'Ana Beatriz Lima',       email: 'ana.lima@clinica.com',        phone: '(11) 98765-4321', registro: 'CREFITO-3 112233-F', area: 'tecnica',        cargo: 'esteticista',    especialidade: 'Estética Facial',      status: 'ativo',   atendimentos: 142, ultimoAcesso: '20/02/2025', observacoes: '' },
+  { id: 2,  name: 'Dra. Clara Andrade',     email: 'clara.andrade@clinica.com',   phone: '(11) 97654-3210', registro: 'CRM/SP 654321',      area: 'tecnica',        cargo: 'dermatologista', especialidade: 'Dermatologia Clínica', status: 'ativo',   atendimentos: 98,  ultimoAcesso: '19/02/2025', observacoes: '' },
+  { id: 3,  name: 'Juliana Ferreira',       email: 'juliana.f@clinica.com',       phone: '(31) 94321-0987', registro: 'COREN/SP 901234',    area: 'tecnica',        cargo: 'enfermeiro',     especialidade: 'Enf. Estética',        status: 'ativo',   atendimentos: 55,  ultimoAcesso: '17/02/2025', observacoes: '' },
+  { id: 4,  name: 'Rafael Costa',           email: 'rafael.costa@clinica.com',    phone: '(21) 95432-1098', registro: '',                   area: 'administrativa', cargo: 'recepcionista',  especialidade: '',                     status: 'inativo', atendimentos: 0,   ultimoAcesso: '10/01/2025', observacoes: '' },
+  { id: 5,  name: 'Mariana Souza',          email: 'mariana.s@clinica.com',       phone: '(21) 94321-9876', registro: 'CRBim-5 445566',     area: 'tecnica',        cargo: 'biomedico',      especialidade: 'Biomedicina Estética', status: 'ativo',   atendimentos: 76,  ultimoAcesso: '18/02/2025', observacoes: '' },
+  { id: 6,  name: 'Patricia Gomes',         email: 'patricia.g@clinica.com',      phone: '(11) 93210-8765', registro: '',                   area: 'administrativa', cargo: 'gerente',        especialidade: '',                     status: 'ativo',   atendimentos: 0,   ultimoAcesso: '20/02/2025', observacoes: '' },
+  { id: 7,  name: 'Fernanda Oliveira',      email: 'fernanda.o@clinica.com',      phone: '(11) 91234-5678', registro: 'CREFITO-3 778899-F', area: 'tecnica',        cargo: 'fisioterapeuta', especialidade: 'Dermato Funcional',    status: 'ativo',   atendimentos: 63,  ultimoAcesso: '15/02/2025', observacoes: '' },
+  { id: 8,  name: 'Dr. Lucas Mendes',       email: 'lucas.mendes@clinica.com',    phone: '(11) 99876-5432', registro: 'CRM/SP 789012',      area: 'tecnica',        cargo: 'dermatologista', especialidade: 'Dermatologia Estética', status: 'ativo',   atendimentos: 110, ultimoAcesso: '20/02/2025', observacoes: '' },
+  { id: 9,  name: 'Camila Rocha',           email: 'camila.rocha@clinica.com',    phone: '(21) 98765-1234', registro: '',                   area: 'administrativa', cargo: 'financeiro',     especialidade: '',                     status: 'ativo',   atendimentos: 0,   ultimoAcesso: '19/02/2025', observacoes: '' },
+  { id: 10, name: 'Beatriz Santos',         email: 'beatriz.santos@clinica.com',  phone: '(31) 97654-3210', registro: 'COREN/SP 345678',    area: 'tecnica',        cargo: 'enfermeiro',     especialidade: 'Procedimentos Injetáveis', status: 'ativo', atendimentos: 41,  ultimoAcesso: '16/02/2025', observacoes: '' },
+  { id: 11, name: 'Thiago Almeida',         email: 'thiago.a@clinica.com',        phone: '(11) 96543-2109', registro: '',                   area: 'administrativa', cargo: 'recepcionista',  especialidade: '',                     status: 'ativo',   atendimentos: 0,   ultimoAcesso: '18/02/2025', observacoes: '' },
+  { id: 12, name: 'Larissa Duarte',         email: 'larissa.d@clinica.com',       phone: '(11) 95432-1098', registro: 'CRBim-5 667788',     area: 'tecnica',        cargo: 'biomedico',      especialidade: 'Laserterapia',         status: 'inativo', atendimentos: 29,  ultimoAcesso: '05/01/2025', observacoes: '' },
 ];
 
 const avatarColors = ['#BBA188', '#8a7560', '#a8906f', '#c9a882', '#917255', '#d4b896'];
@@ -240,6 +247,8 @@ const AreaAdminIcon = () => (
   </svg>
 );
 
+const ITEMS_PER_PAGE = 10;
+
 export default function Profissionais() {
   const [profissionais,        setProfissionais]        = useState<Profissional[]>(INITIAL_PROFISSIONAIS);
   const [search,               setSearch]               = useState('');
@@ -255,6 +264,7 @@ export default function Profissionais() {
   const [showSenha,            setShowSenha]            = useState(false);
   const [showConfirm,          setShowConfirm]          = useState(false);
   const [isEditing,            setIsEditing]            = useState(false);
+  const [currentPage,          setCurrentPage]          = useState(1);
 
   const cargoConfig   = form.cargo ? ALL_CARGO_CONFIG[form.cargo] : null;
   const cargoOptions  =
@@ -270,6 +280,37 @@ export default function Profissionais() {
     const matchArea   = filterArea === 'Todos' || (filterArea === 'Técnica' ? p.area === 'tecnica' : p.area === 'administrativa');
     return matchSearch && matchStat && matchArea;
   });
+
+  // Paginação
+  const totalFiltered = filtered.length;
+  const totalPages    = Math.max(1, Math.ceil(totalFiltered / ITEMS_PER_PAGE));
+  const safePage      = Math.min(currentPage, totalPages);
+  const startIndex    = (safePage - 1) * ITEMS_PER_PAGE;
+  const paginatedData = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  // Resetar página ao mudar filtros/busca
+  function handleSearchChange(value: string) {
+    setSearch(value);
+    setCurrentPage(1);
+  }
+
+  function handleFilterStatChange(value: string) {
+    setFilterStat(value);
+    setCurrentPage(1);
+    setOpenDrop(null);
+  }
+
+  function handleFilterAreaChange(value: string) {
+    setFilterArea(value);
+    setCurrentPage(1);
+    setOpenDrop(null);
+  }
+
+  function handleClearFilters() {
+    setFilterStat('Todos');
+    setFilterArea('Todos');
+    setCurrentPage(1);
+  }
 
   const totalProfissionais = profissionais.length;
   const ativos             = profissionais.filter(p => p.status === 'ativo').length;
@@ -566,7 +607,7 @@ export default function Profissionais() {
           <SearchIconWrap>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           </SearchIconWrap>
-          <SearchInputStyled type="search" placeholder="Buscar por nome ou e-mail..." value={search} onChange={e => setSearch(e.target.value)} autoComplete="off" name="search-profissionais-filter" data-form-type="other" data-lpignore="true" />
+          <SearchInputStyled type="search" placeholder="Buscar por nome ou e-mail..." value={search} onChange={e => handleSearchChange(e.target.value)} autoComplete="off" name="search-profissionais-filter" data-form-type="other" data-lpignore="true" />
         </SearchBarWrapper>
         <FilterRow>
           <DropdownWrapper>
@@ -577,7 +618,7 @@ export default function Profissionais() {
             {openDrop === 'status' && (
               <DropdownList>
                 {filterStatus.map(s => (
-                  <DropdownItem key={s} $active={filterStat === s} onClick={() => { setFilterStat(s); setOpenDrop(null); }}>{s}</DropdownItem>
+                  <DropdownItem key={s} $active={filterStat === s} onClick={() => handleFilterStatChange(s)}>{s}</DropdownItem>
                 ))}
               </DropdownList>
             )}
@@ -590,13 +631,13 @@ export default function Profissionais() {
             {openDrop === 'area' && (
               <DropdownList>
                 {filterAreas.map(a => (
-                  <DropdownItem key={a} $active={filterArea === a} onClick={() => { setFilterArea(a); setOpenDrop(null); }}>{a}</DropdownItem>
+                  <DropdownItem key={a} $active={filterArea === a} onClick={() => handleFilterAreaChange(a)}>{a}</DropdownItem>
                 ))}
               </DropdownList>
             )}
           </DropdownWrapper>
           {(filterStat !== 'Todos' || filterArea !== 'Todos') && (
-            <ClearFilterBtn onClick={() => { setFilterStat('Todos'); setFilterArea('Todos'); }}>
+            <ClearFilterBtn onClick={handleClearFilters}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
               Limpar
             </ClearFilterBtn>
@@ -604,8 +645,8 @@ export default function Profissionais() {
         </FilterRow>
       </Controls>
 
-      <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden' }}>
-        <TableWrapper>
+      <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 596 }}>
+        <TableWrapper style={{ flex: 1 }}>
           <Table>
             <Thead>
               <tr>
@@ -622,7 +663,7 @@ export default function Profissionais() {
               </tr>
             </Thead>
             <Tbody>
-              {filtered.length === 0 ? (
+              {paginatedData.length === 0 ? (
                 <tr><td colSpan={10}>
                   <EmptyState>
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -630,11 +671,11 @@ export default function Profissionais() {
                     <p>Tente ajustar os filtros</p>
                   </EmptyState>
                 </td></tr>
-              ) : filtered.map((p, i) => (
+              ) : paginatedData.map((p, i) => (
                 <Tr key={p.id}>
                   <Td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <Avatar $color={avatarColors[i % avatarColors.length]}>
+                      <Avatar $color={avatarColors[(startIndex + i) % avatarColors.length]}>
                         {getInitials(p.name)}
                       </Avatar>
                       <ProfissionalInfo>
@@ -690,6 +731,12 @@ export default function Profissionais() {
             </Tbody>
           </Table>
         </TableWrapper>
+        <Pagination
+          currentPage={safePage}
+          totalItems={totalFiltered}
+          itemsPerPage={ITEMS_PER_PAGE}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       <Modal

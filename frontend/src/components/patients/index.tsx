@@ -6,6 +6,7 @@ import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
 import StatCard from '@/components/ui/statcard';
+import Pagination from '@/components/ui/pagination';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import {
   Container, Header, Title, Controls,
@@ -73,6 +74,9 @@ const avatarColors = ['#BBA188', '#EBD5B0', '#1b1b1b', '#a8906f', '#e74c3c', '#8
 
 type Patient = typeof mockPatients[0];
 
+const ITEMS_PER_PAGE = 10;
+const TABLE_MIN_HEIGHT = 540;
+
 export default function Patients() {
   const [search,          setSearch]          = useState('');
   const [filterSt,        setFilterSt]        = useState('Todos');
@@ -81,6 +85,7 @@ export default function Patients() {
   const [isModalOpen,     setIsModalOpen]      = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [form,            setForm]            = useState<PacienteForm>(FORM_INITIAL);
+  const [currentPage,     setCurrentPage]     = useState(1);
 
   const { errors, validate, clearError, clearAll } =
     useSequentialValidation<PacienteField>(VALIDATION_FIELDS);
@@ -92,9 +97,38 @@ export default function Patients() {
     return matchSearch && matchStatus && matchProc;
   });
 
+  const totalFiltered = filtered.length;
+  const totalPages    = Math.max(1, Math.ceil(totalFiltered / ITEMS_PER_PAGE));
+  const safePage      = Math.min(currentPage, totalPages);
+  const startIndex    = (safePage - 1) * ITEMS_PER_PAGE;
+  const paginatedData = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
   const ativos = mockPatients.filter(p => p.status === 'ativo').length;
 
   const toggleDropdown = (name: string) => setOpenDropdown(prev => prev === name ? null : name);
+
+  function handleSearchChange(value: string) {
+    setSearch(value);
+    setCurrentPage(1);
+  }
+
+  function handleFilterStChange(value: string) {
+    setFilterSt(value);
+    setCurrentPage(1);
+    setOpenDropdown(null);
+  }
+
+  function handleFilterProcChange(value: string) {
+    setFilterProc(value);
+    setCurrentPage(1);
+    setOpenDropdown(null);
+  }
+
+  function handleClearFilters() {
+    setFilterSt('Todos');
+    setFilterProc('Todos');
+    setCurrentPage(1);
+  }
 
   function handleChange(field: keyof PacienteForm, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -190,7 +224,7 @@ export default function Patients() {
           <SearchIconWrap>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           </SearchIconWrap>
-          <SearchInputStyled placeholder="Buscar por nome ou e-mail..." value={search} onChange={e => setSearch(e.target.value)} />
+          <SearchInputStyled placeholder="Buscar por nome ou e-mail..." value={search} onChange={e => handleSearchChange(e.target.value)} />
         </SearchBarWrapper>
 
         <FilterRow>
@@ -202,7 +236,7 @@ export default function Patients() {
             {openDropdown === 'status' && (
               <DropdownList>
                 {filterStatus.map(s => (
-                  <DropdownItem key={s} $active={filterSt === s} onClick={() => { setFilterSt(s); setOpenDropdown(null); }}>{s}</DropdownItem>
+                  <DropdownItem key={s} $active={filterSt === s} onClick={() => handleFilterStChange(s)}>{s}</DropdownItem>
                 ))}
               </DropdownList>
             )}
@@ -216,14 +250,14 @@ export default function Patients() {
             {openDropdown === 'proc' && (
               <DropdownList>
                 {filterProcedure.map(s => (
-                  <DropdownItem key={s} $active={filterProc === s} onClick={() => { setFilterProc(s); setOpenDropdown(null); }}>{s}</DropdownItem>
+                  <DropdownItem key={s} $active={filterProc === s} onClick={() => handleFilterProcChange(s)}>{s}</DropdownItem>
                 ))}
               </DropdownList>
             )}
           </DropdownWrapper>
 
           {(filterSt !== 'Todos' || filterProc !== 'Todos') && (
-            <ClearFilterBtn onClick={() => { setFilterSt('Todos'); setFilterProc('Todos'); }}>
+            <ClearFilterBtn onClick={handleClearFilters}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
               Limpar
             </ClearFilterBtn>
@@ -231,8 +265,8 @@ export default function Patients() {
         </FilterRow>
       </Controls>
 
-      <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden' }}>
-        <TableWrapper>
+      <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <TableWrapper style={{ minHeight: TABLE_MIN_HEIGHT }}>
           <Table>
             <Thead>
               <tr>
@@ -246,7 +280,7 @@ export default function Patients() {
               </tr>
             </Thead>
             <Tbody>
-              {filtered.length === 0 ? (
+              {paginatedData.length === 0 ? (
                 <tr><td colSpan={7}>
                   <EmptyState>
                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
@@ -254,11 +288,11 @@ export default function Patients() {
                     <p>Tente ajustar os filtros</p>
                   </EmptyState>
                 </td></tr>
-              ) : filtered.map((p, i) => (
+              ) : paginatedData.map((p, i) => (
                 <Tr key={p.id}>
                   <Td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <Avatar $color={avatarColors[i % avatarColors.length]}>
+                      <Avatar $color={avatarColors[(startIndex + i) % avatarColors.length]}>
                         {p.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
                       </Avatar>
                       <PatientInfo>
@@ -287,6 +321,12 @@ export default function Patients() {
             </Tbody>
           </Table>
         </TableWrapper>
+        <Pagination
+          currentPage={safePage}
+          totalItems={totalFiltered}
+          itemsPerPage={ITEMS_PER_PAGE}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       <Modal

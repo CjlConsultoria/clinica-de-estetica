@@ -6,6 +6,7 @@ import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
 import StatCard from '@/components/ui/statcard';
+import Pagination from '@/components/ui/pagination';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import {
   Container, Header, Title, StatsGrid, Controls,
@@ -64,6 +65,13 @@ const mockTermos = [
   { id: 4, paciente: 'Marina Souza',       procedimento: 'Fio de PDO',            dataCriacao: '05/01/2025', dataValidade: '05/01/2026', status: 'assinado', assinadoEm: '05/01/2025 09:55', ip: '201.45.67.88',  profissional: 'Beatriz Santos', versao: 'v2.0' },
   { id: 5, paciente: 'Juliana Rocha',      procedimento: 'Toxina Botulínica',     dataCriacao: '10/01/2025', dataValidade: '10/01/2026', status: 'pendente', assinadoEm: null,               ip: null,            profissional: 'Maria Oliveira', versao: 'v2.1' },
   { id: 6, paciente: 'Patrícia Alves',     procedimento: 'Microagulhamento',      dataCriacao: '20/12/2024', dataValidade: '20/12/2025', status: 'assinado', assinadoEm: '20/12/2024 16:20', ip: '177.84.98.10',  profissional: 'Beatriz Santos', versao: 'v2.0' },
+  { id: 7, paciente: 'Ana Beatriz Costa',  procedimento: 'Botox Facial',         dataCriacao: '18/02/2025', dataValidade: '18/02/2026', status: 'assinado', assinadoEm: '18/02/2025 10:32', ip: '177.84.12.45',  profissional: 'Maria Oliveira', versao: 'v2.1' },
+  { id: 8, paciente: 'Carla Mendonça',     procedimento: 'Preenchimento Labial',  dataCriacao: '15/02/2025', dataValidade: '15/02/2026', status: 'assinado', assinadoEm: '15/02/2025 14:10', ip: '189.90.34.21',  profissional: 'Maria Oliveira', versao: 'v2.1' },
+  { id: 9, paciente: 'Fernanda Lima',      procedimento: 'Bioestimulador',        dataCriacao: '10/02/2025', dataValidade: '10/02/2026', status: 'pendente', assinadoEm: null,               ip: null,            profissional: 'Clara Andrade',  versao: 'v2.1' },
+  { id: 10, paciente: 'Marina Souza',       procedimento: 'Fio de PDO',            dataCriacao: '05/01/2025', dataValidade: '05/01/2026', status: 'assinado', assinadoEm: '05/01/2025 09:55', ip: '201.45.67.88',  profissional: 'Beatriz Santos', versao: 'v2.0' },
+  { id: 11, paciente: 'Juliana Rocha',      procedimento: 'Toxina Botulínica',     dataCriacao: '10/01/2025', dataValidade: '10/01/2026', status: 'pendente', assinadoEm: null,               ip: null,            profissional: 'Maria Oliveira', versao: 'v2.1' },
+  { id: 12, paciente: 'Patrícia Alves',     procedimento: 'Microagulhamento',      dataCriacao: '20/12/2024', dataValidade: '20/12/2025', status: 'assinado', assinadoEm: '20/12/2024 16:20', ip: '177.84.98.10',  profissional: 'Beatriz Santos', versao: 'v2.0' },
+
 ];
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
@@ -73,6 +81,10 @@ const statusConfig: Record<string, { label: string; color: string; bg: string }>
 };
 
 type Termo = typeof mockTermos[0];
+
+const ITEMS_PER_PAGE = 10;
+const TABLE_MIN_HEIGHT = 540;
+
 export default function Consentimento() {
   const [search,        setSearch]       = useState('');
   const [filterStat,    setFilterStat]   = useState('Todos');
@@ -84,6 +96,7 @@ export default function Consentimento() {
   const [signed,        setSigned]       = useState(false);
   const [exporting,     setExporting]    = useState(false);
   const [form,          setForm]         = useState<TermoForm>(FORM_INITIAL);
+  const [currentPage,   setCurrentPage]  = useState(1);
 
   const { errors, validate, clearError, clearAll } =
     useSequentialValidation<TermoField>(VALIDATION_FIELDS);
@@ -94,10 +107,28 @@ export default function Consentimento() {
     return matchSearch && matchStat;
   });
 
+  const totalFiltered = filtered.length;
+  const totalPages    = Math.max(1, Math.ceil(totalFiltered / ITEMS_PER_PAGE));
+  const safePage      = Math.min(currentPage, totalPages);
+  const startIndex    = (safePage - 1) * ITEMS_PER_PAGE;
+  const paginatedData = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
   const totalTermos = mockTermos.length;
   const assinados   = mockTermos.filter(t => t.status === 'assinado').length;
   const pendentes   = mockTermos.filter(t => t.status === 'pendente').length;
   const expirados   = mockTermos.filter(t => t.status === 'expirado').length;
+
+  function handleSearchChange(value: string) {
+    setSearch(value);
+    setCurrentPage(1);
+  }
+
+  function handleFilterStatChange(value: string) {
+    setFilterStat(value);
+    setCurrentPage(1);
+    setOpenDropStat(false);
+  }
+
   function handleChange(field: keyof TermoForm, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
     clearError(field as TermoField);
@@ -212,7 +243,7 @@ export default function Consentimento() {
           <SearchIconWrap>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           </SearchIconWrap>
-          <SearchInputStyled placeholder="Buscar por paciente ou procedimento..." value={search} onChange={e => setSearch(e.target.value)} />
+          <SearchInputStyled placeholder="Buscar por paciente ou procedimento..." value={search} onChange={e => handleSearchChange(e.target.value)} />
         </SearchBarWrapper>
         <FilterRow>
           <DropdownWrapper>
@@ -223,13 +254,13 @@ export default function Consentimento() {
             {openDropStat && (
               <DropdownList>
                 {filterStatus.map(s => (
-                  <DropdownItem key={s} $active={filterStat === s} onClick={() => { setFilterStat(s); setOpenDropStat(false); }}>{s}</DropdownItem>
+                  <DropdownItem key={s} $active={filterStat === s} onClick={() => handleFilterStatChange(s)}>{s}</DropdownItem>
                 ))}
               </DropdownList>
             )}
           </DropdownWrapper>
           {filterStat !== 'Todos' && (
-            <ClearFilterBtn onClick={() => setFilterStat('Todos')}>
+            <ClearFilterBtn onClick={() => { setFilterStat('Todos'); setCurrentPage(1); }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
               Limpar
             </ClearFilterBtn>
@@ -237,8 +268,8 @@ export default function Consentimento() {
         </FilterRow>
       </Controls>
 
-      <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden' }}>
-        <TableWrapper>
+      <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <TableWrapper style={{ minHeight: TABLE_MIN_HEIGHT }}>
           <Table>
             <Thead>
               <tr>
@@ -253,7 +284,7 @@ export default function Consentimento() {
               </tr>
             </Thead>
             <Tbody>
-              {filtered.map(termo => (
+              {paginatedData.map(termo => (
                 <Tr key={termo.id}>
                   <Td style={{ fontWeight: 600, color: '#1a1a1a' }}>{termo.paciente}</Td>
                   <Td><Badge $bg="rgba(187,161,136,0.15)" $color="#BBA188">{termo.procedimento}</Badge></Td>
@@ -279,6 +310,12 @@ export default function Consentimento() {
             </Tbody>
           </Table>
         </TableWrapper>
+        <Pagination
+          currentPage={safePage}
+          totalItems={totalFiltered}
+          itemsPerPage={ITEMS_PER_PAGE}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       <Modal
@@ -295,93 +332,27 @@ export default function Consentimento() {
       >
         <FormGrid>
           <div style={{ gridColumn: 'span 2' }}>
-            <Input
-              label="Nome do Paciente *"
-              placeholder="Nome completo do paciente..."
-              value={form.paciente}
-              onChange={(e) => {
-                const val = e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
-                handleChange('paciente', val);
-              }}
-              maxLength={80}
-              error={errors.paciente}
-            />
+            <Input label="Nome do Paciente *" placeholder="Nome completo do paciente..." value={form.paciente} onChange={(e) => { const val = e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''); handleChange('paciente', val); }} maxLength={80} error={errors.paciente} />
           </div>
-
-          <Input
-            label="CPF *"
-            mask="cpf"
-            value={form.cpf}
-            inputMode="numeric"
-            maxLength={14}
-            onValueChange={(v) => handleMaskedChange('cpf', v)}
-            error={errors.cpf}
-          />
-
-          <Input
-            label="Data de Nascimento *"
-            type="date"
-            value={form.nascimento}
-            onChange={(e) => handleDateChange('nascimento', e.target.value)}
-            error={errors.nascimento}
-          />
-
+          <Input label="CPF *" mask="cpf" value={form.cpf} inputMode="numeric" maxLength={14} onValueChange={(v) => handleMaskedChange('cpf', v)} error={errors.cpf} />
+          <Input label="Data de Nascimento *" type="date" value={form.nascimento} onChange={(e) => handleDateChange('nascimento', e.target.value)} error={errors.nascimento} />
           <div style={{ gridColumn: 'span 2' }}>
-            <Select
-              label="Procedimento *"
-              options={procedureOptions}
-              placeholder="Selecione o procedimento..."
-              value={form.procedimento}
-              onChange={(v) => handleChange('procedimento', v)}
-              error={errors.procedimento}
-            />
+            <Select label="Procedimento *" options={procedureOptions} placeholder="Selecione o procedimento..." value={form.procedimento} onChange={(v) => handleChange('procedimento', v)} error={errors.procedimento} />
           </div>
-
-          <Input
-            label="Data do Procedimento *"
-            type="date"
-            value={form.dataProcedimento}
-            onChange={(e) => handleDateChange('dataProcedimento', e.target.value)}
-            error={errors.dataProcedimento}
-          />
-
-          <Input
-            label="Profissional Responsável *"
-            placeholder="Nome do profissional..."
-            value={form.profissional}
-            onChange={(e) => {
-              const val = e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
-              handleChange('profissional', val);
-            }}
-            maxLength={80}
-            error={errors.profissional}
-          />
-
+          <Input label="Data do Procedimento *" type="date" value={form.dataProcedimento} onChange={(e) => handleDateChange('dataProcedimento', e.target.value)} error={errors.dataProcedimento} />
+          <Input label="Profissional Responsável *" placeholder="Nome do profissional..." value={form.profissional} onChange={(e) => { const val = e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''); handleChange('profissional', val); }} maxLength={80} error={errors.profissional} />
           <div style={{ gridColumn: 'span 2' }}>
-            <Input
-              label="E-mail do Paciente (para envio do link de assinatura) *"
-              type="email"
-              placeholder="email@exemplo.com"
-              value={form.email}
-              onChange={(e) => handleChange('email', e.target.value)}
-              error={errors.email}
-            />
+            <Input label="E-mail do Paciente (para envio do link de assinatura) *" type="email" placeholder="email@exemplo.com" value={form.email} onChange={(e) => handleChange('email', e.target.value)} error={errors.email} />
           </div>
         </FormGrid>
       </Modal>
 
-      <Modal
-        isOpen={isViewOpen}
-        onClose={() => setIsViewOpen(false)}
-        title="Termo de Consentimento"
-        size="lg"
+      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title="Termo de Consentimento" size="lg"
         footer={
           <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'space-between' }}>
             <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
             <Button variant="outline" onClick={handleBaixarPDF} disabled={exporting}
-              icon={exporting
-                ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>}
+              icon={exporting ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>}
             >{exporting ? 'Gerando PDF...' : 'Baixar PDF'}</Button>
             <Button variant="outline" onClick={() => setIsViewOpen(false)}>Fechar</Button>
           </div>
@@ -390,75 +361,35 @@ export default function Consentimento() {
         {selectedTermo && (
           <TermoViewer>
             <TermoTitle>TERMO DE CONSENTIMENTO INFORMADO</TermoTitle>
-            <TermoText style={{ textAlign: 'center', color: '#999', fontSize: '0.82rem', marginBottom: 24 }}>
-              Versão {selectedTermo.versao} · Gerado em {selectedTermo.dataCriacao}
-            </TermoText>
-            <TermoSection>
-              <h4>Dados do Paciente</h4>
-              <p><strong>Nome:</strong> {selectedTermo.paciente}</p>
-              <p><strong>Procedimento:</strong> {selectedTermo.procedimento}</p>
-              <p><strong>Profissional Responsável:</strong> {selectedTermo.profissional}</p>
-            </TermoSection>
-            <TermoSection>
-              <h4>Descrição do Procedimento</h4>
-              <TermoBody>Eu, paciente acima identificado(a), declaro que fui devidamente informado(a) sobre o procedimento de <strong>{selectedTermo.procedimento}</strong>, seus objetivos, riscos, alternativas e possíveis complicações.</TermoBody>
-            </TermoSection>
+            <TermoText style={{ textAlign: 'center', color: '#999', fontSize: '0.82rem', marginBottom: 24 }}>Versão {selectedTermo.versao} · Gerado em {selectedTermo.dataCriacao}</TermoText>
+            <TermoSection><h4>Dados do Paciente</h4><p><strong>Nome:</strong> {selectedTermo.paciente}</p><p><strong>Procedimento:</strong> {selectedTermo.procedimento}</p><p><strong>Profissional Responsável:</strong> {selectedTermo.profissional}</p></TermoSection>
+            <TermoSection><h4>Descrição do Procedimento</h4><TermoBody>Eu, paciente acima identificado(a), declaro que fui devidamente informado(a) sobre o procedimento de <strong>{selectedTermo.procedimento}</strong>, seus objetivos, riscos, alternativas e possíveis complicações.</TermoBody></TermoSection>
             <TermoSection>
               <h4>Consentimento e Assinatura</h4>
               {selectedTermo.status === 'assinado' ? (
                 <div style={{ background: '#f0ebe4', borderRadius: 10, padding: 16, border: '1.5px solid #BBA188' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8a7560" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                    <span style={{ fontWeight: 700, color: '#8a7560', fontSize: '0.9rem' }}>Assinado Digitalmente</span>
-                  </div>
-                  <div style={{ fontSize: '0.82rem', color: '#666' }}>
-                    <p style={{ margin: '4px 0' }}><strong>Data/Hora:</strong> {selectedTermo.assinadoEm}</p>
-                    <p style={{ margin: '4px 0' }}><strong>IP:</strong> {selectedTermo.ip}</p>
-                    <p style={{ margin: '4px 0' }}><strong>Validade:</strong> {selectedTermo.dataValidade}</p>
-                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8a7560" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span style={{ fontWeight: 700, color: '#8a7560', fontSize: '0.9rem' }}>Assinado Digitalmente</span></div>
+                  <div style={{ fontSize: '0.82rem', color: '#666' }}><p style={{ margin: '4px 0' }}><strong>Data/Hora:</strong> {selectedTermo.assinadoEm}</p><p style={{ margin: '4px 0' }}><strong>IP:</strong> {selectedTermo.ip}</p><p style={{ margin: '4px 0' }}><strong>Validade:</strong> {selectedTermo.dataValidade}</p></div>
                 </div>
               ) : (
-                <div style={{ background: '#fff3cd', borderRadius: 10, padding: 16, border: '1.5px solid #ffc107', color: '#856404', fontSize: '0.88rem' }}>
-                  ⏳ Aguardando assinatura digital do paciente.
-                </div>
+                <div style={{ background: '#fff3cd', borderRadius: 10, padding: 16, border: '1.5px solid #ffc107', color: '#856404', fontSize: '0.88rem' }}>⏳ Aguardando assinatura digital do paciente.</div>
               )}
             </TermoSection>
           </TermoViewer>
         )}
       </Modal>
 
-      <Modal
-        isOpen={isSignOpen}
-        onClose={() => setIsSignOpen(false)}
-        title={`Assinatura Digital — ${selectedTermo?.paciente}`}
-        size="md"
-        footer={
-          <>
-            <Button variant="outline" onClick={() => setIsSignOpen(false)}>Cancelar</Button>
-            <Button variant="primary" onClick={() => setSigned(true)} disabled={signed}>
-              {signed ? '✓ Assinatura Coletada' : 'Confirmar Assinatura'}
-            </Button>
-          </>
-        }
+      <Modal isOpen={isSignOpen} onClose={() => setIsSignOpen(false)} title={`Assinatura Digital — ${selectedTermo?.paciente}`} size="md"
+        footer={<><Button variant="outline" onClick={() => setIsSignOpen(false)}>Cancelar</Button><Button variant="primary" onClick={() => setSigned(true)} disabled={signed}>{signed ? '✓ Assinatura Coletada' : 'Confirmar Assinatura'}</Button></>}
       >
-        <div style={{ marginBottom: 20, fontSize: '0.88rem', color: '#666', lineHeight: 1.6 }}>
-          O paciente <strong style={{ color: '#1a1a1a' }}>{selectedTermo?.paciente}</strong> deve assinar abaixo para confirmar o procedimento de <strong style={{ color: '#BBA188' }}>{selectedTermo?.procedimento}</strong>.
-        </div>
+        <div style={{ marginBottom: 20, fontSize: '0.88rem', color: '#666', lineHeight: 1.6 }}>O paciente <strong style={{ color: '#1a1a1a' }}>{selectedTermo?.paciente}</strong> deve assinar abaixo para confirmar o procedimento de <strong style={{ color: '#BBA188' }}>{selectedTermo?.procedimento}</strong>.</div>
         <SignatureBox>
           <SignatureLabel>Assine abaixo:</SignatureLabel>
           <SignatureCanvas>
-            {signed
-              ? <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, color: '#8a7560' }}>
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                  <span style={{ fontWeight: 700 }}>Assinatura registrada</span>
-                </div>
-              : <div style={{ color: '#ccc', fontSize: '0.82rem' }}>Área de assinatura digital</div>
-            }
+            {signed ? <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, color: '#8a7560' }}><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span style={{ fontWeight: 700 }}>Assinatura registrada</span></div> : <div style={{ color: '#ccc', fontSize: '0.82rem' }}>Área de assinatura digital</div>}
           </SignatureCanvas>
         </SignatureBox>
-        <div style={{ marginTop: 16, padding: 12, background: '#fdf9f5', borderRadius: 10, border: '1px solid #f0ebe4', fontSize: '0.78rem', color: '#888' }}>
-          <strong>Registro automático:</strong> IP, data, hora e dispositivo serão salvos para fins legais (LGPD).
-        </div>
+        <div style={{ marginTop: 16, padding: 12, background: '#fdf9f5', borderRadius: 10, border: '1px solid #f0ebe4', fontSize: '0.78rem', color: '#888' }}><strong>Registro automático:</strong> IP, data, hora e dispositivo serão salvos para fins legais (LGPD).</div>
       </Modal>
     </Container>
   );

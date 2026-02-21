@@ -199,8 +199,8 @@ export default function Reaplicacoes() {
           })}
         </CardsGrid>
       ) : (
-        <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden' }}>
-          <TableWrapper>
+        <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 596 }}>
+          <TableWrapper style={{ flex: 1 }}>
             <Table>
               <Thead>
                 <tr>
