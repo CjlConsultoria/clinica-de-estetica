@@ -6,6 +6,9 @@ import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
 import StatCard from '@/components/ui/statcard';
+import CancelModal from '@/components/modals/cancelModal';
+import ConfirmModal from '@/components/modals/confirmModal';
+import SucessModal from '@/components/modals/sucessModal';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import {
   Container, Header, Title, Controls, SearchBarWrapper, SearchIconWrap, SearchInputStyled,
@@ -14,6 +17,9 @@ import {
   ProcDetails, DetailRow, DetailLabel, DetailValue, ProcActions, IconBtn,
   TableWrapper, Table, Thead, Th, Tbody, Tr, Td, Badge, ActionGroup,
   ToggleGroup, ToggleBtn, EmptyState, FormGrid,
+  PaginationWrapper, PaginationInfo, PaginationControls,
+  PageButton, PageEllipsis, PaginationArrow,
+  CardsContainer, TableContainer,
 } from './styles';
 
 type ProcedimentoField =
@@ -44,24 +50,24 @@ const VALIDATION_FIELDS = [
 ];
 
 const categoryOptions = [
-  { value: 'toxina',        label: 'Toxina Botulínica' },
-  { value: 'preenchimento', label: 'Preenchimento'      },
-  { value: 'bioestimulador',label: 'Bioestimulador'     },
-  { value: 'fio',           label: 'Fio de PDO'         },
-  { value: 'skincare',      label: 'Skincare/Pele'      },
+  { value: 'toxina',         label: 'Toxina Botulínica' },
+  { value: 'preenchimento',  label: 'Preenchimento'      },
+  { value: 'bioestimulador', label: 'Bioestimulador'     },
+  { value: 'fio',            label: 'Fio de PDO'         },
+  { value: 'skincare',       label: 'Skincare/Pele'      },
 ];
 
 const filterCategories = ['Todas', 'Toxina Botulínica', 'Preenchimento', 'Bioestimulador', 'Fio de PDO', 'Skincare/Pele'];
 
 const mockProcedures = [
-  { id: 1, code: 'BTX-001', name: 'Botox Facial Completo',  category: 'Toxina Botulínica', price: 800,  duration: 45, commission: 20, status: 'ativo',   sessions: 142 },
-  { id: 2, code: 'PRE-001', name: 'Preenchimento Labial',   category: 'Preenchimento',     price: 1200, duration: 60, commission: 20, status: 'ativo',   sessions: 98  },
-  { id: 3, code: 'BIO-001', name: 'Bioestimulador Sculptra',category: 'Bioestimulador',    price: 2500, duration: 90, commission: 15, status: 'ativo',   sessions: 34  },
-  { id: 4, code: 'FIO-001', name: 'Fio de PDO Tensor',      category: 'Fio de PDO',        price: 1800, duration: 75, commission: 18, status: 'ativo',   sessions: 56  },
-  { id: 5, code: 'BTX-002', name: 'Toxina para Bruxismo',   category: 'Toxina Botulínica', price: 600,  duration: 30, commission: 20, status: 'ativo',   sessions: 67  },
-  { id: 6, code: 'SKN-001', name: 'Microagulhamento',       category: 'Skincare/Pele',     price: 450,  duration: 60, commission: 25, status: 'ativo',   sessions: 89  },
-  { id: 7, code: 'PRE-002', name: 'Preenchimento Malar',    category: 'Preenchimento',     price: 1400, duration: 60, commission: 20, status: 'inativo', sessions: 23  },
-  { id: 8, code: 'SKN-002', name: 'Peelings Químicos',      category: 'Skincare/Pele',     price: 300,  duration: 45, commission: 25, status: 'ativo',   sessions: 110 },
+  { id: 1, code: 'BTX-001', name: 'Botox Facial Completo',   category: 'Toxina Botulínica', price: 800,  duration: 45, commission: 20, status: 'ativo',   sessions: 142 },
+  { id: 2, code: 'PRE-001', name: 'Preenchimento Labial',    category: 'Preenchimento',     price: 1200, duration: 60, commission: 20, status: 'ativo',   sessions: 98  },
+  { id: 3, code: 'BIO-001', name: 'Bioestimulador Sculptra', category: 'Bioestimulador',    price: 2500, duration: 90, commission: 15, status: 'ativo',   sessions: 34  },
+  { id: 4, code: 'FIO-001', name: 'Fio de PDO Tensor',       category: 'Fio de PDO',        price: 1800, duration: 75, commission: 18, status: 'ativo',   sessions: 56  },
+  { id: 5, code: 'BTX-002', name: 'Toxina para Bruxismo',    category: 'Toxina Botulínica', price: 600,  duration: 30, commission: 20, status: 'ativo',   sessions: 67  },
+  { id: 6, code: 'SKN-001', name: 'Microagulhamento',        category: 'Skincare/Pele',     price: 450,  duration: 60, commission: 25, status: 'ativo',   sessions: 89  },
+  { id: 7, code: 'PRE-002', name: 'Preenchimento Malar',     category: 'Preenchimento',     price: 1400, duration: 60, commission: 20, status: 'inativo', sessions: 23  },
+  { id: 8, code: 'SKN-002', name: 'Peelings Químicos',       category: 'Skincare/Pele',     price: 300,  duration: 45, commission: 25, status: 'ativo',   sessions: 110 },
 ];
 
 const catColors: Record<string, string> = {
@@ -77,14 +83,52 @@ const avgPrice      = mockProcedures.reduce((a, p) => a + p.price, 0) / mockProc
 
 type Procedure = typeof mockProcedures[0];
 
+const CARDS_PER_PAGE = 6;
+const TABLE_PER_PAGE = 10;
+
+function getVisiblePages(currentPage: number, totalPages: number): (number | '...')[] {
+  if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
+  const pages: (number | '...')[] = [];
+  const half = 2;
+  let start = Math.max(2, currentPage - half);
+  let end   = Math.min(totalPages - 1, currentPage + half);
+  if (currentPage <= half + 1) end   = Math.min(totalPages - 1, 4);
+  if (currentPage >= totalPages - half) start = Math.max(2, totalPages - 3);
+  pages.push(1);
+  if (start > 2) pages.push('...');
+  for (let i = start; i <= end; i++) pages.push(i);
+  if (end < totalPages - 1) pages.push('...');
+  if (totalPages > 1) pages.push(totalPages);
+  return pages;
+}
+
+function isFormDirty(form: ProcedimentoForm): boolean {
+  return (
+    form.nome.trim() !== '' ||
+    form.codigo.trim() !== '' ||
+    form.categoria !== '' ||
+    form.valor.trim() !== '' ||
+    form.duracao.trim() !== '' ||
+    form.comissao.trim() !== '' ||
+    form.descricao.trim() !== ''
+  );
+}
+
 export default function Procedures() {
-  const [view,         setView]        = useState<'cards' | 'tabela'>('cards');
-  const [search,       setSearch]      = useState('');
-  const [filterCat,    setFilterCat]   = useState('Todas');
-  const [openDropdown, setOpenDropdown]= useState(false);
-  const [isModalOpen,  setIsModalOpen] = useState(false);
-  const [selected,     setSelected]    = useState<Procedure | null>(null);
-  const [form,         setForm]        = useState<ProcedimentoForm>(FORM_INITIAL);
+  const [view,         setView]         = useState<'cards' | 'tabela'>('cards');
+  const [search,       setSearch]       = useState('');
+  const [filterCat,    setFilterCat]    = useState('Todas');
+  const [openDropdown, setOpenDropdown] = useState(false);
+  const [isModalOpen,  setIsModalOpen]  = useState(false);
+  const [selected,     setSelected]     = useState<Procedure | null>(null);
+  const [form,         setForm]         = useState<ProcedimentoForm>(FORM_INITIAL);
+  const [currentPage,  setCurrentPage]  = useState(1);
+  const [isEditing,    setIsEditing]    = useState(false);
+
+  const [showCancelModal,  setShowCancelModal]  = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage,   setSuccessMessage]   = useState('');
 
   const { errors, validate, clearError, clearAll } =
     useSequentialValidation<ProcedimentoField>(VALIDATION_FIELDS);
@@ -94,6 +138,24 @@ export default function Procedures() {
     const matchCat    = filterCat === 'Todas' || p.category === filterCat;
     return matchSearch && matchCat;
   });
+
+  const totalPagesCards   = Math.max(1, Math.ceil(filtered.length / CARDS_PER_PAGE));
+  const safePageCards     = Math.min(currentPage, totalPagesCards);
+  const startIdxCards     = (safePageCards - 1) * CARDS_PER_PAGE;
+  const paginatedCards    = filtered.slice(startIdxCards, startIdxCards + CARDS_PER_PAGE);
+  const startItemCards    = filtered.length === 0 ? 0 : startIdxCards + 1;
+  const visiblePagesCards = getVisiblePages(safePageCards, totalPagesCards);
+
+  const totalPagesTable   = Math.max(1, Math.ceil(filtered.length / TABLE_PER_PAGE));
+  const safePageTable     = Math.min(currentPage, totalPagesTable);
+  const startIdxTable     = (safePageTable - 1) * TABLE_PER_PAGE;
+  const paginatedTable    = filtered.slice(startIdxTable, startIdxTable + TABLE_PER_PAGE);
+  const startItemTable    = filtered.length === 0 ? 0 : startIdxTable + 1;
+  const visiblePagesTable = getVisiblePages(safePageTable, totalPagesTable);
+
+  function handleSearchChange(v: string)  { setSearch(v);      setCurrentPage(1); }
+  function handleFilterChange(v: string)  { setFilterCat(v);   setCurrentPage(1); setOpenDropdown(false); }
+  function handleClearFilter()            { setFilterCat('Todas'); setCurrentPage(1); }
 
   function handleChange(field: keyof ProcedimentoForm, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -106,6 +168,7 @@ export default function Procedures() {
   }
 
   function openNew() {
+    setIsEditing(false);
     setSelected(null);
     setForm(FORM_INITIAL);
     clearAll();
@@ -113,6 +176,7 @@ export default function Procedures() {
   }
 
   function openEdit(proc: Procedure) {
+    setIsEditing(true);
     setSelected(proc);
     setForm({
       nome:      proc.name,
@@ -127,33 +191,55 @@ export default function Procedures() {
     setIsModalOpen(true);
   }
 
-  function handleClose() {
+  function handleCancelClick() {
+    if (isFormDirty(form)) {
+      setShowCancelModal(true);
+    } else {
+      forceClose();
+    }
+  }
+
+  function forceClose() {
     setForm(FORM_INITIAL);
     clearAll();
     setIsModalOpen(false);
+    setSelected(null);
+    setIsEditing(false);
+    setShowCancelModal(false);
+    setShowConfirmModal(false);
   }
 
-  function handleSave() {
+  function handleSaveClick() {
     const isValid = validate({
-      nome:      form.nome,
-      codigo:    form.codigo,
-      categoria: form.categoria,
-      valor:     form.valor,
-      duracao:   form.duracao,
-      comissao:  form.comissao,
-      descricao: form.descricao,
+      nome: form.nome, codigo: form.codigo, categoria: form.categoria,
+      valor: form.valor, duracao: form.duracao, comissao: form.comissao, descricao: form.descricao,
     });
     if (!isValid) return;
-    console.log('Salvar procedimento:', form);
-    handleClose();
+    setShowConfirmModal(true);
+  }
+
+  function handleConfirmSave() {
+    const msg = isEditing ? 'Procedimento atualizado com sucesso!' : 'Procedimento cadastrado com sucesso!';
+    setShowConfirmModal(false);
+    setIsModalOpen(false);
+    setSuccessMessage(msg);
+    setShowSuccessModal(true);
+  }
+
+  function handleSuccessClose() {
+    setShowSuccessModal(false);
+    setSuccessMessage('');
+    setForm(FORM_INITIAL);
+    clearAll();
+    setSelected(null);
+    setIsEditing(false);
   }
 
   return (
     <Container>
       <Header>
         <Title>Procedimentos</Title>
-        <Button
-          variant="primary"
+        <Button variant="primary"
           icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>}
           onClick={openNew}
         >
@@ -179,9 +265,8 @@ export default function Procedures() {
       <Controls>
         <SearchBarWrapper>
           <SearchIconWrap><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></SearchIconWrap>
-          <SearchInputStyled placeholder="Buscar por nome ou código..." value={search} onChange={e => setSearch(e.target.value)} />
+          <SearchInputStyled placeholder="Buscar por nome ou código..." value={search} onChange={e => handleSearchChange(e.target.value)} />
         </SearchBarWrapper>
-
         <FilterRow>
           <DropdownWrapper>
             <DropdownBtn onClick={() => setOpenDropdown(!openDropdown)}>
@@ -191,19 +276,19 @@ export default function Procedures() {
             {openDropdown && (
               <DropdownList>
                 {filterCategories.map(c => (
-                  <DropdownItem key={c} $active={filterCat === c} onClick={() => { setFilterCat(c); setOpenDropdown(false); }}>{c}</DropdownItem>
+                  <DropdownItem key={c} $active={filterCat === c} onClick={() => handleFilterChange(c)}>{c}</DropdownItem>
                 ))}
               </DropdownList>
             )}
           </DropdownWrapper>
           {filterCat !== 'Todas' && (
-            <ClearFilterBtn onClick={() => setFilterCat('Todas')}>
+            <ClearFilterBtn onClick={handleClearFilter}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
               Limpar
             </ClearFilterBtn>
           )}
           <ToggleGroup>
-            <ToggleBtn $active={view === 'cards'} onClick={() => setView('cards')}>
+            <ToggleBtn $active={view === 'cards'} onClick={() => { setView('cards'); setCurrentPage(1); }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
             </ToggleBtn>
             <ToggleBtn $active={view === 'tabela'} onClick={() => setView('tabela')}>
@@ -214,34 +299,65 @@ export default function Procedures() {
       </Controls>
 
       {view === 'cards' ? (
-        <CardsGrid>
-          {filtered.map(proc => (
-            <ProcCard key={proc.id}>
-              <ProcCardHeader $color={catColors[proc.category] || '#BBA188'}>
-                <div>
-                  <ProcCode>{proc.code}</ProcCode>
-                  <ProcName>{proc.name}</ProcName>
-                </div>
-                <Badge $bg={`${catColors[proc.category]}22`} $color={catColors[proc.category]}>{proc.category}</Badge>
-              </ProcCardHeader>
-              <ProcDetails>
-                <DetailRow><DetailLabel>Valor</DetailLabel><DetailValue $highlight>R$ {proc.price.toLocaleString('pt-BR')}</DetailValue></DetailRow>
-                <DetailRow><DetailLabel>Duração</DetailLabel><DetailValue>{proc.duration} min</DetailValue></DetailRow>
-                <DetailRow><DetailLabel>Comissão</DetailLabel><DetailValue>{proc.commission}%</DetailValue></DetailRow>
-                <DetailRow><DetailLabel>Sessões</DetailLabel><DetailValue>{proc.sessions}</DetailValue></DetailRow>
-              </ProcDetails>
-              <ProcActions>
-                <Button variant="outline" size="sm" onClick={() => openEdit(proc)}>Editar</Button>
-                <Badge $bg={proc.status === 'ativo' ? '#f0ebe4' : '#f5f5f5'} $color={proc.status === 'ativo' ? '#8a7560' : '#888'}>
-                  {proc.status.charAt(0).toUpperCase() + proc.status.slice(1)}
-                </Badge>
-              </ProcActions>
-            </ProcCard>
-          ))}
-        </CardsGrid>
+        <CardsContainer>
+          <div style={{ padding: 20, flex: 1, overflow: 'hidden' }}>
+            {filtered.length === 0 ? (
+              <EmptyState><h3>Nenhum procedimento encontrado</h3><p>Tente ajustar os filtros ou a busca.</p></EmptyState>
+            ) : (
+              <CardsGrid>
+                {paginatedCards.map(proc => (
+                  <ProcCard key={proc.id}>
+                    <ProcCardHeader $color={catColors[proc.category] || '#BBA188'}>
+                      <div>
+                        <ProcCode>{proc.code}</ProcCode>
+                        <ProcName>{proc.name}</ProcName>
+                      </div>
+                      <Badge $bg={`${catColors[proc.category]}22`} $color={catColors[proc.category]}>{proc.category}</Badge>
+                    </ProcCardHeader>
+                    <ProcDetails>
+                      <DetailRow><DetailLabel>Valor</DetailLabel><DetailValue $highlight>R$ {proc.price.toLocaleString('pt-BR')}</DetailValue></DetailRow>
+                      <DetailRow><DetailLabel>Duração</DetailLabel><DetailValue>{proc.duration} min</DetailValue></DetailRow>
+                      <DetailRow><DetailLabel>Comissão</DetailLabel><DetailValue>{proc.commission}%</DetailValue></DetailRow>
+                      <DetailRow><DetailLabel>Sessões</DetailLabel><DetailValue>{proc.sessions}</DetailValue></DetailRow>
+                    </ProcDetails>
+                    <ProcActions>
+                      <Button variant="outline" size="sm" onClick={() => openEdit(proc)}>Editar</Button>
+                      <Badge $bg={proc.status === 'ativo' ? '#f0ebe4' : '#f5f5f5'} $color={proc.status === 'ativo' ? '#8a7560' : '#888'}>
+                        {proc.status.charAt(0).toUpperCase() + proc.status.slice(1)}
+                      </Badge>
+                    </ProcActions>
+                  </ProcCard>
+                ))}
+              </CardsGrid>
+            )}
+          </div>
+
+          <PaginationWrapper>
+            <PaginationInfo>
+              {filtered.length === 0 ? 'Nenhum registro' : `Mostrando ${startItemCards} de ${filtered.length}`}
+            </PaginationInfo>
+            <PaginationControls>
+              <PaginationArrow onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={safePageCards <= 1} aria-label="Página anterior">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+              </PaginationArrow>
+              {visiblePagesCards.map((page, idx) =>
+                page === '...' ? (
+                  <PageEllipsis key={`ellipsis-${idx}`}>…</PageEllipsis>
+                ) : (
+                  <PageButton key={page} $active={page === safePageCards} onClick={() => setCurrentPage(page as number)} aria-label={`Página ${page}`} aria-current={page === safePageCards ? 'page' : undefined}>
+                    {page}
+                  </PageButton>
+                )
+              )}
+              <PaginationArrow onClick={() => setCurrentPage(p => Math.min(totalPagesCards, p + 1))} disabled={safePageCards >= totalPagesCards} aria-label="Próxima página">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+              </PaginationArrow>
+            </PaginationControls>
+          </PaginationWrapper>
+        </CardsContainer>
       ) : (
-        <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 596 }}>
-          <TableWrapper style={{ flex: 1 }}>
+        <TableContainer>
+          <TableWrapper style={{ flex: 1, overflow: 'hidden' }}>
             <Table>
               <Thead>
                 <tr>
@@ -256,7 +372,9 @@ export default function Procedures() {
                 </tr>
               </Thead>
               <Tbody>
-                {filtered.map(proc => (
+                {filtered.length === 0 ? (
+                  <tr><Td colSpan={8} style={{ textAlign: 'center', padding: '48px 0', color: '#bbb' }}>Nenhum procedimento encontrado.</Td></tr>
+                ) : paginatedTable.map(proc => (
                   <Tr key={proc.id}>
                     <Td><code style={{ fontSize: '0.8rem', color: '#888' }}>{proc.code}</code></Td>
                     <Td style={{ fontWeight: 600, color: '#1a1a1a' }}>{proc.name}</Td>
@@ -277,90 +395,81 @@ export default function Procedures() {
               </Tbody>
             </Table>
           </TableWrapper>
-        </div>
+
+          <PaginationWrapper>
+            <PaginationInfo>
+              {filtered.length === 0 ? 'Nenhum registro' : `Mostrando ${startItemTable}–${Math.min(startIdxTable + TABLE_PER_PAGE, filtered.length)} de ${filtered.length} procedimento(s)`}
+            </PaginationInfo>
+            <PaginationControls>
+              <PaginationArrow onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={safePageTable <= 1} aria-label="Página anterior">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+              </PaginationArrow>
+              {visiblePagesTable.map((page, idx) =>
+                page === '...' ? (
+                  <PageEllipsis key={`ellipsis-${idx}`}>…</PageEllipsis>
+                ) : (
+                  <PageButton key={page} $active={page === safePageTable} onClick={() => setCurrentPage(page as number)} aria-label={`Página ${page}`} aria-current={page === safePageTable ? 'page' : undefined}>
+                    {page}
+                  </PageButton>
+                )
+              )}
+              <PaginationArrow onClick={() => setCurrentPage(p => Math.min(totalPagesTable, p + 1))} disabled={safePageTable >= totalPagesTable} aria-label="Próxima página">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+              </PaginationArrow>
+            </PaginationControls>
+          </PaginationWrapper>
+        </TableContainer>
       )}
 
-      <Modal
-        isOpen={isModalOpen}
-        onClose={handleClose}
-        title={selected ? 'Editar Procedimento' : 'Novo Procedimento'}
-        size="md"
+      <Modal isOpen={isModalOpen} onClose={handleCancelClick} closeOnOverlayClick={false}
+        title={isEditing ? 'Editar Procedimento' : 'Novo Procedimento'} size="md"
         footer={
           <>
-            <Button variant="outline" onClick={handleClose}>Cancelar</Button>
-            <Button variant="primary" onClick={handleSave}>Salvar</Button>
+            <Button variant="outline" onClick={handleCancelClick}>Cancelar</Button>
+            <Button variant="primary" onClick={handleSaveClick}>Salvar</Button>
           </>
         }
       >
         <FormGrid>
-          <Input
-            label="Nome do Procedimento *"
-            placeholder="Ex: Botox Facial Completo"
-            value={form.nome}
-            onChange={(e) => handleChange('nome', e.target.value)}
-            error={errors.nome}
-          />
-
-          <Input
-            label="Código *"
-            placeholder="Ex: BTX-001"
-            value={form.codigo}
-            onChange={(e) => handleChange('codigo', e.target.value.toUpperCase())}
-            maxLength={20}
-            error={errors.codigo}
-          />
-
+          <Input label="Nome do Procedimento *" placeholder="Ex: Botox Facial Completo" value={form.nome} onChange={(e) => handleChange('nome', e.target.value)} error={errors.nome} />
+          <Input label="Código *" placeholder="Ex: BTX-001" value={form.codigo} onChange={(e) => handleChange('codigo', e.target.value.toUpperCase())} maxLength={20} error={errors.codigo} />
           <div style={{ gridColumn: 'span 2' }}>
-            <Select
-              label="Categoria *"
-              options={categoryOptions}
-              placeholder="Selecione..."
-              value={form.categoria}
-              onChange={(v) => handleChange('categoria', v)}
-              error={errors.categoria}
-            />
+            <Select label="Categoria *" options={categoryOptions} placeholder="Selecione..." value={form.categoria} onChange={(v) => handleChange('categoria', v)} error={errors.categoria} />
           </div>
-
-          <Input
-            label="Valor (R$) *"
-            mask="moeda"
-            value={form.valor}
-            inputMode="numeric"
-            maxLength={14}
-            onValueChange={(v) => handleMaskedChange('valor', v)}
-            error={errors.valor}
-          />
-
-          <Input
-            label="Duração (min) *"
-            type="number"
-            placeholder="Ex: 60"
-            value={form.duracao}
-            onChange={(e) => handleChange('duracao', e.target.value)}
-            error={errors.duracao}
-          />
-
-          <Input
-            label="Comissão (%) *"
-            type="number"
-            placeholder="Ex: 20"
-            value={form.comissao}
-            onChange={(e) => handleChange('comissao', e.target.value)}
-            error={errors.comissao}
-          />
-
+          <Input label="Valor (R$) *" mask="moeda" value={form.valor} inputMode="numeric" maxLength={14} onValueChange={(v) => handleMaskedChange('valor', v)} error={errors.valor} />
+          <Input label="Duração (min) *" type="number" placeholder="Ex: 60" value={form.duracao} onChange={(e) => handleChange('duracao', e.target.value)} error={errors.duracao} />
+          <Input label="Comissão (%) *" type="number" placeholder="Ex: 20" value={form.comissao} onChange={(e) => handleChange('comissao', e.target.value)} error={errors.comissao} />
           <div style={{ gridColumn: 'span 2' }}>
-            <Input
-              label="Descrição *"
-              placeholder="Descreva o procedimento..."
-              maxLength={300}
-              value={form.descricao}
-              onChange={(e) => handleChange('descricao', e.target.value)}
-              error={errors.descricao}
-            />
+            <Input label="Descrição *" placeholder="Descreva o procedimento..." maxLength={300} value={form.descricao} onChange={(e) => handleChange('descricao', e.target.value)} error={errors.descricao} />
           </div>
         </FormGrid>
       </Modal>
+
+      <CancelModal
+        isOpen={showCancelModal}
+        title="Deseja cancelar?"
+        message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas."
+        onConfirm={forceClose}
+        onCancel={() => setShowCancelModal(false)}
+      />
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        title={isEditing ? 'Salvar alterações?' : 'Cadastrar procedimento?'}
+        message={isEditing ? 'Tem certeza que deseja salvar as alterações neste procedimento?' : `Tem certeza que deseja cadastrar "${form.nome || 'este procedimento'}"?`}
+        confirmText="Confirmar"
+        cancelText="Voltar"
+        onConfirm={handleConfirmSave}
+        onCancel={() => setShowConfirmModal(false)}
+      />
+
+      <SucessModal
+        isOpen={showSuccessModal}
+        title="Sucesso!"
+        message={successMessage}
+        onClose={handleSuccessClose}
+        buttonText="Continuar"
+      />
     </Container>
   );
 }

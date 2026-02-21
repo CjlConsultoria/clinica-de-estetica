@@ -7,6 +7,9 @@ import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
 import StatCard from '@/components/ui/statcard';
 import Pagination from '@/components/ui/pagination';
+import CancelModal from '@/components/modals/cancelModal';
+import ConfirmModal from '@/components/modals/confirmModal';
+import SucessModal from '@/components/modals/sucessModal';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import {
   Container, Header, Title, StatsGrid, Controls,
@@ -59,19 +62,18 @@ const procedureOptions = [
 const filterStatus = ['Todos', 'Assinado', 'Pendente', 'Expirado'];
 
 const mockTermos = [
-  { id: 1, paciente: 'Ana Beatriz Costa',  procedimento: 'Botox Facial',         dataCriacao: '18/02/2025', dataValidade: '18/02/2026', status: 'assinado', assinadoEm: '18/02/2025 10:32', ip: '177.84.12.45',  profissional: 'Maria Oliveira', versao: 'v2.1' },
-  { id: 2, paciente: 'Carla Mendonça',     procedimento: 'Preenchimento Labial',  dataCriacao: '15/02/2025', dataValidade: '15/02/2026', status: 'assinado', assinadoEm: '15/02/2025 14:10', ip: '189.90.34.21',  profissional: 'Maria Oliveira', versao: 'v2.1' },
-  { id: 3, paciente: 'Fernanda Lima',      procedimento: 'Bioestimulador',        dataCriacao: '10/02/2025', dataValidade: '10/02/2026', status: 'pendente', assinadoEm: null,               ip: null,            profissional: 'Clara Andrade',  versao: 'v2.1' },
-  { id: 4, paciente: 'Marina Souza',       procedimento: 'Fio de PDO',            dataCriacao: '05/01/2025', dataValidade: '05/01/2026', status: 'assinado', assinadoEm: '05/01/2025 09:55', ip: '201.45.67.88',  profissional: 'Beatriz Santos', versao: 'v2.0' },
-  { id: 5, paciente: 'Juliana Rocha',      procedimento: 'Toxina Botulínica',     dataCriacao: '10/01/2025', dataValidade: '10/01/2026', status: 'pendente', assinadoEm: null,               ip: null,            profissional: 'Maria Oliveira', versao: 'v2.1' },
-  { id: 6, paciente: 'Patrícia Alves',     procedimento: 'Microagulhamento',      dataCriacao: '20/12/2024', dataValidade: '20/12/2025', status: 'assinado', assinadoEm: '20/12/2024 16:20', ip: '177.84.98.10',  profissional: 'Beatriz Santos', versao: 'v2.0' },
-  { id: 7, paciente: 'Ana Beatriz Costa',  procedimento: 'Botox Facial',         dataCriacao: '18/02/2025', dataValidade: '18/02/2026', status: 'assinado', assinadoEm: '18/02/2025 10:32', ip: '177.84.12.45',  profissional: 'Maria Oliveira', versao: 'v2.1' },
-  { id: 8, paciente: 'Carla Mendonça',     procedimento: 'Preenchimento Labial',  dataCriacao: '15/02/2025', dataValidade: '15/02/2026', status: 'assinado', assinadoEm: '15/02/2025 14:10', ip: '189.90.34.21',  profissional: 'Maria Oliveira', versao: 'v2.1' },
-  { id: 9, paciente: 'Fernanda Lima',      procedimento: 'Bioestimulador',        dataCriacao: '10/02/2025', dataValidade: '10/02/2026', status: 'pendente', assinadoEm: null,               ip: null,            profissional: 'Clara Andrade',  versao: 'v2.1' },
-  { id: 10, paciente: 'Marina Souza',       procedimento: 'Fio de PDO',            dataCriacao: '05/01/2025', dataValidade: '05/01/2026', status: 'assinado', assinadoEm: '05/01/2025 09:55', ip: '201.45.67.88',  profissional: 'Beatriz Santos', versao: 'v2.0' },
-  { id: 11, paciente: 'Juliana Rocha',      procedimento: 'Toxina Botulínica',     dataCriacao: '10/01/2025', dataValidade: '10/01/2026', status: 'pendente', assinadoEm: null,               ip: null,            profissional: 'Maria Oliveira', versao: 'v2.1' },
-  { id: 12, paciente: 'Patrícia Alves',     procedimento: 'Microagulhamento',      dataCriacao: '20/12/2024', dataValidade: '20/12/2025', status: 'assinado', assinadoEm: '20/12/2024 16:20', ip: '177.84.98.10',  profissional: 'Beatriz Santos', versao: 'v2.0' },
-
+  { id: 1,  paciente: 'Ana Beatriz Costa',  procedimento: 'Botox Facial',        dataCriacao: '18/02/2025', dataValidade: '18/02/2026', status: 'assinado', assinadoEm: '18/02/2025 10:32', ip: '177.84.12.45',  profissional: 'Maria Oliveira', versao: 'v2.1' },
+  { id: 2,  paciente: 'Carla Mendonça',     procedimento: 'Preenchimento Labial', dataCriacao: '15/02/2025', dataValidade: '15/02/2026', status: 'assinado', assinadoEm: '15/02/2025 14:10', ip: '189.90.34.21',  profissional: 'Maria Oliveira', versao: 'v2.1' },
+  { id: 3,  paciente: 'Fernanda Lima',      procedimento: 'Bioestimulador',       dataCriacao: '10/02/2025', dataValidade: '10/02/2026', status: 'pendente', assinadoEm: null,               ip: null,            profissional: 'Clara Andrade',  versao: 'v2.1' },
+  { id: 4,  paciente: 'Marina Souza',       procedimento: 'Fio de PDO',           dataCriacao: '05/01/2025', dataValidade: '05/01/2026', status: 'assinado', assinadoEm: '05/01/2025 09:55', ip: '201.45.67.88',  profissional: 'Beatriz Santos', versao: 'v2.0' },
+  { id: 5,  paciente: 'Juliana Rocha',      procedimento: 'Toxina Botulínica',    dataCriacao: '10/01/2025', dataValidade: '10/01/2026', status: 'pendente', assinadoEm: null,               ip: null,            profissional: 'Maria Oliveira', versao: 'v2.1' },
+  { id: 6,  paciente: 'Patrícia Alves',     procedimento: 'Microagulhamento',     dataCriacao: '20/12/2024', dataValidade: '20/12/2025', status: 'assinado', assinadoEm: '20/12/2024 16:20', ip: '177.84.98.10',  profissional: 'Beatriz Santos', versao: 'v2.0' },
+  { id: 7,  paciente: 'Ana Beatriz Costa',  procedimento: 'Botox Facial',        dataCriacao: '18/02/2025', dataValidade: '18/02/2026', status: 'assinado', assinadoEm: '18/02/2025 10:32', ip: '177.84.12.45',  profissional: 'Maria Oliveira', versao: 'v2.1' },
+  { id: 8,  paciente: 'Carla Mendonça',     procedimento: 'Preenchimento Labial', dataCriacao: '15/02/2025', dataValidade: '15/02/2026', status: 'assinado', assinadoEm: '15/02/2025 14:10', ip: '189.90.34.21',  profissional: 'Maria Oliveira', versao: 'v2.1' },
+  { id: 9,  paciente: 'Fernanda Lima',      procedimento: 'Bioestimulador',       dataCriacao: '10/02/2025', dataValidade: '10/02/2026', status: 'pendente', assinadoEm: null,               ip: null,            profissional: 'Clara Andrade',  versao: 'v2.1' },
+  { id: 10, paciente: 'Marina Souza',       procedimento: 'Fio de PDO',           dataCriacao: '05/01/2025', dataValidade: '05/01/2026', status: 'assinado', assinadoEm: '05/01/2025 09:55', ip: '201.45.67.88',  profissional: 'Beatriz Santos', versao: 'v2.0' },
+  { id: 11, paciente: 'Juliana Rocha',      procedimento: 'Toxina Botulínica',    dataCriacao: '10/01/2025', dataValidade: '10/01/2026', status: 'pendente', assinadoEm: null,               ip: null,            profissional: 'Maria Oliveira', versao: 'v2.1' },
+  { id: 12, paciente: 'Patrícia Alves',     procedimento: 'Microagulhamento',     dataCriacao: '20/12/2024', dataValidade: '20/12/2025', status: 'assinado', assinadoEm: '20/12/2024 16:20', ip: '177.84.98.10',  profissional: 'Beatriz Santos', versao: 'v2.0' },
 ];
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
@@ -85,6 +87,18 @@ type Termo = typeof mockTermos[0];
 const ITEMS_PER_PAGE = 10;
 const TABLE_MIN_HEIGHT = 540;
 
+function isFormDirty(form: TermoForm): boolean {
+  return (
+    form.paciente.trim() !== '' ||
+    form.cpf.trim() !== '' ||
+    form.nascimento !== '' ||
+    form.procedimento !== '' ||
+    form.dataProcedimento !== '' ||
+    form.profissional.trim() !== '' ||
+    form.email.trim() !== ''
+  );
+}
+
 export default function Consentimento() {
   const [search,        setSearch]       = useState('');
   const [filterStat,    setFilterStat]   = useState('Todos');
@@ -97,6 +111,10 @@ export default function Consentimento() {
   const [exporting,     setExporting]    = useState(false);
   const [form,          setForm]         = useState<TermoForm>(FORM_INITIAL);
   const [currentPage,   setCurrentPage]  = useState(1);
+
+  const [showCancelModal,  setShowCancelModal]  = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const { errors, validate, clearError, clearAll } =
     useSequentialValidation<TermoField>(VALIDATION_FIELDS);
@@ -118,16 +136,8 @@ export default function Consentimento() {
   const pendentes   = mockTermos.filter(t => t.status === 'pendente').length;
   const expirados   = mockTermos.filter(t => t.status === 'expirado').length;
 
-  function handleSearchChange(value: string) {
-    setSearch(value);
-    setCurrentPage(1);
-  }
-
-  function handleFilterStatChange(value: string) {
-    setFilterStat(value);
-    setCurrentPage(1);
-    setOpenDropStat(false);
-  }
+  function handleSearchChange(value: string) { setSearch(value); setCurrentPage(1); }
+  function handleFilterStatChange(value: string) { setFilterStat(value); setCurrentPage(1); setOpenDropStat(false); }
 
   function handleChange(field: keyof TermoForm, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -146,13 +156,23 @@ export default function Consentimento() {
     handleChange(field, `${safeYear}-${month ?? ''}-${day ?? ''}`);
   }
 
-  function handleCloseNovo() {
+  function handleCancelClick() {
+    if (isFormDirty(form)) {
+      setShowCancelModal(true);
+    } else {
+      forceClose();
+    }
+  }
+
+  function forceClose() {
     setForm(FORM_INITIAL);
     clearAll();
     setIsNovoOpen(false);
+    setShowCancelModal(false);
+    setShowConfirmModal(false);
   }
 
-  function handleSaveNovo() {
+  function handleSaveNovoClick() {
     const isValid = validate({
       paciente:         form.paciente,
       cpf:              form.cpf,
@@ -163,8 +183,19 @@ export default function Consentimento() {
       email:            form.email,
     });
     if (!isValid) return;
-    console.log('Novo termo:', form);
-    handleCloseNovo();
+    setShowConfirmModal(true);
+  }
+
+  function handleConfirmSave() {
+    setShowConfirmModal(false);
+    setIsNovoOpen(false);
+    setForm(FORM_INITIAL);
+    clearAll();
+    setShowSuccessModal(true);
+  }
+
+  function handleSuccessClose() {
+    setShowSuccessModal(false);
   }
 
   const handleBaixarPDF = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -202,8 +233,7 @@ export default function Consentimento() {
     <Container>
       <Header>
         <Title>Consentimento Digital</Title>
-        <Button
-          variant="primary"
+        <Button variant="primary"
           icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>}
           onClick={() => setIsNovoOpen(true)}
         >
@@ -310,23 +340,14 @@ export default function Consentimento() {
             </Tbody>
           </Table>
         </TableWrapper>
-        <Pagination
-          currentPage={safePage}
-          totalItems={totalFiltered}
-          itemsPerPage={ITEMS_PER_PAGE}
-          onPageChange={setCurrentPage}
-        />
+        <Pagination currentPage={safePage} totalItems={totalFiltered} itemsPerPage={ITEMS_PER_PAGE} onPageChange={setCurrentPage} />
       </div>
 
-      <Modal
-        isOpen={isNovoOpen}
-        onClose={handleCloseNovo}
-        title="Novo Termo de Consentimento"
-        size="md"
+      <Modal isOpen={isNovoOpen} onClose={handleCancelClick} closeOnOverlayClick={false} title="Novo Termo de Consentimento" size="md"
         footer={
           <>
-            <Button variant="outline" onClick={handleCloseNovo}>Cancelar</Button>
-            <Button variant="primary" onClick={handleSaveNovo}>Gerar Termo</Button>
+            <Button variant="outline" onClick={handleCancelClick}>Cancelar</Button>
+            <Button variant="primary" onClick={handleSaveNovoClick}>Gerar Termo</Button>
           </>
         }
       >
@@ -391,6 +412,32 @@ export default function Consentimento() {
         </SignatureBox>
         <div style={{ marginTop: 16, padding: 12, background: '#fdf9f5', borderRadius: 10, border: '1px solid #f0ebe4', fontSize: '0.78rem', color: '#888' }}><strong>Registro automático:</strong> IP, data, hora e dispositivo serão salvos para fins legais (LGPD).</div>
       </Modal>
+
+      <CancelModal
+        isOpen={showCancelModal}
+        title="Deseja cancelar?"
+        message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas."
+        onConfirm={forceClose}
+        onCancel={() => setShowCancelModal(false)}
+      />
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        title="Gerar termo?"
+        message={`Tem certeza que deseja gerar o termo de consentimento para ${form.paciente || 'este paciente'}?`}
+        confirmText="Confirmar"
+        cancelText="Voltar"
+        onConfirm={handleConfirmSave}
+        onCancel={() => setShowConfirmModal(false)}
+      />
+
+      <SucessModal
+        isOpen={showSuccessModal}
+        title="Sucesso!"
+        message="Termo de consentimento gerado com sucesso!"
+        onClose={handleSuccessClose}
+        buttonText="Continuar"
+      />
     </Container>
   );
 }

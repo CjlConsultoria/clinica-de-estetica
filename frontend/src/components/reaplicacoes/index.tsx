@@ -15,15 +15,18 @@ import {
   CardsGrid, ReapCard, ReapCardHeader, ReapAvatar, ReapPatientName, ReapPatientSub,
   ReapCardBody, ReapRow, ReapLabel, ReapValue, ReapDaysTag, ReapCardFooter,
   ProgressBarOuter, ProgressBarInner,
+  CardsContainer, TableContainer,
+  PaginationWrapper, PaginationInfo, PaginationControls,
+  PageButton, PageEllipsis, PaginationArrow,
 } from './styles';
 
 const procedureOptions = [
-  { value: 'botox',           label: 'Botox Facial'         },
-  { value: 'preenchimento',   label: 'Preenchimento Labial'  },
-  { value: 'bioestimulador',  label: 'Bioestimulador'        },
-  { value: 'fio-pdo',         label: 'Fio de PDO'            },
-  { value: 'microagulhamento',label: 'Microagulhamento'      },
-  { value: 'toxina',          label: 'Toxina Botulínica'     },
+  { value: 'botox',            label: 'Botox Facial'         },
+  { value: 'preenchimento',    label: 'Preenchimento Labial'  },
+  { value: 'bioestimulador',   label: 'Bioestimulador'        },
+  { value: 'fio-pdo',          label: 'Fio de PDO'            },
+  { value: 'microagulhamento', label: 'Microagulhamento'      },
+  { value: 'toxina',           label: 'Toxina Botulínica'     },
 ];
 
 const filterStatus     = ['Todos', 'Urgente', 'Esta semana', 'Este mês', 'Agendado'];
@@ -43,51 +46,92 @@ function getUrgencia(dias: number): { label: string; color: string; bg: string }
 }
 
 const mockReaplicacoes = [
-  { id: 1, paciente: 'Ana Beatriz Costa',  initials: 'AB', procedimento: 'Botox Facial',        ultimaData: '18/10/2024', proximaData: '2025-02-25', intervaloDias: 120, profissional: 'Maria Oliveira',  telefone: '(11) 98765-4321', email: 'ana.costa@email.com',   agendado: false },
-  { id: 2, paciente: 'Carla Mendonça',     initials: 'CM', procedimento: 'Preenchimento Labial', ultimaData: '15/11/2024', proximaData: '2025-03-15', intervaloDias: 120, profissional: 'Maria Oliveira',  telefone: '(11) 97654-3210', email: 'carla.m@email.com',     agendado: true  },
+  { id: 1, paciente: 'Ana Beatriz Costa',  initials: 'AB', procedimento: 'Botox Facial',        ultimaData: '18/10/2024', proximaData: '2025-02-25', intervaloDias: 120, profissional: 'Maria Oliveira',  telefone: '(11) 98765-4321', email: 'ana.costa@email.com',    agendado: false },
+  { id: 2, paciente: 'Carla Mendonça',     initials: 'CM', procedimento: 'Preenchimento Labial', ultimaData: '15/11/2024', proximaData: '2025-03-15', intervaloDias: 120, profissional: 'Maria Oliveira',  telefone: '(11) 97654-3210', email: 'carla.m@email.com',      agendado: true  },
   { id: 3, paciente: 'Fernanda Lima',      initials: 'FL', procedimento: 'Bioestimulador',       ultimaData: '10/08/2024', proximaData: '2025-02-10', intervaloDias: 180, profissional: 'Clara Andrade',   telefone: '(11) 96543-2109', email: 'fernanda.lima@email.com', agendado: false },
-  { id: 4, paciente: 'Marina Souza',       initials: 'MS', procedimento: 'Fio de PDO',           ultimaData: '08/09/2024', proximaData: '2025-03-08', intervaloDias: 180, profissional: 'Beatriz Santos',  telefone: '(21) 95432-1098', email: 'marina.s@email.com',    agendado: false },
-  { id: 5, paciente: 'Juliana Rocha',      initials: 'JR', procedimento: 'Botox Facial',         ultimaData: '05/11/2024', proximaData: '2025-03-05', intervaloDias: 120, profissional: 'Maria Oliveira',  telefone: '(21) 94321-0987', email: 'juliana.r@email.com',   agendado: true  },
-  { id: 6, paciente: 'Patrícia Alves',     initials: 'PA', procedimento: 'Microagulhamento',     ultimaData: '20/01/2025', proximaData: '2025-04-20', intervaloDias: 90,  profissional: 'Beatriz Santos',  telefone: '(31) 93210-9876', email: 'patricia.a@email.com',  agendado: false },
+  { id: 4, paciente: 'Marina Souza',       initials: 'MS', procedimento: 'Fio de PDO',           ultimaData: '08/09/2024', proximaData: '2025-03-08', intervaloDias: 180, profissional: 'Beatriz Santos',  telefone: '(21) 95432-1098', email: 'marina.s@email.com',     agendado: false },
+  { id: 5, paciente: 'Juliana Rocha',      initials: 'JR', procedimento: 'Botox Facial',         ultimaData: '05/11/2024', proximaData: '2025-03-05', intervaloDias: 120, profissional: 'Maria Oliveira',  telefone: '(21) 94321-0987', email: 'juliana.r@email.com',    agendado: true  },
+  { id: 6, paciente: 'Patrícia Alves',     initials: 'PA', procedimento: 'Microagulhamento',     ultimaData: '20/01/2025', proximaData: '2025-04-20', intervaloDias: 90,  profissional: 'Beatriz Santos',  telefone: '(31) 93210-9876', email: 'patricia.a@email.com',   agendado: false },
 ];
 
 type Reap = typeof mockReaplicacoes[0];
 
+const CARDS_PER_PAGE = 6;
+const TABLE_PER_PAGE = 10;
+
+function getVisiblePages(currentPage: number, totalPages: number): (number | '...')[] {
+  if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
+  const pages: (number | '...')[] = [];
+  const half = 2;
+  let start = Math.max(2, currentPage - half);
+  let end   = Math.min(totalPages - 1, currentPage + half);
+  if (currentPage <= half + 1) end   = Math.min(totalPages - 1, 4);
+  if (currentPage >= totalPages - half) start = Math.max(2, totalPages - 3);
+  pages.push(1);
+  if (start > 2) pages.push('...');
+  for (let i = start; i <= end; i++) pages.push(i);
+  if (end < totalPages - 1) pages.push('...');
+  if (totalPages > 1) pages.push(totalPages);
+  return pages;
+}
+
 export default function Reaplicacoes() {
-  const [search, setSearch]             = useState('');
-  const [filterStat, setFilterStat]     = useState('Todos');
-  const [filterProc, setFilterProc]     = useState('Todos');
+  const [search,       setSearch]       = useState('');
+  const [filterStat,   setFilterStat]   = useState('Todos');
+  const [filterProc,   setFilterProc]   = useState('Todos');
   const [openDropStat, setOpenDropStat] = useState(false);
   const [openDropProc, setOpenDropProc] = useState(false);
-  const [view, setView]                 = useState<'tabela' | 'cards'>('cards');
-  const [isModalOpen, setIsModalOpen]   = useState(false);
-  const [selected, setSelected]         = useState<Reap | null>(null);
+  const [view,         setView]         = useState<'tabela' | 'cards'>('cards');
+  const [isModalOpen,  setIsModalOpen]  = useState(false);
+  const [selected,     setSelected]     = useState<Reap | null>(null);
+  const [currentPage,  setCurrentPage]  = useState(1);
 
   const filtered = mockReaplicacoes.filter(r => {
     const matchSearch = r.paciente.toLowerCase().includes(search.toLowerCase()) || r.procedimento.toLowerCase().includes(search.toLowerCase());
     const dias        = diasRestantes(r.proximaData);
     const matchStat   =
       filterStat === 'Todos'        ||
-      (filterStat === 'Urgente'     && dias <= 7)              ||
-      (filterStat === 'Esta semana' && dias > 7  && dias <= 14)||
-      (filterStat === 'Este mês'    && dias > 14 && dias <= 30)||
+      (filterStat === 'Urgente'     && dias <= 7)               ||
+      (filterStat === 'Esta semana' && dias > 7  && dias <= 14) ||
+      (filterStat === 'Este mês'    && dias > 14 && dias <= 30) ||
       (filterStat === 'Agendado'    && r.agendado);
-    const matchProc   = filterProc === 'Todos' || r.procedimento.toLowerCase().includes(filterProc.toLowerCase());
+    const matchProc = filterProc === 'Todos' || r.procedimento.toLowerCase().includes(filterProc.toLowerCase());
     return matchSearch && matchStat && matchProc;
   });
+
+  /* paginação cards */
+  const totalPagesCards   = Math.max(1, Math.ceil(filtered.length / CARDS_PER_PAGE));
+  const safePageCards     = Math.min(currentPage, totalPagesCards);
+  const startIdxCards     = (safePageCards - 1) * CARDS_PER_PAGE;
+  const paginatedCards    = filtered.slice(startIdxCards, startIdxCards + CARDS_PER_PAGE);
+  const startItemCards    = filtered.length === 0 ? 0 : startIdxCards + 1;
+  const visiblePagesCards = getVisiblePages(safePageCards, totalPagesCards);
+
+  /* paginação tabela */
+  const totalPagesTable   = Math.max(1, Math.ceil(filtered.length / TABLE_PER_PAGE));
+  const safePageTable     = Math.min(currentPage, totalPagesTable);
+  const startIdxTable     = (safePageTable - 1) * TABLE_PER_PAGE;
+  const paginatedTable    = filtered.slice(startIdxTable, startIdxTable + TABLE_PER_PAGE);
+  const startItemTable    = filtered.length === 0 ? 0 : startIdxTable + 1;
+  const visiblePagesTable = getVisiblePages(safePageTable, totalPagesTable);
 
   const urgentes   = mockReaplicacoes.filter(r => diasRestantes(r.proximaData) <= 7).length;
   const estaSemana = mockReaplicacoes.filter(r => { const d = diasRestantes(r.proximaData); return d > 7  && d <= 14; }).length;
   const esteMes    = mockReaplicacoes.filter(r => { const d = diasRestantes(r.proximaData); return d > 14 && d <= 30; }).length;
   const agendados  = mockReaplicacoes.filter(r => r.agendado).length;
 
+  function handleSearchChange(v: string) { setSearch(v);      setCurrentPage(1); }
+  function handleFilterStat(v: string)   { setFilterStat(v);  setCurrentPage(1); setOpenDropStat(false); }
+  function handleFilterProc(v: string)   { setFilterProc(v);  setCurrentPage(1); setOpenDropProc(false); }
+  function handleClearFilters()          { setFilterStat('Todos'); setFilterProc('Todos'); setCurrentPage(1); }
+
   return (
     <Container>
       <Header>
         <Title>Alertas de Reaplicação</Title>
         <div style={{ display: 'flex', gap: 10 }}>
-          <Button variant={view === 'cards'  ? 'primary' : 'outline'} onClick={() => setView('cards')}  icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>}>Cards</Button>
-          <Button variant={view === 'tabela' ? 'primary' : 'outline'} onClick={() => setView('tabela')} icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>}>Tabela</Button>
+          <Button variant={view === 'cards'  ? 'primary' : 'outline'} onClick={() => { setView('cards');  setCurrentPage(1); }} icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>}>Cards</Button>
+          <Button variant={view === 'tabela' ? 'primary' : 'outline'} onClick={() => { setView('tabela'); setCurrentPage(1); }} icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>}>Tabela</Button>
         </div>
       </Header>
 
@@ -120,7 +164,7 @@ export default function Reaplicacoes() {
       <Controls>
         <SearchBarWrapper>
           <SearchIconWrap><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></SearchIconWrap>
-          <SearchInputStyled placeholder="Buscar paciente ou procedimento..." value={search} onChange={e => setSearch(e.target.value)} />
+          <SearchInputStyled placeholder="Buscar paciente ou procedimento..." value={search} onChange={e => handleSearchChange(e.target.value)} />
         </SearchBarWrapper>
         <FilterRow>
           <DropdownWrapper>
@@ -130,7 +174,7 @@ export default function Reaplicacoes() {
             </DropdownBtn>
             {openDropStat && (
               <DropdownList>
-                {filterStatus.map(s => <DropdownItem key={s} $active={filterStat === s} onClick={() => { setFilterStat(s); setOpenDropStat(false); }}>{s}</DropdownItem>)}
+                {filterStatus.map(s => <DropdownItem key={s} $active={filterStat === s} onClick={() => handleFilterStat(s)}>{s}</DropdownItem>)}
               </DropdownList>
             )}
           </DropdownWrapper>
@@ -141,12 +185,12 @@ export default function Reaplicacoes() {
             </DropdownBtn>
             {openDropProc && (
               <DropdownList>
-                {filterProcedures.map(p => <DropdownItem key={p} $active={filterProc === p} onClick={() => { setFilterProc(p); setOpenDropProc(false); }}>{p}</DropdownItem>)}
+                {filterProcedures.map(p => <DropdownItem key={p} $active={filterProc === p} onClick={() => handleFilterProc(p)}>{p}</DropdownItem>)}
               </DropdownList>
             )}
           </DropdownWrapper>
           {(filterStat !== 'Todos' || filterProc !== 'Todos') && (
-            <ClearFilterBtn onClick={() => { setFilterStat('Todos'); setFilterProc('Todos'); }}>
+            <ClearFilterBtn onClick={handleClearFilters}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
               Limpar
             </ClearFilterBtn>
@@ -155,52 +199,89 @@ export default function Reaplicacoes() {
       </Controls>
 
       {view === 'cards' ? (
-        <CardsGrid>
-          {filtered.map((r, i) => {
-            const dias    = diasRestantes(r.proximaData);
-            const urg     = getUrgencia(dias);
-            const progPct = Math.max(0, Math.min(100, 100 - (dias / r.intervaloDias) * 100));
-            return (
-              <ReapCard key={r.id} $urgente={dias <= 7}>
-                <ReapCardHeader>
-                  <ReapAvatar $color={avatarColors[i % avatarColors.length]}>{r.initials}</ReapAvatar>
-                  <div style={{ flex: 1 }}>
-                    <ReapPatientName>{r.paciente}</ReapPatientName>
-                    <ReapPatientSub>{r.procedimento}</ReapPatientSub>
-                  </div>
-                  <ReapDaysTag $color={urg.color} $bg={urg.bg}>
-                    {dias < 0 ? `${Math.abs(dias)}d atrasado` : `${dias}d`}
-                  </ReapDaysTag>
-                </ReapCardHeader>
-                <ReapCardBody>
-                  <ProgressBarOuter>
-                    <ProgressBarInner $pct={progPct} $color={urg.color} />
-                  </ProgressBarOuter>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#bbb', marginTop: 4, marginBottom: 12 }}>
-                    <span>Última: {r.ultimaData}</span>
-                    <span>Próxima: {r.proximaData.split('-').reverse().join('/')}</span>
-                  </div>
-                  <ReapRow><ReapLabel>Profissional</ReapLabel><ReapValue>{r.profissional}</ReapValue></ReapRow>
-                  <ReapRow><ReapLabel>Intervalo</ReapLabel><ReapValue>{r.intervaloDias} dias</ReapValue></ReapRow>
-                  <ReapRow>
-                    <ReapLabel>Status</ReapLabel>
-                    <ReapValue><Badge $bg={urg.bg} $color={urg.color}>{urg.label}</Badge></ReapValue>
-                  </ReapRow>
-                  {r.agendado && <ReapRow><ReapLabel /><ReapValue><Badge $bg="#f0ebe4" $color="#8a7560">✓ Agendado</Badge></ReapValue></ReapRow>}
-                </ReapCardBody>
-                <ReapCardFooter>
-                  <Button variant="outline" size="sm" onClick={() => { setSelected(r); setIsModalOpen(true); }}>Agendar</Button>
-                  <a href={`tel:${r.telefone}`} style={{ textDecoration: 'none' }}>
-                    <Button variant="ghost" size="sm" icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 9.79 19.79 19.79 0 0 1 1.69 1.11a2 2 0 0 1 2-2.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>}>Ligar</Button>
-                  </a>
-                </ReapCardFooter>
-              </ReapCard>
-            );
-          })}
-        </CardsGrid>
+        <CardsContainer>
+          <div style={{ padding: 20, flex: 1, overflow: 'hidden' }}>
+            {filtered.length === 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '60px 20px', color: '#bbb', textAlign: 'center' }}>
+                <h3 style={{ fontSize: '1.1rem', color: '#555', margin: '0 0 6px' }}>Nenhuma reaplicação encontrada</h3>
+                <p style={{ fontSize: '0.88rem', color: '#999', margin: 0 }}>Tente ajustar os filtros ou a busca.</p>
+              </div>
+            ) : (
+              <CardsGrid>
+                {paginatedCards.map((r, i) => {
+                  const dias    = diasRestantes(r.proximaData);
+                  const urg     = getUrgencia(dias);
+                  const progPct = Math.max(0, Math.min(100, 100 - (dias / r.intervaloDias) * 100));
+                  return (
+                    <ReapCard key={r.id} $urgente={dias <= 7}>
+                      <ReapCardHeader>
+                        <ReapAvatar $color={avatarColors[i % avatarColors.length]}>{r.initials}</ReapAvatar>
+                        <div style={{ flex: 1 }}>
+                          <ReapPatientName>{r.paciente}</ReapPatientName>
+                          <ReapPatientSub>{r.procedimento}</ReapPatientSub>
+                        </div>
+                        <ReapDaysTag $color={urg.color} $bg={urg.bg}>
+                          {dias < 0 ? `${Math.abs(dias)}d atrasado` : `${dias}d`}
+                        </ReapDaysTag>
+                      </ReapCardHeader>
+                      <ReapCardBody>
+                        <ProgressBarOuter>
+                          <ProgressBarInner $pct={progPct} $color={urg.color} />
+                        </ProgressBarOuter>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#bbb', marginTop: 4, marginBottom: 12 }}>
+                          <span>Última: {r.ultimaData}</span>
+                          <span>Próxima: {r.proximaData.split('-').reverse().join('/')}</span>
+                        </div>
+                        <ReapRow><ReapLabel>Profissional</ReapLabel><ReapValue>{r.profissional}</ReapValue></ReapRow>
+                        <ReapRow><ReapLabel>Intervalo</ReapLabel><ReapValue>{r.intervaloDias} dias</ReapValue></ReapRow>
+                        <ReapRow>
+                          <ReapLabel>Status</ReapLabel>
+                          <ReapValue><Badge $bg={urg.bg} $color={urg.color}>{urg.label}</Badge></ReapValue>
+                        </ReapRow>
+                        {r.agendado && <ReapRow><ReapLabel /><ReapValue><Badge $bg="#f0ebe4" $color="#8a7560">✓ Agendado</Badge></ReapValue></ReapRow>}
+                      </ReapCardBody>
+                      <ReapCardFooter>
+                        <Button variant="outline" size="sm" onClick={() => { setSelected(r); setIsModalOpen(true); }}>Agendar</Button>
+                        <a href={`tel:${r.telefone}`} style={{ textDecoration: 'none' }}>
+                          <Button variant="ghost" size="sm" icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 9.79 19.79 19.79 0 0 1 1.69 1.11a2 2 0 0 1 2-2.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>}>Ligar</Button>
+                        </a>
+                      </ReapCardFooter>
+                    </ReapCard>
+                  );
+                })}
+              </CardsGrid>
+            )}
+          </div>
+
+          <PaginationWrapper>
+            <PaginationInfo>
+              {filtered.length === 0
+                ? 'Nenhum registro'
+                : `Mostrando ${startItemCards} de ${filtered.length}`
+              }
+            </PaginationInfo>
+            <PaginationControls>
+              <PaginationArrow onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={safePageCards <= 1} aria-label="Página anterior">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+              </PaginationArrow>
+              {visiblePagesCards.map((page, idx) =>
+                page === '...' ? (
+                  <PageEllipsis key={`ellipsis-${idx}`}>…</PageEllipsis>
+                ) : (
+                  <PageButton key={page} $active={page === safePageCards} onClick={() => setCurrentPage(page as number)} aria-label={`Página ${page}`} aria-current={page === safePageCards ? 'page' : undefined}>
+                    {page}
+                  </PageButton>
+                )
+              )}
+              <PaginationArrow onClick={() => setCurrentPage(p => Math.min(totalPagesCards, p + 1))} disabled={safePageCards >= totalPagesCards} aria-label="Próxima página">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+              </PaginationArrow>
+            </PaginationControls>
+          </PaginationWrapper>
+        </CardsContainer>
       ) : (
-        <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 596 }}>
-          <TableWrapper style={{ flex: 1 }}>
+        <TableContainer>
+          <TableWrapper style={{ flex: 1, overflow: 'hidden' }}>
             <Table>
               <Thead>
                 <tr>
@@ -215,7 +296,9 @@ export default function Reaplicacoes() {
                 </tr>
               </Thead>
               <Tbody>
-                {filtered.map(r => {
+                {filtered.length === 0 ? (
+                  <tr><Td colSpan={8} style={{ textAlign: 'center', padding: '48px 0', color: '#bbb' }}>Nenhuma reaplicação encontrada.</Td></tr>
+                ) : paginatedTable.map(r => {
                   const dias = diasRestantes(r.proximaData);
                   const urg  = getUrgencia(dias);
                   return (
@@ -245,7 +328,33 @@ export default function Reaplicacoes() {
               </Tbody>
             </Table>
           </TableWrapper>
-        </div>
+
+          <PaginationWrapper>
+            <PaginationInfo>
+              {filtered.length === 0
+                ? 'Nenhum registro'
+                : `Mostrando ${startItemTable}–${Math.min(startIdxTable + TABLE_PER_PAGE, filtered.length)} de ${filtered.length} reaplicação(ões)`
+              }
+            </PaginationInfo>
+            <PaginationControls>
+              <PaginationArrow onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={safePageTable <= 1} aria-label="Página anterior">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+              </PaginationArrow>
+              {visiblePagesTable.map((page, idx) =>
+                page === '...' ? (
+                  <PageEllipsis key={`ellipsis-${idx}`}>…</PageEllipsis>
+                ) : (
+                  <PageButton key={page} $active={page === safePageTable} onClick={() => setCurrentPage(page as number)} aria-label={`Página ${page}`} aria-current={page === safePageTable ? 'page' : undefined}>
+                    {page}
+                  </PageButton>
+                )
+              )}
+              <PaginationArrow onClick={() => setCurrentPage(p => Math.min(totalPagesTable, p + 1))} disabled={safePageTable >= totalPagesTable} aria-label="Próxima página">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+              </PaginationArrow>
+            </PaginationControls>
+          </PaginationWrapper>
+        </TableContainer>
       )}
 
       <Modal

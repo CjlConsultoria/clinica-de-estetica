@@ -7,6 +7,9 @@ import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
 import StatCard from '@/components/ui/statcard';
 import Pagination from '@/components/ui/pagination';
+import CancelModal from '@/components/modals/cancelModal';
+import ConfirmModal from '@/components/modals/confirmModal';
+import SucessModal from '@/components/modals/sucessModal';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import {
   Container, Header, Title, StatsGrid, Controls,
@@ -95,6 +98,22 @@ type Lote = typeof mockLotes[0];
 const ITEMS_PER_PAGE = 10;
 const TABLE_MIN_HEIGHT = 540;
 
+function isFormDirty(form: LoteForm): boolean {
+  return (
+    form.lote.trim() !== '' ||
+    form.registroAnvisa.trim() !== '' ||
+    form.produto.trim() !== '' ||
+    form.categoria !== '' ||
+    form.fabricante.trim() !== '' ||
+    form.fornecedor.trim() !== '' ||
+    form.quantidadeEntrada.trim() !== '' ||
+    form.dataFabricacao !== '' ||
+    form.dataValidade !== '' ||
+    form.dataEntrada !== '' ||
+    form.statusLote !== ''
+  );
+}
+
 export default function Lotes() {
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState('Todas');
@@ -106,6 +125,10 @@ export default function Lotes() {
   const [selected, setSelected] = useState<Lote | null>(null);
   const [form, setForm] = useState<LoteForm>(FORM_INITIAL);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const [showCancelModal,  setShowCancelModal]  = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const { errors, validate, clearError, clearAll } = useSequentialValidation<LoteField>(VALIDATION_FIELDS);
 
@@ -144,12 +167,41 @@ export default function Lotes() {
     clearAll(); setIsModalOpen(true);
   }
 
-  function handleClose() { setForm(FORM_INITIAL); clearAll(); setIsModalOpen(false); }
+  function handleCancelClick() {
+    if (isFormDirty(form)) {
+      setShowCancelModal(true);
+    } else {
+      forceClose();
+    }
+  }
 
-  function handleSave() {
-    const isValid = validate({ lote: form.lote, registroAnvisa: form.registroAnvisa, produto: form.produto, categoria: form.categoria, fabricante: form.fabricante, fornecedor: form.fornecedor, quantidadeEntrada: form.quantidadeEntrada, dataFabricacao: form.dataFabricacao, dataValidade: form.dataValidade, dataEntrada: form.dataEntrada, statusLote: form.statusLote });
+  function forceClose() {
+    setForm(FORM_INITIAL);
+    clearAll();
+    setIsModalOpen(false);
+    setSelected(null);
+    setShowCancelModal(false);
+    setShowConfirmModal(false);
+  }
+
+  function handleSaveClick() {
+    const isValid = validate({
+      lote: form.lote, registroAnvisa: form.registroAnvisa, produto: form.produto,
+      categoria: form.categoria, fabricante: form.fabricante, fornecedor: form.fornecedor,
+      quantidadeEntrada: form.quantidadeEntrada, dataFabricacao: form.dataFabricacao,
+      dataValidade: form.dataValidade, dataEntrada: form.dataEntrada, statusLote: form.statusLote,
+    });
     if (!isValid) return;
-    handleClose();
+    setShowConfirmModal(true);
+  }
+
+  function handleConfirmSave() {
+    setShowConfirmModal(false);
+    setIsModalOpen(false);
+    setForm(FORM_INITIAL);
+    clearAll();
+    setSelected(null);
+    setShowSuccessModal(true);
   }
 
   return (
@@ -214,7 +266,8 @@ export default function Lotes() {
         <Pagination currentPage={safePage} totalItems={totalFiltered} itemsPerPage={ITEMS_PER_PAGE} onPageChange={setCurrentPage} />
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={handleClose} title={selected ? 'Editar Lote' : 'Registrar Novo Lote'} size="lg" footer={<><Button variant="outline" onClick={handleClose}>Cancelar</Button><Button variant="primary" onClick={handleSave}>Salvar Lote</Button></>}>
+      {/* Form Modal */}
+      <Modal isOpen={isModalOpen} onClose={handleCancelClick} closeOnOverlayClick={false} title={selected ? 'Editar Lote' : 'Registrar Novo Lote'} size="lg" footer={<><Button variant="outline" onClick={handleCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveClick}>Salvar Lote</Button></>}>
         <FormGrid>
           <Input label="Número do Lote *" placeholder="Ex: LOT-2025-BTX-001" value={form.lote} onChange={(e) => handleChange('lote', e.target.value.toUpperCase())} error={errors.lote} />
           <Input label="Registro ANVISA *" placeholder="Ex: 1.0309.0198.001-9" value={form.registroAnvisa} onChange={(e) => handleChange('registroAnvisa', e.target.value)} error={errors.registroAnvisa} />
@@ -230,6 +283,7 @@ export default function Lotes() {
         </FormGrid>
       </Modal>
 
+      {/* Detail Modal */}
       <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} title={`Rastreabilidade — ${selected?.lote}`} size="xl" footer={<Button variant="outline" onClick={() => setIsDetailOpen(false)}>Fechar</Button>}>
         {selected && (
           <>
@@ -261,6 +315,32 @@ export default function Lotes() {
           </>
         )}
       </Modal>
+
+      <CancelModal
+        isOpen={showCancelModal}
+        title="Deseja cancelar?"
+        message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas."
+        onConfirm={forceClose}
+        onCancel={() => setShowCancelModal(false)}
+      />
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        title={selected ? 'Salvar alterações?' : 'Registrar lote?'}
+        message={selected ? `Deseja salvar as alterações do lote "${form.lote || selected.lote}"?` : `Deseja registrar o lote "${form.lote}" no sistema?`}
+        confirmText="Confirmar"
+        cancelText="Voltar"
+        onConfirm={handleConfirmSave}
+        onCancel={() => setShowConfirmModal(false)}
+      />
+
+      <SucessModal
+        isOpen={showSuccessModal}
+        title="Sucesso!"
+        message={selected ? 'Lote atualizado com sucesso!' : 'Lote registrado com sucesso!'}
+        onClose={() => setShowSuccessModal(false)}
+        buttonText="Continuar"
+      />
     </Container>
   );
 }

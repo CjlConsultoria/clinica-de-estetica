@@ -5,6 +5,9 @@ import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
+import CancelModal from '@/components/modals/cancelModal';
+import ConfirmModal from '@/components/modals/confirmModal';
+import SucessModal from '@/components/modals/sucessModal';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import {
   Container, Header, Title, ActionsRow,
@@ -14,8 +17,8 @@ import {
   ToggleGroup, ToggleBtn, Legend, LegendItem, LegendDot, FormGrid,
 } from './styles';
 
-const NAV_MIN = { year: 2025, month: 0  }; 
-const NAV_MAX = { year: 2026, month: 11 }; 
+const NAV_MIN = { year: 2025, month: 0  };
+const NAV_MAX = { year: 2026, month: 11 };
 const procedureOptions = [
   { value: 'botox',            label: 'Botox Facial' },
   { value: 'preenchimento',    label: 'Preenchimento Labial' },
@@ -45,7 +48,7 @@ interface CalEvent {
   weekDay: number;
   hour: number;
   year: number;
-  month: number;   
+  month: number;
   monthDay: number;
   name: string;
   procedure: string;
@@ -93,7 +96,7 @@ const VALIDATION_FIELDS = [
   { key: 'valor'        as AgendamentoField, validate: (v: string) => !v.trim() || v === 'R$ 0,00' ? 'Informe o valor do procedimento' : null },
 ];
 
-function parseHour(h: string): number      { return parseInt(h.split(':')[0], 10); }
+function parseHour(h: string): number       { return parseInt(h.split(':')[0], 10); }
 function parseDayOfMonth(d: string): number { return parseInt(d.split('-')[2], 10); }
 function parseDayOfWeek(d: string): number  { return new Date(`${d}T12:00:00`).getDay(); }
 function parseYear(d: string): number       { return parseInt(d.split('-')[0], 10); }
@@ -109,6 +112,19 @@ function getWeekDaysForMonth(year: number, month: number): Date[] {
   });
 }
 
+function isFormDirty(form: AgendamentoForm): boolean {
+  return (
+    form.nome.trim() !== '' ||
+    form.telefone.trim() !== '' ||
+    form.data !== '' ||
+    form.horario !== '' ||
+    form.procedimento !== '' ||
+    form.status !== '' ||
+    form.valor.trim() !== '' ||
+    form.observacoes.trim() !== ''
+  );
+}
+
 export default function Agenda() {
   const today = new Date();
 
@@ -117,9 +133,14 @@ export default function Agenda() {
   const [form, setForm]               = useState<AgendamentoForm>(FORM_INITIAL);
   const [events, setEvents]           = useState<CalEvent[]>(INITIAL_EVENTS);
   const [nextId, setNextId]           = useState(100);
-  const [navYear,  setNavYear]  = useState(today.getFullYear());
-  const [navMonth, setNavMonth] = useState(today.getMonth());
-  const [weekOffset, setWeekOffset] = useState(0);
+  const [navYear,  setNavYear]        = useState(today.getFullYear());
+  const [navMonth, setNavMonth]       = useState(today.getMonth());
+  const [weekOffset, setWeekOffset]   = useState(0);
+
+  const [showCancelModal,  setShowCancelModal]  = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage,   setSuccessMessage]   = useState('');
 
   const { errors, validate, clearError, clearAll } =
     useSequentialValidation<AgendamentoField>(VALIDATION_FIELDS);
@@ -140,7 +161,6 @@ export default function Agenda() {
     if (navMonth === 11) { setNavYear((y) => y + 1); setNavMonth(0); }
     else { setNavMonth((m) => m + 1); }
   }
-
 
   const firstDay    = new Date(navYear, navMonth, 1).getDay();
   const daysInMonth = new Date(navYear, navMonth + 1, 0).getDate();
@@ -185,20 +205,33 @@ export default function Agenda() {
     handleChange('data', `${safeYear}-${month ?? ''}-${day ?? ''}`);
   }
 
-  function handleCloseModal() {
+  function handleCancelClick() {
+    if (isFormDirty(form)) {
+      setShowCancelModal(true);
+    } else {
+      forceClose();
+    }
+  }
+
+  function forceClose() {
     setForm(FORM_INITIAL);
     clearAll();
     setIsModalOpen(false);
+    setShowCancelModal(false);
+    setShowConfirmModal(false);
   }
 
-  function handleSave() {
+  function handleSaveClick() {
     const isValid = validate({
       nome: form.nome, telefone: form.telefone, data: form.data,
       horario: form.horario, procedimento: form.procedimento,
       status: form.status, valor: form.valor,
     });
     if (!isValid) return;
+    setShowConfirmModal(true);
+  }
 
+  function handleConfirmSave() {
     const procedureLabel =
       procedureOptions.find((p) => p.value === form.procedimento)?.label ?? form.procedimento;
 
@@ -216,7 +249,17 @@ export default function Agenda() {
 
     setEvents((prev) => [...prev, novoEvento]);
     setNextId((n) => n + 1);
-    handleCloseModal();
+    setShowConfirmModal(false);
+    setIsModalOpen(false);
+    setSuccessMessage('Agendamento salvo com sucesso!');
+    setShowSuccessModal(true);
+  }
+
+  function handleSuccessClose() {
+    setShowSuccessModal(false);
+    setSuccessMessage('');
+    setForm(FORM_INITIAL);
+    clearAll();
   }
 
   return (
@@ -363,18 +406,18 @@ export default function Agenda() {
 
       <Modal
         isOpen={isModalOpen}
-        onClose={handleCloseModal}
+        onClose={handleCancelClick}
+        closeOnOverlayClick={false}
         title="Novo Agendamento"
         size="md"
         footer={
           <>
-            <Button variant="outline" onClick={handleCloseModal}>Cancelar</Button>
-            <Button variant="primary" onClick={handleSave}>Salvar Agendamento</Button>
+            <Button variant="outline" onClick={handleCancelClick}>Cancelar</Button>
+            <Button variant="primary" onClick={handleSaveClick}>Salvar Agendamento</Button>
           </>
         }
       >
         <FormGrid>
-
           <Input
             label="Nome do Paciente *"
             placeholder="Digite o nome..."
@@ -386,7 +429,6 @@ export default function Agenda() {
             maxLength={80}
             error={errors.nome}
           />
-
           <Input
             label="Telefone *"
             mask="telefone"
@@ -396,7 +438,6 @@ export default function Agenda() {
             onValueChange={(v) => handleMaskedChange('telefone', v)}
             error={errors.telefone}
           />
-
           <Input
             label="Data *"
             type="date"
@@ -404,7 +445,6 @@ export default function Agenda() {
             onChange={(e) => handleDataChange(e.target.value)}
             error={errors.data}
           />
-
           <Input
             label="Horário *"
             type="time"
@@ -412,7 +452,6 @@ export default function Agenda() {
             onChange={(e) => handleChange('horario', e.target.value)}
             error={errors.horario}
           />
-
           <div style={{ gridColumn: 'span 2' }}>
             <Select
               label="Procedimento *"
@@ -423,7 +462,6 @@ export default function Agenda() {
               error={errors.procedimento}
             />
           </div>
-
           <Select
             label="Status *"
             placeholder="Selecione..."
@@ -432,7 +470,6 @@ export default function Agenda() {
             onChange={(v) => handleChange('status', v)}
             error={errors.status}
           />
-
           <Input
             label="Valor (R$) *"
             mask="moeda"
@@ -442,7 +479,6 @@ export default function Agenda() {
             onValueChange={(v) => handleMaskedChange('valor', v)}
             error={errors.valor}
           />
-
           <div style={{ gridColumn: 'span 2' }}>
             <Input
               label="Observações"
@@ -452,9 +488,34 @@ export default function Agenda() {
               onChange={(e) => handleChange('observacoes', e.target.value)}
             />
           </div>
-
         </FormGrid>
       </Modal>
+
+      <CancelModal
+        isOpen={showCancelModal}
+        title="Deseja cancelar?"
+        message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas."
+        onConfirm={forceClose}
+        onCancel={() => setShowCancelModal(false)}
+      />
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        title="Salvar agendamento?"
+        message={`Tem certeza que deseja agendar ${form.nome || 'este paciente'}?`}
+        confirmText="Confirmar"
+        cancelText="Voltar"
+        onConfirm={handleConfirmSave}
+        onCancel={() => setShowConfirmModal(false)}
+      />
+
+      <SucessModal
+        isOpen={showSuccessModal}
+        title="Sucesso!"
+        message={successMessage}
+        onClose={handleSuccessClose}
+        buttonText="Continuar"
+      />
     </Container>
   );
 }

@@ -6,7 +6,6 @@ export const Container = styled.div`
   min-height: 100vh;
   background: #f5f5f5;
   box-sizing: border-box;
-
   @media (max-width: 1024px) { padding: 24px 20px; }
   @media (max-width: 768px)  { padding: 20px 16px; }
 `;
@@ -70,12 +69,7 @@ export const SearchInputStyled = styled.input`
   color: #333;
   transition: all 0.25s;
   box-sizing: border-box;
-
-  &:focus {
-    outline: none;
-    border-color: #BBA188;
-    box-shadow: 0 0 0 3px rgba(187, 161, 136, 0.15);
-  }
+  &:focus { outline: none; border-color: #BBA188; box-shadow: 0 0 0 3px rgba(187,161,136,0.15); }
   &::placeholder { color: #bbb; }
 `;
 
@@ -116,7 +110,7 @@ export const DropdownList = styled.div`
   background: white;
   border: 1.5px solid #e8e8e8;
   border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
   z-index: 100;
   overflow: hidden;
 `;
@@ -148,28 +142,22 @@ export const ClearFilterBtn = styled.button`
   &:hover { background: #e74c3c; color: white; }
 `;
 
+/* ✅ 2 colunas fixas para exibir exatamente 4 cards (2x2) por página */
 export const PatientGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 20px;
-
-  @media (max-width: 840px) {
-    grid-template-columns: 1fr;
-  }
+  @media (max-width: 840px) { grid-template-columns: 1fr; }
 `;
 
 export const PatientCard = styled.div`
   background: white;
   border-radius: 18px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
   overflow: hidden;
   cursor: pointer;
   transition: all 0.25s;
-
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 28px rgba(187, 161, 136, 0.18);
-  }
+  &:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(187,161,136,0.18); }
 `;
 
 export const PatientCardHeader = styled.div`
@@ -250,7 +238,6 @@ export const TimelineItem = styled.div`
   gap: 10px;
   padding: 8px 0;
   border-bottom: 1px solid #f8f8f8;
-
   &:last-child { border-bottom: none; }
 `;
 
@@ -378,7 +365,6 @@ export const FullTimeline = styled.div`
   flex-direction: column;
   gap: 0;
   position: relative;
-
   &::before {
     content: '';
     position: absolute;
@@ -395,7 +381,6 @@ export const FullTimelineItem = styled.div`
   gap: 16px;
   padding-bottom: 20px;
   position: relative;
-
   &:last-child { padding-bottom: 0; }
 `;
 
@@ -404,7 +389,7 @@ export const FullDot = styled.div<{ $color: string; $first?: boolean }>`
   height: 16px;
   border-radius: 50%;
   background: ${({ $color }) => $color};
-  border: 3px solid ${({ $first }) => ($first ? 'white' : 'white')};
+  border: 3px solid white;
   box-shadow: 0 0 0 2px ${({ $color }) => $color}44;
   flex-shrink: 0;
   margin-top: 4px;
@@ -472,17 +457,79 @@ export const EmptyState = styled.div`
   padding: 80px 20px;
   text-align: center;
   color: #bbb;
+  h3 { font-size: 1.1rem; font-family: var(--font-cabourg-bold), 'Cabourg', serif; color: #555; margin: 0 0 6px; }
+  p  { font-size: 0.88rem; color: #999; margin: 0; }
+`;
 
-  h3 {
-    font-size: 1.1rem;
-    font-family: var(--font-cabourg-bold), 'Cabourg', serif;
-    color: #555;
-    margin: 0 0 6px;
-  }
+/* ─────────────── Paginação ─────────────── */
 
-  p {
-    font-size: 0.88rem;
-    color: #999;
-    margin: 0;
+export const PaginationWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 14px 20px;
+  border-top: 1px solid #f0ebe4;
+  min-height: 56px;
+  flex-shrink: 0;
+`;
+
+export const PaginationInfo = styled.span`
+  font-size: 0.8rem;
+  color: #999;
+  font-weight: 400;
+  white-space: nowrap;
+`;
+
+export const PaginationControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+export const PageButton = styled.button<{ $active?: boolean }>`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: ${({ $active }) => ($active ? '700' : '500')};
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: ${({ $active }) => ($active ? '#BBA188' : 'transparent')};
+  color: ${({ $active }) => ($active ? '#ffffff' : '#888')};
+  &:hover:not(:disabled) {
+    background: ${({ $active }) => ($active ? '#BBA188' : 'rgba(187,161,136,0.12)')};
+    color: ${({ $active }) => ($active ? '#ffffff' : '#BBA188')};
   }
+`;
+
+export const PageEllipsis = styled.span`
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #bbb;
+  user-select: none;
+`;
+
+export const PaginationArrow = styled.button`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #BBA188;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  &:hover:not(:disabled) { background: rgba(187,161,136,0.12); }
+  &:disabled { color: #ddd; cursor: not-allowed; }
 `;

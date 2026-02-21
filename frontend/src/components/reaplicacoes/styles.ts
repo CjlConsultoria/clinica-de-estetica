@@ -202,7 +202,7 @@ export const Tr = styled.tr`
   &:last-child { border-bottom: none; }
 `;
 
-export const Td = styled.td`
+export const Td = styled.td<{ colSpan?: number }>`
   padding: 13px 16px;
   font-size: 0.88rem;
   color: #444;
@@ -246,10 +246,56 @@ export const FormGrid = styled.div`
   @media (max-width: 560px) { grid-template-columns: 1fr; }
 `;
 
+/*
+ * CardsContainer — altura fixa para 2 linhas × 3 cards de reaplicação.
+ *
+ * Anatomia de cada ReapCard:
+ *   Header:   padding 18px top + 14px bottom + avatar (42px) + border = ~80px
+ *   Body:     padding 14px × 2 + progress bar (6px) + datas (14px) + margin (4+12px) + 3–4 ReapRows (28px × 4) + gaps = ~172px
+ *   Footer:   padding 12px × 2 + btn height (~34px) + border = ~60px
+ *   Card total ≈ 312px
+ *
+ * Grid: 2 linhas × 312px + 1 gap (20px) = 644px
+ * Padding do wrapper: 20px top + 20px bottom = 40px
+ * Área de cards: 644px + 40px = 684px
+ * Paginação: 56px
+ * Total container: 684 + 56 = 740px
+ */
+export const CardsContainer = styled.div`
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 740px;
+`;
+
+/*
+ * TableContainer — altura fixa para 10 linhas de tabela.
+ *
+ * Thead: padding 13px × 2 + texto ~14px = ~40px
+ * Cada Tr: padding 13px × 2 + conteúdo ~20px + border 1px = ~47px
+ * 10 linhas: 10 × 47px = 470px
+ * Total tabela: 40px + 470px = 510px
+ * Paginação: 56px
+ * Total container: 510 + 56 = 566px
+ */
+export const TableContainer = styled.div`
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 566px;
+`;
+
 export const CardsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
+  @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); }
   @media (max-width: 640px) { grid-template-columns: 1fr; }
 `;
 
@@ -351,4 +397,77 @@ export const ReapCardFooter = styled.div`
   display: flex;
   gap: 8px;
   justify-content: flex-end;
+`;
+
+/* ─────────────── Paginação ─────────────── */
+
+export const PaginationWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 14px 20px;
+  border-top: 1px solid #f0ebe4;
+  min-height: 56px;
+  flex-shrink: 0;
+`;
+
+export const PaginationInfo = styled.span`
+  font-size: 0.8rem;
+  color: #999;
+  font-weight: 400;
+  white-space: nowrap;
+`;
+
+export const PaginationControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+export const PageButton = styled.button<{ $active?: boolean }>`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: ${({ $active }) => ($active ? '700' : '500')};
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: ${({ $active }) => ($active ? '#BBA188' : 'transparent')};
+  color: ${({ $active }) => ($active ? '#ffffff' : '#888')};
+  &:hover:not(:disabled) {
+    background: ${({ $active }) => ($active ? '#BBA188' : 'rgba(187,161,136,0.12)')};
+    color: ${({ $active }) => ($active ? '#ffffff' : '#BBA188')};
+  }
+`;
+
+export const PageEllipsis = styled.span`
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #bbb;
+  user-select: none;
+`;
+
+export const PaginationArrow = styled.button`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #BBA188;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  &:hover:not(:disabled) { background: rgba(187,161,136,0.12); }
+  &:disabled { color: #ddd; cursor: not-allowed; }
 `;

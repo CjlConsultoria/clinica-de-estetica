@@ -150,11 +150,18 @@ export const Badge = styled.span<{ $bg?: string; $color?: string }>`
   color: ${({ $color }) => $color || '#BBA188'};
 `;
 
+/* ─── Grid e Cards ─── */
+
 export const PatientsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
   gap: 20px;
-  @media (max-width: 640px) { grid-template-columns: 1fr; }
+  /* altura fixa equivalente a 2 linhas de cards — não muda com quantidade */
+  height: 720px;
+  align-items: stretch;
+  @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); height: auto; }
+  @media (max-width: 640px) { grid-template-columns: 1fr; height: auto; }
 `;
 
 export const PatientFotoCard = styled.div`
@@ -163,6 +170,10 @@ export const PatientFotoCard = styled.div`
   box-shadow: 0 2px 8px rgba(0,0,0,0.07);
   overflow: hidden;
   transition: all 0.25s;
+  display: flex;
+  flex-direction: column;
+  /* ocupa 100% da célula do grid para todas as linhas terem a mesma altura */
+  height: 100%;
   &:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
 `;
 
@@ -170,8 +181,9 @@ export const PatientCardHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 20px 20px 16px;
+  padding: 18px 20px 14px;
   border-bottom: 1px solid #f5f5f5;
+  flex-shrink: 0;
 `;
 
 export const PatientAvatar = styled.div<{ $color: string }>`
@@ -201,20 +213,52 @@ export const PatientSub = styled.div`
 `;
 
 export const PatientCardBody = styled.div`
-  padding: 16px 20px;
-  min-height: 120px;
+  padding: 12px 16px;
+  flex: 1;
+  /* scroll vertical interno — card não cresce, usuário rola as fotos */
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* scrollbar discreta no tema do sistema */
+  scrollbar-width: thin;
+  scrollbar-color: #e0d4c8 transparent;
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: #e0d4c8; border-radius: 4px; }
+`;
+
+export const PatientCardFooter = styled.div`
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 16px;
+  border-top: 1px solid #f5f5f5;
+  flex-shrink: 0;
+  background: white;
 `;
 
 export const FotoGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  /* exatamente 3 colunas iguais */
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
 `;
 
 export const FotoItem = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
+  /* largura controlada pelo grid, não pelo item */
+  min-width: 0;
+`;
+
+export const FotoImg = styled.img`
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
 `;
 
 export const FotoLabel = styled.div`
@@ -236,20 +280,85 @@ export const FotoEmpty = styled.div`
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 80px;
+  min-height: 120px;
   color: #ccc;
   font-size: 0.82rem;
   svg { color: #ddd; }
 `;
 
-export const CompareSection = styled.div``;
+/* ─── Modais ─── */
 
-export const CompareTitle = styled.h4`
-  font-size: 0.88rem;
-  font-weight: 700;
+export const SectionLabel = styled.div`
+  font-size: 0.78rem;
+  font-weight: 600;
   color: #BBA188;
-  margin: 0 0 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #f0ebe4;
+  padding-bottom: 6px;
 `;
+
+export const WizardNav = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+`;
+
+export const FormGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  @media (max-width: 560px) { grid-template-columns: 1fr; }
+`;
+
+/* ─── Upload ─── */
+
+export const UploadZone = styled.div`
+  border: 2px dashed #e0d4c8;
+  border-radius: 14px;
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  background: #fdf9f5;
+  transition: all 0.2s;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  &:hover { border-color: #BBA188; background: #fdf5ef; }
+`;
+
+export const UploadPreview = styled.img`
+  max-height: 200px;
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+`;
+
+export const UploadIcon = styled.div`
+  color: #BBA188;
+  margin-bottom: 12px;
+  opacity: 0.7;
+`;
+
+export const UploadText = styled.div`
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+`;
+
+export const UploadHint = styled.div`
+  font-size: 0.78rem;
+  color: #bbb;
+  margin-top: 4px;
+`;
+
+/* ─── Comparar ─── */
+
+export const CompareSection = styled.div``;
 
 export const CompareGrid = styled.div`
   display: grid;
@@ -274,11 +383,11 @@ export const CompareSideLabel = styled.div<{ $tipo: string }>`
   color: ${({ $tipo }) => $tipo === 'antes' ? '#856404' : '#8a7560'};
 `;
 
-export const CompareImg = styled.div<{ $color: string }>`
+export const CompareImg = styled.div<{ $color: string; $hasImage?: boolean }>`
   width: 100%;
   aspect-ratio: 3/4;
-  background: ${({ $color }) => $color}11;
-  border: 2px dashed ${({ $color }) => $color}44;
+  background: ${({ $color, $hasImage }) => $hasImage ? 'transparent' : `${$color}11`};
+  border: ${({ $hasImage, $color }) => $hasImage ? 'none' : `2px dashed ${$color}44`};
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -286,46 +395,111 @@ export const CompareImg = styled.div<{ $color: string }>`
   justify-content: center;
   gap: 8px;
   color: ${({ $color }) => $color};
-  opacity: 0.6;
+  opacity: ${({ $hasImage }) => $hasImage ? 1 : 0.6};
   font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s;
-  &:hover { opacity: 1; background: ${({ $color }) => $color}18; }
+  overflow: hidden;
+  &:hover { opacity: 1; background: ${({ $color, $hasImage }) => $hasImage ? 'transparent' : `${$color}18`}; }
 `;
 
-/* ── Upload ── */
-export const UploadZone = styled.div`
-  border: 2px dashed #e0d4c8;
-  border-radius: 14px;
-  padding: 40px 20px;
-  text-align: center;
-  cursor: pointer;
-  background: #fdf9f5;
-  transition: all 0.2s;
-  &:hover { border-color: #BBA188; background: #fdf5ef; }
+export const SavedBanner = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0faf0;
+  border: 1.5px solid #6fcf6f;
+  border-radius: 10px;
+  padding: 10px 16px;
+  color: #2d7a2d;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  animation: fadeIn 0.3s ease;
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
 `;
 
-export const UploadIcon = styled.div`
-  color: #BBA188;
-  margin-bottom: 12px;
-  opacity: 0.7;
-`;
+/* ─────────────── Paginação ─────────────── */
 
-export const UploadText = styled.div`
-  font-size: 0.9rem;
-  color: #666;
-  font-weight: 500;
-`;
-
-export const UploadHint = styled.div`
-  font-size: 0.78rem;
-  color: #bbb;
-  margin-top: 4px;
-`;
-
-export const FormGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+export const PaginationWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   gap: 16px;
-  @media (max-width: 560px) { grid-template-columns: 1fr; }
+  padding: 14px 20px;
+  border-top: 1px solid #f0ebe4;
+  /* sempre visível mesmo com 1 página */
+  min-height: 56px;
+  flex-shrink: 0;
+`;
+
+export const PaginationInfo = styled.span`
+  font-size: 0.8rem;
+  color: #999;
+  font-weight: 400;
+  white-space: nowrap;
+`;
+
+export const PaginationControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+export const PageButton = styled.button<{ $active?: boolean }>`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: ${({ $active }) => ($active ? '700' : '500')};
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: ${({ $active }) => ($active ? '#BBA188' : 'transparent')};
+  color: ${({ $active }) => ($active ? '#ffffff' : '#888')};
+
+  &:hover:not(:disabled) {
+    background: ${({ $active }) => ($active ? '#BBA188' : 'rgba(187,161,136,0.12)')};
+    color: ${({ $active }) => ($active ? '#ffffff' : '#BBA188')};
+  }
+`;
+
+export const PageEllipsis = styled.span`
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #bbb;
+  user-select: none;
+`;
+
+export const PaginationArrow = styled.button`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #BBA188;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: rgba(187,161,136,0.12);
+  }
+
+  &:disabled {
+    color: #ddd;
+    cursor: not-allowed;
+  }
 `;

@@ -7,18 +7,21 @@ import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
 import StatCard from '@/components/ui/statcard';
 import Pagination from '@/components/ui/pagination';
+import CancelModal from '@/components/modals/cancelModal';
+import ConfirmModal from '@/components/modals/confirmModal';
+import SucessModal from '@/components/modals/sucessModal';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import {
-  Container, Header, Title, Controls,
+  Container, Header, Title, StatsGrid, Controls,
   SearchBarWrapper, SearchIconWrap, SearchInputStyled,
   FilterRow, DropdownWrapper, DropdownBtn, DropdownList, DropdownItem, ClearFilterBtn,
-  StatsGrid, TableWrapper, Table, Thead, Th, Tbody, Tr, Td,
-  Avatar, PatientInfo, PatientName, PatientEmail,
-  Badge, ActionGroup, IconBtn, EmptyState, FormGrid, PhoneText, DateText,
+  TableWrapper, Table, Thead, Th, Tbody, Tr, Td, Badge, ActionGroup, IconBtn,
+  Avatar, PatientInfo, PatientName, PatientEmail, EmptyState,
+  FormGrid, SectionLabel, WizardNav, PhoneText, DateText,
+  DetailModal, DetailHeader, DetailAvatar, DetailName, DetailMeta, DetailMetaItem,
+  DetailSection, DetailSectionTitle, StatsRow, StatPill,
+  InfoGrid, InfoItem, InfoLabel, InfoValue, ObsBox,
 } from './styles';
-
-type PacienteField =
-  | 'nome' | 'email' | 'telefone' | 'nascimento' | 'cpf' | 'status' | 'indicacao';
 
 interface PacienteForm {
   nome: string;
@@ -31,71 +34,116 @@ interface PacienteForm {
   observacoes: string;
 }
 
+type PacienteField = keyof Omit<PacienteForm, 'observacoes' | 'indicacao' | 'status'>;
+
 const FORM_INITIAL: PacienteForm = {
   nome: '', email: '', telefone: '', nascimento: '',
-  cpf: '', status: '', indicacao: '', observacoes: '',
+  cpf: '', status: 'ativo', indicacao: '', observacoes: '',
 };
 
 const VALIDATION_FIELDS = [
-  { key: 'nome'       as PacienteField, validate: (v: string) => !v.trim() ? 'Nome completo é obrigatório' : null },
-  { key: 'email'      as PacienteField, validate: (v: string) => !v.trim() ? 'E-mail é obrigatório' : null },
-  { key: 'telefone'   as PacienteField, validate: (v: string) => !v.trim() ? 'Telefone é obrigatório' : null },
-  { key: 'nascimento' as PacienteField, validate: (v: string) => !v ? 'Data de nascimento é obrigatória' : null },
-  { key: 'cpf'        as PacienteField, validate: (v: string) => !v.trim() ? 'CPF é obrigatório' : null },
-  { key: 'status'     as PacienteField, validate: (v: string) => !v ? 'Selecione um status' : null },
-  { key: 'indicacao'  as PacienteField, validate: (v: string) => !v.trim() ? 'Informe como nos conheceu' : null },
+  { key: 'nome'       as PacienteField, validate: (v: string) => !v.trim() ? 'Nome completo é obrigatório'      : null },
+  { key: 'email'      as PacienteField, validate: (v: string) => !v.trim() ? 'E-mail é obrigatório'             : null },
+  { key: 'telefone'   as PacienteField, validate: (v: string) => !v.trim() ? 'Telefone é obrigatório'           : null },
+  { key: 'nascimento' as PacienteField, validate: (v: string) => !v        ? 'Data de nascimento é obrigatória' : null },
+  { key: 'cpf'        as PacienteField, validate: (v: string) => !v.trim() ? 'CPF é obrigatório'                : null },
 ];
 
-const statusOptions = [
-  { value: 'ativo',   label: 'Ativo'   },
-  { value: 'inativo', label: 'Inativo' },
-];
-
+const statusOptions   = [{ value: 'ativo', label: 'Ativo' }, { value: 'inativo', label: 'Inativo' }];
 const filterStatus    = ['Todos', 'Ativo', 'Inativo'];
 const filterProcedure = ['Todos', 'Botox', 'Preenchimento', 'Bioestimulador', 'Fio PDO', 'Microagulhamento'];
-
-const mockPatients = [
-  { id: 1, name: 'Ana Beatriz Costa',   email: 'ana.costa@email.com',    phone: '(11) 98765-4321', birthdate: '15/03/1988', lastVisit: '18/02/2025', procedure: 'Botox',         status: 'ativo',   visits: 8  },
-  { id: 2, name: 'Carla Mendonça',      email: 'carla.m@email.com',      phone: '(11) 97654-3210', birthdate: '22/07/1992', lastVisit: '15/02/2025', procedure: 'Preenchimento', status: 'ativo',   visits: 5  },
-  { id: 3, name: 'Fernanda Lima',       email: 'fernanda.lima@email.com', phone: '(11) 96543-2109', birthdate: '05/11/1985', lastVisit: '10/02/2025', procedure: 'Bioestimulador',status: 'ativo',   visits: 3  },
-  { id: 4, name: 'Marina Souza',        email: 'marina.s@email.com',      phone: '(21) 95432-1098', birthdate: '30/04/1990', lastVisit: '08/01/2025', procedure: 'Fio PDO',       status: 'ativo',   visits: 6  },
-  { id: 5, name: 'Juliana Rocha',       email: 'juliana.r@email.com',     phone: '(21) 94321-0987', birthdate: '14/09/1995', lastVisit: '05/01/2025', procedure: 'Botox',         status: 'ativo',   visits: 2  },
-  { id: 6, name: 'Patrícia Alves',      email: 'patricia.a@email.com',    phone: '(31) 93210-9876', birthdate: '19/12/1982', lastVisit: '20/12/2024', procedure: 'Microagulhamento',status:'inativo', visits: 12 },
-  { id: 7, name: 'Roberta Gomes',       email: 'roberta.g@email.com',     phone: '(31) 92109-8765', birthdate: '08/06/1998', lastVisit: '15/12/2024', procedure: 'Preenchimento', status: 'ativo',   visits: 1  },
-  { id: 8, name: 'Sandra Oliveira',     email: 'sandra.o@email.com',      phone: '(41) 91098-7654', birthdate: '25/02/1978', lastVisit: '10/11/2024', procedure: 'Bioestimulador',status: 'inativo', visits: 7  },
-  { id: 9, name: 'Ana Beatriz Costa',   email: 'ana.costa@email.com',    phone: '(11) 98765-4321', birthdate: '15/03/1988', lastVisit: '18/02/2025', procedure: 'Botox',         status: 'ativo',   visits: 8  },
-  { id: 10, name: 'Carla Mendonça',      email: 'carla.m@email.com',      phone: '(11) 97654-3210', birthdate: '22/07/1992', lastVisit: '15/02/2025', procedure: 'Preenchimento', status: 'ativo',   visits: 5  },
-  { id: 11, name: 'Fernanda Lima',       email: 'fernanda.lima@email.com', phone: '(11) 96543-2109', birthdate: '05/11/1985', lastVisit: '10/02/2025', procedure: 'Bioestimulador',status: 'ativo',   visits: 3  },
-  { id: 12, name: 'Marina Souza',        email: 'marina.s@email.com',      phone: '(21) 95432-1098', birthdate: '30/04/1990', lastVisit: '08/01/2025', procedure: 'Fio PDO',       status: 'ativo',   visits: 6  },
-
-];
 
 const statusColors: Record<string, { bg: string; color: string }> = {
   ativo:   { bg: '#f0ebe4', color: '#8a7560' },
   inativo: { bg: '#f5f5f5', color: '#888'    },
 };
 
-const avatarColors = ['#BBA188', '#EBD5B0', '#1b1b1b', '#a8906f', '#e74c3c', '#8a7560', '#BBA188', '#EBD5B0'];
+const avatarColors = ['#BBA188', '#8a7560', '#a8906f', '#c9a882', '#917255', '#d4b896'];
 
-type Patient = typeof mockPatients[0];
+const INITIAL_PATIENTS = [
+  { id: 1,  name: 'Ana Beatriz Costa',  email: 'ana.costa@email.com',     phone: '(11) 98765-4321', birthdate: '1988-03-15', cpf: '123.456.789-00', lastVisit: '18/02/2025', procedure: 'Botox',            status: 'ativo',   visits: 8,  indicacao: 'Instagram',          observacoes: 'Alergia a látex' },
+  { id: 2,  name: 'Carla Mendonça',     email: 'carla.m@email.com',       phone: '(11) 97654-3210', birthdate: '1992-07-22', cpf: '234.567.890-11', lastVisit: '15/02/2025', procedure: 'Preenchimento',    status: 'ativo',   visits: 5,  indicacao: 'Indicação de amiga', observacoes: '' },
+  { id: 3,  name: 'Fernanda Lima',      email: 'fernanda.lima@email.com', phone: '(11) 96543-2109', birthdate: '1985-11-05', cpf: '345.678.901-22', lastVisit: '10/02/2025', procedure: 'Bioestimulador',   status: 'ativo',   visits: 3,  indicacao: 'Google',             observacoes: 'Gestante, verificar procedimentos' },
+  { id: 4,  name: 'Marina Souza',       email: 'marina.s@email.com',      phone: '(21) 95432-1098', birthdate: '1990-04-30', cpf: '456.789.012-33', lastVisit: '08/01/2025', procedure: 'Fio PDO',          status: 'ativo',   visits: 6,  indicacao: 'Instagram',          observacoes: '' },
+  { id: 5,  name: 'Juliana Rocha',      email: 'juliana.r@email.com',     phone: '(21) 94321-0987', birthdate: '1995-09-14', cpf: '567.890.123-44', lastVisit: '05/01/2025', procedure: 'Botox',            status: 'ativo',   visits: 2,  indicacao: 'Indicação médico',   observacoes: '' },
+  { id: 6,  name: 'Patrícia Alves',     email: 'patricia.a@email.com',    phone: '(31) 93210-9876', birthdate: '1982-12-19', cpf: '678.901.234-55', lastVisit: '20/12/2024', procedure: 'Microagulhamento', status: 'inativo', visits: 12, indicacao: 'Google',             observacoes: 'Histórico de queloides' },
+  { id: 7,  name: 'Roberta Gomes',      email: 'roberta.g@email.com',     phone: '(31) 92109-8765', birthdate: '1998-06-08', cpf: '789.012.345-66', lastVisit: '15/12/2024', procedure: 'Preenchimento',    status: 'ativo',   visits: 1,  indicacao: 'TikTok',             observacoes: '' },
+  { id: 8,  name: 'Sandra Oliveira',    email: 'sandra.o@email.com',      phone: '(41) 91098-7654', birthdate: '1978-02-25', cpf: '890.123.456-77', lastVisit: '10/11/2024', procedure: 'Bioestimulador',   status: 'inativo', visits: 7,  indicacao: 'Indicação de amiga', observacoes: '' },
+  { id: 9,  name: 'Luciana Ferreira',   email: 'luciana.f@email.com',     phone: '(11) 90987-6543', birthdate: '1991-01-10', cpf: '901.234.567-88', lastVisit: '12/02/2025', procedure: 'Botox',            status: 'ativo',   visits: 4,  indicacao: 'Instagram',          observacoes: '' },
+  { id: 10, name: 'Renata Cardoso',     email: 'renata.c@email.com',      phone: '(21) 99876-5432', birthdate: '1987-08-03', cpf: '012.345.678-99', lastVisit: '20/01/2025', procedure: 'Fio PDO',          status: 'ativo',   visits: 9,  indicacao: 'Google',             observacoes: 'Diabética tipo 2' },
+  { id: 11, name: 'Camila Torres',      email: 'camila.t@email.com',      phone: '(31) 98765-0123', birthdate: '1994-05-17', cpf: '111.222.333-44', lastVisit: '05/02/2025', procedure: 'Preenchimento',    status: 'ativo',   visits: 2,  indicacao: 'Indicação de amiga', observacoes: '' },
+  { id: 12, name: 'Beatriz Nunes',      email: 'beatriz.n@email.com',     phone: '(41) 97654-9012', birthdate: '2000-11-28', cpf: '222.333.444-55', lastVisit: '01/01/2025', procedure: 'Microagulhamento', status: 'ativo',   visits: 1,  indicacao: 'Instagram',          observacoes: '' },
+];
+
+type Patient = typeof INITIAL_PATIENTS[0];
 
 const ITEMS_PER_PAGE = 10;
-const TABLE_MIN_HEIGHT = 540;
+
+function getInitials(name: string) {
+  return name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+}
+
+function formatDate(dateStr: string): string {
+  if (!dateStr) return '—';
+  if (dateStr.includes('/')) return dateStr;
+  const [y, m, d] = dateStr.split('-');
+  if (!y || !m || !d) return dateStr;
+  return `${d}/${m}/${y}`;
+}
+
+function toInputDate(dateStr: string): string {
+  if (!dateStr) return '';
+  if (dateStr.includes('/')) {
+    const [d, m, y] = dateStr.split('/');
+    return `${y}-${m}-${d}`;
+  }
+  return dateStr;
+}
+
+function calcAge(dateStr: string): string {
+  if (!dateStr) return '';
+  const input = toInputDate(dateStr);
+  const birth = new Date(input);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return `${age} anos`;
+}
+
+function isFormDirty(form: PacienteForm): boolean {
+  return (
+    form.nome.trim() !== '' ||
+    form.email.trim() !== '' ||
+    form.telefone.trim() !== '' ||
+    form.nascimento !== '' ||
+    form.cpf.trim() !== '' ||
+    form.indicacao.trim() !== '' ||
+    form.observacoes.trim() !== ''
+  );
+}
 
 export default function Patients() {
+  const [patients,        setPatients]        = useState<Patient[]>(INITIAL_PATIENTS);
   const [search,          setSearch]          = useState('');
   const [filterSt,        setFilterSt]        = useState('Todos');
   const [filterProc,      setFilterProc]      = useState('Todos');
-  const [openDropdown,    setOpenDropdown]     = useState<string | null>(null);
-  const [isModalOpen,     setIsModalOpen]      = useState(false);
+  const [openDrop,        setOpenDrop]        = useState<string | null>(null);
+  const [isModalOpen,     setIsModalOpen]     = useState(false);
+  const [isDetailOpen,    setIsDetailOpen]    = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [isEditing,       setIsEditing]       = useState(false);
   const [form,            setForm]            = useState<PacienteForm>(FORM_INITIAL);
   const [currentPage,     setCurrentPage]     = useState(1);
 
-  const { errors, validate, clearError, clearAll } =
-    useSequentialValidation<PacienteField>(VALIDATION_FIELDS);
+  // Modal states
+  const [showCancelModal,  setShowCancelModal]  = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const filtered = mockPatients.filter(p => {
+  const { errors, validate, clearError, clearAll } = useSequentialValidation<PacienteField>(VALIDATION_FIELDS);
+
+  const filtered = patients.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.email.includes(search);
     const matchStatus = filterSt   === 'Todos' || p.status    === filterSt.toLowerCase();
     const matchProc   = filterProc === 'Todos' || p.procedure === filterProc;
@@ -108,51 +156,29 @@ export default function Patients() {
   const startIndex    = (safePage - 1) * ITEMS_PER_PAGE;
   const paginatedData = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  const ativos = mockPatients.filter(p => p.status === 'ativo').length;
+  const ativos   = patients.filter(p => p.status === 'ativo').length;
+  const inativos = patients.filter(p => p.status === 'inativo').length;
 
-  const toggleDropdown = (name: string) => setOpenDropdown(prev => prev === name ? null : name);
-
-  function handleSearchChange(value: string) {
-    setSearch(value);
-    setCurrentPage(1);
-  }
-
-  function handleFilterStChange(value: string) {
-    setFilterSt(value);
-    setCurrentPage(1);
-    setOpenDropdown(null);
-  }
-
-  function handleFilterProcChange(value: string) {
-    setFilterProc(value);
-    setCurrentPage(1);
-    setOpenDropdown(null);
-  }
-
-  function handleClearFilters() {
-    setFilterSt('Todos');
-    setFilterProc('Todos');
-    setCurrentPage(1);
-  }
+  function handleSearchChange(v: string)     { setSearch(v);     setCurrentPage(1); }
+  function handleFilterStChange(v: string)   { setFilterSt(v);   setCurrentPage(1); setOpenDrop(null); }
+  function handleFilterProcChange(v: string) { setFilterProc(v); setCurrentPage(1); setOpenDrop(null); }
+  function handleClearFilters()              { setFilterSt('Todos'); setFilterProc('Todos'); setCurrentPage(1); }
 
   function handleChange(field: keyof PacienteForm, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
-    clearError(field as PacienteField);
+    if (field !== 'observacoes' && field !== 'indicacao' && field !== 'status') {
+      clearError(field as PacienteField);
+    }
   }
 
-  function handleMaskedChange(field: keyof PacienteForm, value: string) {
-    setForm(prev => ({ ...prev, [field]: value }));
-    clearError(field as PacienteField);
-  }
-
-  function handleDateChange(field: 'nascimento', raw: string) {
-    if (!raw) { handleChange(field, ''); return; }
-    const [yearStr, month, day] = raw.split('-');
-    const safeYear = yearStr ? yearStr.slice(0, 4) : '';
-    handleChange(field, `${safeYear}-${month ?? ''}-${day ?? ''}`);
+  function handleDateChange(raw: string) {
+    if (!raw) { handleChange('nascimento', ''); return; }
+    const [y, m, d] = raw.split('-');
+    handleChange('nascimento', `${(y ?? '').slice(0, 4)}-${m ?? ''}-${d ?? ''}`);
   }
 
   function openNew() {
+    setIsEditing(false);
     setSelectedPatient(null);
     setForm(FORM_INITIAL);
     clearAll();
@@ -160,40 +186,88 @@ export default function Patients() {
   }
 
   function openEdit(p: Patient) {
+    setIsEditing(true);
     setSelectedPatient(p);
     setForm({
       nome:        p.name,
       email:       p.email,
       telefone:    p.phone,
-      nascimento:  '',
-      cpf:         '',
+      nascimento:  toInputDate(p.birthdate),
+      cpf:         p.cpf,
       status:      p.status,
-      indicacao:   '',
-      observacoes: '',
+      indicacao:   p.indicacao,
+      observacoes: p.observacoes,
     });
     clearAll();
+    setIsDetailOpen(false);
     setIsModalOpen(true);
   }
 
-  function handleClose() {
+  function openDetail(p: Patient) {
+    setSelectedPatient(p);
+    setIsDetailOpen(true);
+  }
+
+  // Called when user clicks "Cancelar" button in the form modal
+  function handleCancelClick() {
+    if (isFormDirty(form)) {
+      setShowCancelModal(true);
+    } else {
+      forceClose();
+    }
+  }
+
+  // Actually closes everything and resets form
+  function forceClose() {
     setForm(FORM_INITIAL);
     clearAll();
     setIsModalOpen(false);
+    setSelectedPatient(null);
+    setIsEditing(false);
+    setShowCancelModal(false);
+    setShowConfirmModal(false);
   }
 
-  function handleSave() {
+  // Called when user clicks "Salvar" button
+  function handleSaveClick() {
     const isValid = validate({
       nome:       form.nome,
       email:      form.email,
       telefone:   form.telefone,
       nascimento: form.nascimento,
       cpf:        form.cpf,
-      status:     form.status,
-      indicacao:  form.indicacao,
     });
     if (!isValid) return;
-    console.log('Salvar paciente:', form);
-    handleClose();
+    setShowConfirmModal(true);
+  }
+
+  // Called after user confirms in ConfirmModal
+  function handleConfirmSave() {
+    setShowConfirmModal(false);
+    if (isEditing && selectedPatient) {
+      setPatients(prev => prev.map(p => p.id === selectedPatient.id
+        ? { ...p, name: form.nome, email: form.email, phone: form.telefone, birthdate: form.nascimento, cpf: form.cpf, status: form.status, indicacao: form.indicacao, observacoes: form.observacoes }
+        : p
+      ));
+    } else {
+      const today = new Date().toLocaleDateString('pt-BR');
+      setPatients(prev => [...prev, {
+        id: Date.now(), name: form.nome, email: form.email, phone: form.telefone,
+        birthdate: form.nascimento, cpf: form.cpf, lastVisit: today, procedure: '—',
+        status: 'ativo', visits: 0, indicacao: form.indicacao, observacoes: form.observacoes,
+      }]);
+    }
+    setIsModalOpen(false);
+    setShowSuccessModal(true);
+  }
+
+  // Called after user clicks "Continuar" in SuccessModal
+  function handleSuccessClose() {
+    setShowSuccessModal(false);
+    setForm(FORM_INITIAL);
+    clearAll();
+    setSelectedPatient(null);
+    setIsEditing(false);
   }
 
   return (
@@ -210,57 +284,62 @@ export default function Patients() {
       </Header>
 
       <StatsGrid>
-        <StatCard label="Total de Pacientes" value={mockPatients.length} color="#BBA188"
+        <StatCard label="Total de Pacientes" value={patients.length} color="#BBA188"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>}
         />
         <StatCard label="Pacientes Ativos" value={ativos} color="#8a7560"
-          icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+          icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>}
         />
-        <StatCard label="Inativos" value={mockPatients.length - ativos} color="#EBD5B0"
+        <StatCard label="Inativos" value={inativos} color="#EBD5B0"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>}
         />
-        <StatCard label="Novos este mês" value={3} color="#1b1b1b"
+        <StatCard label="Novos este mês" value={3} color="#a8906f"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>}
         />
       </StatsGrid>
 
       <Controls>
         <SearchBarWrapper>
+          <input type="text"     name="prevent-autofill-name"  autoComplete="off" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
+          <input type="email"    name="prevent-autofill-email" autoComplete="off" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
+          <input type="password" name="prevent-autofill-pass"  autoComplete="off" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
           <SearchIconWrap>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           </SearchIconWrap>
-          <SearchInputStyled placeholder="Buscar por nome ou e-mail..." value={search} onChange={e => handleSearchChange(e.target.value)} />
+          <SearchInputStyled
+            type="search"
+            placeholder="Buscar por nome ou e-mail..."
+            value={search}
+            onChange={e => handleSearchChange(e.target.value)}
+            autoComplete="off"
+            name="search-pacientes-filter"
+            data-form-type="other"
+            data-lpignore="true"
+          />
         </SearchBarWrapper>
-
         <FilterRow>
           <DropdownWrapper>
-            <DropdownBtn onClick={() => toggleDropdown('status')}>
+            <DropdownBtn onClick={() => setOpenDrop(p => p === 'status' ? null : 'status')}>
               <span>{filterSt}</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
             </DropdownBtn>
-            {openDropdown === 'status' && (
+            {openDrop === 'status' && (
               <DropdownList>
-                {filterStatus.map(s => (
-                  <DropdownItem key={s} $active={filterSt === s} onClick={() => handleFilterStChange(s)}>{s}</DropdownItem>
-                ))}
+                {filterStatus.map(s => <DropdownItem key={s} $active={filterSt === s} onClick={() => handleFilterStChange(s)}>{s}</DropdownItem>)}
               </DropdownList>
             )}
           </DropdownWrapper>
-
           <DropdownWrapper>
-            <DropdownBtn onClick={() => toggleDropdown('proc')}>
+            <DropdownBtn onClick={() => setOpenDrop(p => p === 'proc' ? null : 'proc')}>
               <span>{filterProc}</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
             </DropdownBtn>
-            {openDropdown === 'proc' && (
+            {openDrop === 'proc' && (
               <DropdownList>
-                {filterProcedure.map(s => (
-                  <DropdownItem key={s} $active={filterProc === s} onClick={() => handleFilterProcChange(s)}>{s}</DropdownItem>
-                ))}
+                {filterProcedure.map(s => <DropdownItem key={s} $active={filterProc === s} onClick={() => handleFilterProcChange(s)}>{s}</DropdownItem>)}
               </DropdownList>
             )}
           </DropdownWrapper>
-
           {(filterSt !== 'Todos' || filterProc !== 'Todos') && (
             <ClearFilterBtn onClick={handleClearFilters}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -270,25 +349,26 @@ export default function Patients() {
         </FilterRow>
       </Controls>
 
-      <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <TableWrapper style={{ minHeight: TABLE_MIN_HEIGHT }}>
+      <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 596 }}>
+        <TableWrapper style={{ flex: 1 }}>
           <Table>
             <Thead>
               <tr>
-                <Th $width="28%">Paciente</Th>
-                <Th $width="16%">Telefone</Th>
-                <Th $width="13%">Nascimento</Th>
-                <Th $width="14%">Última Visita</Th>
-                <Th $width="14%">Procedimento</Th>
+                <Th $width="24%">Paciente</Th>
+                <Th $width="13%">Telefone</Th>
+                <Th $width="11%">Nascimento</Th>
+                <Th $width="12%">Última Visita</Th>
+                <Th $width="15%">Procedimento</Th>
+                <Th $width="7%" $center>Visitas</Th>
                 <Th $width="8%">Status</Th>
-                <Th $width="7%">Ações</Th>
+                <Th $width="10%">Ações</Th>
               </tr>
             </Thead>
             <Tbody>
               {paginatedData.length === 0 ? (
-                <tr><td colSpan={7}>
+                <tr><td colSpan={8}>
                   <EmptyState>
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
                     <h3>Nenhum paciente encontrado</h3>
                     <p>Tente ajustar os filtros</p>
                   </EmptyState>
@@ -298,7 +378,7 @@ export default function Patients() {
                   <Td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <Avatar $color={avatarColors[(startIndex + i) % avatarColors.length]}>
-                        {p.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                        {getInitials(p.name)}
                       </Avatar>
                       <PatientInfo>
                         <PatientName>{p.name}</PatientName>
@@ -307,17 +387,18 @@ export default function Patients() {
                     </div>
                   </Td>
                   <Td><PhoneText>{p.phone}</PhoneText></Td>
-                  <Td><DateText>{p.birthdate}</DateText></Td>
+                  <Td><DateText>{formatDate(p.birthdate)}</DateText></Td>
                   <Td><DateText>{p.lastVisit}</DateText></Td>
                   <Td><Badge $bg="rgba(187,161,136,0.15)" $color="#BBA188">{p.procedure}</Badge></Td>
-                  <Td><Badge $bg={statusColors[p.status].bg} $color={statusColors[p.status].color}>{p.status.charAt(0).toUpperCase() + p.status.slice(1)}</Badge></Td>
+                  <Td $center $bold>{p.visits || '—'}</Td>
+                  <Td><Badge $bg={statusColors[p.status].bg} $color={statusColors[p.status].color}>{p.status === 'ativo' ? 'Ativo' : 'Inativo'}</Badge></Td>
                   <Td>
                     <ActionGroup>
+                      <IconBtn title="Ver detalhes" onClick={() => openDetail(p)}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      </IconBtn>
                       <IconBtn title="Editar" onClick={() => openEdit(p)}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                      </IconBtn>
-                      <IconBtn title="Ver histórico">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                       </IconBtn>
                     </ActionGroup>
                   </Td>
@@ -334,98 +415,250 @@ export default function Patients() {
         />
       </div>
 
+      {/* ─── Detail Modal ─── */}
       <Modal
-        isOpen={isModalOpen}
-        onClose={handleClose}
-        title={selectedPatient ? 'Editar Paciente' : 'Novo Paciente'}
+        isOpen={isDetailOpen}
+        onClose={() => setIsDetailOpen(false)}
+        closeOnOverlayClick={false}
+        title="Ficha do Paciente"
         size="lg"
         footer={
-          <>
-            <Button variant="outline" onClick={handleClose}>Cancelar</Button>
-            <Button variant="primary" onClick={handleSave}>Salvar</Button>
-          </>
+          <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'space-between' }}>
+            <Button
+              variant="outline"
+              icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
+              onClick={() => selectedPatient && openEdit(selectedPatient)}
+            >
+              Editar Ficha
+            </Button>
+            <Button variant="outline" onClick={() => setIsDetailOpen(false)}>Fechar</Button>
+          </div>
         }
       >
-        <FormGrid>
-          <div style={{ gridColumn: 'span 2' }}>
-            <Input
-              label="Nome Completo *"
-              placeholder="Nome do paciente..."
-              value={form.nome}
-              onChange={(e) => {
-                const val = e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
-                handleChange('nome', val);
-              }}
-              maxLength={80}
-              error={errors.nome}
-            />
-          </div>
+        {selectedPatient && (
+          <DetailModal>
+            <DetailHeader>
+              <DetailAvatar $color="#BBA188">{getInitials(selectedPatient.name)}</DetailAvatar>
+              <div style={{ flex: 1 }}>
+                <DetailName>{selectedPatient.name}</DetailName>
+                <DetailMeta>
+                  <DetailMetaItem>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.72 9.81a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.63 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9a16 16 0 0 0 6.92 6.92l1.37-1.37a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 23 17z"/></svg>
+                    {selectedPatient.phone}
+                  </DetailMetaItem>
+                  <DetailMetaItem>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    {selectedPatient.email}
+                  </DetailMetaItem>
+                </DetailMeta>
+                <StatsRow style={{ marginTop: 10 }}>
+                  <StatPill $color="#BBA188">{selectedPatient.visits} visitas</StatPill>
+                  <StatPill $color={selectedPatient.status === 'ativo' ? '#8a7560' : '#888'}>
+                    {selectedPatient.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                  </StatPill>
+                  <StatPill $color="#a8906f">{selectedPatient.procedure}</StatPill>
+                </StatsRow>
+              </div>
+            </DetailHeader>
 
-          <Input
-            label="E-mail *"
-            type="email"
-            placeholder="email@exemplo.com"
-            value={form.email}
-            onChange={(e) => handleChange('email', e.target.value)}
-            error={errors.email}
-          />
+            {selectedPatient.observacoes && (
+              <ObsBox>
+                <strong>⚠ Observações / Alergias: </strong>{selectedPatient.observacoes}
+              </ObsBox>
+            )}
 
-          <Input
-            label="Telefone *"
-            mask="telefone"
-            value={form.telefone}
-            inputMode="numeric"
-            maxLength={15}
-            onValueChange={(v) => handleMaskedChange('telefone', v)}
-            error={errors.telefone}
-          />
-
-          <Input
-            label="Data de Nascimento *"
-            type="date"
-            value={form.nascimento}
-            onChange={(e) => handleDateChange('nascimento', e.target.value)}
-            error={errors.nascimento}
-          />
-
-          <Input
-            label="CPF *"
-            mask="cpf"
-            value={form.cpf}
-            inputMode="numeric"
-            maxLength={14}
-            onValueChange={(v) => handleMaskedChange('cpf', v)}
-            error={errors.cpf}
-          />
-
-          <Select
-            label="Status *"
-            options={statusOptions}
-            placeholder="Selecione..."
-            value={form.status}
-            onChange={(v) => handleChange('status', v)}
-            error={errors.status}
-          />
-
-          <Input
-            label="Como nos conheceu? *"
-            placeholder="Indicação, Instagram, Google..."
-            value={form.indicacao}
-            onChange={(e) => handleChange('indicacao', e.target.value)}
-            error={errors.indicacao}
-          />
-
-          <div style={{ gridColumn: 'span 2' }}>
-            <Input
-              label="Observações / Alergias"
-              placeholder="Informações de saúde relevantes..."
-              maxLength={300}
-              value={form.observacoes}
-              onChange={(e) => handleChange('observacoes', e.target.value)}
-            />
-          </div>
-        </FormGrid>
+            <DetailSection>
+              <DetailSectionTitle>Dados do Paciente</DetailSectionTitle>
+              <InfoGrid>
+                <InfoItem>
+                  <InfoLabel>Data de Nascimento</InfoLabel>
+                  <InfoValue>{formatDate(selectedPatient.birthdate)}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Idade</InfoLabel>
+                  <InfoValue>{calcAge(selectedPatient.birthdate)}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>CPF</InfoLabel>
+                  <InfoValue>
+                    <code style={{ fontSize: '0.83rem', color: '#888', background: '#f5f5f5', padding: '3px 8px', borderRadius: 5 }}>
+                      {selectedPatient.cpf}
+                    </code>
+                  </InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Como nos conheceu</InfoLabel>
+                  <InfoValue>{selectedPatient.indicacao || '—'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Último Procedimento</InfoLabel>
+                  <InfoValue>{selectedPatient.procedure}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Última Visita</InfoLabel>
+                  <InfoValue>{selectedPatient.lastVisit}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Total de Visitas</InfoLabel>
+                  <InfoValue style={{ fontWeight: 700, color: '#1a1a1a', fontSize: '1.1rem' }}>
+                    {selectedPatient.visits}
+                  </InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Status</InfoLabel>
+                  <InfoValue>
+                    <Badge $bg={statusColors[selectedPatient.status].bg} $color={statusColors[selectedPatient.status].color}>
+                      {selectedPatient.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                    </Badge>
+                  </InfoValue>
+                </InfoItem>
+              </InfoGrid>
+            </DetailSection>
+          </DetailModal>
+        )}
       </Modal>
+
+      {/* ─── Create / Edit Modal ─── */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCancelClick}
+        closeOnOverlayClick={false}
+        title={isEditing ? 'Editar Paciente' : 'Novo Paciente'}
+        size="lg"
+        footer={
+          <WizardNav>
+            <Button variant="outline" onClick={handleCancelClick}>Cancelar</Button>
+            <Button variant="primary" onClick={handleSaveClick}>
+              {isEditing ? 'Salvar Alterações' : 'Cadastrar Paciente'}
+            </Button>
+          </WizardNav>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, overflowY: 'auto', maxHeight: '65vh', paddingRight: 4 }}>
+
+          <div>
+            <SectionLabel style={{ marginBottom: 12 }}>Dados Pessoais</SectionLabel>
+            <FormGrid>
+              <div style={{ gridColumn: 'span 2' }}>
+                <Input
+                  label="Nome Completo *"
+                  placeholder="Digite o nome completo"
+                  value={form.nome}
+                  onChange={e => handleChange('nome', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))}
+                  maxLength={80}
+                  error={errors.nome}
+                />
+              </div>
+              <Input
+                label="E-mail *"
+                type="email"
+                placeholder="Digite o e-mail"
+                value={form.email}
+                onChange={e => handleChange('email', e.target.value)}
+                error={errors.email}
+              />
+              <Input
+                label="Telefone *"
+                mask="telefone"
+                placeholder="Digite o telefone"
+                value={form.telefone}
+                inputMode="numeric"
+                maxLength={15}
+                onValueChange={v => handleChange('telefone', v)}
+                error={errors.telefone}
+              />
+              <Input
+                label="Data de Nascimento *"
+                type="date"
+                value={form.nascimento}
+                onChange={e => handleDateChange(e.target.value)}
+                error={errors.nascimento}
+              />
+              <Input
+                label="CPF *"
+                mask="cpf"
+                placeholder="Digite o CPF"
+                value={form.cpf}
+                inputMode="numeric"
+                maxLength={14}
+                onValueChange={v => handleChange('cpf', v)}
+                error={errors.cpf}
+              />
+            </FormGrid>
+          </div>
+
+          <div>
+            <SectionLabel style={{ marginBottom: 12 }}>Informações Adicionais</SectionLabel>
+            <FormGrid>
+              {isEditing && (
+                <Select
+                  key={`status-${selectedPatient?.id}`}
+                  label="Status"
+                  options={statusOptions}
+                  placeholder="Selecione o status"
+                  value={form.status}
+                  onChange={v => handleChange('status', v)}
+                />
+              )}
+              <div style={{ gridColumn: isEditing ? 'auto' : 'span 2' }}>
+                <Input
+                  label="Como nos conheceu?"
+                  placeholder="Ex: Instagram, indicação, Google..."
+                  value={form.indicacao}
+                  onChange={e => handleChange('indicacao', e.target.value)}
+                />
+              </div>
+              <div style={{ gridColumn: 'span 2' }}>
+                <Input
+                  label="Observações / Alergias"
+                  placeholder="Digite observações de saúde relevantes ou alergias"
+                  maxLength={300}
+                  value={form.observacoes}
+                  onChange={e => handleChange('observacoes', e.target.value)}
+                />
+              </div>
+            </FormGrid>
+          </div>
+
+        </div>
+      </Modal>
+
+      {/* ─── Cancel Confirmation Modal ─── */}
+      <CancelModal
+        isOpen={showCancelModal}
+        title="Deseja cancelar?"
+        message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas."
+        onConfirm={forceClose}
+        onCancel={() => setShowCancelModal(false)}
+      />
+
+      {/* ─── Save Confirmation Modal ─── */}
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        title={isEditing ? 'Salvar alterações?' : 'Cadastrar paciente?'}
+        message={
+          isEditing
+            ? 'Tem certeza que deseja salvar as alterações feitas na ficha deste paciente?'
+            : `Tem certeza que deseja cadastrar ${form.nome || 'este paciente'}?`
+        }
+        confirmText="Confirmar"
+        cancelText="Voltar"
+        onConfirm={handleConfirmSave}
+        onCancel={() => setShowConfirmModal(false)}
+      />
+
+      {/* ─── Success Modal ─── */}
+      <SucessModal
+        isOpen={showSuccessModal}
+        title="Sucesso!"
+        message={
+          isEditing
+            ? 'Alterações salvas com sucesso!'
+            : 'Paciente cadastrado com sucesso!'
+        }
+        onClose={handleSuccessClose}
+        buttonText="Continuar"
+      />
     </Container>
   );
 }

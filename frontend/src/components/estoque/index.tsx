@@ -7,6 +7,9 @@ import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
 import StatCard from '@/components/ui/statcard';
 import Pagination from '@/components/ui/pagination';
+import CancelModal from '@/components/modals/cancelModal';
+import ConfirmModal from '@/components/modals/confirmModal';
+import SucessModal from '@/components/modals/sucessModal';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import {
   Container, Header, Title, Controls, SearchBarWrapper, SearchIconWrap, SearchInputStyled,
@@ -143,6 +146,29 @@ const MOV_VALIDATION_FIELDS = [
 const ITEMS_PER_PAGE = 10;
 const TABLE_MIN_HEIGHT = 540;
 
+function isItemFormDirty(form: ItemForm): boolean {
+  return (
+    form.nome.trim() !== '' ||
+    form.codigo.trim() !== '' ||
+    form.categoria !== '' ||
+    form.unidade !== '' ||
+    form.quantidade.trim() !== '' ||
+    form.minimo.trim() !== '' ||
+    form.maximo.trim() !== '' ||
+    form.preco.trim() !== '' ||
+    form.fornecedor.trim() !== '' ||
+    form.validade !== ''
+  );
+}
+
+function isMovFormDirty(form: MovForm): boolean {
+  return (
+    form.tipoMov !== '' ||
+    form.quantidadeMov.trim() !== '' ||
+    form.observacaoMov.trim() !== ''
+  );
+}
+
 export default function Estoque() {
   const [view,             setView]             = useState<'cards' | 'tabela'>('tabela');
   const [search,           setSearch]           = useState('');
@@ -154,6 +180,16 @@ export default function Estoque() {
   const [isMovModal,       setIsMovModal]       = useState(false);
   const [selected,         setSelected]         = useState<typeof mockStock[0] | null>(null);
   const [currentPage,      setCurrentPage]      = useState(1);
+
+  // Item modal states
+  const [showItemCancelModal,  setShowItemCancelModal]  = useState(false);
+  const [showItemConfirmModal, setShowItemConfirmModal] = useState(false);
+  const [showItemSuccessModal, setShowItemSuccessModal] = useState(false);
+
+  // Mov modal states
+  const [showMovCancelModal,  setShowMovCancelModal]  = useState(false);
+  const [showMovConfirmModal, setShowMovConfirmModal] = useState(false);
+  const [showMovSuccessModal, setShowMovSuccessModal] = useState(false);
 
   const [itemForm, setItemForm] = useState<ItemForm>(ITEM_INITIAL);
   const { errors: itemErrors, validate: itemValidate, clearError: itemClearError, clearAll: itemClearAll } = useSequentialValidation<ItemField>(ITEM_VALIDATION_FIELDS);
@@ -183,12 +219,74 @@ export default function Estoque() {
 
   function handleItemChange(field: ItemField, value: string) { setItemForm(prev => ({ ...prev, [field]: value })); itemClearError(field); }
   function handleItemDataChange(raw: string) { if (!raw) { handleItemChange('validade', ''); return; } const [yearStr, month, day] = raw.split('-'); const safeYear = yearStr ? yearStr.slice(0, 4) : ''; handleItemChange('validade', `${safeYear}-${month ?? ''}-${day ?? ''}`); }
-  function handleCloseItemModal() { setItemForm(ITEM_INITIAL); itemClearAll(); setIsModalOpen(false); setSelected(null); }
-  function handleSaveItem() { const isValid = itemValidate({ nome: itemForm.nome, codigo: itemForm.codigo, categoria: itemForm.categoria, unidade: itemForm.unidade, quantidade: itemForm.quantidade, minimo: itemForm.minimo, maximo: itemForm.maximo, preco: itemForm.preco, fornecedor: itemForm.fornecedor, validade: itemForm.validade }); if (!isValid) return; handleCloseItemModal(); }
+
+  function handleItemCancelClick() {
+    if (isItemFormDirty(itemForm)) {
+      setShowItemCancelModal(true);
+    } else {
+      forceCloseItemModal();
+    }
+  }
+
+  function forceCloseItemModal() {
+    setItemForm(ITEM_INITIAL);
+    itemClearAll();
+    setIsModalOpen(false);
+    setSelected(null);
+    setShowItemCancelModal(false);
+  }
+
+  function handleSaveItemClick() {
+    const isValid = itemValidate({
+      nome: itemForm.nome, codigo: itemForm.codigo, categoria: itemForm.categoria,
+      unidade: itemForm.unidade, quantidade: itemForm.quantidade, minimo: itemForm.minimo,
+      maximo: itemForm.maximo, preco: itemForm.preco, fornecedor: itemForm.fornecedor, validade: itemForm.validade,
+    });
+    if (!isValid) return;
+    setShowItemConfirmModal(true);
+  }
+
+  function handleConfirmSaveItem() {
+    setShowItemConfirmModal(false);
+    setIsModalOpen(false);
+    setItemForm(ITEM_INITIAL);
+    itemClearAll();
+    setSelected(null);
+    setShowItemSuccessModal(true);
+  }
 
   function handleMovChange(field: MovField, value: string) { setMovForm(prev => ({ ...prev, [field]: value })); movClearError(field); }
-  function handleCloseMovModal() { setMovForm(MOV_INITIAL); movClearAll(); setIsMovModal(false); setSelected(null); }
-  function handleSaveMov() { const isValid = movValidate({ tipoMov: movForm.tipoMov, quantidadeMov: movForm.quantidadeMov, observacaoMov: movForm.observacaoMov }); if (!isValid) return; handleCloseMovModal(); }
+
+  function handleMovCancelClick() {
+    if (isMovFormDirty(movForm)) {
+      setShowMovCancelModal(true);
+    } else {
+      forceCloseMovModal();
+    }
+  }
+
+  function forceCloseMovModal() {
+    setMovForm(MOV_INITIAL);
+    movClearAll();
+    setIsMovModal(false);
+    setSelected(null);
+    setShowMovCancelModal(false);
+  }
+
+  function handleSaveMovClick() {
+    const isValid = movValidate({ tipoMov: movForm.tipoMov, quantidadeMov: movForm.quantidadeMov, observacaoMov: movForm.observacaoMov });
+    if (!isValid) return;
+    setShowMovConfirmModal(true);
+  }
+
+  function handleConfirmSaveMov() {
+    setShowMovConfirmModal(false);
+    setIsMovModal(false);
+    setMovForm(MOV_INITIAL);
+    movClearAll();
+    setSelected(null);
+    setShowMovSuccessModal(true);
+  }
 
   function openEdit(item: typeof mockStock[0]) {
     setSelected(item);
@@ -310,7 +408,8 @@ export default function Estoque() {
         </CardsGrid>
       )}
 
-      <Modal isOpen={isModalOpen} onClose={handleCloseItemModal} title={selected ? 'Editar Item' : 'Novo Item de Estoque'} size="md" footer={<><Button variant="outline" onClick={handleCloseItemModal}>Cancelar</Button><Button variant="primary" onClick={handleSaveItem}>Salvar</Button></>}>
+      {/* Item Modal */}
+      <Modal isOpen={isModalOpen} onClose={handleItemCancelClick} closeOnOverlayClick={false} title={selected ? 'Editar Item' : 'Novo Item de Estoque'} size="md" footer={<><Button variant="outline" onClick={handleItemCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveItemClick}>Salvar</Button></>}>
         <FormGrid>
           <div style={{ gridColumn: 'span 2' }}><Input label="Nome do Item *" placeholder="Ex: Toxina Botulínica Allergan..." value={itemForm.nome} onChange={e => handleItemChange('nome', e.target.value)} maxLength={120} error={itemErrors.nome} /></div>
           <Input label="Código *" placeholder="Ex: BTX-001" value={itemForm.codigo} onChange={e => handleItemChange('codigo', e.target.value.toUpperCase())} maxLength={30} error={itemErrors.codigo} />
@@ -325,13 +424,64 @@ export default function Estoque() {
         </FormGrid>
       </Modal>
 
-      <Modal isOpen={isMovModal} onClose={handleCloseMovModal} title={`Movimentar: ${selected?.name ?? ''}`} size="sm" footer={<><Button variant="outline" onClick={handleCloseMovModal}>Cancelar</Button><Button variant="primary" onClick={handleSaveMov}>Confirmar</Button></>}>
+      {/* Mov Modal */}
+      <Modal isOpen={isMovModal} onClose={handleMovCancelClick} closeOnOverlayClick={false} title={`Movimentar: ${selected?.name ?? ''}`} size="sm" footer={<><Button variant="outline" onClick={handleMovCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveMovClick}>Confirmar</Button></>}>
         <FormGrid style={{ gridTemplateColumns: '1fr' }}>
           <Select label="Tipo de Movimentação *" options={movTypeOptions} placeholder="Selecione o tipo..." value={movForm.tipoMov} onChange={v => handleMovChange('tipoMov', v)} error={movErrors.tipoMov} />
           <Input label="Quantidade *" type="number" placeholder="0" value={movForm.quantidadeMov} onChange={e => handleMovChange('quantidadeMov', e.target.value)} error={movErrors.quantidadeMov} />
           <Input label="Observação *" placeholder="Ex: NF 1234, Procedimento da paciente Ana..." value={movForm.observacaoMov} onChange={e => handleMovChange('observacaoMov', e.target.value)} maxLength={200} error={movErrors.observacaoMov} />
         </FormGrid>
       </Modal>
+
+      {/* Item modals */}
+      <CancelModal
+        isOpen={showItemCancelModal}
+        title="Deseja cancelar?"
+        message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas."
+        onConfirm={forceCloseItemModal}
+        onCancel={() => setShowItemCancelModal(false)}
+      />
+      <ConfirmModal
+        isOpen={showItemConfirmModal}
+        title={selected ? 'Salvar alterações?' : 'Adicionar item?'}
+        message={selected ? `Deseja salvar as alterações do item "${itemForm.nome || selected.name}"?` : `Deseja adicionar o item "${itemForm.nome}" ao estoque?`}
+        confirmText="Confirmar"
+        cancelText="Voltar"
+        onConfirm={handleConfirmSaveItem}
+        onCancel={() => setShowItemConfirmModal(false)}
+      />
+      <SucessModal
+        isOpen={showItemSuccessModal}
+        title="Sucesso!"
+        message={selected ? 'Item atualizado com sucesso!' : 'Item adicionado ao estoque com sucesso!'}
+        onClose={() => setShowItemSuccessModal(false)}
+        buttonText="Continuar"
+      />
+
+      {/* Mov modals */}
+      <CancelModal
+        isOpen={showMovCancelModal}
+        title="Deseja cancelar?"
+        message="Você preencheu alguns campos. Se continuar, a movimentação será descartada."
+        onConfirm={forceCloseMovModal}
+        onCancel={() => setShowMovCancelModal(false)}
+      />
+      <ConfirmModal
+        isOpen={showMovConfirmModal}
+        title="Confirmar movimentação?"
+        message={`Deseja registrar a movimentação de "${selected?.name ?? 'item'}"?`}
+        confirmText="Confirmar"
+        cancelText="Voltar"
+        onConfirm={handleConfirmSaveMov}
+        onCancel={() => setShowMovConfirmModal(false)}
+      />
+      <SucessModal
+        isOpen={showMovSuccessModal}
+        title="Sucesso!"
+        message="Movimentação registrada com sucesso!"
+        onClose={() => setShowMovSuccessModal(false)}
+        buttonText="Continuar"
+      />
     </Container>
   );
 }

@@ -7,15 +7,8 @@ export const Container = styled.div`
   min-height: 100vh;
   background: #f5f5f5;
   box-sizing: border-box;
-
-  @media (max-width: 1024px) {
-    width: 100%;
-    padding: 24px 20px;
-  }
-
-  @media (max-width: 768px) {
-    padding: 20px 16px;
-  }
+  @media (max-width: 1024px) { width: 100%; padding: 24px 20px; }
+  @media (max-width: 768px)  { padding: 20px 16px; }
 `;
 
 export const Header = styled.div`
@@ -54,10 +47,7 @@ export const SearchBarWrapper = styled.div`
   position: relative;
   flex: 1;
   max-width: 380px;
-
-  @media (max-width: 768px) {
-    max-width: 100%;
-  }
+  @media (max-width: 768px) { max-width: 100%; }
 `;
 
 export const SearchIconWrap = styled.div`
@@ -80,17 +70,8 @@ export const SearchInputStyled = styled.input`
   color: #333;
   transition: all 0.25s;
   box-sizing: border-box;
-  font-family: var(--font-inter-variable-regular), 'Inter', sans-serif;
-
-  &:focus {
-    outline: none;
-    border-color: #BBA188;
-    box-shadow: 0 0 0 3px rgba(187, 161, 136, 0.15);
-  }
-
-  &::placeholder {
-    color: #bbb;
-  }
+  &:focus { outline: none; border-color: #BBA188; box-shadow: 0 0 0 3px rgba(187,161,136,0.15); }
+  &::placeholder { color: #bbb; }
 `;
 
 export const FilterRow = styled.div`
@@ -114,16 +95,12 @@ export const DropdownBtn = styled.button`
   background: white;
   color: #444;
   font-size: 0.88rem;
-  font-family: var(--font-metropolis-regular), 'Metropolis', sans-serif;
   font-weight: 500;
   cursor: pointer;
   min-width: 160px;
   justify-content: space-between;
   transition: all 0.2s;
-
-  &:hover {
-    border-color: #BBA188;
-  }
+  &:hover { border-color: #BBA188; }
 `;
 
 export const DropdownList = styled.div`
@@ -134,36 +111,27 @@ export const DropdownList = styled.div`
   background: white;
   border: 1.5px solid #e8e8e8;
   border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
   z-index: 100;
   overflow: hidden;
   animation: dropIn 0.18s ease;
-
   @keyframes dropIn {
     from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 `;
 
 export const DropdownItem = styled.div<{ $active?: boolean }>`
   padding: 11px 18px;
   font-size: 0.87rem;
-  font-family: var(--font-metropolis-regular), 'Metropolis', sans-serif;
   color: ${({ $active }) => ($active ? '#BBA188' : '#444')};
-  background: ${({ $active }) => ($active ? 'rgba(187, 161, 136, 0.1)' : 'white')};
+  background: ${({ $active }) => ($active ? 'rgba(187,161,136,0.1)' : 'white')};
   font-weight: ${({ $active }) => ($active ? '600' : '400')};
   cursor: pointer;
   transition: all 0.15s;
   border-bottom: 1px solid #f5f5f5;
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  &:hover {
-    background: rgba(187, 161, 136, 0.08);
-    color: #BBA188;
-  }
+  &:last-child { border-bottom: none; }
+  &:hover { background: rgba(187,161,136,0.08); color: #BBA188; }
 `;
 
 export const ClearFilterBtn = styled.button`
@@ -176,14 +144,9 @@ export const ClearFilterBtn = styled.button`
   background: white;
   color: #e74c3c;
   font-size: 0.84rem;
-  font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
   cursor: pointer;
   transition: all 0.2s;
-
-  &:hover {
-    background: #e74c3c;
-    color: white;
-  }
+  &:hover { background: #e74c3c; color: white; }
 `;
 
 export const ToggleGroup = styled.div`
@@ -206,27 +169,68 @@ export const ToggleBtn = styled.button<{ $active: boolean }>`
   align-items: center;
 `;
 
+/*
+ * CardsContainer — altura fixa calculada para exibir exatamente 2 linhas × 3 cards.
+ *
+ * Anatomia de cada card:
+ *   Header:  padding 20px top + 20px bottom + ProcName (~1.1rem ≈ 18px) + ProcCode (~0.72rem ≈ 12px) + gap = ~74px
+ *   Details: padding 16px top + 16px bottom + 4 DetailRows (cada ~22px) + 3 gaps (8px) = ~112px
+ *   Actions: padding 14px top + 14px bottom + btn height (~34px) + border = ~62px
+ *   Card total ≈ 248px
+ *
+ * Grid: 2 linhas × 248px + 1 gap (16px) = 512px
+ * Padding do wrapper: 20px top + 20px bottom = 40px
+ * Área de cards: 512px + 40px = 552px
+ * Paginação: min-height 56px (definido em PaginationWrapper)
+ * Total container: 552 + 56 = 608px
+ */
+export const CardsContainer = styled.div`
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 608px;
+`;
+
+/*
+ * TableContainer — altura fixa calculada para exibir exatamente 10 linhas.
+ *
+ * Header (Thead): padding 13px × 2 + texto ~14px = ~40px
+ * Cada linha (Tr): padding 13px × 2 + conteúdo ~20px + border 1px = ~47px
+ * 10 linhas: 10 × 47px = 470px
+ * Thead: 40px
+ * Área de tabela: 40px + 470px = 510px
+ * Paginação: 56px
+ * Total container: 510 + 56 = 566px
+ */
+export const TableContainer = styled.div`
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 566px;
+`;
+
+/* ✅ 3 colunas fixas para 6 cards por página (2 linhas × 3 colunas) */
 export const CardsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-  }
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 600px) { grid-template-columns: 1fr; }
 `;
 
 export const ProcCard = styled.div`
   background: white;
   border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
   overflow: hidden;
   transition: all 0.25s;
-
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  }
+  &:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
 `;
 
 export const ProcCardHeader = styled.div<{ $color: string }>`
@@ -242,7 +246,6 @@ export const ProcCardHeader = styled.div<{ $color: string }>`
 export const ProcCode = styled.div`
   font-size: 0.72rem;
   color: #999;
-  font-family: var(--font-roboto-medium), 'Roboto', sans-serif;
   margin-bottom: 4px;
 `;
 
@@ -269,14 +272,12 @@ export const DetailRow = styled.div`
 export const DetailLabel = styled.span`
   font-size: 0.82rem;
   color: #888;
-  font-family: var(--font-metropolis-regular), 'Metropolis', sans-serif;
 `;
 
 export const DetailValue = styled.span<{ $highlight?: boolean }>`
   font-size: ${({ $highlight }) => ($highlight ? '1rem' : '0.88rem')};
   font-weight: ${({ $highlight }) => ($highlight ? '700' : '600')};
   color: ${({ $highlight }) => ($highlight ? '#1a1a1a' : '#444')};
-  font-family: var(--font-roboto-medium), 'Roboto', sans-serif;
 `;
 
 export const ProcActions = styled.div`
@@ -293,7 +294,6 @@ export const Badge = styled.span<{ $bg?: string; $color?: string }>`
   border-radius: 20px;
   font-size: 0.74rem;
   font-weight: 600;
-  font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
   background: ${({ $bg }) => $bg || '#f0ebe4'};
   color: ${({ $color }) => $color || '#BBA188'};
 `;
@@ -317,7 +317,6 @@ export const Th = styled.th<{ $width?: string }>`
   padding: 13px 16px;
   text-align: left;
   font-size: 0.78rem;
-  font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
   font-weight: 600;
   color: white;
   text-transform: uppercase;
@@ -330,20 +329,13 @@ export const Tbody = styled.tbody``;
 export const Tr = styled.tr`
   border-bottom: 1px solid #f5f5f5;
   transition: background 0.15s;
-
-  &:hover {
-    background: #fdf9f5;
-  }
-
-  &:last-child {
-    border-bottom: none;
-  }
+  &:hover { background: #fdf9f5; }
+  &:last-child { border-bottom: none; }
 `;
 
-export const Td = styled.td`
+export const Td = styled.td<{ colSpan?: number }>`
   padding: 13px 16px;
   font-size: 0.88rem;
-  font-family: var(--font-inter-variable-regular), 'Inter', sans-serif;
   color: #444;
   vertical-align: middle;
 `;
@@ -365,12 +357,7 @@ export const IconBtn = styled.button`
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
-
-  &:hover {
-    background: #BBA188;
-    border-color: #BBA188;
-    color: white;
-  }
+  &:hover { background: #BBA188; border-color: #BBA188; color: white; }
 `;
 
 export const EmptyState = styled.div`
@@ -380,27 +367,86 @@ export const EmptyState = styled.div`
   padding: 60px 20px;
   text-align: center;
   color: #bbb;
-
-  h3 {
-    font-size: 1.1rem;
-    font-family: var(--font-cabourg-bold), 'Cabourg', serif;
-    color: #555;
-    margin: 0 0 6px;
-  }
-
-  p {
-    font-size: 0.88rem;
-    color: #999;
-    margin: 0;
-  }
+  h3 { font-size: 1.1rem; font-family: var(--font-cabourg-bold), 'Cabourg', serif; color: #555; margin: 0 0 6px; }
+  p  { font-size: 0.88rem; color: #999; margin: 0; }
 `;
 
 export const FormGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+  @media (max-width: 560px) { grid-template-columns: 1fr; }
+`;
 
-  @media (max-width: 560px) {
-    grid-template-columns: 1fr;
+/* ─────────────── Paginação ─────────────── */
+
+export const PaginationWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 14px 20px;
+  border-top: 1px solid #f0ebe4;
+  min-height: 56px;
+  flex-shrink: 0;
+`;
+
+export const PaginationInfo = styled.span`
+  font-size: 0.8rem;
+  color: #999;
+  font-weight: 400;
+  white-space: nowrap;
+`;
+
+export const PaginationControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+export const PageButton = styled.button<{ $active?: boolean }>`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: ${({ $active }) => ($active ? '700' : '500')};
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: ${({ $active }) => ($active ? '#BBA188' : 'transparent')};
+  color: ${({ $active }) => ($active ? '#ffffff' : '#888')};
+  &:hover:not(:disabled) {
+    background: ${({ $active }) => ($active ? '#BBA188' : 'rgba(187,161,136,0.12)')};
+    color: ${({ $active }) => ($active ? '#ffffff' : '#BBA188')};
   }
+`;
+
+export const PageEllipsis = styled.span`
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #bbb;
+  user-select: none;
+`;
+
+export const PaginationArrow = styled.button`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #BBA188;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  &:hover:not(:disabled) { background: rgba(187,161,136,0.12); }
+  &:disabled { color: #ddd; cursor: not-allowed; }
 `;

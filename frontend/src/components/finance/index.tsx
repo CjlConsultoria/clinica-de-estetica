@@ -7,6 +7,9 @@ import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
 import StatCard from '@/components/ui/statcard';
 import Pagination from '@/components/ui/pagination';
+import CancelModal from '@/components/modals/cancelModal';
+import ConfirmModal from '@/components/modals/confirmModal';
+import SucessModal from '@/components/modals/sucessModal';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import {
   Container, Header, Title, Controls, SearchBarWrapper, SearchIconWrap, SearchInputStyled,
@@ -87,6 +90,18 @@ const LANCAMENTO_VALIDATION_FIELDS = [
 const ITEMS_PER_PAGE = 10;
 const TABLE_MIN_HEIGHT = 540;
 
+function isLancFormDirty(form: LancamentoForm): boolean {
+  return (
+    form.tipo !== '' ||
+    form.categoria !== '' ||
+    form.descricao.trim() !== '' ||
+    form.valor.trim() !== '' ||
+    form.data !== '' ||
+    form.paciente.trim() !== '' ||
+    form.pagamento !== ''
+  );
+}
+
 export default function Finance() {
   const [search,       setSearch]       = useState('');
   const [filterType,   setFilterType]   = useState('Todos');
@@ -95,6 +110,15 @@ export default function Finance() {
   const [isModalOpen,  setIsModalOpen]  = useState(false);
   const [exporting,    setExporting]    = useState(false);
   const [currentPage,  setCurrentPage]  = useState(1);
+
+  // Lancamento modal states
+  const [showCancelModal,  setShowCancelModal]  = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  // Export modal states
+  const [showExportConfirmModal, setShowExportConfirmModal] = useState(false);
+  const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
 
   const [lancForm, setLancForm] = useState<LancamentoForm>(LANCAMENTO_INITIAL);
   const { errors: lancErrors, validate: lancValidate, clearError: lancClearError, clearAll: lancClearAll } = useSequentialValidation<LancamentoField>(LANCAMENTO_VALIDATION_FIELDS);
@@ -116,14 +140,49 @@ export default function Finance() {
   const startIndex    = (safePage - 1) * ITEMS_PER_PAGE;
   const paginatedData = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  function handleLancChange(field: LancamentoField | 'paciente', value: string) { setLancForm(prev => ({ ...prev, [field]: value })); if (field !== 'paciente') lancClearError(field as LancamentoField); }
+  function handleLancChange(field: LancamentoField | 'paciente', value: string) {
+    setLancForm(prev => ({ ...prev, [field]: value }));
+    if (field !== 'paciente') lancClearError(field as LancamentoField);
+  }
   function handleLancDataChange(raw: string) { if (!raw) { handleLancChange('data', ''); return; } const [yearStr, month, day] = raw.split('-'); const safeYear = yearStr ? yearStr.slice(0, 4) : ''; handleLancChange('data', `${safeYear}-${month ?? ''}-${day ?? ''}`); }
-  function handleCloseLancModal() { setLancForm(LANCAMENTO_INITIAL); lancClearAll(); setIsModalOpen(false); }
-  function handleSaveLanc() { const isValid = lancValidate({ tipo: lancForm.tipo, categoria: lancForm.categoria, descricao: lancForm.descricao, valor: lancForm.valor, data: lancForm.data, pagamento: lancForm.pagamento }); if (!isValid) return; handleCloseLancModal(); }
+
+  function handleCancelClick() {
+    if (isLancFormDirty(lancForm)) {
+      setShowCancelModal(true);
+    } else {
+      forceClose();
+    }
+  }
+
+  function forceClose() {
+    setLancForm(LANCAMENTO_INITIAL);
+    lancClearAll();
+    setIsModalOpen(false);
+    setShowCancelModal(false);
+  }
+
+  function handleSaveLancClick() {
+    const isValid = lancValidate({ tipo: lancForm.tipo, categoria: lancForm.categoria, descricao: lancForm.descricao, valor: lancForm.valor, data: lancForm.data, pagamento: lancForm.pagamento });
+    if (!isValid) return;
+    setShowConfirmModal(true);
+  }
+
+  function handleConfirmSave() {
+    setShowConfirmModal(false);
+    setIsModalOpen(false);
+    setLancForm(LANCAMENTO_INITIAL);
+    lancClearAll();
+    setShowSuccessModal(true);
+  }
 
   const toggle = (name: string) => setOpenDropdown(prev => prev === name ? null : name);
 
-  const handleExportPDF = async () => {
+  const handleExportClick = () => {
+    setShowExportConfirmModal(true);
+  };
+
+  const handleConfirmExport = async () => {
+    setShowExportConfirmModal(false);
     try {
       setExporting(true);
       const response = await fetch('/api/relatorios/financeiro', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transactions: mockFinance, monthlyData, month: 'Fevereiro 2025', totalReceita, totalDespesa, saldo }) });
@@ -133,6 +192,7 @@ export default function Finance() {
       const a    = document.createElement('a');
       a.href = url; a.download = 'relatorio-financeiro-fevereiro-2025.pdf'; a.click();
       URL.revokeObjectURL(url);
+      setShowExportSuccessModal(true);
     } catch (err) { console.error('[Exportar PDF]', err); alert('Erro ao exportar o PDF. Tente novamente.'); } finally { setExporting(false); }
   };
 
@@ -141,7 +201,7 @@ export default function Finance() {
       <Header>
         <Title>Financeiro</Title>
         <div style={{ display: 'flex', gap: 12 }}>
-          <Button variant="outline" loading={exporting} icon={!exporting ? (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>) : undefined} onClick={handleExportPDF}>{exporting ? 'Exportando...' : 'Exportar PDF'}</Button>
+          <Button variant="outline" loading={exporting} icon={!exporting ? (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>) : undefined} onClick={handleExportClick}>{exporting ? 'Exportando...' : 'Exportar PDF'}</Button>
           <Button variant="primary" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>} onClick={() => setIsModalOpen(true)}>Novo Lançamento</Button>
         </div>
       </Header>
@@ -234,7 +294,8 @@ export default function Finance() {
         <Pagination currentPage={safePage} totalItems={totalFiltered} itemsPerPage={ITEMS_PER_PAGE} onPageChange={setCurrentPage} />
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={handleCloseLancModal} title="Novo Lançamento" size="md" footer={<><Button variant="outline" onClick={handleCloseLancModal}>Cancelar</Button><Button variant="primary" onClick={handleSaveLanc}>Salvar</Button></>}>
+      {/* Novo Lançamento Modal */}
+      <Modal isOpen={isModalOpen} onClose={handleCancelClick} closeOnOverlayClick={false} title="Novo Lançamento" size="md" footer={<><Button variant="outline" onClick={handleCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveLancClick}>Salvar</Button></>}>
         <FormGrid>
           <Select label="Tipo *" options={typeOptions} placeholder="Selecione..." value={lancForm.tipo} onChange={v => handleLancChange('tipo', v)} error={lancErrors.tipo} />
           <Select label="Categoria *" options={categoryOptions} placeholder="Selecione..." value={lancForm.categoria} onChange={v => handleLancChange('categoria', v)} error={lancErrors.categoria} />
@@ -245,6 +306,49 @@ export default function Finance() {
           <Input label="Paciente (opcional)" placeholder="Nome do paciente..." value={lancForm.paciente} onChange={e => handleLancChange('paciente', e.target.value)} maxLength={80} />
         </FormGrid>
       </Modal>
+
+      {/* Lancamento modals */}
+      <CancelModal
+        isOpen={showCancelModal}
+        title="Deseja cancelar?"
+        message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas."
+        onConfirm={forceClose}
+        onCancel={() => setShowCancelModal(false)}
+      />
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        title="Salvar lançamento?"
+        message={`Deseja registrar este lançamento de ${lancForm.tipo === 'receita' ? 'receita' : 'despesa'}${lancForm.descricao ? `: "${lancForm.descricao}"` : ''}?`}
+        confirmText="Confirmar"
+        cancelText="Voltar"
+        onConfirm={handleConfirmSave}
+        onCancel={() => setShowConfirmModal(false)}
+      />
+      <SucessModal
+        isOpen={showSuccessModal}
+        title="Sucesso!"
+        message="Lançamento registrado com sucesso!"
+        onClose={() => setShowSuccessModal(false)}
+        buttonText="Continuar"
+      />
+
+      {/* Export modals */}
+      <ConfirmModal
+        isOpen={showExportConfirmModal}
+        title="Exportar PDF?"
+        message="Deseja exportar o relatório financeiro em PDF?"
+        confirmText="Exportar"
+        cancelText="Cancelar"
+        onConfirm={handleConfirmExport}
+        onCancel={() => setShowExportConfirmModal(false)}
+      />
+      <SucessModal
+        isOpen={showExportSuccessModal}
+        title="PDF exportado!"
+        message="Relatório financeiro exportado com sucesso!"
+        onClose={() => setShowExportSuccessModal(false)}
+        buttonText="Continuar"
+      />
     </Container>
   );
 }

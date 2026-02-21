@@ -20,7 +20,7 @@ export const ModalContainer = styled.div`
   border-radius: 16px;
   width: 90%;
   max-width: 450px;
-  min-height: 200px;
+  height: 230px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.2);
   overflow: hidden;
   display: flex;
@@ -30,12 +30,13 @@ export const ModalContainer = styled.div`
 
 export const Header = styled.div`
   padding: 20px;
-  background: #19921f;
+  background: #41ac47;
   flex-shrink: 0;
 `;
 
 export const Title = styled.h2`
   font-size: 1.5rem;
+  font-family: var(--font-cabourg-bold), 'Cabourg', serif;
   font-weight: 700;
   color: #ffffff;
   margin: 0;
@@ -44,7 +45,7 @@ export const Title = styled.h2`
 `;
 
 export const Content = styled.div`
-  padding: 28px 20px;
+  padding: 14px 20px 8px;
   background-color: #ffffff;
   flex: 1;
 `;
@@ -58,7 +59,7 @@ export const Subtitle = styled.p`
 `;
 
 export const ContentWithTitle = styled.div`
-  padding: 28px 20px;
+  padding: 14px 20px 8px;
   background-color: #ffffff;
 `;
 
@@ -82,12 +83,12 @@ export const ConfirmButton = styled.button`
   height: 56px;
   border: none;
   border-radius: 0 0 16px 16px;
-  background-color: #fff3e0;
-  color: #19921f;
+  background-color: #ffffff;
+  color: #41ac47;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  &:hover { background-color: #f8f9fa; }
+  &:hover { background-color: #faf9f8; }
   @media (max-width: 576px) { height: 52px; font-size: 0.95rem; }
 `;

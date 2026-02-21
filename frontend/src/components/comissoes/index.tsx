@@ -4,6 +4,9 @@ import { useState } from 'react';
 import Button from '@/components/ui/button';
 import StatCard from '@/components/ui/statcard';
 import Pagination from '@/components/ui/pagination';
+import CancelModal from '@/components/modals/cancelModal';
+import ConfirmModal from '@/components/modals/confirmModal';
+import SucessModal from '@/components/modals/sucessModal';
 import {
   Container, Header, Title, Controls, SearchBarWrapper, SearchIconWrap, SearchInputStyled,
   FilterRow, DropdownWrapper, DropdownBtn, DropdownList, DropdownItem, ClearFilterBtn,
@@ -64,6 +67,10 @@ export default function Comissoes() {
   const [exporting,    setExporting]    = useState(false);
   const [currentPage,  setCurrentPage]  = useState(1);
 
+  const [showCancelModal,  setShowCancelModal]  = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
   const totalComissoes = mockComissoes.reduce((a, c) => a + c.comissao, 0);
   const totalPago      = mockComissoes.filter(c => c.status === 'pago').reduce((a, c) => a + c.comissao, 0);
   const totalPendente  = mockComissoes.filter(c => c.status === 'pendente').reduce((a, c) => a + c.comissao, 0);
@@ -87,10 +94,12 @@ export default function Comissoes() {
   const toggle = (name: string) =>
     setOpenDropdown(prev => (prev === name ? null : name));
 
-  const handleExport = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleExportClick = () => {
+    setShowConfirmModal(true);
+  };
 
+  const handleConfirmExport = async () => {
+    setShowConfirmModal(false);
     setExporting(true);
     let objectUrl: string | null = null;
 
@@ -122,6 +131,8 @@ export default function Comissoes() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+
+      setShowSuccessModal(true);
     } catch (err) {
       console.error('Erro ao exportar:', err);
       alert('Não foi possível gerar o relatório. Tente novamente.');
@@ -133,6 +144,14 @@ export default function Comissoes() {
     }
   };
 
+  const handleCancelExport = () => {
+    setShowCancelModal(false);
+  };
+
+  const handleSuccessClose = () => {
+    setShowSuccessModal(false);
+  };
+
   return (
     <Container>
       <Header>
@@ -141,7 +160,7 @@ export default function Comissoes() {
         <Button
           type="button"
           variant="primary"
-          onClick={handleExport}
+          onClick={handleExportClick}
           disabled={exporting}
           icon={
             exporting ? (
@@ -389,6 +408,32 @@ export default function Comissoes() {
           onPageChange={setCurrentPage}
         />
       </div>
+
+      <CancelModal
+        isOpen={showCancelModal}
+        title="Cancelar exportação?"
+        message="Tem certeza que deseja cancelar a exportação do relatório?"
+        onConfirm={handleCancelExport}
+        onCancel={() => setShowCancelModal(false)}
+      />
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        title="Exportar relatório?"
+        message={`Deseja exportar o relatório de comissões${filterMonth !== 'Todos' ? ` de ${filterMonth}` : ''}${filterProf !== 'Todos' ? ` de ${filterProf}` : ''}?`}
+        confirmText="Exportar"
+        cancelText="Cancelar"
+        onConfirm={handleConfirmExport}
+        onCancel={() => setShowConfirmModal(false)}
+      />
+
+      <SucessModal
+        isOpen={showSuccessModal}
+        title="Sucesso!"
+        message="Relatório de comissões exportado com sucesso!"
+        onClose={handleSuccessClose}
+        buttonText="Continuar"
+      />
     </Container>
   );
 }

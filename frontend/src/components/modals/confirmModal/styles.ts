@@ -20,7 +20,7 @@ export const ModalContainer = styled.div`
   position: relative;
   width: 90%;
   max-width: 450px;
-  min-height: 200px;
+  height: 230px;
   background-color: #ffffff;
   border-radius: 16px;
   overflow: hidden;
@@ -38,6 +38,7 @@ export const Header = styled.div`
 
 export const Title = styled.h2`
   font-size: 1.5rem;
+  font-family: var(--font-cabourg-bold), 'Cabourg', serif;
   font-weight: 700;
   color: #ffffff;
   margin: 0;
@@ -46,7 +47,7 @@ export const Title = styled.h2`
 `;
 
 export const Content = styled.div`
-  padding: 28px 20px;
+  padding: 14px 20px 8px;
   background-color: #ffffff;
   flex: 1;
   display: flex;
@@ -54,7 +55,7 @@ export const Content = styled.div`
 `;
 
 export const ContentWithTitle = styled.div`
-  padding: 28px 20px;
+  padding: 14px 20px 8px;
   background-color: #ffffff;
   flex: 1;
 `;
@@ -103,12 +104,12 @@ export const ConfirmButton = styled.button`
   height: 56px;
   border: none;
   border-radius: 0 0 16px 0;
-  background-color: #fff3e0;
+  background-color: #ffffff;
   color: #a8906f;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  &:hover { background-color: #f8f9fa; }
+  &:hover { background-color: #faf9f8; }
   @media (max-width: 576px) { height: 52px; font-size: 0.95rem; }
 `;
