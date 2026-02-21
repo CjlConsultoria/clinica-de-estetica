@@ -1,0 +1,828 @@
+'use client';
+
+import { useState } from 'react';
+import Button from '@/components/ui/button';
+import Modal from '@/components/ui/modal';
+import Input from '@/components/ui/input';
+import Select from '@/components/ui/select';
+import StatCard from '@/components/ui/statcard';
+import {
+  Container, Header, Title, StatsGrid, Controls,
+  SearchBarWrapper, SearchIconWrap, SearchInputStyled,
+  FilterRow, DropdownWrapper, DropdownBtn, DropdownList, DropdownItem, ClearFilterBtn,
+  TableWrapper, Table, Thead, Th, Tbody, Tr, Td, Badge, ActionGroup, IconBtn,
+  Avatar, ProfissionalInfo, ProfissionalName, ProfissionalEmail, EmptyState,
+  FormGrid, SectionLabel, PasswordHint, RoleTag,
+  WizardSteps, WizardStep, WizardStepLine, WizardStepCircle, WizardStepLabel,
+  AreaCard, AreaGrid, AreaIcon, AreaTitle, AreaDesc,
+  WizardNav, StepSection,
+  DetailModal, DetailHeader, DetailAvatar, DetailName, DetailMeta, DetailMetaItem,
+  DetailSection, DetailSectionTitle, StatsRow, StatPill,
+  InfoGrid, InfoItem, InfoLabel, InfoValue,
+  ObsBox,
+} from './styles';
+import { validateEmail, validatePassword, ERROR_MESSAGES } from './validation';
+
+type AreaType = 'tecnica' | 'administrativa' | '';
+type CargoTecnico = 'esteticista' | 'biomedico' | 'enfermeiro' | 'dermatologista' | 'fisioterapeuta';
+type CargoAdmin = 'recepcionista' | 'gerente' | 'financeiro';
+type Cargo = CargoTecnico | CargoAdmin | '';
+
+interface CargoConfig {
+  label: string;
+  icon: React.ReactNode;
+  desc: string;
+  requiresRegistro: boolean;
+  registroLabel?: string;
+  registroPlaceholder?: string;
+  requiresEspecialidade: boolean;
+  especialidades?: { value: string; label: string }[];
+}
+
+const CARGO_TECNICO_CONFIG: Record<CargoTecnico, CargoConfig> = {
+  esteticista: {
+    label: 'Esteticista',
+    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 14H8a4 4 0 0 0-4 4v2h16v-2a4 4 0 0 0-4-4z"/><line x1="12" y1="11" x2="12" y2="14"/></svg>,
+    desc: 'Limpeza de pele, drenagem, tratamentos faciais e corporais',
+    requiresRegistro: true, registroLabel: 'CREFITO / Registro Profissional', registroPlaceholder: 'Ex: CREFITO-3 123456-F',
+    requiresEspecialidade: true,
+    especialidades: [
+      { value: 'estetica-facial',   label: 'Estética Facial'   },
+      { value: 'estetica-corporal', label: 'Estética Corporal' },
+      { value: 'estetica-capilar',  label: 'Estética Capilar'  },
+      { value: 'depilacao',         label: 'Depilação'          },
+      { value: 'massoterapia',      label: 'Massoterapia'       },
+      { value: 'estetica-completa', label: 'Estética Completa'  },
+    ],
+  },
+  biomedico: {
+    label: 'Biomédico Esteta',
+    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>,
+    desc: 'Toxina botulínica, preenchimento, bioestimuladores, injetáveis',
+    requiresRegistro: true, registroLabel: 'CRBim', registroPlaceholder: 'Ex: CRBim-5 123456',
+    requiresEspecialidade: true,
+    especialidades: [
+      { value: 'biomedicina-estetica',     label: 'Biomedicina Estética'     },
+      { value: 'procedimentos-injetaveis', label: 'Procedimentos Injetáveis' },
+      { value: 'laser-terapia',            label: 'Laserterapia'              },
+    ],
+  },
+  enfermeiro: {
+    label: 'Enfermeiro Esteta',
+    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>,
+    desc: 'Aplicações, tratamentos injetáveis, procedimentos minimamente invasivos',
+    requiresRegistro: true, registroLabel: 'COREN', registroPlaceholder: 'Ex: COREN/SP 123456',
+    requiresEspecialidade: true,
+    especialidades: [
+      { value: 'enfermagem-estetica',      label: 'Enfermagem Estética'      },
+      { value: 'procedimentos-injetaveis', label: 'Procedimentos Injetáveis' },
+      { value: 'enfermagem-geral',         label: 'Enfermagem Geral'         },
+    ],
+  },
+  dermatologista: {
+    label: 'Dermatologista',
+    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg>,
+    desc: 'Tratamentos clínicos, procedimentos médicos, casos complexos',
+    requiresRegistro: true, registroLabel: 'CRM', registroPlaceholder: 'Ex: CRM/SP 123456',
+    requiresEspecialidade: true,
+    especialidades: [
+      { value: 'dermatologia-clinica',   label: 'Dermatologia Clínica'   },
+      { value: 'dermatologia-estetica',  label: 'Dermatologia Estética'  },
+      { value: 'cirurgia-dermatologica', label: 'Cirurgia Dermatológica' },
+    ],
+  },
+  fisioterapeuta: {
+    label: 'Fisioterapeuta Dermato',
+    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="5" r="3"/><path d="M12 8v4"/><path d="M8 20l4-8 4 8"/><line x1="7" y1="14" x2="17" y2="14"/></svg>,
+    desc: 'Tratamentos corporais, pós-operatório, ultrassom, radiofrequência',
+    requiresRegistro: true, registroLabel: 'CREFITO', registroPlaceholder: 'Ex: CREFITO-3 654321-F',
+    requiresEspecialidade: true,
+    especialidades: [
+      { value: 'dermato-funcional', label: 'Dermato Funcional' },
+      { value: 'pos-operatorio',    label: 'Pós-Operatório'    },
+      { value: 'corporal',          label: 'Corporal Geral'    },
+    ],
+  },
+};
+
+const CARGO_ADMIN_CONFIG: Record<CargoAdmin, CargoConfig> = {
+  recepcionista: {
+    label: 'Recepcionista',
+    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.72 9.81a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.63 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9a16 16 0 0 0 6.92 6.92l1.37-1.37a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 23 17z"/></svg>,
+    desc: 'Atendimento ao cliente, agendamentos, organização da agenda',
+    requiresRegistro: false, requiresEspecialidade: false,
+  },
+  gerente: {
+    label: 'Gerente de Clínica',
+    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+    desc: 'Gestão de equipe, controle financeiro, metas e estratégia',
+    requiresRegistro: false, requiresEspecialidade: false,
+  },
+  financeiro: {
+    label: 'Financeiro',
+    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
+    desc: 'Contas a pagar/receber, fluxo de caixa, relatórios',
+    requiresRegistro: false, requiresEspecialidade: false,
+  },
+};
+
+const ALL_CARGO_CONFIG: Record<string, CargoConfig> = {
+  ...CARGO_TECNICO_CONFIG,
+  ...CARGO_ADMIN_CONFIG,
+};
+
+const statusOptions = [{ value: 'ativo', label: 'Ativo' }, { value: 'inativo', label: 'Inativo' }];
+const filterStatus  = ['Todos', 'Ativo', 'Inativo'];
+const filterAreas   = ['Todos', 'Técnica', 'Administrativa'];
+const STEP_LABELS   = ['Dados Básicos', 'Área', 'Cargo', 'Acesso'];
+
+const INITIAL_PROFISSIONAIS = [
+  { id: 1, name: 'Ana Beatriz Lima',   email: 'ana.lima@clinica.com',      phone: '(11) 98765-4321', registro: 'CREFITO-3 112233-F', area: 'tecnica',        cargo: 'esteticista',    especialidade: 'Estética Facial',      status: 'ativo',   atendimentos: 142, ultimoAcesso: '20/02/2025', observacoes: '' },
+  { id: 2, name: 'Dra. Clara Andrade', email: 'clara.andrade@clinica.com', phone: '(11) 97654-3210', registro: 'CRM/SP 654321',      area: 'tecnica',        cargo: 'dermatologista', especialidade: 'Dermatologia Clínica', status: 'ativo',   atendimentos: 98,  ultimoAcesso: '19/02/2025', observacoes: '' },
+  { id: 3, name: 'Juliana Ferreira',   email: 'juliana.f@clinica.com',     phone: '(31) 94321-0987', registro: 'COREN/SP 901234',    area: 'tecnica',        cargo: 'enfermeiro',     especialidade: 'Enf. Estética',        status: 'ativo',   atendimentos: 55,  ultimoAcesso: '17/02/2025', observacoes: '' },
+  { id: 4, name: 'Rafael Costa',       email: 'rafael.costa@clinica.com',  phone: '(21) 95432-1098', registro: '',                   area: 'administrativa', cargo: 'recepcionista',  especialidade: '',                     status: 'inativo', atendimentos: 0,   ultimoAcesso: '10/01/2025', observacoes: '' },
+  { id: 5, name: 'Mariana Souza',      email: 'mariana.s@clinica.com',     phone: '(21) 94321-9876', registro: 'CRBim-5 445566',     area: 'tecnica',        cargo: 'biomedico',      especialidade: 'Biomedicina Estética', status: 'ativo',   atendimentos: 76,  ultimoAcesso: '18/02/2025', observacoes: '' },
+  { id: 6, name: 'Patricia Gomes',     email: 'patricia.g@clinica.com',    phone: '(11) 93210-8765', registro: '',                   area: 'administrativa', cargo: 'gerente',        especialidade: '',                     status: 'ativo',   atendimentos: 0,   ultimoAcesso: '20/02/2025', observacoes: '' },
+];
+
+const avatarColors = ['#BBA188', '#8a7560', '#a8906f', '#c9a882', '#917255', '#d4b896'];
+
+const statusColors: Record<string, { bg: string; color: string }> = {
+  ativo:   { bg: '#f0ebe4', color: '#8a7560' },
+  inativo: { bg: '#f5f5f5', color: '#888'    },
+};
+
+const cargoTagColors: Record<string, { bg: string; color: string }> = {
+  esteticista:    { bg: '#fdf0e8', color: '#c97a3a' },
+  biomedico:      { bg: '#f0e8fd', color: '#7a3ac9' },
+  enfermeiro:     { bg: '#e8fdf0', color: '#3ac97a' },
+  dermatologista: { bg: '#e8f0fd', color: '#3a6bc9' },
+  fisioterapeuta: { bg: '#fde8f5', color: '#c93a8a' },
+  recepcionista:  { bg: '#fdf8e8', color: '#c9b03a' },
+  gerente:        { bg: '#1b1b1b', color: '#EBD5B0' },
+  financeiro:     { bg: '#e8fdf8', color: '#3ac9a8' },
+};
+
+interface ProfissionalForm {
+  nome: string; email: string; telefone: string;
+  area: AreaType; cargo: Cargo;
+  especialidade: string; registro: string; status: string; observacoes: string;
+  senha: string; confirmarSenha: string;
+}
+
+const FORM_INITIAL: ProfissionalForm = {
+  nome: '', email: '', telefone: '',
+  area: '', cargo: '', especialidade: '', registro: '', status: '', observacoes: '',
+  senha: '', confirmarSenha: '',
+};
+
+type Errors = Partial<Record<keyof ProfissionalForm, string>>;
+
+type Profissional = {
+  id: number; name: string; email: string; phone: string;
+  registro: string; area: string; cargo: string; especialidade: string;
+  status: string; atendimentos: number; ultimoAcesso: string; observacoes: string;
+};
+
+function getInitials(name: string) {
+  return name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+}
+
+function CargoCard({ children, $active, onClick }: { children: React.ReactNode; $active: boolean; onClick: () => void }) {
+  return (
+    <div onClick={onClick} style={{
+      display: 'flex', flexDirection: 'column', gap: 5,
+      padding: '12px 14px',
+      border: `1.5px solid ${$active ? '#BBA188' : '#e8e8e8'}`,
+      borderRadius: 12,
+      background: $active ? 'rgba(187,161,136,0.07)' : 'white',
+      cursor: 'pointer',
+      transition: 'all 0.18s',
+      boxShadow: $active ? '0 0 0 3px rgba(187,161,136,0.15)' : 'none',
+    }}>
+      {children}
+    </div>
+  );
+}
+
+function EyeBtn({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button {...props} style={{ position: 'absolute', right: 12, top: 34, background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', padding: 0 }}>
+      {children}
+    </button>
+  );
+}
+
+function EyeOnIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
+}
+
+function EyeOffIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>;
+}
+
+/* Ícones SVG cinza escuro para as áreas de atuação */
+const AreaTecnicaIcon = () => (
+  <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/>
+    <path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4"/>
+    <circle cx="20" cy="10" r="2"/>
+  </svg>
+);
+
+const AreaAdminIcon = () => (
+  <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <line x1="9" y1="6" x2="15" y2="6"/>
+    <line x1="9" y1="10" x2="15" y2="10"/>
+    <line x1="9" y1="14" x2="13" y2="14"/>
+    <line x1="9" y1="18" x2="11" y2="18"/>
+  </svg>
+);
+
+export default function Profissionais() {
+  const [profissionais,        setProfissionais]        = useState<Profissional[]>(INITIAL_PROFISSIONAIS);
+  const [search,               setSearch]               = useState('');
+  const [filterStat,           setFilterStat]           = useState('Todos');
+  const [filterArea,           setFilterArea]           = useState('Todos');
+  const [openDrop,             setOpenDrop]             = useState<string | null>(null);
+  const [isModalOpen,          setIsModalOpen]          = useState(false);
+  const [isDetailOpen,         setIsDetailOpen]         = useState(false);
+  const [selectedProfissional, setSelectedProfissional] = useState<Profissional | null>(null);
+  const [form,                 setForm]                 = useState<ProfissionalForm>(FORM_INITIAL);
+  const [errors,               setErrors]               = useState<Errors>({});
+  const [step,                 setStep]                 = useState(1);
+  const [showSenha,            setShowSenha]            = useState(false);
+  const [showConfirm,          setShowConfirm]          = useState(false);
+  const [isEditing,            setIsEditing]            = useState(false);
+
+  const cargoConfig   = form.cargo ? ALL_CARGO_CONFIG[form.cargo] : null;
+  const cargoOptions  =
+    form.area === 'tecnica'
+      ? Object.entries(CARGO_TECNICO_CONFIG).map(([v, c]) => ({ value: v, label: c.label }))
+      : form.area === 'administrativa'
+        ? Object.entries(CARGO_ADMIN_CONFIG).map(([v, c]) => ({ value: v, label: c.label }))
+        : [];
+
+  const filtered = profissionais.filter(p => {
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.email.includes(search);
+    const matchStat   = filterStat === 'Todos' || p.status === filterStat.toLowerCase();
+    const matchArea   = filterArea === 'Todos' || (filterArea === 'Técnica' ? p.area === 'tecnica' : p.area === 'administrativa');
+    return matchSearch && matchStat && matchArea;
+  });
+
+  const totalProfissionais = profissionais.length;
+  const ativos             = profissionais.filter(p => p.status === 'ativo').length;
+  const inativos           = profissionais.filter(p => p.status === 'inativo').length;
+  const totalAtend         = profissionais.reduce((acc, p) => acc + p.atendimentos, 0);
+
+  function handleChange(field: keyof ProfissionalForm, value: string) {
+    setForm(prev => {
+      const next = { ...prev, [field]: value };
+      if (field === 'area')  { next.cargo = ''; next.especialidade = ''; next.registro = ''; }
+      if (field === 'cargo') { next.especialidade = ''; next.registro = ''; }
+      return next;
+    });
+    setErrors(prev => ({ ...prev, [field]: undefined }));
+  }
+
+  function validateStep(s: number): boolean {
+    const e: Errors = {};
+    if (s === 1) {
+      if (!form.nome.trim())     e.nome     = 'Nome completo é obrigatório';
+      const emailErr = validateEmail(form.email);
+      if (emailErr)              e.email    = emailErr.message;
+      if (!form.telefone.trim()) e.telefone = 'Telefone é obrigatório';
+    }
+    if (s === 2) {
+      if (!form.area) e.area = 'Selecione uma área';
+    }
+    if (s === 3) {
+      if (!form.cargo)  e.cargo  = 'Selecione o cargo';
+      if (!form.status) e.status = 'Selecione um status';
+      if (cargoConfig?.requiresRegistro && !form.registro.trim())
+        e.registro = `${cargoConfig.registroLabel} é obrigatório`;
+      if (cargoConfig?.requiresEspecialidade && !form.especialidade)
+        e.especialidade = 'Selecione a área de atuação';
+    }
+    if (s === 4) {
+      if (!isEditing) {
+        const senhaErr = validatePassword(form.senha);
+        if (senhaErr)                    e.senha          = senhaErr.message;
+        if (!form.confirmarSenha.trim()) e.confirmarSenha = ERROR_MESSAGES.PASSWORD_CONFIRM_REQUIRED;
+      } else if (form.senha) {
+        const senhaErr = validatePassword(form.senha);
+        if (senhaErr)                    e.senha          = senhaErr.message;
+        if (!form.confirmarSenha.trim()) e.confirmarSenha = ERROR_MESSAGES.PASSWORD_CONFIRM_REQUIRED;
+      }
+    }
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  }
+
+  function nextStep() { if (!validateStep(step)) return; setStep(s => Math.min(s + 1, 4)); }
+  function prevStep()  { setErrors({}); setStep(s => Math.max(s - 1, 1)); }
+
+  function openNew() {
+    setIsEditing(false);
+    setSelectedProfissional(null);
+    setForm(FORM_INITIAL);
+    setErrors({});
+    setStep(1);
+    setIsModalOpen(true);
+  }
+
+  function openEdit(p: Profissional) {
+    setIsEditing(true);
+    setSelectedProfissional(p);
+    setForm({
+      nome: p.name, email: p.email, telefone: p.phone,
+      area: p.area as AreaType, cargo: p.cargo as Cargo,
+      especialidade: p.especialidade, registro: p.registro,
+      status: p.status, observacoes: p.observacoes || '',
+      senha: '', confirmarSenha: '',
+    });
+    setErrors({});
+    setStep(1);
+    setIsDetailOpen(false);
+    setIsModalOpen(true);
+  }
+
+  function openDetail(p: Profissional) {
+    setSelectedProfissional(p);
+    setIsDetailOpen(true);
+  }
+
+  function handleClose() {
+    setForm(FORM_INITIAL);
+    setErrors({});
+    setIsModalOpen(false);
+    setSelectedProfissional(null);
+    setStep(1);
+    setShowSenha(false);
+    setShowConfirm(false);
+    setIsEditing(false);
+  }
+
+  function handleSave() {
+    if (!validateStep(4)) return;
+    if (form.senha && form.senha !== form.confirmarSenha) {
+      setErrors(prev => ({ ...prev, confirmarSenha: ERROR_MESSAGES.PASSWORD_MISMATCH }));
+      return;
+    }
+    const today = new Date().toLocaleDateString('pt-BR');
+    if (isEditing && selectedProfissional) {
+      setProfissionais(prev =>
+        prev.map(p => p.id === selectedProfissional.id
+          ? { ...p, name: form.nome, email: form.email, phone: form.telefone, area: form.area, cargo: form.cargo, especialidade: form.especialidade, registro: form.registro, status: form.status, observacoes: form.observacoes }
+          : p
+        )
+      );
+    } else {
+      setProfissionais(prev => [...prev, {
+        id: Date.now(), name: form.nome, email: form.email, phone: form.telefone,
+        registro: form.registro, area: form.area, cargo: form.cargo,
+        especialidade: form.especialidade, status: form.status,
+        atendimentos: 0, ultimoAcesso: today, observacoes: form.observacoes,
+      }]);
+    }
+    handleClose();
+  }
+
+  function renderStepContent() {
+    switch (step) {
+      case 1:
+        return (
+          <StepSection>
+            <SectionLabel>Dados Pessoais</SectionLabel>
+            <FormGrid>
+              <div style={{ gridColumn: 'span 2' }}>
+                <Input label="Nome Completo *" placeholder="Ex: Ana Beatriz Lima" value={form.nome}
+                  onChange={e => handleChange('nome', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s.]/g, ''))}
+                  maxLength={80} error={errors.nome} />
+              </div>
+              <Input label="E-mail de Acesso *" type="email" placeholder="Digite seu e-mail"
+                value={form.email} onChange={e => handleChange('email', e.target.value)} error={errors.email} />
+              <Input label="Telefone *" mask="telefone" value={form.telefone} inputMode="numeric"
+                maxLength={15} onValueChange={v => handleChange('telefone', v)} error={errors.telefone} />
+            </FormGrid>
+          </StepSection>
+        );
+      case 2:
+        return (
+          <StepSection>
+            <SectionLabel>Selecione a Área de Atuação</SectionLabel>
+            {errors.area && <p style={{ color: '#e74c3c', fontSize: '0.82rem', margin: '4px 0 12px' }}>{errors.area}</p>}
+            <AreaGrid>
+              <AreaCard $active={form.area === 'tecnica'} onClick={() => handleChange('area', 'tecnica')}>
+                <AreaIcon><AreaTecnicaIcon /></AreaIcon>
+                <AreaTitle>Área Técnica</AreaTitle>
+                <AreaDesc>Esteticista, Biomédico, Enfermeiro, Dermatologista, Fisioterapeuta</AreaDesc>
+              </AreaCard>
+              <AreaCard $active={form.area === 'administrativa'} onClick={() => handleChange('area', 'administrativa')}>
+                <AreaIcon><AreaAdminIcon /></AreaIcon>
+                <AreaTitle>Área Administrativa</AreaTitle>
+                <AreaDesc>Recepcionista, Gerente de Clínica, Financeiro</AreaDesc>
+              </AreaCard>
+            </AreaGrid>
+          </StepSection>
+        );
+      case 3:
+        return (
+          <StepSection>
+            <SectionLabel>Cargo — {form.area === 'tecnica' ? 'Área Técnica' : 'Área Administrativa'}</SectionLabel>
+            <FormGrid>
+              <div style={{ gridColumn: 'span 2' }}>
+                <p style={{ fontSize: '0.8rem', color: '#aaa', marginBottom: 10, marginTop: 0 }}>Selecione o cargo do profissional:</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))', gap: 10 }}>
+                  {cargoOptions.map(opt => {
+                    const cfg = ALL_CARGO_CONFIG[opt.value];
+                    return (
+                      <CargoCard key={opt.value} $active={form.cargo === opt.value} onClick={() => handleChange('cargo', opt.value)}>
+                        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>{cfg.icon}</span>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#333', lineHeight: 1.3 }}>{cfg.label}</span>
+                        <span style={{ fontSize: '0.72rem', color: '#aaa', lineHeight: 1.4 }}>{cfg.desc}</span>
+                      </CargoCard>
+                    );
+                  })}
+                </div>
+                {errors.cargo && <p style={{ color: '#e74c3c', fontSize: '0.82rem', marginTop: 6 }}>{errors.cargo}</p>}
+              </div>
+              <Select label="Status *" options={statusOptions} placeholder="Selecione..."
+                value={form.status} onChange={v => handleChange('status', v)} error={errors.status} />
+              {cargoConfig?.requiresRegistro && (
+                <Input label={`${cargoConfig.registroLabel} *`} placeholder={cargoConfig.registroPlaceholder}
+                  value={form.registro} onChange={e => handleChange('registro', e.target.value.toUpperCase())}
+                  maxLength={30} error={errors.registro} />
+              )}
+              {cargoConfig?.requiresEspecialidade && cargoConfig.especialidades && (
+                <Select label="Área de Especialização *" options={cargoConfig.especialidades}
+                  placeholder="Selecione..." value={form.especialidade}
+                  onChange={v => handleChange('especialidade', v)} error={errors.especialidade} />
+              )}
+              <div style={{ gridColumn: 'span 2' }}>
+                <Input label="Observações" placeholder="Informações adicionais sobre o profissional..."
+                  maxLength={300} value={form.observacoes} onChange={e => handleChange('observacoes', e.target.value)} />
+              </div>
+            </FormGrid>
+          </StepSection>
+        );
+      case 4:
+        return (
+          <StepSection>
+            <SectionLabel>{isEditing ? 'Alterar Senha (opcional)' : 'Senha de Acesso ao Sistema'}</SectionLabel>
+            <FormGrid>
+              <div style={{ position: 'relative' }}>
+                <Input label={isEditing ? 'Nova Senha' : 'Senha *'} type={showSenha ? 'text' : 'password'}
+                  placeholder="Digite sua senha" value={form.senha}
+                  onChange={e => handleChange('senha', e.target.value)} error={errors.senha} />
+                <EyeBtn type="button" onClick={() => setShowSenha(p => !p)} tabIndex={-1}>
+                  {showSenha ? <EyeOffIcon /> : <EyeOnIcon />}
+                </EyeBtn>
+              </div>
+              <div style={{ position: 'relative' }}>
+                <Input label={isEditing ? 'Confirmar Nova Senha' : 'Confirmar Senha *'} type={showConfirm ? 'text' : 'password'}
+                  placeholder="Digite sua senha" value={form.confirmarSenha}
+                  onChange={e => handleChange('confirmarSenha', e.target.value)} error={errors.confirmarSenha} />
+                <EyeBtn type="button" onClick={() => setShowConfirm(p => !p)} tabIndex={-1}>
+                  {showConfirm ? <EyeOffIcon /> : <EyeOnIcon />}
+                </EyeBtn>
+              </div>
+              {isEditing && <PasswordHint style={{ gridColumn: 'span 2' }}>Deixe os campos em branco para manter a senha atual.</PasswordHint>}
+              <div style={{ gridColumn: 'span 2', background: '#fdf9f5', borderRadius: 12, padding: 16, border: '1px solid #f0ebe4' }}>
+                <p style={{ fontSize: '0.77rem', fontWeight: 600, color: '#BBA188', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 10px' }}>Resumo do Cadastro</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px' }}>
+                  {([
+                    ['Nome',          form.nome],
+                    ['E-mail',        form.email],
+                    ['Telefone',      form.telefone],
+                    ['Área',          form.area === 'tecnica' ? 'Técnica' : 'Administrativa'],
+                    ['Cargo',         cargoConfig?.label || '—'],
+                    ['Especialidade', form.especialidade || '—'],
+                    ['Registro',      form.registro || '—'],
+                    ['Status',        form.status === 'ativo' ? 'Ativo' : 'Inativo'],
+                  ] as [string, string][]).map(([label, value]) => (
+                    <div key={label}>
+                      <span style={{ fontSize: '0.72rem', color: '#bbb', display: 'block' }}>{label}</span>
+                      <span style={{ fontSize: '0.83rem', color: '#555', fontWeight: 500 }}>{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </FormGrid>
+          </StepSection>
+        );
+      default: return null;
+    }
+  }
+
+  const modalFooter = (
+    <WizardNav>
+      {step > 1
+        ? <Button variant="outline" onClick={prevStep}>← Voltar</Button>
+        : <Button variant="outline" onClick={handleClose}>Cancelar</Button>
+      }
+      {step < 4
+        ? <Button variant="primary" onClick={nextStep}>Continuar →</Button>
+        : <Button variant="primary" onClick={handleSave}>{isEditing ? 'Salvar Alterações' : 'Cadastrar Profissional'}</Button>
+      }
+    </WizardNav>
+  );
+
+  return (
+    <Container>
+      <Header>
+        <Title>Profissionais</Title>
+        <Button
+          variant="primary"
+          icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>}
+          onClick={openNew}
+        >
+          Cadastrar Profissional
+        </Button>
+      </Header>
+
+      <StatsGrid>
+        <StatCard label="Total de Profissionais" value={totalProfissionais} color="#BBA188"
+          icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+        />
+        <StatCard label="Ativos" value={ativos} color="#8a7560"
+          icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>}
+        />
+        <StatCard label="Inativos" value={inativos} color="#EBD5B0"
+          icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>}
+        />
+        <StatCard label="Atendimentos Total" value={totalAtend} color="#a8906f"
+          icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3h6"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M21 9v6"/><path d="M21 15v4a2 2 0 0 1-2 2h-4"/><path d="M15 21H9"/><path d="M9 21H5a2 2 0 0 1-2-2v-4"/><path d="M3 15V9"/></svg>}
+        />
+      </StatsGrid>
+
+      <Controls>
+        <SearchBarWrapper>
+          {/* Hidden honeypot fields to prevent browser autofill on the search input */}
+          <input type="text" name="prevent-autofill-name" autoComplete="off" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
+          <input type="email" name="prevent-autofill-email" autoComplete="off" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
+          <input type="password" name="prevent-autofill-pass" autoComplete="off" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
+          <SearchIconWrap>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          </SearchIconWrap>
+          <SearchInputStyled type="search" placeholder="Buscar por nome ou e-mail..." value={search} onChange={e => setSearch(e.target.value)} autoComplete="off" name="search-profissionais-filter" data-form-type="other" data-lpignore="true" />
+        </SearchBarWrapper>
+        <FilterRow>
+          <DropdownWrapper>
+            <DropdownBtn onClick={() => setOpenDrop(p => p === 'status' ? null : 'status')}>
+              <span>{filterStat}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+            </DropdownBtn>
+            {openDrop === 'status' && (
+              <DropdownList>
+                {filterStatus.map(s => (
+                  <DropdownItem key={s} $active={filterStat === s} onClick={() => { setFilterStat(s); setOpenDrop(null); }}>{s}</DropdownItem>
+                ))}
+              </DropdownList>
+            )}
+          </DropdownWrapper>
+          <DropdownWrapper>
+            <DropdownBtn onClick={() => setOpenDrop(p => p === 'area' ? null : 'area')}>
+              <span>{filterArea}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+            </DropdownBtn>
+            {openDrop === 'area' && (
+              <DropdownList>
+                {filterAreas.map(a => (
+                  <DropdownItem key={a} $active={filterArea === a} onClick={() => { setFilterArea(a); setOpenDrop(null); }}>{a}</DropdownItem>
+                ))}
+              </DropdownList>
+            )}
+          </DropdownWrapper>
+          {(filterStat !== 'Todos' || filterArea !== 'Todos') && (
+            <ClearFilterBtn onClick={() => { setFilterStat('Todos'); setFilterArea('Todos'); }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              Limpar
+            </ClearFilterBtn>
+          )}
+        </FilterRow>
+      </Controls>
+
+      <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden' }}>
+        <TableWrapper>
+          <Table>
+            <Thead>
+              <tr>
+                <Th $width="22%">Profissional</Th>
+                <Th $width="12%">Telefone</Th>
+                <Th $width="7%">Área</Th>
+                <Th $width="11%">Cargo</Th>
+                <Th $width="11%">Especialidade</Th>
+                <Th $width="11%">Registro</Th>
+                <Th $width="5%" $center>Atend.</Th>
+                <Th $width="9%">Últ. Acesso</Th>
+                <Th $width="5%">Status</Th>
+                <Th $width="7%">Ações</Th>
+              </tr>
+            </Thead>
+            <Tbody>
+              {filtered.length === 0 ? (
+                <tr><td colSpan={10}>
+                  <EmptyState>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <h3>Nenhum profissional encontrado</h3>
+                    <p>Tente ajustar os filtros</p>
+                  </EmptyState>
+                </td></tr>
+              ) : filtered.map((p, i) => (
+                <Tr key={p.id}>
+                  <Td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Avatar $color={avatarColors[i % avatarColors.length]}>
+                        {getInitials(p.name)}
+                      </Avatar>
+                      <ProfissionalInfo>
+                        <ProfissionalName>{p.name}</ProfissionalName>
+                        <ProfissionalEmail>{p.email}</ProfissionalEmail>
+                      </ProfissionalInfo>
+                    </div>
+                  </Td>
+                  <Td $muted>{p.phone}</Td>
+                  <Td>
+                    <Badge $bg={p.area === 'tecnica' ? '#e8f5fd' : '#fdf8e8'} $color={p.area === 'tecnica' ? '#3a7dc9' : '#c9a03a'}>
+                      {p.area === 'tecnica' ? 'Técnica' : 'Admin.'}
+                    </Badge>
+                  </Td>
+                  <Td>
+                    <RoleTag $bg={cargoTagColors[p.cargo]?.bg} $color={cargoTagColors[p.cargo]?.color}>
+                      {ALL_CARGO_CONFIG[p.cargo]?.label || p.cargo}
+                    </RoleTag>
+                  </Td>
+                  <Td $muted>{p.especialidade || '—'}</Td>
+                  <Td>
+                    {p.registro
+                      ? <code style={{ fontSize: '0.71rem', color: '#888', background: '#f5f5f5', padding: '2px 5px', borderRadius: 4 }}>{p.registro}</code>
+                      : <span style={{ color: '#ccc' }}>—</span>
+                    }
+                  </Td>
+                  <Td $center $bold>{p.atendimentos || '—'}</Td>
+                  <Td $muted>{p.ultimoAcesso}</Td>
+                  <Td>
+                    <Badge $bg={statusColors[p.status].bg} $color={statusColors[p.status].color}>
+                      {p.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                    </Badge>
+                  </Td>
+                  <Td>
+                    <ActionGroup>
+                      <IconBtn title="Ver detalhes" onClick={() => openDetail(p)}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10"/>
+                          <line x1="12" y1="8" x2="12" y2="12"/>
+                          <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                      </IconBtn>
+                      <IconBtn title="Editar" onClick={() => openEdit(p)}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </IconBtn>
+                    </ActionGroup>
+                  </Td>
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
+        </TableWrapper>
+      </div>
+
+      <Modal
+        isOpen={isDetailOpen}
+        onClose={() => setIsDetailOpen(false)}
+        closeOnOverlayClick={false}
+        title="Ficha do Profissional"
+        size="lg"
+        footer={
+          <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'space-between' }}>
+            <Button
+              variant="outline"
+              icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
+              onClick={() => selectedProfissional && openEdit(selectedProfissional)}
+            >
+              Editar Ficha
+            </Button>
+            <Button variant="outline" onClick={() => setIsDetailOpen(false)}>Fechar</Button>
+          </div>
+        }
+      >
+        {selectedProfissional && (
+          <DetailModal>
+            <DetailHeader>
+              <DetailAvatar $color="#BBA188">{getInitials(selectedProfissional.name)}</DetailAvatar>
+              <div style={{ flex: 1 }}>
+                <DetailName>{selectedProfissional.name}</DetailName>
+                <DetailMeta>
+                  <DetailMetaItem>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.72 9.81a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.63 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9a16 16 0 0 0 6.92 6.92l1.37-1.37a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 23 17z"/></svg>
+                    {selectedProfissional.phone}
+                  </DetailMetaItem>
+                  <DetailMetaItem>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    {selectedProfissional.email}
+                  </DetailMetaItem>
+                </DetailMeta>
+                <StatsRow style={{ marginTop: 10 }}>
+                  <StatPill $color="#BBA188">{selectedProfissional.atendimentos} atendimentos</StatPill>
+                  <StatPill $color={selectedProfissional.status === 'ativo' ? '#8a7560' : '#888'}>
+                    {selectedProfissional.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                  </StatPill>
+                  <StatPill $color={selectedProfissional.area === 'tecnica' ? '#3a7dc9' : '#c9a03a'}>
+                    {selectedProfissional.area === 'tecnica' ? 'Área Técnica' : 'Área Administrativa'}
+                  </StatPill>
+                </StatsRow>
+              </div>
+            </DetailHeader>
+
+            {selectedProfissional.observacoes && (
+              <ObsBox>
+                <strong>⚠ Observações: </strong>{selectedProfissional.observacoes}
+              </ObsBox>
+            )}
+
+            <DetailSection>
+              <DetailSectionTitle>Dados Profissionais</DetailSectionTitle>
+              <InfoGrid>
+                <InfoItem>
+                  <InfoLabel>Cargo</InfoLabel>
+                  <InfoValue>
+                    <RoleTag $bg={cargoTagColors[selectedProfissional.cargo]?.bg} $color={cargoTagColors[selectedProfissional.cargo]?.color}>
+                      {ALL_CARGO_CONFIG[selectedProfissional.cargo]?.label || selectedProfissional.cargo}
+                    </RoleTag>
+                  </InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Área de Atuação</InfoLabel>
+                  <InfoValue>{selectedProfissional.area === 'tecnica' ? 'Técnica' : 'Administrativa'}</InfoValue>
+                </InfoItem>
+                {selectedProfissional.especialidade && (
+                  <InfoItem>
+                    <InfoLabel>Especialidade</InfoLabel>
+                    <InfoValue>{selectedProfissional.especialidade}</InfoValue>
+                  </InfoItem>
+                )}
+                {selectedProfissional.registro && (
+                  <InfoItem>
+                    <InfoLabel>Registro Profissional</InfoLabel>
+                    <InfoValue>
+                      <code style={{ fontSize: '0.83rem', color: '#888', background: '#f5f5f5', padding: '3px 8px', borderRadius: 5 }}>
+                        {selectedProfissional.registro}
+                      </code>
+                    </InfoValue>
+                  </InfoItem>
+                )}
+                <InfoItem>
+                  <InfoLabel>Último Acesso</InfoLabel>
+                  <InfoValue>{selectedProfissional.ultimoAcesso}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Total de Atendimentos</InfoLabel>
+                  <InfoValue style={{ fontWeight: 700, color: '#1a1a1a', fontSize: '1.1rem' }}>
+                    {selectedProfissional.atendimentos}
+                  </InfoValue>
+                </InfoItem>
+              </InfoGrid>
+            </DetailSection>
+          </DetailModal>
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleClose}
+        closeOnOverlayClick={false}
+        title={isEditing ? 'Editar Profissional' : 'Cadastrar Profissional'}
+        size="lg"
+        footer={modalFooter}
+      >
+        <form autoComplete="off" onSubmit={e => e.preventDefault()} style={{ display: 'contents' }}>
+          <WizardSteps>
+            {STEP_LABELS.map((label, idx) => {
+              const num     = idx + 1;
+              const done    = num < step;
+              const current = num === step;
+              return (
+                <WizardStep key={num}>
+                  {idx > 0 && <WizardStepLine $done={done || current} />}
+                  <WizardStepCircle $done={done} $current={current}>
+                    {done
+                      ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                      : num
+                    }
+                  </WizardStepCircle>
+                  <WizardStepLabel $current={current}>{label}</WizardStepLabel>
+                </WizardStep>
+              );
+            })}
+          </WizardSteps>
+          {renderStepContent()}
+        </form>
+      </Modal>
+    </Container>
+  );
+}

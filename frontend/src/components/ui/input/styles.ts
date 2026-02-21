@@ -47,6 +47,15 @@ export const StyledInput = styled.input<{
 
   &::placeholder { color: #bbb; }
   &:disabled { background: #f5f5f5; cursor: not-allowed; opacity: 0.7; }
+
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus,
+  &:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+    -webkit-text-fill-color: #1a1a1a !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
 `;
 
 /* ── Texto de erro: mesma cor da borda (#ab031d), ícone, borda esquerda ── */

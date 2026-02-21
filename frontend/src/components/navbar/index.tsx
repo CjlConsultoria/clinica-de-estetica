@@ -18,6 +18,7 @@ import {
   FlaskConical,
   RefreshCcw,
   ClipboardList,
+  Stethoscope,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
@@ -68,6 +69,7 @@ const navSections = [
   {
     label: 'Operacional',
     items: [
+      { label: 'Profissionais',        href: '/profissionais',            icon: Stethoscope     },
       { label: 'Lotes ANVISA',   href: '/lotes',              icon: FlaskConical    },
       { label: 'Estoque',        href: '/estoque',            icon: Package         },
       { label: 'Financeiro',     href: '/finance',            icon: DollarSign      },

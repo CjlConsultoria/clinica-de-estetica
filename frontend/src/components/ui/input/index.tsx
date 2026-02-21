@@ -118,6 +118,7 @@ export default function Input({
   onValueChange,
   placeholder,
   value,
+  autoComplete,
   ...rest
 }: InputProps) {
   const inputId = id || label?.toLowerCase().replace(/\s/g, '-');
@@ -147,6 +148,7 @@ export default function Input({
           placeholder={resolvedPlaceholder}
           value={value}
           onChange={handleChange}
+          autoComplete={autoComplete ?? 'off'}
           {...rest}
         />
         {iconRight && <IconRight>{iconRight}</IconRight>}

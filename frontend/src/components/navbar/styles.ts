@@ -35,7 +35,7 @@ export const NavbarContainer = styled.div<NavbarContainerProps>`
   &::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
 
   @media (min-width: 1025px) and (max-width: 1440px) {
-    padding: 16px 0;
+    padding: 14px 0;
     overflow-y: hidden;
   }
 
@@ -111,7 +111,7 @@ export const CollapseButton = styled.button<{ $collapsed: boolean }>`
     width: 34px;
     height: 34px;
     left: 15px;
-    top: 16px;
+    top: 14px;
   }
 
   @media (max-width: 1024px) {
@@ -142,7 +142,7 @@ export const TopSection = styled.div<{ $collapsed: boolean }>`
 
   @media (min-width: 1025px) and (max-width: 1440px) {
     max-width: ${({ $collapsed }) => ($collapsed ? '0' : '210px')};
-    margin-top: 42px;
+    margin-top: 38px;
   }
 
   @media (max-width: 1024px) {
@@ -163,8 +163,8 @@ export const TitleText = styled.h1`
   white-space: nowrap;
 
   @media (min-width: 1025px) and (max-width: 1440px) {
-    font-size: 20px;
-    margin: 6px 0 2px 0;
+    font-size: 18px;
+    margin: 4px 0 2px 0;
   }
 `;
 
@@ -175,8 +175,8 @@ export const GreetingText = styled.p`
   white-space: nowrap;
 
   @media (min-width: 1025px) and (max-width: 1440px) {
-    font-size: 12px;
-    margin: 0 0 10px 0;
+    font-size: 11px;
+    margin: 0 0 6px 0;
   }
 `;
 
@@ -223,8 +223,8 @@ export const DividerTop = styled.div<{ $collapsed?: boolean }>`
   will-change: transform, opacity;
 
   @media (min-width: 1025px) and (max-width: 1440px) {
-    margin-top: ${({ $collapsed }) => ($collapsed ? '8px' : '0')};
-    margin-bottom: ${({ $collapsed }) => ($collapsed ? '4px' : '0')};
+    margin-top: ${({ $collapsed }) => ($collapsed ? '6px' : '0')};
+    margin-bottom: ${({ $collapsed }) => ($collapsed ? '2px' : '0')};
   }
 
   @media (max-width: 1024px) {
@@ -246,7 +246,7 @@ export const Nav = styled.nav<{ $collapsed: boolean }>`
 
   @media (min-width: 1025px) and (max-width: 1440px) {
     gap: 0px;
-    margin-top: 2px;
+    margin-top: 1px;
   }
 
   @media (max-width: 1024px) {
@@ -291,12 +291,12 @@ export const SectionDividerWrap = styled.div<SectionDividerWrapProps>`
 
   @media (min-width: 1025px) and (max-width: 1440px) {
     max-height: ${({ $collapsed, $isBottom }) => {
-      if ($isBottom) return $collapsed ? '0' : '20px';
-      return '20px';
+      if ($isBottom) return $collapsed ? '0' : '18px';
+      return '18px';
     }};
     margin-top: ${({ $first, $isBottom }) => {
       if ($isBottom) return '0';
-      return $first ? '1px' : '5px';
+      return $first ? '1px' : '4px';
     }};
     margin-bottom: ${({ $isBottom }) => ($isBottom ? '0' : '1px')};
   }
@@ -444,7 +444,7 @@ export const NavLink = styled(Link)<NavProps>`
     border-radius 0.25s ease;
 
   @media (min-width: 1025px) and (max-width: 1440px) {
-    padding: 6px 12px 6px 0;
+    padding: 5px 12px 5px 0;
   }
 
   &::before {
@@ -483,7 +483,7 @@ export const LogoutDivider = styled.div<{ $collapsed: boolean }>`
   will-change: transform, opacity;
 
   @media (min-width: 1025px) and (max-width: 1440px) {
-    margin: ${({ $collapsed }) => ($collapsed ? '4px 0' : '0')};
+    margin: ${({ $collapsed }) => ($collapsed ? '3px 0' : '0')};
   }
 
   @media (max-width: 1024px) {
@@ -523,7 +523,7 @@ export const LogoutButton = styled.button<{ $collapsed?: boolean }>`
   }
 
   @media (min-width: 1025px) and (max-width: 1440px) {
-    padding: 6px 12px 6px 0;
+    padding: 5px 12px 5px 0;
     font-size: 11px;
   }
 
