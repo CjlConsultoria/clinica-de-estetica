@@ -122,7 +122,7 @@ export const DropdownBtn = styled.button`
   font-family: var(--font-metropolis-regular), 'Metropolis', sans-serif;
   font-weight: 500;
   cursor: pointer;
-  min-width: 140px;
+  min-width: 155px;
   justify-content: space-between;
   transition: all 0.2s;
 
@@ -135,7 +135,7 @@ export const DropdownList = styled.div`
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  min-width: 180px;
+  width: 100%;
   background: white;
   border: 1.5px solid #e8e8e8;
   border-radius: 14px;
@@ -208,14 +208,14 @@ export const Thead = styled.thead`
 `;
 
 export const Th = styled.th<{ $width?: string }>`
-  padding: 14px 16px;
+  padding: 11px 10px;
   text-align: left;
-  font-size: 0.78rem;
+  font-size: 0.69rem;
   font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
   font-weight: 600;
   color: white;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.4px;
   width: ${({ $width }) => $width || 'auto'};
 `;
 
@@ -235,73 +235,83 @@ export const Tr = styled.tr`
 `;
 
 export const Td = styled.td`
-  padding: 14px 16px;
-  font-size: 0.88rem;
+  padding: 10px 10px;
+  font-size: 0.78rem;
   font-family: var(--font-inter-variable-regular), 'Inter', sans-serif;
   color: #444;
   vertical-align: middle;
 `;
 
 export const Avatar = styled.div<{ $color: string }>`
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   background: ${({ $color }) => $color}22;
   color: ${({ $color }) => $color};
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.82rem;
+  font-size: 0.72rem;
   font-weight: 700;
   flex-shrink: 0;
   font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
 `;
 
-export const PatientInfo = styled.div``;
+export const PatientInfo = styled.div`
+  min-width: 0;
+  flex: 1;
+`;
 
 export const PatientName = styled.div`
   font-weight: 600;
   color: #1a1a1a;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 export const PatientEmail = styled.div`
-  font-size: 0.76rem;
-  color: #999;
-  margin-top: 2px;
+  font-size: 0.7rem;
+  color: #aaa;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 export const PhoneText = styled.div`
-  font-size: 0.85rem;
-  color: #555;
+  font-size: 0.78rem;
+  color: #777;
   font-family: var(--font-roboto-medium), 'Roboto', sans-serif;
 `;
 
 export const DateText = styled.div`
-  font-size: 0.84rem;
-  color: #666;
+  font-size: 0.78rem;
+  color: #777;
 `;
 
 export const Badge = styled.span<{ $bg?: string; $color?: string }>`
   display: inline-block;
-  padding: 4px 10px;
+  padding: 3px 7px;
   border-radius: 20px;
-  font-size: 0.74rem;
+  font-size: 0.68rem;
   font-weight: 600;
   font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
   background: ${({ $bg }) => $bg || '#f0ebe4'};
   color: ${({ $color }) => $color || '#BBA188'};
+  white-space: nowrap;
 `;
 
 export const ActionGroup = styled.div`
   display: flex;
-  gap: 6px;
+  gap: 4px;
 `;
 
 export const IconBtn = styled.button`
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border: 1.5px solid #e8e8e8;
   border-radius: 8px;
   background: white;
@@ -311,6 +321,7 @@ export const IconBtn = styled.button`
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
 
   &:hover {
     background: #BBA188;

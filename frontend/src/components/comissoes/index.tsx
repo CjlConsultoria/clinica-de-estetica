@@ -22,19 +22,18 @@ const mockProfessionals = [
 ];
 
 const mockComissoes = [
-  { id: 1, date: '18/02/2025', professional: 'Maria Oliveira', procedure: 'Botox Facial',        patient: 'Ana Costa',   value: 720,  percentual: 20, comissao: 144,  status: 'pago'     },
-  { id: 2, date: '18/02/2025', professional: 'Clara Andrade',  procedure: 'Preenchimento Labial', patient: 'Carla M.',    value: 1200, percentual: 20, comissao: 240,  status: 'pendente' },
-  { id: 3, date: '16/02/2025', professional: 'Beatriz Santos', procedure: 'Bioestimulador',       patient: 'Fernanda L.', value: 2500, percentual: 25, comissao: 625,  status: 'pago'     },
-  { id: 4, date: '14/02/2025', professional: 'Maria Oliveira', procedure: 'Microagulhamento',     patient: 'Patrícia A.', value: 450,  percentual: 20, comissao: 90,   status: 'pago'     },
-  { id: 5, date: '13/02/2025', professional: 'Clara Andrade',  procedure: 'Fio PDO',              patient: 'Marina S.',   value: 1800, percentual: 20, comissao: 360,  status: 'pendente' },
-  { id: 6, date: '10/02/2025', professional: 'Beatriz Santos', procedure: 'Toxina Botulínica',    patient: 'Juliana R.',  value: 600,  percentual: 25, comissao: 150,  status: 'pago'     },
-  { id: 7, date: '18/02/2025', professional: 'Maria Oliveira', procedure: 'Botox Facial',        patient: 'Ana Costa',   value: 720,  percentual: 20, comissao: 144,  status: 'pago'     },
-  { id: 8, date: '18/02/2025', professional: 'Clara Andrade',  procedure: 'Preenchimento Labial', patient: 'Carla M.',    value: 1200, percentual: 20, comissao: 240,  status: 'pendente' },
-  { id: 9, date: '16/02/2025', professional: 'Beatriz Santos', procedure: 'Bioestimulador',       patient: 'Fernanda L.', value: 2500, percentual: 25, comissao: 625,  status: 'pago'     },
+  { id: 1,  date: '18/02/2025', professional: 'Maria Oliveira', procedure: 'Botox Facial',        patient: 'Ana Costa',   value: 720,  percentual: 20, comissao: 144,  status: 'pago'     },
+  { id: 2,  date: '18/02/2025', professional: 'Clara Andrade',  procedure: 'Preenchimento Labial', patient: 'Carla M.',    value: 1200, percentual: 20, comissao: 240,  status: 'pendente' },
+  { id: 3,  date: '16/02/2025', professional: 'Beatriz Santos', procedure: 'Bioestimulador',       patient: 'Fernanda L.', value: 2500, percentual: 25, comissao: 625,  status: 'pago'     },
+  { id: 4,  date: '14/02/2025', professional: 'Maria Oliveira', procedure: 'Microagulhamento',     patient: 'Patrícia A.', value: 450,  percentual: 20, comissao: 90,   status: 'pago'     },
+  { id: 5,  date: '13/02/2025', professional: 'Clara Andrade',  procedure: 'Fio PDO',              patient: 'Marina S.',   value: 1800, percentual: 20, comissao: 360,  status: 'pendente' },
+  { id: 6,  date: '10/02/2025', professional: 'Beatriz Santos', procedure: 'Toxina Botulínica',    patient: 'Juliana R.',  value: 600,  percentual: 25, comissao: 150,  status: 'pago'     },
+  { id: 7,  date: '18/02/2025', professional: 'Maria Oliveira', procedure: 'Botox Facial',        patient: 'Ana Costa',   value: 720,  percentual: 20, comissao: 144,  status: 'pago'     },
+  { id: 8,  date: '18/02/2025', professional: 'Clara Andrade',  procedure: 'Preenchimento Labial', patient: 'Carla M.',    value: 1200, percentual: 20, comissao: 240,  status: 'pendente' },
+  { id: 9,  date: '16/02/2025', professional: 'Beatriz Santos', procedure: 'Bioestimulador',       patient: 'Fernanda L.', value: 2500, percentual: 25, comissao: 625,  status: 'pago'     },
   { id: 10, date: '14/02/2025', professional: 'Maria Oliveira', procedure: 'Microagulhamento',     patient: 'Patrícia A.', value: 450,  percentual: 20, comissao: 90,   status: 'pago'     },
   { id: 11, date: '13/02/2025', professional: 'Clara Andrade',  procedure: 'Fio PDO',              patient: 'Marina S.',   value: 1800, percentual: 20, comissao: 360,  status: 'pendente' },
   { id: 12, date: '10/02/2025', professional: 'Beatriz Santos', procedure: 'Toxina Botulínica',    patient: 'Juliana R.',  value: 600,  percentual: 25, comissao: 150,  status: 'pago'     },
-
 ];
 
 const fmt = (v: number) =>
@@ -79,7 +78,6 @@ export default function Comissoes() {
     return matchSearch && matchProf;
   });
 
-  /* ── Paginação ── */
   const totalFiltered = filtered.length;
   const totalPages    = Math.max(1, Math.ceil(totalFiltered / ITEMS_PER_PAGE));
   const safePage      = Math.min(currentPage, totalPages);
@@ -343,25 +341,31 @@ export default function Comissoes() {
                 const barColor  = prof ? getBarColor(prof.comissao, prof.meta) : '#BBA188';
                 return (
                   <Tr key={c.id}>
-                    <Td style={{ color: '#888', fontSize: '0.82rem' }}>{c.date}</Td>
+                    <Td style={{ color: '#888' }}>{c.date}</Td>
                     <Td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <div style={{
-                          width: 28, height: 28, borderRadius: 8,
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
                           background: `${avatarColors[profIndex % 3]}22`,
                           color: avatarColors[profIndex % 3],
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '0.68rem', fontWeight: 700,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          flexShrink: 0,
                         }}>
                           {c.professional.split(' ').map(n => n[0]).slice(0, 2).join('')}
                         </div>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#1a1a1a' }}>
+                        <span style={{ fontWeight: 600, color: '#1a1a1a' }}>
                           {c.professional}
                         </span>
                       </div>
                     </Td>
-                    <Td style={{ fontSize: '0.86rem' }}>{c.procedure}</Td>
-                    <Td style={{ fontSize: '0.84rem', color: '#666' }}>{c.patient}</Td>
+                    <Td>{c.procedure}</Td>
+                    <Td style={{ color: '#666' }}>{c.patient}</Td>
                     <Td style={{ fontWeight: 600 }}>R$ {fmt(c.value)}</Td>
                     <Td>
                       <Badge $bg="rgba(187,161,136,0.15)" $color="#BBA188">{c.percentual}%</Badge>

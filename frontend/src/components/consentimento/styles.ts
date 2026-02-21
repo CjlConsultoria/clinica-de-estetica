@@ -131,7 +131,7 @@ export const DropdownList = styled.div`
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  min-width: 200px;
+  min-width: 100%;
   background: white;
   border: 1.5px solid #e8e8e8;
   border-radius: 14px;
@@ -183,13 +183,13 @@ export const Thead = styled.thead`
 `;
 
 export const Th = styled.th<{ $width?: string }>`
-  padding: 13px 16px;
+  padding: 11px 10px;
   text-align: left;
-  font-size: 0.77rem;
+  font-size: 0.69rem;
   font-weight: 600;
   color: white;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
   width: ${({ $width }) => $width || 'auto'};
 `;
 
@@ -203,30 +203,31 @@ export const Tr = styled.tr`
 `;
 
 export const Td = styled.td`
-  padding: 13px 16px;
-  font-size: 0.88rem;
+  padding: 10px 10px;
+  font-size: 0.78rem;
   color: #444;
   vertical-align: middle;
 `;
 
 export const Badge = styled.span<{ $bg?: string; $color?: string }>`
   display: inline-block;
-  padding: 4px 10px;
+  padding: 3px 7px;
   border-radius: 20px;
-  font-size: 0.74rem;
+  font-size: 0.68rem;
   font-weight: 600;
   background: ${({ $bg }) => $bg || '#f0ebe4'};
   color: ${({ $color }) => $color || '#BBA188'};
+  white-space: nowrap;
 `;
 
 export const ActionGroup = styled.div`
   display: flex;
-  gap: 6px;
+  gap: 4px;
 `;
 
 export const IconBtn = styled.button`
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border: 1.5px solid #e8e8e8;
   border-radius: 8px;
   background: white;
@@ -236,6 +237,7 @@ export const IconBtn = styled.button`
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
   &:hover { background: #BBA188; border-color: #BBA188; color: white; }
 `;
 

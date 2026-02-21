@@ -76,7 +76,6 @@ const mockLotes = [
   { id: 9, lote: 'LOT-2024-BIO-001', produto: 'Sculptra 150mg', categoria: 'Bioestimulador', fabricante: 'Galderma', fornecedor: 'Galderma Brasil', dataEntrada: '15/11/2024', dataFabricacao: '01/05/2024', dataValidade: '2025-07-22', quantidadeEntrada: 4, quantidadeAtual: 0, unidade: 'fr', registroAnvisa: '1.0309.0312.001-7', status: 'esgotado', usos: [{ data: '20/01/2025', paciente: 'Roberta Gomes', procedimento: 'Bioestimulador Facial', profissional: 'Clara Andrade', quantidade: 2 }, { data: '05/01/2025', paciente: 'Sandra Oliveira', procedimento: 'Bioestimulador', profissional: 'Clara Andrade', quantidade: 2 }] },
   { id: 10, lote: 'LOT-2024-FIO-001', produto: 'Fio PDO Tensor Espiral 19G', categoria: 'Fio de PDO', fabricante: 'Aesthetic', fornecedor: 'Aesthetic Brasil', dataEntrada: '01/12/2024', dataFabricacao: '01/06/2024', dataValidade: '2026-01-10', quantidadeEntrada: 10, quantidadeAtual: 4, unidade: 'cx', registroAnvisa: '1.0309.0400.001-2', status: 'ativo', usos: [{ data: '14/02/2025', paciente: 'Marina Souza', procedimento: 'Fio PDO Facial', profissional: 'Beatriz Santos', quantidade: 2 }] },
   { id: 11, lote: 'LOT-2024-BTX-001', produto: 'Toxina Botulínica Allergan 100U', categoria: 'Toxina Botulínica', fabricante: 'Allergan', fornecedor: 'Biolab', dataEntrada: '10/01/2025', dataFabricacao: '01/06/2024', dataValidade: '2025-06-15', quantidadeEntrada: 10, quantidadeAtual: 8, unidade: 'fr', registroAnvisa: '1.0309.0198.001-9', status: 'ativo', usos: [{ data: '18/02/2025', paciente: 'Ana Beatriz Costa', procedimento: 'Botox Facial', profissional: 'Maria Oliveira', quantidade: 1 }, { data: '15/02/2025', paciente: 'Carla Mendonça', procedimento: 'Botox Testa', profissional: 'Maria Oliveira', quantidade: 1 }] },
- 
 ];
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
@@ -194,12 +193,12 @@ export default function Lotes() {
                 <tr><Td colSpan={8} style={{ textAlign: 'center', padding: '48px 0', color: '#bbb' }}>Nenhum lote encontrado.</Td></tr>
               ) : paginatedData.map(lote => (
                 <Tr key={lote.id}>
-                  <Td><code style={{ fontSize: '0.78rem', color: '#BBA188', fontWeight: 700 }}>{lote.lote}</code></Td>
-                  <Td style={{ fontWeight: 600, color: '#1a1a1a' }}>{lote.produto}{isExpiringSoon(lote.dataValidade) && <span style={{ marginLeft: 6, fontSize: '0.7rem', background: '#fff3cd', color: '#856404', borderRadius: 6, padding: '2px 7px', fontWeight: 600 }}>A vencer</span>}{isExpired(lote.dataValidade) && <span style={{ marginLeft: 6, fontSize: '0.7rem', background: '#fdecea', color: '#c0392b', borderRadius: 6, padding: '2px 7px', fontWeight: 600 }}>Vencido</span>}</Td>
+                  <Td><code style={{ fontSize: '0.73rem', color: '#BBA188', fontWeight: 700 }}>{lote.lote}</code></Td>
+                  <Td style={{ fontWeight: 600, color: '#1a1a1a' }}>{lote.produto}{isExpiringSoon(lote.dataValidade) && <span style={{ marginLeft: 6, fontSize: '0.65rem', background: '#fff3cd', color: '#856404', borderRadius: 6, padding: '2px 6px', fontWeight: 600 }}>A vencer</span>}{isExpired(lote.dataValidade) && <span style={{ marginLeft: 6, fontSize: '0.65rem', background: '#fdecea', color: '#c0392b', borderRadius: 6, padding: '2px 6px', fontWeight: 600 }}>Vencido</span>}</Td>
                   <Td><Badge $bg={`${catColors[lote.categoria]}18`} $color={catColors[lote.categoria]}>{lote.categoria}</Badge></Td>
-                  <Td style={{ fontSize: '0.78rem', color: '#666', fontFamily: 'monospace' }}>{lote.registroAnvisa}</Td>
+                  <Td style={{ color: '#666', fontFamily: 'monospace' }}>{lote.registroAnvisa}</Td>
                   <Td style={{ color: isExpiringSoon(lote.dataValidade) ? '#d68a00' : isExpired(lote.dataValidade) ? '#c0392b' : '#555', fontWeight: isExpiringSoon(lote.dataValidade) ? 600 : 400 }}>{formatDate(lote.dataValidade)}</Td>
-                  <Td style={{ fontWeight: 700, color: lote.quantidadeAtual === 0 ? '#e74c3c' : '#1a1a1a' }}>{lote.quantidadeAtual} <span style={{ color: '#aaa', fontWeight: 400, fontSize: '0.8rem' }}>{lote.unidade}</span></Td>
+                  <Td style={{ fontWeight: 700, color: lote.quantidadeAtual === 0 ? '#e74c3c' : '#1a1a1a' }}>{lote.quantidadeAtual} <span style={{ color: '#aaa', fontWeight: 400, fontSize: '0.72rem' }}>{lote.unidade}</span></Td>
                   <Td><Badge $bg={statusConfig[lote.status]?.bg} $color={statusConfig[lote.status]?.color}>{statusConfig[lote.status]?.label}</Badge></Td>
                   <Td>
                     <ActionGroup>

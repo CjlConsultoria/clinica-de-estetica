@@ -288,10 +288,10 @@ export default function Consentimento() {
                 <Tr key={termo.id}>
                   <Td style={{ fontWeight: 600, color: '#1a1a1a' }}>{termo.paciente}</Td>
                   <Td><Badge $bg="rgba(187,161,136,0.15)" $color="#BBA188">{termo.procedimento}</Badge></Td>
-                  <Td style={{ color: '#888', fontSize: '0.82rem' }}>{termo.dataCriacao}</Td>
-                  <Td style={{ color: '#555', fontSize: '0.82rem' }}>{termo.assinadoEm ?? <span style={{ color: '#ccc' }}>—</span>}</Td>
-                  <Td style={{ fontSize: '0.85rem' }}>{termo.profissional}</Td>
-                  <Td><code style={{ fontSize: '0.76rem', color: '#999', background: '#f5f5f5', padding: '2px 6px', borderRadius: 4 }}>{termo.versao}</code></Td>
+                  <Td style={{ color: '#777' }}>{termo.dataCriacao}</Td>
+                  <Td style={{ color: '#555' }}>{termo.assinadoEm ?? <span style={{ color: '#ccc' }}>—</span>}</Td>
+                  <Td>{termo.profissional}</Td>
+                  <Td><code style={{ fontSize: '0.71rem', color: '#999', background: '#f5f5f5', padding: '2px 5px', borderRadius: 4 }}>{termo.versao}</code></Td>
                   <Td><Badge $bg={statusConfig[termo.status]?.bg} $color={statusConfig[termo.status]?.color}>{statusConfig[termo.status]?.label}</Badge></Td>
                   <Td>
                     <ActionGroup>

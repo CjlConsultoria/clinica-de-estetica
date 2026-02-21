@@ -131,7 +131,7 @@ export const DropdownList = styled.div`
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  min-width: 200px;
+  min-width: 100%;
   background: white;
   border: 1.5px solid #e8e8e8;
   border-radius: 14px;

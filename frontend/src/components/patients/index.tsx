@@ -63,6 +63,11 @@ const mockPatients = [
   { id: 6, name: 'Patrícia Alves',      email: 'patricia.a@email.com',    phone: '(31) 93210-9876', birthdate: '19/12/1982', lastVisit: '20/12/2024', procedure: 'Microagulhamento',status:'inativo', visits: 12 },
   { id: 7, name: 'Roberta Gomes',       email: 'roberta.g@email.com',     phone: '(31) 92109-8765', birthdate: '08/06/1998', lastVisit: '15/12/2024', procedure: 'Preenchimento', status: 'ativo',   visits: 1  },
   { id: 8, name: 'Sandra Oliveira',     email: 'sandra.o@email.com',      phone: '(41) 91098-7654', birthdate: '25/02/1978', lastVisit: '10/11/2024', procedure: 'Bioestimulador',status: 'inativo', visits: 7  },
+  { id: 9, name: 'Ana Beatriz Costa',   email: 'ana.costa@email.com',    phone: '(11) 98765-4321', birthdate: '15/03/1988', lastVisit: '18/02/2025', procedure: 'Botox',         status: 'ativo',   visits: 8  },
+  { id: 10, name: 'Carla Mendonça',      email: 'carla.m@email.com',      phone: '(11) 97654-3210', birthdate: '22/07/1992', lastVisit: '15/02/2025', procedure: 'Preenchimento', status: 'ativo',   visits: 5  },
+  { id: 11, name: 'Fernanda Lima',       email: 'fernanda.lima@email.com', phone: '(11) 96543-2109', birthdate: '05/11/1985', lastVisit: '10/02/2025', procedure: 'Bioestimulador',status: 'ativo',   visits: 3  },
+  { id: 12, name: 'Marina Souza',        email: 'marina.s@email.com',      phone: '(21) 95432-1098', birthdate: '30/04/1990', lastVisit: '08/01/2025', procedure: 'Fio PDO',       status: 'ativo',   visits: 6  },
+
 ];
 
 const statusColors: Record<string, { bg: string; color: string }> = {
@@ -291,7 +296,7 @@ export default function Patients() {
               ) : paginatedData.map((p, i) => (
                 <Tr key={p.id}>
                   <Td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <Avatar $color={avatarColors[(startIndex + i) % avatarColors.length]}>
                         {p.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
                       </Avatar>
@@ -309,10 +314,10 @@ export default function Patients() {
                   <Td>
                     <ActionGroup>
                       <IconBtn title="Editar" onClick={() => openEdit(p)}>
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       </IconBtn>
                       <IconBtn title="Ver histórico">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                       </IconBtn>
                     </ActionGroup>
                   </Td>

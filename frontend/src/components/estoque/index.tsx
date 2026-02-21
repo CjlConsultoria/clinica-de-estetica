@@ -60,7 +60,6 @@ const mockStock = [
   { id: 9, code: 'DES-AGU-001', name: 'Agulhas 30G 0.5mm',                 category: 'Descartável',       quantity: 1,  minStock: 10, maxStock: 100, unit: 'cx',  price: 45,   expiryDate: '2027-01-01', supplier: 'BD',           status: 'critico'  },
   { id: 10,code: 'DES-LUV-002', name: 'Luvas Nitrila M',                   category: 'Descartável',       quantity: 22, minStock: 5,  maxStock: 50,  unit: 'cx',  price: 38,   expiryDate: '2027-06-01', supplier: 'Medix',        status: 'normal'   },
   { id: 11,code: 'DES-LUV-002', name: 'Luvas Nitrila M',                   category: 'Descartável',       quantity: 22, minStock: 5,  maxStock: 50,  unit: 'cx',  price: 38,   expiryDate: '2027-06-01', supplier: 'Medix',        status: 'normal'   },
-
 ];
 
 const catColors: Record<string, string> = {
@@ -102,24 +101,15 @@ type ItemField =
   | 'quantidade' | 'minimo' | 'maximo' | 'preco' | 'fornecedor' | 'validade';
 
 interface ItemForm {
-  nome:       string;
-  codigo:     string;
-  categoria:  string;
-  unidade:    string;
-  quantidade: string;
-  minimo:     string;
-  maximo:     string;
-  preco:      string;
-  fornecedor: string;
-  validade:   string;
+  nome: string; codigo: string; categoria: string; unidade: string;
+  quantidade: string; minimo: string; maximo: string; preco: string;
+  fornecedor: string; validade: string;
 }
 
 type MovField = 'tipoMov' | 'quantidadeMov' | 'observacaoMov';
 
 interface MovForm {
-  tipoMov:       string;
-  quantidadeMov: string;
-  observacaoMov: string;
+  tipoMov: string; quantidadeMov: string; observacaoMov: string;
 }
 
 const ITEM_INITIAL: ItemForm = {
@@ -166,20 +156,10 @@ export default function Estoque() {
   const [currentPage,      setCurrentPage]      = useState(1);
 
   const [itemForm, setItemForm] = useState<ItemForm>(ITEM_INITIAL);
-  const {
-    errors:     itemErrors,
-    validate:   itemValidate,
-    clearError: itemClearError,
-    clearAll:   itemClearAll,
-  } = useSequentialValidation<ItemField>(ITEM_VALIDATION_FIELDS);
+  const { errors: itemErrors, validate: itemValidate, clearError: itemClearError, clearAll: itemClearAll } = useSequentialValidation<ItemField>(ITEM_VALIDATION_FIELDS);
 
   const [movForm, setMovForm] = useState<MovForm>(MOV_INITIAL);
-  const {
-    errors:     movErrors,
-    validate:   movValidate,
-    clearError: movClearError,
-    clearAll:   movClearAll,
-  } = useSequentialValidation<MovField>(MOV_VALIDATION_FIELDS);
+  const { errors: movErrors, validate: movValidate, clearError: movClearError, clearAll: movClearAll } = useSequentialValidation<MovField>(MOV_VALIDATION_FIELDS);
 
   const filtered = mockStock.filter(item => {
     const matchSearch = item.name.toLowerCase().includes(search.toLowerCase()) || item.code.toLowerCase().includes(search.toLowerCase());
@@ -188,7 +168,6 @@ export default function Estoque() {
     return matchSearch && matchCat && matchStat;
   });
 
-  /* ── Paginação ── */
   const totalFiltered = filtered.length;
   const totalPages    = Math.max(1, Math.ceil(totalFiltered / ITEMS_PER_PAGE));
   const safePage      = Math.min(currentPage, totalPages);
@@ -196,180 +175,69 @@ export default function Estoque() {
   const paginatedData = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const totalItems   = mockStock.length;
-  const lowStock     = mockStock.filter(i => i.status === 'baixo'    || i.status === 'critico').length;
+  const lowStock     = mockStock.filter(i => i.status === 'baixo' || i.status === 'critico').length;
   const outOfStock   = mockStock.filter(i => i.status === 'esgotado').length;
   const expiringSoon = mockStock.filter(i => isExpiringSoon(i.expiryDate)).length;
   const totalValue   = mockStock.reduce((acc, i) => acc + i.price * i.quantity, 0);
   const criticalItems = mockStock.filter(i => i.status === 'critico' || i.status === 'esgotado');
 
-  function handleItemChange(field: ItemField, value: string) {
-    setItemForm(prev => ({ ...prev, [field]: value }));
-    itemClearError(field);
-  }
+  function handleItemChange(field: ItemField, value: string) { setItemForm(prev => ({ ...prev, [field]: value })); itemClearError(field); }
+  function handleItemDataChange(raw: string) { if (!raw) { handleItemChange('validade', ''); return; } const [yearStr, month, day] = raw.split('-'); const safeYear = yearStr ? yearStr.slice(0, 4) : ''; handleItemChange('validade', `${safeYear}-${month ?? ''}-${day ?? ''}`); }
+  function handleCloseItemModal() { setItemForm(ITEM_INITIAL); itemClearAll(); setIsModalOpen(false); setSelected(null); }
+  function handleSaveItem() { const isValid = itemValidate({ nome: itemForm.nome, codigo: itemForm.codigo, categoria: itemForm.categoria, unidade: itemForm.unidade, quantidade: itemForm.quantidade, minimo: itemForm.minimo, maximo: itemForm.maximo, preco: itemForm.preco, fornecedor: itemForm.fornecedor, validade: itemForm.validade }); if (!isValid) return; handleCloseItemModal(); }
 
-  function handleItemDataChange(raw: string) {
-    if (!raw) { handleItemChange('validade', ''); return; }
-    const [yearStr, month, day] = raw.split('-');
-    const safeYear = yearStr ? yearStr.slice(0, 4) : '';
-    handleItemChange('validade', `${safeYear}-${month ?? ''}-${day ?? ''}`);
-  }
-
-  function handleCloseItemModal() {
-    setItemForm(ITEM_INITIAL);
-    itemClearAll();
-    setIsModalOpen(false);
-    setSelected(null);
-  }
-
-  function handleSaveItem() {
-    const isValid = itemValidate({
-      nome:       itemForm.nome,
-      codigo:     itemForm.codigo,
-      categoria:  itemForm.categoria,
-      unidade:    itemForm.unidade,
-      quantidade: itemForm.quantidade,
-      minimo:     itemForm.minimo,
-      maximo:     itemForm.maximo,
-      preco:      itemForm.preco,
-      fornecedor: itemForm.fornecedor,
-      validade:   itemForm.validade,
-    });
-    if (!isValid) return;
-    handleCloseItemModal();
-  }
-
-  function handleMovChange(field: MovField, value: string) {
-    setMovForm(prev => ({ ...prev, [field]: value }));
-    movClearError(field);
-  }
-
-  function handleCloseMovModal() {
-    setMovForm(MOV_INITIAL);
-    movClearAll();
-    setIsMovModal(false);
-    setSelected(null);
-  }
-
-  function handleSaveMov() {
-    const isValid = movValidate({
-      tipoMov:       movForm.tipoMov,
-      quantidadeMov: movForm.quantidadeMov,
-      observacaoMov: movForm.observacaoMov,
-    });
-    if (!isValid) return;
-    handleCloseMovModal();
-  }
+  function handleMovChange(field: MovField, value: string) { setMovForm(prev => ({ ...prev, [field]: value })); movClearError(field); }
+  function handleCloseMovModal() { setMovForm(MOV_INITIAL); movClearAll(); setIsMovModal(false); setSelected(null); }
+  function handleSaveMov() { const isValid = movValidate({ tipoMov: movForm.tipoMov, quantidadeMov: movForm.quantidadeMov, observacaoMov: movForm.observacaoMov }); if (!isValid) return; handleCloseMovModal(); }
 
   function openEdit(item: typeof mockStock[0]) {
     setSelected(item);
-    setItemForm({
-      nome:       item.name,
-      codigo:     item.code,
-      categoria:  categoryOptions.find(c => c.label === item.category)?.value ?? '',
-      unidade:    item.unit,
-      quantidade: String(item.quantity),
-      minimo:     String(item.minStock),
-      maximo:     String(item.maxStock),
-      preco:      String(item.price),
-      fornecedor: item.supplier,
-      validade:   item.expiryDate,
-    });
+    setItemForm({ nome: item.name, codigo: item.code, categoria: categoryOptions.find(c => c.label === item.category)?.value ?? '', unidade: item.unit, quantidade: String(item.quantity), minimo: String(item.minStock), maximo: String(item.maxStock), preco: String(item.price), fornecedor: item.supplier, validade: item.expiryDate });
     setIsModalOpen(true);
   }
 
-  function openMov(item: typeof mockStock[0]) {
-    setSelected(item);
-    setMovForm(MOV_INITIAL);
-    movClearAll();
-    setIsMovModal(true);
-  }
+  function openMov(item: typeof mockStock[0]) { setSelected(item); setMovForm(MOV_INITIAL); movClearAll(); setIsMovModal(true); }
 
   return (
     <Container>
       <Header>
         <Title>Estoque</Title>
-        <Button
-          variant="primary"
-          icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>}
-          onClick={() => { setSelected(null); setItemForm(ITEM_INITIAL); itemClearAll(); setIsModalOpen(true); }}
-        >
-          Novo Item
-        </Button>
+        <Button variant="primary" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>} onClick={() => { setSelected(null); setItemForm(ITEM_INITIAL); itemClearAll(); setIsModalOpen(true); }}>Novo Item</Button>
       </Header>
 
       {criticalItems.length > 0 && (
         <AlertBanner>
-          <AlertBannerIcon>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-          </AlertBannerIcon>
-          <AlertBannerText>
-            <strong>{criticalItems.length} {criticalItems.length === 1 ? 'item' : 'itens'}</strong> com estoque crítico ou esgotado: {criticalItems.map(i => i.name).join(', ')}
-          </AlertBannerText>
+          <AlertBannerIcon><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></AlertBannerIcon>
+          <AlertBannerText><strong>{criticalItems.length} {criticalItems.length === 1 ? 'item' : 'itens'}</strong> com estoque crítico ou esgotado: {criticalItems.map(i => i.name).join(', ')}</AlertBannerText>
         </AlertBanner>
       )}
 
       <StatsGrid>
-        <StatCard label="Total de Itens"       value={totalItems}   color="#BBA188" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>} />
-        <StatCard label="Estoque Baixo/Crítico" value={lowStock}     color="#f39c12" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>} trend={{ value: 'Atenção!', positive: false }} />
-        <StatCard label="Esgotados"             value={outOfStock}   color="#e74c3c" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>} trend={{ value: 'Repor urgente', positive: false }} />
-        <StatCard label="A Vencer (30 dias)"    value={expiringSoon} color="#a8906f" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>} />
-        <StatCard label="Valor em Estoque"      value={`R$ ${totalValue.toLocaleString('pt-BR')}`} color="#8a7560" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>} trend={{ value: '+R$ 4.200 vs mês', positive: true }} />
+        <StatCard label="Total de Itens" value={totalItems} color="#BBA188" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>} />
+        <StatCard label="Estoque Baixo/Crítico" value={lowStock} color="#f39c12" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>} trend={{ value: 'Atenção!', positive: false }} />
+        <StatCard label="Esgotados" value={outOfStock} color="#e74c3c" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>} trend={{ value: 'Repor urgente', positive: false }} />
+        <StatCard label="A Vencer (30 dias)" value={expiringSoon} color="#a8906f" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>} />
+        <StatCard label="Valor em Estoque" value={`R$ ${totalValue.toLocaleString('pt-BR')}`} color="#8a7560" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>} trend={{ value: '+R$ 4.200 vs mês', positive: true }} />
       </StatsGrid>
 
       <Controls>
         <SearchBarWrapper>
-          <SearchIconWrap>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          </SearchIconWrap>
+          <SearchIconWrap><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></SearchIconWrap>
           <SearchInputStyled placeholder="Buscar por nome ou código..." value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }} />
         </SearchBarWrapper>
-
         <FilterRow>
           <DropdownWrapper>
-            <DropdownBtn onClick={() => { setOpenDropdownCat(!openDropdownCat); setOpenDropdownStat(false); }}>
-              <span>{filterCat}</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
-            </DropdownBtn>
-            {openDropdownCat && (
-              <DropdownList>
-                {filterCategories.map(c => (
-                  <DropdownItem key={c} $active={filterCat === c} onClick={() => { setFilterCat(c); setOpenDropdownCat(false); setCurrentPage(1); }}>{c}</DropdownItem>
-                ))}
-              </DropdownList>
-            )}
+            <DropdownBtn onClick={() => { setOpenDropdownCat(!openDropdownCat); setOpenDropdownStat(false); }}><span>{filterCat}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg></DropdownBtn>
+            {openDropdownCat && (<DropdownList>{filterCategories.map(c => (<DropdownItem key={c} $active={filterCat === c} onClick={() => { setFilterCat(c); setOpenDropdownCat(false); setCurrentPage(1); }}>{c}</DropdownItem>))}</DropdownList>)}
           </DropdownWrapper>
-
           <DropdownWrapper>
-            <DropdownBtn onClick={() => { setOpenDropdownStat(!openDropdownStat); setOpenDropdownCat(false); }}>
-              <span>{filterStat}</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
-            </DropdownBtn>
-            {openDropdownStat && (
-              <DropdownList>
-                {filterStatus.map(s => (
-                  <DropdownItem key={s} $active={filterStat === s} onClick={() => { setFilterStat(s); setOpenDropdownStat(false); setCurrentPage(1); }}>{s}</DropdownItem>
-                ))}
-              </DropdownList>
-            )}
+            <DropdownBtn onClick={() => { setOpenDropdownStat(!openDropdownStat); setOpenDropdownCat(false); }}><span>{filterStat}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg></DropdownBtn>
+            {openDropdownStat && (<DropdownList>{filterStatus.map(s => (<DropdownItem key={s} $active={filterStat === s} onClick={() => { setFilterStat(s); setOpenDropdownStat(false); setCurrentPage(1); }}>{s}</DropdownItem>))}</DropdownList>)}
           </DropdownWrapper>
-
-          {(filterCat !== 'Todas' || filterStat !== 'Todos') && (
-            <ClearFilterBtn onClick={() => { setFilterCat('Todas'); setFilterStat('Todos'); setCurrentPage(1); }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-              Limpar
-            </ClearFilterBtn>
-          )}
-
+          {(filterCat !== 'Todas' || filterStat !== 'Todos') && (<ClearFilterBtn onClick={() => { setFilterCat('Todas'); setFilterStat('Todos'); setCurrentPage(1); }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>Limpar</ClearFilterBtn>)}
           <ToggleGroup>
-            <ToggleBtn $active={view === 'tabela'} onClick={() => setView('tabela')}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
-            </ToggleBtn>
-            <ToggleBtn $active={view === 'cards'} onClick={() => setView('cards')}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-            </ToggleBtn>
+            <ToggleBtn $active={view === 'tabela'} onClick={() => setView('tabela')}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></ToggleBtn>
+            <ToggleBtn $active={view === 'cards'} onClick={() => setView('cards')}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></ToggleBtn>
           </ToggleGroup>
         </FilterRow>
       </Controls>
@@ -380,55 +248,28 @@ export default function Estoque() {
             <Table>
               <Thead>
                 <tr>
-                  <Th $width="10%">Código</Th>
-                  <Th $width="22%">Nome</Th>
-                  <Th $width="16%">Categoria</Th>
-                  <Th $width="10%">Qtd / Un</Th>
-                  <Th $width="10%">Mín</Th>
-                  <Th $width="12%">Validade</Th>
-                  <Th $width="10%">Status</Th>
-                  <Th $width="10%">Ações</Th>
+                  <Th $width="10%">Código</Th><Th $width="22%">Nome</Th><Th $width="16%">Categoria</Th><Th $width="10%">Qtd / Un</Th><Th $width="10%">Mín</Th><Th $width="12%">Validade</Th><Th $width="10%">Status</Th><Th $width="10%">Ações</Th>
                 </tr>
               </Thead>
               <Tbody>
                 {paginatedData.length === 0 ? (
-                  <tr>
-                    <Td colSpan={8} style={{ textAlign: 'center', padding: '48px 0', color: '#bbb' }}>
-                      Nenhum item encontrado.
-                    </Td>
-                  </tr>
+                  <tr><Td colSpan={8} style={{ textAlign: 'center', padding: '48px 0', color: '#bbb' }}>Nenhum item encontrado.</Td></tr>
                 ) : paginatedData.map(item => (
                   <Tr key={item.id}>
-                    <Td><code style={{ fontSize: '0.78rem', color: '#888' }}>{item.code}</code></Td>
+                    <Td><code style={{ fontSize: '0.73rem', color: '#888' }}>{item.code}</code></Td>
                     <Td style={{ fontWeight: 600, color: '#1a1a1a' }}>
                       {item.name}
-                      {isExpiringSoon(item.expiryDate) && (
-                        <span style={{ marginLeft: 6, fontSize: '0.7rem', background: '#fff3cd', color: '#856404', borderRadius: 6, padding: '2px 7px', fontWeight: 600 }}>Vence em breve</span>
-                      )}
+                      {isExpiringSoon(item.expiryDate) && (<span style={{ marginLeft: 6, fontSize: '0.65rem', background: '#fff3cd', color: '#856404', borderRadius: 6, padding: '2px 6px', fontWeight: 600 }}>Vence em breve</span>)}
                     </Td>
-                    <Td>
-                      <Badge $bg={`${catColors[item.category]}18`} $color={catColors[item.category]}>{item.category}</Badge>
-                    </Td>
-                    <Td style={{ fontWeight: 700, color: item.quantity === 0 ? '#e74c3c' : '#1a1a1a' }}>
-                      {item.quantity} <span style={{ color: '#aaa', fontWeight: 400, fontSize: '0.8rem' }}>{item.unit}</span>
-                    </Td>
+                    <Td><Badge $bg={`${catColors[item.category]}18`} $color={catColors[item.category]}>{item.category}</Badge></Td>
+                    <Td style={{ fontWeight: 700, color: item.quantity === 0 ? '#e74c3c' : '#1a1a1a' }}>{item.quantity} <span style={{ color: '#aaa', fontWeight: 400, fontSize: '0.72rem' }}>{item.unit}</span></Td>
                     <Td style={{ color: '#888' }}>{item.minStock} {item.unit}</Td>
-                    <Td style={{ color: isExpiringSoon(item.expiryDate) ? '#d68a00' : '#555', fontWeight: isExpiringSoon(item.expiryDate) ? 600 : 400 }}>
-                      {formatDate(item.expiryDate)}
-                    </Td>
-                    <Td>
-                      <Badge $bg={statusConfig[item.status].bg} $color={statusConfig[item.status].color}>
-                        {statusConfig[item.status].label}
-                      </Badge>
-                    </Td>
+                    <Td style={{ color: isExpiringSoon(item.expiryDate) ? '#d68a00' : '#555', fontWeight: isExpiringSoon(item.expiryDate) ? 600 : 400 }}>{formatDate(item.expiryDate)}</Td>
+                    <Td><Badge $bg={statusConfig[item.status].bg} $color={statusConfig[item.status].color}>{statusConfig[item.status].label}</Badge></Td>
                     <Td>
                       <ActionGroup>
-                        <IconBtn title="Movimentar" onClick={() => openMov(item)}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
-                        </IconBtn>
-                        <IconBtn title="Editar" onClick={() => openEdit(item)}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                        </IconBtn>
+                        <IconBtn title="Movimentar" onClick={() => openMov(item)}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg></IconBtn>
+                        <IconBtn title="Editar" onClick={() => openEdit(item)}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></IconBtn>
                       </ActionGroup>
                     </Td>
                   </Tr>
@@ -436,20 +277,12 @@ export default function Estoque() {
               </Tbody>
             </Table>
           </TableWrapper>
-          <Pagination
-            currentPage={safePage}
-            totalItems={totalFiltered}
-            itemsPerPage={ITEMS_PER_PAGE}
-            onPageChange={setCurrentPage}
-          />
+          <Pagination currentPage={safePage} totalItems={totalFiltered} itemsPerPage={ITEMS_PER_PAGE} onPageChange={setCurrentPage} />
         </div>
       ) : (
         <CardsGrid>
           {filtered.length === 0 ? (
-            <EmptyState>
-              <h3>Nenhum item encontrado</h3>
-              <p>Tente ajustar os filtros de busca.</p>
-            </EmptyState>
+            <EmptyState><h3>Nenhum item encontrado</h3><p>Tente ajustar os filtros de busca.</p></EmptyState>
           ) : filtered.map(item => (
             <StockCard key={item.id}>
               <StockCardTop $color={catColors[item.category] || '#BBA188'}>
@@ -458,65 +291,28 @@ export default function Estoque() {
                   <StockCardName>{item.name}</StockCardName>
                   <code style={{ fontSize: '0.72rem', color: '#999' }}>{item.code}</code>
                 </div>
-                <StockAlertBadge $bg={statusConfig[item.status].bg} $color={statusConfig[item.status].color}>
-                  {statusConfig[item.status].label}
-                </StockAlertBadge>
+                <StockAlertBadge $bg={statusConfig[item.status].bg} $color={statusConfig[item.status].color}>{statusConfig[item.status].label}</StockAlertBadge>
               </StockCardTop>
-
               <StockCardBody>
-                <StockDetailRow>
-                  <StockDetailLabel>Quantidade</StockDetailLabel>
-                  <StockDetailValue $highlight $color={item.quantity === 0 ? '#e74c3c' : item.quantity <= item.minStock ? '#d68a00' : '#1a1a1a'}>
-                    {item.quantity} {item.unit}
-                  </StockDetailValue>
-                </StockDetailRow>
-                <ProgressBarWrapper>
-                  <ProgressBar $pct={Math.min((item.quantity / item.maxStock) * 100, 100)} $color={getProgressColor(item.status)} />
-                </ProgressBarWrapper>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#aaa', marginBottom: 12 }}>
-                  <span>Mín: {item.minStock}</span><span>Máx: {item.maxStock}</span>
-                </div>
-                <StockDetailRow>
-                  <StockDetailLabel>Validade</StockDetailLabel>
-                  <StockDetailValue $color={isExpiringSoon(item.expiryDate) ? '#d68a00' : '#444'}>
-                    {formatDate(item.expiryDate)}{isExpiringSoon(item.expiryDate) && ' ⚠️'}
-                  </StockDetailValue>
-                </StockDetailRow>
-                <StockDetailRow>
-                  <StockDetailLabel>Fornecedor</StockDetailLabel>
-                  <StockDetailValue>{item.supplier}</StockDetailValue>
-                </StockDetailRow>
-                <StockDetailRow>
-                  <StockDetailLabel>Preço Unit.</StockDetailLabel>
-                  <StockDetailValue $highlight>R$ {item.price.toLocaleString('pt-BR')}</StockDetailValue>
-                </StockDetailRow>
+                <StockDetailRow><StockDetailLabel>Quantidade</StockDetailLabel><StockDetailValue $highlight $color={item.quantity === 0 ? '#e74c3c' : item.quantity <= item.minStock ? '#d68a00' : '#1a1a1a'}>{item.quantity} {item.unit}</StockDetailValue></StockDetailRow>
+                <ProgressBarWrapper><ProgressBar $pct={Math.min((item.quantity / item.maxStock) * 100, 100)} $color={getProgressColor(item.status)} /></ProgressBarWrapper>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#aaa', marginBottom: 12 }}><span>Mín: {item.minStock}</span><span>Máx: {item.maxStock}</span></div>
+                <StockDetailRow><StockDetailLabel>Validade</StockDetailLabel><StockDetailValue $color={isExpiringSoon(item.expiryDate) ? '#d68a00' : '#444'}>{formatDate(item.expiryDate)}{isExpiringSoon(item.expiryDate) && ' ⚠️'}</StockDetailValue></StockDetailRow>
+                <StockDetailRow><StockDetailLabel>Fornecedor</StockDetailLabel><StockDetailValue>{item.supplier}</StockDetailValue></StockDetailRow>
+                <StockDetailRow><StockDetailLabel>Preço Unit.</StockDetailLabel><StockDetailValue $highlight>R$ {item.price.toLocaleString('pt-BR')}</StockDetailValue></StockDetailRow>
               </StockCardBody>
-
               <StockCardFooter>
                 <Button variant="outline" size="sm" onClick={() => openMov(item)}>+ Movimentar</Button>
-                <Button variant="ghost"   size="sm" onClick={() => openEdit(item)}>Editar</Button>
+                <Button variant="ghost" size="sm" onClick={() => openEdit(item)}>Editar</Button>
               </StockCardFooter>
             </StockCard>
           ))}
         </CardsGrid>
       )}
 
-      <Modal
-        isOpen={isModalOpen}
-        onClose={handleCloseItemModal}
-        title={selected ? 'Editar Item' : 'Novo Item de Estoque'}
-        size="md"
-        footer={
-          <>
-            <Button variant="outline" onClick={handleCloseItemModal}>Cancelar</Button>
-            <Button variant="primary" onClick={handleSaveItem}>Salvar</Button>
-          </>
-        }
-      >
+      <Modal isOpen={isModalOpen} onClose={handleCloseItemModal} title={selected ? 'Editar Item' : 'Novo Item de Estoque'} size="md" footer={<><Button variant="outline" onClick={handleCloseItemModal}>Cancelar</Button><Button variant="primary" onClick={handleSaveItem}>Salvar</Button></>}>
         <FormGrid>
-          <div style={{ gridColumn: 'span 2' }}>
-            <Input label="Nome do Item *" placeholder="Ex: Toxina Botulínica Allergan..." value={itemForm.nome} onChange={e => handleItemChange('nome', e.target.value)} maxLength={120} error={itemErrors.nome} />
-          </div>
+          <div style={{ gridColumn: 'span 2' }}><Input label="Nome do Item *" placeholder="Ex: Toxina Botulínica Allergan..." value={itemForm.nome} onChange={e => handleItemChange('nome', e.target.value)} maxLength={120} error={itemErrors.nome} /></div>
           <Input label="Código *" placeholder="Ex: BTX-001" value={itemForm.codigo} onChange={e => handleItemChange('codigo', e.target.value.toUpperCase())} maxLength={30} error={itemErrors.codigo} />
           <Select label="Categoria *" options={categoryOptions} placeholder="Selecione..." value={itemForm.categoria} onChange={v => handleItemChange('categoria', v)} error={itemErrors.categoria} />
           <Select label="Unidade *" options={unitOptions} placeholder="Selecione..." value={itemForm.unidade} onChange={v => handleItemChange('unidade', v)} error={itemErrors.unidade} />
@@ -529,18 +325,7 @@ export default function Estoque() {
         </FormGrid>
       </Modal>
 
-      <Modal
-        isOpen={isMovModal}
-        onClose={handleCloseMovModal}
-        title={`Movimentar: ${selected?.name ?? ''}`}
-        size="sm"
-        footer={
-          <>
-            <Button variant="outline" onClick={handleCloseMovModal}>Cancelar</Button>
-            <Button variant="primary" onClick={handleSaveMov}>Confirmar</Button>
-          </>
-        }
-      >
+      <Modal isOpen={isMovModal} onClose={handleCloseMovModal} title={`Movimentar: ${selected?.name ?? ''}`} size="sm" footer={<><Button variant="outline" onClick={handleCloseMovModal}>Cancelar</Button><Button variant="primary" onClick={handleSaveMov}>Confirmar</Button></>}>
         <FormGrid style={{ gridTemplateColumns: '1fr' }}>
           <Select label="Tipo de Movimentação *" options={movTypeOptions} placeholder="Selecione o tipo..." value={movForm.tipoMov} onChange={v => handleMovChange('tipoMov', v)} error={movErrors.tipoMov} />
           <Input label="Quantidade *" type="number" placeholder="0" value={movForm.quantidadeMov} onChange={e => handleMovChange('quantidadeMov', e.target.value)} error={movErrors.quantidadeMov} />
