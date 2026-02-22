@@ -11,6 +11,8 @@ public class ProdutoResponse {
     private Long id;
     private String nome;
     private String fabricante;
+    private String categoria;
+    private String unidade;
     private String registroAnvisa;
     private String descricao;
     private boolean ativo;

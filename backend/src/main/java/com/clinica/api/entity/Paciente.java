@@ -42,8 +42,6 @@ public class Paciente {
 
     @Column(unique = true)
     private String email;
-
-    // Endereço
     private String cep;
     private String logradouro;
     private String numero;
@@ -52,7 +50,7 @@ public class Paciente {
     private String cidade;
     private String estado;
 
-    // Convênio
+
     @Column(name = "convenio")
     private String convenio;
 

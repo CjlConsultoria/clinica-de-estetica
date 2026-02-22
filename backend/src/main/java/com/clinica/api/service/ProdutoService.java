@@ -38,6 +38,8 @@ public class ProdutoService {
         Produto produto = Produto.builder()
                 .nome(request.getNome())
                 .fabricante(request.getFabricante())
+                .categoria(request.getCategoria())
+                .unidade(request.getUnidade())
                 .registroAnvisa(request.getRegistroAnvisa())
                 .descricao(request.getDescricao())
                 .build();
@@ -49,6 +51,8 @@ public class ProdutoService {
         Produto produto = findById(id);
         produto.setNome(request.getNome());
         produto.setFabricante(request.getFabricante());
+        produto.setCategoria(request.getCategoria());
+        produto.setUnidade(request.getUnidade());
         produto.setRegistroAnvisa(request.getRegistroAnvisa());
         produto.setDescricao(request.getDescricao());
         return toResponse(produtoRepository.save(produto));
@@ -81,6 +85,8 @@ public class ProdutoService {
                 .id(produto.getId())
                 .nome(produto.getNome())
                 .fabricante(produto.getFabricante())
+                .categoria(produto.getCategoria())
+                .unidade(produto.getUnidade())
                 .registroAnvisa(produto.getRegistroAnvisa())
                 .descricao(produto.getDescricao())
                 .ativo(produto.isAtivo())

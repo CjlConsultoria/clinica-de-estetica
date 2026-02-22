@@ -92,7 +92,7 @@ public class EstoqueService {
         List<AlertaEstoque> novosAlertas = new ArrayList<>();
         LocalDate hoje = LocalDate.now();
 
-        // Validade próxima (60 dias)
+
         List<LoteProduto> vencendoEm60Dias = loteProdutoRepository.findValidadeProxima(hoje.plusDays(60));
         for (LoteProduto lote : vencendoEm60Dias) {
             if (!alertaEstoqueRepository.existsByLoteIdAndTipoAndLidoFalse(lote.getId(), TipoAlertaEstoque.VALIDADE_PROXIMA)) {
@@ -107,7 +107,7 @@ public class EstoqueService {
             }
         }
 
-        // Estoque crítico (< 10%)
+
         List<LoteProduto> estoqueCritico = loteProdutoRepository.findEstoqueBaixo(0.10);
         for (LoteProduto lote : estoqueCritico) {
             if (!alertaEstoqueRepository.existsByLoteIdAndTipoAndLidoFalse(lote.getId(), TipoAlertaEstoque.ESTOQUE_CRITICO)) {
@@ -122,7 +122,7 @@ public class EstoqueService {
             }
         }
 
-        // Estoque baixo (< 30%, excluindo críticos já alertados)
+
         List<LoteProduto> estoqueBaixo = loteProdutoRepository.findEstoqueBaixo(0.30);
         for (LoteProduto lote : estoqueBaixo) {
             double pct = (double) lote.getQuantidadeAtual() / lote.getQuantidadeTotal();
@@ -138,7 +138,7 @@ public class EstoqueService {
             }
         }
 
-        // Lotes vencidos — atualizar status
+
         List<LoteProduto> vencidos = loteProdutoRepository.findVencidosAntes(hoje);
         for (LoteProduto lote : vencidos) {
             lote.setStatus(StatusLote.VENCIDO);
@@ -184,6 +184,10 @@ public class EstoqueService {
                 .id(lote.getId())
                 .produtoId(lote.getProduto().getId())
                 .produtoNome(lote.getProduto().getNome())
+                .produtoCategoria(lote.getProduto().getCategoria())
+                .produtoUnidade(lote.getProduto().getUnidade())
+                .produtoFabricante(lote.getProduto().getFabricante())
+                .produtoRegistroAnvisa(lote.getProduto().getRegistroAnvisa())
                 .numeroLote(lote.getNumeroLote())
                 .dataFabricacao(lote.getDataFabricacao())
                 .dataValidade(lote.getDataValidade())

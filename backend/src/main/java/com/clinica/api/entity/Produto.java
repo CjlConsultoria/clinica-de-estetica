@@ -26,6 +26,10 @@ public class Produto {
     @Column(nullable = false)
     private String fabricante;
 
+    private String categoria;
+
+    private String unidade;
+
     @Column(name = "registro_anvisa", length = 20)
     private String registroAnvisa;
 

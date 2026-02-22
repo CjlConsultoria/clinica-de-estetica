@@ -1,9 +1,9 @@
 package com.clinica.api.dto.request;
 
+import com.clinica.api.enums.Cargo;
 import com.clinica.api.enums.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
@@ -16,9 +16,18 @@ public class UsuarioRequest {
     @Email(message = "Email inválido")
     private String email;
 
-    @NotBlank(message = "Senha é obrigatória")
     private String senha;
 
-    @NotNull(message = "Role é obrigatória")
+
     private Role role;
+
+    private Cargo cargo;
+
+    private String telefone;
+
+    private String especialidade;
+
+    private String registro;
+
+    private String observacoes;
 }

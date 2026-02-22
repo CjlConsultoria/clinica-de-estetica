@@ -1,5 +1,7 @@
 package com.clinica.api.entity;
 
+import com.clinica.api.enums.AreaProfissional;
+import com.clinica.api.enums.Cargo;
 import com.clinica.api.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
@@ -37,6 +39,29 @@ public class Usuario implements UserDetails {
     @Column(nullable = false)
     private Role role;
 
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
+    private Cargo cargo;
+
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "area_profissional", nullable = true)
+    private AreaProfissional areaProfissional;
+
+    @Column(nullable = true)
+    private String telefone;
+
+    @Column(nullable = true)
+    private String especialidade;
+
+    @Column(nullable = true)
+    private String registro;
+
+    @Column(columnDefinition = "TEXT", nullable = true)
+    private String observacoes;
+
+    @Builder.Default
     @Column(nullable = false)
     private boolean ativo = true;
 

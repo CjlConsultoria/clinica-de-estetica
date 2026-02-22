@@ -54,7 +54,6 @@ public class AplicacaoProdutoService {
                     .orElseThrow(() -> new ResourceNotFoundException("Prontuário", request.getProntuarioId()));
         }
 
-        // Dar baixa automática no estoque
         estoqueService.darBaixa(lote.getId(), request.getQuantidade());
 
         AplicacaoProduto aplicacao = AplicacaoProduto.builder()
