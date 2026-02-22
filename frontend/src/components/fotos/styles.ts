@@ -99,7 +99,7 @@ export const DropdownList = styled.div`
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  min-width: 200px;
+  min-width: 100%;
   background: white;
   border: 1.5px solid #e8e8e8;
   border-radius: 14px;
@@ -150,7 +150,6 @@ export const Badge = styled.span<{ $bg?: string; $color?: string }>`
   color: ${({ $color }) => $color || '#BBA188'};
 `;
 
-/* ── Patients Grid ── */
 export const PatientsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -243,7 +242,6 @@ export const FotoEmpty = styled.div`
   svg { color: #ddd; }
 `;
 
-/* ── Compare ── */
 export const CompareSection = styled.div``;
 
 export const CompareTitle = styled.h4`

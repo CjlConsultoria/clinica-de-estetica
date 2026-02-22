@@ -1,0 +1,8 @@
+com\clinica\api\entity\Procedimento.class
+com\clinica\api\dto\response\ProcedimentoResponse$ProcedimentoResponseBuilder.class
+com\clinica\api\dto\response\ProcedimentoResponse.class
+com\clinica\api\entity\Procedimento$ProcedimentoBuilder.class
+com\clinica\api\dto\request\ProcedimentoRequest.class
+com\clinica\api\repository\ProcedimentoRepository.class
+com\clinica\api\service\ProcedimentoService.class
+com\clinica\api\controller\ProcedimentoController.class

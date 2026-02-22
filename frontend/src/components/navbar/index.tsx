@@ -18,6 +18,7 @@ import {
   FlaskConical,
   RefreshCcw,
   ClipboardList,
+  Stethoscope,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
@@ -41,26 +42,42 @@ import {
   Overlay,
   CollapseButton,
   LogoCollapsed,
+  SectionDividerWrap,
+  SectionDividerLine,
+  SectionDividerLabel,
 } from './styles';
 
-const navItems = [
-  // ── Core ──
-  { label: 'Dashboard',        href: '/dashboard',          icon: LayoutDashboard },
-  { label: 'Agenda',           href: '/agenda',             icon: CalendarDays    },
-  { label: 'Pacientes',        href: '/patients',           icon: Users           },
-  // ── Clínico ──
-  { label: 'Histórico Pac.',   href: '/historico-paciente', icon: ClipboardList   },
-  { label: 'Fotos Clínicas',   href: '/fotos',              icon: Camera          },
-  { label: 'Reaplicações',     href: '/reaplicacoes',       icon: RefreshCcw      },
-  { label: 'Procedimentos',    href: '/procedures',         icon: Syringe         },
-  { label: 'Consentimento',    href: '/consentimento',      icon: FileText        },
-  // ── Operacional ──
-  { label: 'Lotes ANVISA',     href: '/lotes',              icon: FlaskConical    },
-  { label: 'Estoque',          href: '/estoque',            icon: Package         },
-  { label: 'Financeiro',       href: '/finance',            icon: DollarSign      },
-  { label: 'Comissões',        href: '/comissoes',          icon: BadgeDollarSign },
-  { label: 'Relatórios',       href: '/reports',            icon: BarChart3       },
-  { label: 'Configurações',    href: '/settings',           icon: Settings        },
+const navSections = [
+  {
+    label: 'Core',
+    items: [
+      { label: 'Dashboard',      href: '/dashboard',          icon: LayoutDashboard },
+      { label: 'Agenda',         href: '/agenda',             icon: CalendarDays    },
+      { label: 'Pacientes',      href: '/patients',           icon: Users           },
+    ],
+  },
+  {
+    label: 'Clínico',
+    items: [
+      { label: 'Histórico Pac.', href: '/historico-paciente', icon: ClipboardList   },
+      { label: 'Fotos Clínicas', href: '/fotos',              icon: Camera          },
+      { label: 'Reaplicações',   href: '/reaplicacoes',       icon: RefreshCcw      },
+      { label: 'Procedimentos',  href: '/procedures',         icon: Syringe         },
+      { label: 'Consentimento',  href: '/consentimento',      icon: FileText        },
+    ],
+  },
+  {
+    label: 'Operacional',
+    items: [
+      { label: 'Profissionais',        href: '/profissionais',            icon: Stethoscope     },
+      { label: 'Lotes ANVISA',   href: '/lotes',              icon: FlaskConical    },
+      { label: 'Estoque',        href: '/estoque',            icon: Package         },
+      { label: 'Financeiro',     href: '/finance',            icon: DollarSign      },
+      { label: 'Comissões',      href: '/comissoes',          icon: BadgeDollarSign },
+      { label: 'Relatórios',     href: '/reports',            icon: BarChart3       },
+      { label: 'Configurações',  href: '/settings',           icon: Settings        },
+    ],
+  },
 ];
 
 export default function Navbar() {
@@ -143,32 +160,49 @@ export default function Navbar() {
           <DividerTop $collapsed={collapsed} />
 
           <Nav $collapsed={collapsed}>
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const selected = pathname === item.href;
-              return (
-                <NavLink
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsOpen(false)}
-                  $selected={selected}
-                  $collapsed={collapsed}
-                >
-                  <NavLinkIcon $selected={selected}>
-                    <Icon size={18} />
-                  </NavLinkIcon>
-                  <NavLinkText $selected={selected} $collapsed={collapsed}>
-                    {item.label}
-                  </NavLinkText>
-                  <NavTooltip>{item.label}</NavTooltip>
-                </NavLink>
-              );
-            })}
+            {navSections.map((section, sectionIndex) => (
+              <div key={section.label} style={{ width: '100%' }}>
+                <SectionDividerWrap $collapsed={collapsed} $first={sectionIndex === 0}>
+                  <SectionDividerLine $collapsed={collapsed} />
+                  <SectionDividerLabel $collapsed={collapsed}>{section.label}</SectionDividerLabel>
+                  <SectionDividerLine $collapsed={collapsed} />
+                </SectionDividerWrap>
+
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const selected = pathname === item.href;
+                  return (
+                    <NavLink
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setIsOpen(false)}
+                      $selected={selected}
+                      $collapsed={collapsed}
+                    >
+                      <NavLinkIcon $selected={selected}>
+                        <Icon size={18} />
+                      </NavLinkIcon>
+                      <NavLinkText $selected={selected} $collapsed={collapsed}>
+                        {item.label}
+                      </NavLinkText>
+                      <NavTooltip>{item.label}</NavTooltip>
+                    </NavLink>
+                  );
+                })}
+              </div>
+            ))}
           </Nav>
         </div>
 
         <div style={{ width: '100%' }}>
           <LogoutDivider $collapsed={collapsed} />
+
+          <SectionDividerWrap $collapsed={collapsed} $isBottom>
+            <SectionDividerLine $collapsed={collapsed} />
+            <SectionDividerLabel $collapsed={collapsed}>Sessão</SectionDividerLabel>
+            <SectionDividerLine $collapsed={collapsed} />
+          </SectionDividerWrap>
+
           <LogoutButton type="button" onClick={handleLogout} $collapsed={collapsed}>
             <LogOut size={18} />
             <LogoutText $collapsed={collapsed}>Sair da conta</LogoutText>

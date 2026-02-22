@@ -220,7 +220,7 @@ export const DropdownList = styled.div`
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  min-width: 220px;
+  min-width: 100%;
   background: white;
   border: 1.5px solid #e8e8e8;
   border-radius: 14px;
@@ -287,9 +287,11 @@ export const TableWrapper = styled.div`
   overflow-x: auto;
 `;
 
+/* ── Igualado ao Finance ── */
+
 export const Table = styled.table`
   width: 100%;
-  min-width: 850px;
+  min-width: 750px;          /* era 850px */
   border-collapse: collapse;
 `;
 
@@ -298,14 +300,14 @@ export const Thead = styled.thead`
 `;
 
 export const Th = styled.th<{ $width?: string }>`
-  padding: 13px 14px;
+  padding: 11px 10px;        /* era 13px 14px */
   text-align: left;
-  font-size: 0.77rem;
+  font-size: 0.69rem;        /* era 0.77rem */
   font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
   font-weight: 600;
   color: white;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;    /* era 0.5px */
   width: ${({ $width }) => $width || 'auto'};
 `;
 
@@ -325,8 +327,8 @@ export const Tr = styled.tr`
 `;
 
 export const Td = styled.td`
-  padding: 13px 14px;
-  font-size: 0.88rem;
+  padding: 10px 10px;        /* era 13px 14px */
+  font-size: 0.78rem;        /* era 0.88rem */
   font-family: var(--font-inter-variable-regular), 'Inter', sans-serif;
   color: #444;
   vertical-align: middle;
@@ -334,23 +336,24 @@ export const Td = styled.td`
 
 export const Badge = styled.span<{ $bg?: string; $color?: string }>`
   display: inline-block;
-  padding: 4px 10px;
+  padding: 3px 7px;          /* era 4px 10px */
   border-radius: 20px;
-  font-size: 0.74rem;
+  font-size: 0.68rem;        /* era 0.74rem */
   font-weight: 600;
   font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
   background: ${({ $bg }) => $bg || '#f0ebe4'};
   color: ${({ $color }) => $color || '#BBA188'};
+  white-space: nowrap;
 `;
 
 export const ActionGroup = styled.div`
   display: flex;
-  gap: 6px;
+  gap: 4px;                  /* era 6px */
 `;
 
 export const IconBtn = styled.button`
-  width: 32px;
-  height: 32px;
+  width: 30px;               /* era 32px */
+  height: 30px;              /* era 32px */
   border: 1.5px solid #e8e8e8;
   border-radius: 8px;
   background: white;
@@ -360,6 +363,7 @@ export const IconBtn = styled.button`
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
 
   &:hover {
     background: #BBA188;
@@ -373,13 +377,17 @@ export const EmptyState = styled.div`
   flex-direction: column;
   align-items: center;
   padding: 60px 20px;
+  text-align: center;
+  color: #bbb;
 
   h3 {
+    font-size: 1.1rem;
     color: #555;
     margin: 0 0 6px;
   }
 
   p {
+    font-size: 0.88rem;
     color: #999;
     margin: 0;
   }

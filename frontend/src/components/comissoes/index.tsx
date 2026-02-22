@@ -1,71 +1,111 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Button from '@/components/ui/button';
 import StatCard from '@/components/ui/statcard';
+import Pagination from '@/components/ui/pagination';
 import {
   Container, Header, Title, Controls, SearchBarWrapper, SearchIconWrap, SearchInputStyled,
   FilterRow, DropdownWrapper, DropdownBtn, DropdownList, DropdownItem, ClearFilterBtn,
-  StatsGrid, TableWrapper, Table, Thead, Th, Tbody, Tr, Td, Badge, ActionGroup, IconBtn,
+  StatsGrid, TableWrapper, Table, Thead, Th, Tbody, Tr, Td, Badge,
   EmptyState, ProfCard, ProfGrid, ProfAvatar, ProfName, ProfRole, ProfStats,
   ProfStat, ProfStatLabel, ProfStatValue, ProgressBar, ProgressFill,
 } from './styles';
+import { comissoesService, type Comissao } from '@/services/comissoes.service';
 
-const filterMonths = ['Todos', 'Fevereiro 2025', 'Janeiro 2025', 'Dezembro 2024'];
-const filterProfs  = ['Todos', 'Maria Oliveira', 'Clara Andrade', 'Beatriz Santos'];
-
-const mockProfessionals = [
-  { id: 1, name: 'Maria Oliveira', role: 'Esteticista Sênior', avatar: 'MO', color: '#BBA188', sessoes: 12, receita: 14400, comissao: 2880,  percentual: 20, meta: 12000 },
-  { id: 2, name: 'Clara Andrade',  role: 'Biomédica Esteta',   avatar: 'CA', color: '#EBD5B0', sessoes: 26, receita: 31200, comissao: 5200,  percentual: 20, meta: 8000  },
-  { id: 3, name: 'Beatriz Santos', role: 'Esteticista',        avatar: 'BS', color: '#1b1b1b', sessoes: 21, receita: 24500, comissao: 6125,  percentual: 25, meta: 6000  },
-];
-
-const mockComissoes = [
-  { id: 1, date: '18/02/2025', professional: 'Maria Oliveira', procedure: 'Botox Facial',        patient: 'Ana Costa',   value: 720,  percentual: 20, comissao: 144,  status: 'pago'     },
-  { id: 2, date: '18/02/2025', professional: 'Clara Andrade',  procedure: 'Preenchimento Labial', patient: 'Carla M.',    value: 1200, percentual: 20, comissao: 240,  status: 'pendente' },
-  { id: 3, date: '16/02/2025', professional: 'Beatriz Santos', procedure: 'Bioestimulador',       patient: 'Fernanda L.', value: 2500, percentual: 25, comissao: 625,  status: 'pago'     },
-  { id: 4, date: '14/02/2025', professional: 'Maria Oliveira', procedure: 'Microagulhamento',     patient: 'Patrícia A.', value: 450,  percentual: 20, comissao: 90,   status: 'pago'     },
-  { id: 5, date: '13/02/2025', professional: 'Clara Andrade',  procedure: 'Fio PDO',              patient: 'Marina S.',   value: 1800, percentual: 20, comissao: 360,  status: 'pendente' },
-  { id: 6, date: '10/02/2025', professional: 'Beatriz Santos', procedure: 'Toxina Botulínica',    patient: 'Juliana R.',  value: 600,  percentual: 25, comissao: 150,  status: 'pago'     },
-];
+interface ProfSummary {
+  id: number; name: string; sessoes: number;
+  receita: number; comissao: number; percentual: number;
+}
 
 const fmt = (v: number) =>
   v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const statusColors: Record<string, { bg: string; color: string }> = {
-  pago:     { bg: '#f0ebe4', color: '#8a7560' },
-  pendente: { bg: '#fff3cd', color: '#856404' },
+  PAGO:     { bg: '#f0ebe4', color: '#8a7560' },
+  PENDENTE: { bg: '#fff3cd', color: '#856404' },
 };
 
-const avatarColors = ['#BBA188', '#EBD5B0', '#1b1b1b'];
+const avatarColors = ['#BBA188', '#EBD5B0', '#1b1b1b', '#8a7560', '#a8906f', '#c9a882'];
 
-function getBarColor(comissao: number, meta: number): string {
-  const pct = (comissao / meta) * 100;
-  if (pct < 50) return '#F09696';
-  if (pct < 75) return '#F0C38C';
+function getBarColor(ratio: number): string {
+  if (ratio < 0.5) return '#F09696';
+  if (ratio < 0.75) return '#F0C38C';
   return '#96D2A0';
 }
 
+function getInitials(name: string) {
+  return name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+}
+
+const ITEMS_PER_PAGE = 10;
+const TABLE_MIN_HEIGHT = 540;
+
 export default function Comissoes() {
+  const [comissoes,    setComissoes]    = useState<Comissao[]>([]);
+  const [loading,      setLoading]      = useState(true);
   const [search,       setSearch]       = useState('');
-  const [filterMonth,  setFilterMonth]  = useState('Todos');
   const [filterProf,   setFilterProf]   = useState('Todos');
+  const [filterStatus, setFilterStatus] = useState('Todos');
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [exporting,    setExporting]    = useState(false);
+  const [currentPage,  setCurrentPage]  = useState(1);
 
-  const totalComissoes = mockComissoes.reduce((a, c) => a + c.comissao, 0);
-  const totalPago      = mockComissoes.filter(c => c.status === 'pago').reduce((a, c) => a + c.comissao, 0);
-  const totalPendente  = mockComissoes.filter(c => c.status === 'pendente').reduce((a, c) => a + c.comissao, 0);
+  const carregarDados = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await comissoesService.listarTodas();
+      setComissoes(data);
+    } catch (err) {
+      console.error('Erro ao carregar comissões:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const filtered = mockComissoes.filter(c => {
+  useEffect(() => { carregarDados(); }, [carregarDados]);
+
+  const profCards = useMemo<ProfSummary[]>(() => {
+    const map = new Map<number, ProfSummary>();
+    comissoes.forEach(c => {
+      if (!map.has(c.usuarioId)) {
+        map.set(c.usuarioId, {
+          id: c.usuarioId,
+          name: c.usuarioNome ?? `Profissional ${c.usuarioId}`,
+          sessoes: 0, receita: 0, comissao: 0,
+          percentual: Number(c.percentual),
+        });
+      }
+      const prof = map.get(c.usuarioId)!;
+      prof.sessoes  += 1;
+      prof.receita  += Number(c.valorBase);
+      prof.comissao += Number(c.valorComissao);
+    });
+    return Array.from(map.values()).sort((a, b) => b.comissao - a.comissao);
+  }, [comissoes]);
+
+  const totalComissoes = comissoes.reduce((a, c) => a + Number(c.valorComissao), 0);
+  const totalPago      = comissoes.filter(c => c.status === 'PAGO').reduce((a, c) => a + Number(c.valorComissao), 0);
+  const totalPendente  = comissoes.filter(c => c.status === 'PENDENTE').reduce((a, c) => a + Number(c.valorComissao), 0);
+
+  const profNames = useMemo(() => ['Todos', ...profCards.map(p => p.name)], [profCards]);
+
+  const filtered = useMemo(() => comissoes.filter(c => {
     const matchSearch = (
-      c.professional.toLowerCase().includes(search.toLowerCase()) ||
-      c.procedure.toLowerCase().includes(search.toLowerCase())    ||
-      c.patient.toLowerCase().includes(search.toLowerCase())
+      (c.usuarioNome ?? '').toLowerCase().includes(search.toLowerCase()) ||
+      (c.procedimento ?? '').toLowerCase().includes(search.toLowerCase()) ||
+      (c.pacienteNome ?? '').toLowerCase().includes(search.toLowerCase())
     );
-    const matchProf = filterProf === 'Todos' || c.professional === filterProf;
-    return matchSearch && matchProf;
-  });
+    const matchProf   = filterProf === 'Todos' || c.usuarioNome === filterProf;
+    const matchStatus = filterStatus === 'Todos' || c.status === filterStatus;
+    return matchSearch && matchProf && matchStatus;
+  }), [comissoes, search, filterProf, filterStatus]);
+
+  const totalFiltered = filtered.length;
+  const totalPages    = Math.max(1, Math.ceil(totalFiltered / ITEMS_PER_PAGE));
+  const safePage      = Math.min(currentPage, totalPages);
+  const startIndex    = (safePage - 1) * ITEMS_PER_PAGE;
+  const paginatedData = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const toggle = (name: string) =>
     setOpenDropdown(prev => (prev === name ? null : name));
@@ -73,34 +113,23 @@ export default function Comissoes() {
   const handleExport = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-
     setExporting(true);
     let objectUrl: string | null = null;
-
     try {
       const response = await fetch('/api/relatorios/comissoes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          professionals: mockProfessionals,
-          comissoes:     filtered,
-          month:         filterMonth === 'Todos' ? 'Fevereiro 2025' : filterMonth,
-          filterProf,
-        }),
+        body: JSON.stringify({ professionals: profCards, comissoes: filtered }),
       });
-
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
-        throw new Error((err as any).details ?? 'Erro ao gerar PDF');
+        throw new Error((err as { details?: string }).details ?? 'Erro ao gerar PDF');
       }
-
       const blob  = await response.blob();
       objectUrl   = URL.createObjectURL(blob);
-      const month = filterMonth === 'Todos' ? 'fevereiro-2025' : filterMonth.replace(/\s/g, '-').toLowerCase();
-
-      const link    = document.createElement('a');
-      link.href     = objectUrl;
-      link.download = `relatorio-comissoes-${month}.pdf`;
+      const link  = document.createElement('a');
+      link.href   = objectUrl;
+      link.download = 'relatorio-comissoes.pdf';
       link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
@@ -110,9 +139,7 @@ export default function Comissoes() {
       alert('Não foi possível gerar o relatório. Tente novamente.');
     } finally {
       setExporting(false);
-      if (objectUrl) {
-        setTimeout(() => URL.revokeObjectURL(objectUrl!), 1000);
-      }
+      if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl!), 1000);
     }
   };
 
@@ -128,11 +155,7 @@ export default function Comissoes() {
           disabled={exporting}
           icon={
             exporting ? (
-              <svg
-                width="16" height="16" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" strokeWidth="2.5"
-                style={{ animation: 'spin 1s linear infinite' }}
-              >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ animation: 'spin 1s linear infinite' }}>
                 <path d="M21 12a9 9 0 1 1-6.219-8.56" />
               </svg>
             ) : (
@@ -147,80 +170,66 @@ export default function Comissoes() {
           {exporting ? 'Gerando PDF...' : 'Exportar Relatório'}
         </Button>
 
-        <style>{`
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to   { transform: rotate(360deg); }
-          }
-        `}</style>
+        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       </Header>
 
       <StatsGrid>
-        <StatCard
-          label="Total de Comissões"
-          value={`R$ ${fmt(totalComissoes)}`}
-          color="#BBA188"
+        <StatCard label="Total de Comissões" value={`R$ ${fmt(totalComissoes)}`} color="#BBA188"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>}
         />
-        <StatCard
-          label="Pagas"
-          value={`R$ ${fmt(totalPago)}`}
-          color="#8a7560"
+        <StatCard label="Pagas" value={`R$ ${fmt(totalPago)}`} color="#8a7560"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>}
         />
-        <StatCard
-          label="Pendentes"
-          value={`R$ ${fmt(totalPendente)}`}
-          color="#d4a84b"
+        <StatCard label="Pendentes" value={`R$ ${fmt(totalPendente)}`} color="#d4a84b"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>}
         />
-        <StatCard
-          label="Profissionais"
-          value={mockProfessionals.length}
-          color="#1b1b1b"
+        <StatCard label="Profissionais" value={profCards.length} color="#1b1b1b"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>}
         />
       </StatsGrid>
 
-      <ProfGrid>
-        {mockProfessionals.map((prof) => (
-          <ProfCard key={prof.id}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
-              <ProfAvatar $color={prof.color}>{prof.avatar}</ProfAvatar>
-              <div>
-                <ProfName>{prof.name}</ProfName>
-                <ProfRole>{prof.role}</ProfRole>
-              </div>
-            </div>
-            <ProfStats>
-              <ProfStat>
-                <ProfStatLabel>Sessões</ProfStatLabel>
-                <ProfStatValue>{prof.sessoes}</ProfStatValue>
-              </ProfStat>
-              <ProfStat>
-                <ProfStatLabel>Receita Gerada</ProfStatLabel>
-                <ProfStatValue>R$ {(prof.receita / 1000).toFixed(1)}k</ProfStatValue>
-              </ProfStat>
-              <ProfStat>
-                <ProfStatLabel>Comissão ({prof.percentual}%)</ProfStatLabel>
-                <ProfStatValue $highlight>R$ {(prof.comissao / 1000).toFixed(1)}k</ProfStatValue>
-              </ProfStat>
-            </ProfStats>
-            <div style={{ marginTop: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: '0.78rem', color: '#888' }}>
-                <span>Meta mensal</span>
-                <span>{Math.min(100, Math.round((prof.comissao / prof.meta) * 100))}%</span>
-              </div>
-              <ProgressBar>
-                <ProgressFill
-                  $width={Math.min(100, (prof.comissao / prof.meta) * 100)}
-                  $color={getBarColor(prof.comissao, prof.meta)}
-                />
-              </ProgressBar>
-            </div>
-          </ProfCard>
-        ))}
-      </ProfGrid>
+      {!loading && profCards.length > 0 && (
+        <ProfGrid>
+          {profCards.map((prof, i) => {
+            const color = avatarColors[i % avatarColors.length];
+            const ratio = prof.receita > 0 ? prof.comissao / prof.receita : 0;
+            return (
+              <ProfCard key={prof.id}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+                  <ProfAvatar $color={color}>{getInitials(prof.name)}</ProfAvatar>
+                  <div>
+                    <ProfName>{prof.name}</ProfName>
+                    <ProfRole>{prof.percentual}% de comissão</ProfRole>
+                  </div>
+                </div>
+                <ProfStats>
+                  <ProfStat>
+                    <ProfStatLabel>Registros</ProfStatLabel>
+                    <ProfStatValue>{prof.sessoes}</ProfStatValue>
+                  </ProfStat>
+                  <ProfStat>
+                    <ProfStatLabel>Receita Base</ProfStatLabel>
+                    <ProfStatValue>R$ {(prof.receita / 1000).toFixed(1)}k</ProfStatValue>
+                  </ProfStat>
+                  <ProfStat>
+                    <ProfStatLabel>Comissão Total</ProfStatLabel>
+                    <ProfStatValue $highlight>R$ {fmt(prof.comissao)}</ProfStatValue>
+                  </ProfStat>
+                </ProfStats>
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: '0.78rem', color: '#888' }}>
+                    <span>% sobre receita</span>
+                    <span>{Math.round(ratio * 100)}%</span>
+                  </div>
+                  <ProgressBar>
+                    <ProgressFill $width={Math.min(100, ratio * 100)} $color={getBarColor(ratio)} />
+                  </ProgressBar>
+                </div>
+              </ProfCard>
+            );
+          })}
+        </ProfGrid>
+      )}
 
       <Controls>
         <SearchBarWrapper>
@@ -231,9 +240,9 @@ export default function Comissoes() {
             </svg>
           </SearchIconWrap>
           <SearchInputStyled
-            placeholder="Buscar por profissional, procedimento..."
+            placeholder="Buscar por profissional, procedimento ou paciente..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
           />
         </SearchBarWrapper>
 
@@ -241,18 +250,13 @@ export default function Comissoes() {
           <DropdownWrapper>
             <DropdownBtn type="button" onClick={() => toggle('prof')}>
               <span>{filterProf}</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M6 9l6 6 6-6"/>
-              </svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
             </DropdownBtn>
             {openDropdown === 'prof' && (
               <DropdownList>
-                {filterProfs.map(p => (
-                  <DropdownItem
-                    key={p}
-                    $active={filterProf === p}
-                    onClick={() => { setFilterProf(p); toggle('prof'); }}
-                  >
+                {profNames.map(p => (
+                  <DropdownItem key={p} $active={filterProf === p}
+                    onClick={() => { setFilterProf(p); toggle('prof'); setCurrentPage(1); }}>
                     {p}
                   </DropdownItem>
                 ))}
@@ -261,40 +265,33 @@ export default function Comissoes() {
           </DropdownWrapper>
 
           <DropdownWrapper>
-            <DropdownBtn type="button" onClick={() => toggle('month')}>
-              <span>{filterMonth}</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M6 9l6 6 6-6"/>
-              </svg>
+            <DropdownBtn type="button" onClick={() => toggle('status')}>
+              <span>{filterStatus === 'Todos' ? 'Status' : filterStatus === 'PAGO' ? 'Pago' : 'Pendente'}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
             </DropdownBtn>
-            {openDropdown === 'month' && (
+            {openDropdown === 'status' && (
               <DropdownList>
-                {filterMonths.map(m => (
-                  <DropdownItem
-                    key={m}
-                    $active={filterMonth === m}
-                    onClick={() => { setFilterMonth(m); toggle('month'); }}
-                  >
-                    {m}
+                {['Todos', 'PAGO', 'PENDENTE'].map(s => (
+                  <DropdownItem key={s} $active={filterStatus === s}
+                    onClick={() => { setFilterStatus(s); toggle('status'); setCurrentPage(1); }}>
+                    {s === 'Todos' ? 'Todos' : s === 'PAGO' ? 'Pago' : 'Pendente'}
                   </DropdownItem>
                 ))}
               </DropdownList>
             )}
           </DropdownWrapper>
 
-          {(filterProf !== 'Todos' || filterMonth !== 'Todos') && (
-            <ClearFilterBtn type="button" onClick={() => { setFilterProf('Todos'); setFilterMonth('Todos'); }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 6L6 18M6 6l12 12"/>
-              </svg>
+          {(filterProf !== 'Todos' || filterStatus !== 'Todos') && (
+            <ClearFilterBtn type="button" onClick={() => { setFilterProf('Todos'); setFilterStatus('Todos'); setCurrentPage(1); }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
               Limpar
             </ClearFilterBtn>
           )}
         </FilterRow>
       </Controls>
 
-      <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden' }}>
-        <TableWrapper>
+      <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <TableWrapper style={{ minHeight: TABLE_MIN_HEIGHT }}>
           <Table>
             <Thead>
               <tr>
@@ -302,14 +299,16 @@ export default function Comissoes() {
                 <Th $width="18%">Profissional</Th>
                 <Th $width="20%">Procedimento</Th>
                 <Th $width="14%">Paciente</Th>
-                <Th $width="11%">Valor Proc.</Th>
+                <Th $width="11%">Valor Base</Th>
                 <Th $width="7%">%</Th>
                 <Th $width="11%">Comissão</Th>
                 <Th $width="8%">Status</Th>
               </tr>
             </Thead>
             <Tbody>
-              {filtered.length === 0 ? (
+              {loading ? (
+                <tr><td colSpan={8}><EmptyState><p>Carregando comissões...</p></EmptyState></td></tr>
+              ) : paginatedData.length === 0 ? (
                 <tr>
                   <td colSpan={8}>
                     <EmptyState>
@@ -318,39 +317,37 @@ export default function Comissoes() {
                     </EmptyState>
                   </td>
                 </tr>
-              ) : filtered.map((c) => {
-                const profIndex = mockProfessionals.findIndex(p => p.name === c.professional);
-                const prof      = mockProfessionals[profIndex];
-                const barColor  = prof ? getBarColor(prof.comissao, prof.meta) : '#BBA188';
+              ) : paginatedData.map((c, idx) => {
+                const profIdx = profCards.findIndex(p => p.id === c.usuarioId);
+                const color   = avatarColors[(profIdx >= 0 ? profIdx : idx) % avatarColors.length];
+                const sc      = statusColors[c.status] ?? { bg: '#f5f5f5', color: '#888' };
+                const dataFmt = c.criadoEm ? new Date(c.criadoEm).toLocaleDateString('pt-BR') : '—';
                 return (
                   <Tr key={c.id}>
-                    <Td style={{ color: '#888', fontSize: '0.82rem' }}>{c.date}</Td>
+                    <Td style={{ color: '#888' }}>{dataFmt}</Td>
                     <Td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <div style={{
                           width: 28, height: 28, borderRadius: 8,
-                          background: `${avatarColors[profIndex % 3]}22`,
-                          color: avatarColors[profIndex % 3],
+                          background: `${color}22`, color,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '0.68rem', fontWeight: 700,
+                          fontSize: '0.68rem', fontWeight: 700, flexShrink: 0,
                         }}>
-                          {c.professional.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                          {getInitials(c.usuarioNome ?? '?')}
                         </div>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#1a1a1a' }}>
-                          {c.professional}
-                        </span>
+                        <span style={{ fontWeight: 600, color: '#1a1a1a' }}>{c.usuarioNome}</span>
                       </div>
                     </Td>
-                    <Td style={{ fontSize: '0.86rem' }}>{c.procedure}</Td>
-                    <Td style={{ fontSize: '0.84rem', color: '#666' }}>{c.patient}</Td>
-                    <Td style={{ fontWeight: 600 }}>R$ {fmt(c.value)}</Td>
+                    <Td>{c.procedimento ?? '—'}</Td>
+                    <Td style={{ color: '#666' }}>{c.pacienteNome ?? '—'}</Td>
+                    <Td style={{ fontWeight: 600 }}>R$ {fmt(Number(c.valorBase))}</Td>
                     <Td>
-                      <Badge $bg="rgba(187,161,136,0.15)" $color="#BBA188">{c.percentual}%</Badge>
+                      <Badge $bg="rgba(187,161,136,0.15)" $color="#BBA188">{Number(c.percentual).toFixed(0)}%</Badge>
                     </Td>
-                    <Td style={{ fontWeight: 700, color: barColor }}>R$ {fmt(c.comissao)}</Td>
+                    <Td style={{ fontWeight: 700, color: sc.color }}>R$ {fmt(Number(c.valorComissao))}</Td>
                     <Td>
-                      <Badge $bg={statusColors[c.status].bg} $color={statusColors[c.status].color}>
-                        {c.status.charAt(0).toUpperCase() + c.status.slice(1)}
+                      <Badge $bg={sc.bg} $color={sc.color}>
+                        {c.status === 'PAGO' ? 'Pago' : 'Pendente'}
                       </Badge>
                     </Td>
                   </Tr>
@@ -359,6 +356,12 @@ export default function Comissoes() {
             </Tbody>
           </Table>
         </TableWrapper>
+        <Pagination
+          currentPage={safePage}
+          totalItems={totalFiltered}
+          itemsPerPage={ITEMS_PER_PAGE}
+          onPageChange={setCurrentPage}
+        />
       </div>
     </Container>
   );

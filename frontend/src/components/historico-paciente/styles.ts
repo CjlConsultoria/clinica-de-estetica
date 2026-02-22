@@ -112,7 +112,7 @@ export const DropdownList = styled.div`
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  min-width: 180px;
+  min-width: 100%;
   background: white;
   border: 1.5px solid #e8e8e8;
   border-radius: 14px;
@@ -148,7 +148,6 @@ export const ClearFilterBtn = styled.button`
   &:hover { background: #e74c3c; color: white; }
 `;
 
-/* ── Patient Cards Grid ── */
 export const PatientGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
@@ -239,7 +238,6 @@ export const PatientCardBody = styled.div`
   padding: 16px 20px;
 `;
 
-/* ── Timeline (card preview) ── */
 export const TimelineWrap = styled.div`
   display: flex;
   flex-direction: column;
@@ -309,7 +307,6 @@ export const PatientCardFooter = styled.div`
   background: #fdf9f5;
 `;
 
-/* ── Detail Modal ── */
 export const DetailModal = styled.div`
   max-height: 65vh;
   overflow-y: auto;
@@ -376,7 +373,6 @@ export const DetailSectionTitle = styled.h3`
   padding-bottom: 8px;
 `;
 
-/* ── Full Timeline (in modal) ── */
 export const FullTimeline = styled.div`
   display: flex;
   flex-direction: column;
@@ -462,7 +458,6 @@ export const FullTag = styled.span<{ $color: string }>`
   color: ${({ $color }) => $color};
 `;
 
-/* ── Form ── */
 export const FormGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -470,7 +465,6 @@ export const FormGrid = styled.div`
   @media (max-width: 560px) { grid-template-columns: 1fr; }
 `;
 
-/* ── Empty ── */
 export const EmptyState = styled.div`
   display: flex;
   flex-direction: column;

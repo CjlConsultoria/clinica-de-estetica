@@ -169,17 +169,17 @@ async function generateConsentimentoPDF(body: RequestBody): Promise<ArrayBuffer>
       title: '1. Descricao do Procedimento e Consentimento',
       body:
         `Eu, paciente acima identificado(a), declaro que fui devidamente informado(a) sobre o procedimento de ` +
-        `${safe(termo.procedimento)}, seus objetivos, riscos, alternativas e possiveis complicacoes, tendo ` +
+        `${safe(termo.procedimento)}, seus objetivos, riscos, alternativas e possiveis complicações, tendo ` +
         `compreendido todas as informacoes prestadas pelo profissional responsavel. ` +
         `Declaro ainda que as informacoes por mim fornecidas sao verdadeiras, e que nao omiti nenhum dado ` +
         `relevante sobre meu estado de saude, alergias ou medicamentos em uso.`,
     },
     {
-      title: '2. Riscos e Complicacoes',
+      title: '2. Riscos e Complicações',
       body:
-        `Estou ciente de que qualquer procedimento estetico pode apresentar riscos e complicacoes, incluindo ` +
+        `Estou ciente de que qualquer procedimento estetico pode apresentar riscos e complicações, incluindo ` +
         `mas nao se limitando a: reacoes alergicas, hematomas, assimetrias temporarias e, em casos raros, ` +
-        `complicacoes mais graves. Fui informado(a) sobre todos esses riscos e aceito submeter-me a este ` +
+        `Complicações mais graves. Fui informado(a) sobre todos esses riscos e aceito submeter-me a este ` +
         `procedimento voluntariamente, sem qualquer coercao.`,
     },
     {

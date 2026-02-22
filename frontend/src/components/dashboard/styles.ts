@@ -1,6 +1,5 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
-import Link from 'next/link';
 
 const fadeUp = keyframes`
   from { opacity: 0; transform: translateY(16px); }
@@ -65,7 +64,7 @@ export const QuickActions = styled.div`
   }
 `;
 
-export const QuickAction = styled(Link)<{ $color: string }>`
+export const QuickAction = styled('a')<{ $color: string }>`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -77,6 +76,7 @@ export const QuickAction = styled(Link)<{ $color: string }>`
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   transition: all 0.25s;
   border: 1.5px solid transparent;
+  cursor: pointer;
 
   &:hover {
     border-color: ${({ $color }) => $color};

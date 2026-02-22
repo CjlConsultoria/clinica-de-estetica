@@ -62,10 +62,7 @@ export const BarChart = styled.div`
   display: flex;
   gap: 16px;
   align-items: flex-end;
-
-  @media (max-width: 600px) {
-    gap: 8px;
-  }
+  @media (max-width: 600px) { gap: 8px; }
 `;
 
 export const BarItem = styled.div`
@@ -84,10 +81,7 @@ export const BarFill = styled.div<{ $height: number; $color: string }>`
   border-radius: 4px 4px 0 0;
   transition: height 0.6s ease;
   cursor: pointer;
-
-  &:hover {
-    opacity: 0.8;
-  }
+  &:hover { opacity: 0.8; }
 `;
 
 export const BarLabel = styled.div`
@@ -113,10 +107,7 @@ export const SearchBarWrapper = styled.div`
   position: relative;
   flex: 1;
   max-width: 380px;
-
-  @media (max-width: 768px) {
-    max-width: 100%;
-  }
+  @media (max-width: 768px) { max-width: 100%; }
 `;
 
 export const SearchIconWrap = styled.div`
@@ -140,16 +131,8 @@ export const SearchInputStyled = styled.input`
   transition: all 0.25s;
   box-sizing: border-box;
   font-family: var(--font-inter-variable-regular), 'Inter', sans-serif;
-
-  &:focus {
-    outline: none;
-    border-color: #BBA188;
-    box-shadow: 0 0 0 3px rgba(187, 161, 136, 0.15);
-  }
-
-  &::placeholder {
-    color: #bbb;
-  }
+  &:focus { outline: none; border-color: #BBA188; box-shadow: 0 0 0 3px rgba(187, 161, 136, 0.15); }
+  &::placeholder { color: #bbb; }
 `;
 
 export const FilterRow = styled.div`
@@ -179,17 +162,14 @@ export const DropdownBtn = styled.button`
   min-width: 140px;
   justify-content: space-between;
   transition: all 0.2s;
-
-  &:hover {
-    border-color: #BBA188;
-  }
+  &:hover { border-color: #BBA188; }
 `;
 
 export const DropdownList = styled.div`
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  min-width: 180px;
+  width: 100%;
   background: white;
   border: 1.5px solid #e8e8e8;
   border-radius: 14px;
@@ -197,16 +177,9 @@ export const DropdownList = styled.div`
   z-index: 100;
   overflow: hidden;
   animation: dropIn 0.18s ease;
-
   @keyframes dropIn {
-    from {
-      opacity: 0;
-      transform: translateY(-8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 `;
 
@@ -219,15 +192,8 @@ export const DropdownItem = styled.div<{ $active?: boolean }>`
   font-weight: ${({ $active }) => ($active ? '600' : '400')};
   cursor: pointer;
   border-bottom: 1px solid #f5f5f5;
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  &:hover {
-    background: rgba(187, 161, 136, 0.08);
-    color: #BBA188;
-  }
+  &:last-child { border-bottom: none; }
+  &:hover { background: rgba(187, 161, 136, 0.08); color: #BBA188; }
 `;
 
 export const ClearFilterBtn = styled.button`
@@ -243,11 +209,7 @@ export const ClearFilterBtn = styled.button`
   font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
   cursor: pointer;
   transition: all 0.2s;
-
-  &:hover {
-    background: #e74c3c;
-    color: white;
-  }
+  &:hover { background: #e74c3c; color: white; }
 `;
 
 export const TableWrapper = styled.div`
@@ -266,14 +228,14 @@ export const Thead = styled.thead`
 `;
 
 export const Th = styled.th<{ $width?: string }>`
-  padding: 13px 16px;
+  padding: 11px 10px;
   text-align: left;
-  font-size: 0.78rem;
+  font-size: 0.69rem;
   font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
   font-weight: 600;
   color: white;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
   width: ${({ $width }) => $width || 'auto'};
 `;
 
@@ -282,19 +244,13 @@ export const Tbody = styled.tbody``;
 export const Tr = styled.tr`
   border-bottom: 1px solid #f5f5f5;
   transition: background 0.15s;
-
-  &:hover {
-    background: #fdf9f5;
-  }
-
-  &:last-child {
-    border-bottom: none;
-  }
+  &:hover { background: #fdf9f5; }
+  &:last-child { border-bottom: none; }
 `;
 
 export const Td = styled.td`
-  padding: 13px 16px;
-  font-size: 0.88rem;
+  padding: 10px 10px;
+  font-size: 0.78rem;
   font-family: var(--font-inter-variable-regular), 'Inter', sans-serif;
   color: #444;
   vertical-align: middle;
@@ -302,13 +258,14 @@ export const Td = styled.td`
 
 export const Badge = styled.span<{ $bg?: string; $color?: string }>`
   display: inline-block;
-  padding: 4px 10px;
+  padding: 3px 7px;
   border-radius: 20px;
-  font-size: 0.74rem;
+  font-size: 0.68rem;
   font-weight: 600;
   font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
   background: ${({ $bg }) => $bg || '#f0ebe4'};
   color: ${({ $color }) => $color || '#BBA188'};
+  white-space: nowrap;
 `;
 
 export const TypeBadge = styled.span<{ $type: string }>`
@@ -316,10 +273,10 @@ export const TypeBadge = styled.span<{ $type: string }>`
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 5px 12px;
-  min-width: 90px;
+  padding: 3px 9px;
+  min-width: 80px;
   border-radius: 20px;
-  font-size: 0.74rem;
+  font-size: 0.68rem;
   font-weight: 700;
   font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
   white-space: nowrap;
@@ -330,12 +287,12 @@ export const TypeBadge = styled.span<{ $type: string }>`
 
 export const ActionGroup = styled.div`
   display: flex;
-  gap: 6px;
+  gap: 4px;
 `;
 
 export const IconBtn = styled.button`
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border: 1.5px solid #e8e8e8;
   border-radius: 8px;
   background: white;
@@ -345,12 +302,8 @@ export const IconBtn = styled.button`
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
-
-  &:hover {
-    background: #BBA188;
-    border-color: #BBA188;
-    color: white;
-  }
+  flex-shrink: 0;
+  &:hover { background: #BBA188; border-color: #BBA188; color: white; }
 `;
 
 export const EmptyState = styled.div`
@@ -360,26 +313,13 @@ export const EmptyState = styled.div`
   padding: 60px 20px;
   text-align: center;
   color: #bbb;
-
-  h3 {
-    font-size: 1.1rem;
-    color: #555;
-    margin: 0 0 6px;
-  }
-
-  p {
-    font-size: 0.88rem;
-    color: #999;
-    margin: 0;
-  }
+  h3 { font-size: 1.1rem; color: #555; margin: 0 0 6px; }
+  p { font-size: 0.88rem; color: #999; margin: 0; }
 `;
 
 export const FormGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-
-  @media (max-width: 560px) {
-    grid-template-columns: 1fr;
-  }
+  @media (max-width: 560px) { grid-template-columns: 1fr; }
 `;

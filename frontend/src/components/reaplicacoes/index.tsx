@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -16,6 +16,7 @@ import {
   ReapCardBody, ReapRow, ReapLabel, ReapValue, ReapDaysTag, ReapCardFooter,
   ProgressBarOuter, ProgressBarInner,
 } from './styles';
+import { alertasService, type AlertaReaplicacao } from '@/services/alertas.service';
 
 const procedureOptions = [
   { value: 'botox',           label: 'Botox Facial'         },
@@ -26,7 +27,7 @@ const procedureOptions = [
   { value: 'toxina',          label: 'Toxina Botulínica'     },
 ];
 
-const filterStatus     = ['Todos', 'Urgente', 'Esta semana', 'Este mês', 'Agendado'];
+const filterStatus     = ['Todos', 'Urgente', 'Esta semana', 'Este mês', 'Programado'];
 const filterProcedures = ['Todos', 'Botox', 'Preenchimento', 'Bioestimulador', 'Fio PDO', 'Microagulhamento'];
 const avatarColors     = ['#BBA188', '#a8906f', '#1b1b1b', '#8a7560', '#EBD5B0'];
 
@@ -35,59 +36,72 @@ function diasRestantes(data: string): number {
 }
 
 function getUrgencia(dias: number): { label: string; color: string; bg: string } {
-  if (dias < 0)   return { label: 'Atrasado',    color: '#c0392b', bg: '#fdecea' };
-  if (dias <= 7)  return { label: 'Urgente',     color: '#c0392b', bg: '#fdecea' };
-  if (dias <= 14) return { label: 'Esta semana', color: '#d68a00', bg: '#fff3cd' };
-  if (dias <= 30) return { label: 'Este mês',    color: '#8a7560', bg: '#f0ebe4' };
-  return                 { label: 'Programado',  color: '#666',    bg: '#f5f5f5' };
+  if (dias < 0)   return { label: 'Atrasado',   color: '#c0392b', bg: '#fdecea' };
+  if (dias <= 7)  return { label: 'Urgente',    color: '#c0392b', bg: '#fdecea' };
+  if (dias <= 14) return { label: 'Esta semana',color: '#d68a00', bg: '#fff3cd' };
+  if (dias <= 30) return { label: 'Este mês',   color: '#8a7560', bg: '#f0ebe4' };
+  return                 { label: 'Programado', color: '#666',    bg: '#f5f5f5' };
 }
 
-const mockReaplicacoes = [
-  { id: 1, paciente: 'Ana Beatriz Costa',  initials: 'AB', procedimento: 'Botox Facial',        ultimaData: '18/10/2024', proximaData: '2025-02-25', intervaloDias: 120, profissional: 'Maria Oliveira',  telefone: '(11) 98765-4321', email: 'ana.costa@email.com',   agendado: false },
-  { id: 2, paciente: 'Carla Mendonça',     initials: 'CM', procedimento: 'Preenchimento Labial', ultimaData: '15/11/2024', proximaData: '2025-03-15', intervaloDias: 120, profissional: 'Maria Oliveira',  telefone: '(11) 97654-3210', email: 'carla.m@email.com',     agendado: true  },
-  { id: 3, paciente: 'Fernanda Lima',      initials: 'FL', procedimento: 'Bioestimulador',       ultimaData: '10/08/2024', proximaData: '2025-02-10', intervaloDias: 180, profissional: 'Clara Andrade',   telefone: '(11) 96543-2109', email: 'fernanda.lima@email.com', agendado: false },
-  { id: 4, paciente: 'Marina Souza',       initials: 'MS', procedimento: 'Fio de PDO',           ultimaData: '08/09/2024', proximaData: '2025-03-08', intervaloDias: 180, profissional: 'Beatriz Santos',  telefone: '(21) 95432-1098', email: 'marina.s@email.com',    agendado: false },
-  { id: 5, paciente: 'Juliana Rocha',      initials: 'JR', procedimento: 'Botox Facial',         ultimaData: '05/11/2024', proximaData: '2025-03-05', intervaloDias: 120, profissional: 'Maria Oliveira',  telefone: '(21) 94321-0987', email: 'juliana.r@email.com',   agendado: true  },
-  { id: 6, paciente: 'Patrícia Alves',     initials: 'PA', procedimento: 'Microagulhamento',     ultimaData: '20/01/2025', proximaData: '2025-04-20', intervaloDias: 90,  profissional: 'Beatriz Santos',  telefone: '(31) 93210-9876', email: 'patricia.a@email.com',  agendado: false },
-];
-
-type Reap = typeof mockReaplicacoes[0];
+function getInitials(name: string) {
+  return name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+}
 
 export default function Reaplicacoes() {
-  const [search, setSearch]             = useState('');
-  const [filterStat, setFilterStat]     = useState('Todos');
-  const [filterProc, setFilterProc]     = useState('Todos');
+  const [alertas,      setAlertas]      = useState<AlertaReaplicacao[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [search,       setSearch]       = useState('');
+  const [filterStat,   setFilterStat]   = useState('Todos');
+  const [filterProc,   setFilterProc]   = useState('Todos');
   const [openDropStat, setOpenDropStat] = useState(false);
   const [openDropProc, setOpenDropProc] = useState(false);
-  const [view, setView]                 = useState<'tabela' | 'cards'>('cards');
-  const [isModalOpen, setIsModalOpen]   = useState(false);
-  const [selected, setSelected]         = useState<Reap | null>(null);
+  const [view,         setView]         = useState<'tabela' | 'cards'>('cards');
+  const [isModalOpen,  setIsModalOpen]  = useState(false);
+  const [selected,     setSelected]     = useState<AlertaReaplicacao | null>(null);
 
-  const filtered = mockReaplicacoes.filter(r => {
-    const matchSearch = r.paciente.toLowerCase().includes(search.toLowerCase()) || r.procedimento.toLowerCase().includes(search.toLowerCase());
-    const dias        = diasRestantes(r.proximaData);
-    const matchStat   =
+  const carregarAlertas = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await alertasService.listar();
+      setAlertas(data);
+    } catch (err) {
+      console.error('Erro ao carregar alertas:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { carregarAlertas(); }, [carregarAlertas]);
+
+  const filtered = alertas.filter(r => {
+    const matchSearch = r.pacienteNome?.toLowerCase().includes(search.toLowerCase()) ||
+                        r.procedimento.toLowerCase().includes(search.toLowerCase());
+    const dias       = diasRestantes(r.proximaReaplicacao);
+    const matchStat  =
       filterStat === 'Todos'        ||
       (filterStat === 'Urgente'     && dias <= 7)              ||
       (filterStat === 'Esta semana' && dias > 7  && dias <= 14)||
       (filterStat === 'Este mês'    && dias > 14 && dias <= 30)||
-      (filterStat === 'Agendado'    && r.agendado);
-    const matchProc   = filterProc === 'Todos' || r.procedimento.toLowerCase().includes(filterProc.toLowerCase());
+      (filterStat === 'Programado'  && dias > 30);
+    const matchProc  = filterProc === 'Todos' ||
+                       r.procedimento.toLowerCase().includes(filterProc.toLowerCase());
     return matchSearch && matchStat && matchProc;
   });
 
-  const urgentes   = mockReaplicacoes.filter(r => diasRestantes(r.proximaData) <= 7).length;
-  const estaSemana = mockReaplicacoes.filter(r => { const d = diasRestantes(r.proximaData); return d > 7  && d <= 14; }).length;
-  const esteMes    = mockReaplicacoes.filter(r => { const d = diasRestantes(r.proximaData); return d > 14 && d <= 30; }).length;
-  const agendados  = mockReaplicacoes.filter(r => r.agendado).length;
+  const urgentes   = alertas.filter(r => diasRestantes(r.proximaReaplicacao) <= 7).length;
+  const estaSemana = alertas.filter(r => { const d = diasRestantes(r.proximaReaplicacao); return d > 7  && d <= 14; }).length;
+  const esteMes    = alertas.filter(r => { const d = diasRestantes(r.proximaReaplicacao); return d > 14 && d <= 30; }).length;
+  const programados= alertas.filter(r => diasRestantes(r.proximaReaplicacao) > 30).length;
 
   return (
     <Container>
       <Header>
         <Title>Alertas de Reaplicação</Title>
         <div style={{ display: 'flex', gap: 10 }}>
-          <Button variant={view === 'cards'  ? 'primary' : 'outline'} onClick={() => setView('cards')}  icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>}>Cards</Button>
-          <Button variant={view === 'tabela' ? 'primary' : 'outline'} onClick={() => setView('tabela')} icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>}>Tabela</Button>
+          <Button variant={view === 'cards'  ? 'primary' : 'outline'} onClick={() => setView('cards')}
+            icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>}>Cards</Button>
+          <Button variant={view === 'tabela' ? 'primary' : 'outline'} onClick={() => setView('tabela')}
+            icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>}>Tabela</Button>
         </div>
       </Header>
 
@@ -112,7 +126,7 @@ export default function Reaplicacoes() {
         <StatCard label="Este mês (15–30d)" value={esteMes} color="#BBA188"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>}
         />
-        <StatCard label="Já Agendados" value={agendados} color="#8a7560"
+        <StatCard label="Programados" value={programados} color="#8a7560"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>}
         />
       </StatsGrid>
@@ -154,18 +168,23 @@ export default function Reaplicacoes() {
         </FilterRow>
       </Controls>
 
-      {view === 'cards' ? (
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 48, color: '#bbb' }}>Carregando alertas...</div>
+      ) : view === 'cards' ? (
         <CardsGrid>
-          {filtered.map((r, i) => {
-            const dias    = diasRestantes(r.proximaData);
+          {filtered.length === 0 ? (
+            <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: 48, color: '#bbb' }}>Nenhum alerta encontrado.</div>
+          ) : filtered.map((r, i) => {
+            const dias    = diasRestantes(r.proximaReaplicacao);
             const urg     = getUrgencia(dias);
             const progPct = Math.max(0, Math.min(100, 100 - (dias / r.intervaloDias) * 100));
+            const name    = r.pacienteNome ?? `Paciente ${r.pacienteId}`;
             return (
               <ReapCard key={r.id} $urgente={dias <= 7}>
                 <ReapCardHeader>
-                  <ReapAvatar $color={avatarColors[i % avatarColors.length]}>{r.initials}</ReapAvatar>
+                  <ReapAvatar $color={avatarColors[i % avatarColors.length]}>{getInitials(name)}</ReapAvatar>
                   <div style={{ flex: 1 }}>
-                    <ReapPatientName>{r.paciente}</ReapPatientName>
+                    <ReapPatientName>{name}</ReapPatientName>
                     <ReapPatientSub>{r.procedimento}</ReapPatientSub>
                   </div>
                   <ReapDaysTag $color={urg.color} $bg={urg.bg}>
@@ -177,30 +196,31 @@ export default function Reaplicacoes() {
                     <ProgressBarInner $pct={progPct} $color={urg.color} />
                   </ProgressBarOuter>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#bbb', marginTop: 4, marginBottom: 12 }}>
-                    <span>Última: {r.ultimaData}</span>
-                    <span>Próxima: {r.proximaData.split('-').reverse().join('/')}</span>
+                    <span>Última: {r.ultimaAplicacao ? new Date(r.ultimaAplicacao).toLocaleDateString('pt-BR') : '—'}</span>
+                    <span>Próxima: {new Date(r.proximaReaplicacao).toLocaleDateString('pt-BR')}</span>
                   </div>
-                  <ReapRow><ReapLabel>Profissional</ReapLabel><ReapValue>{r.profissional}</ReapValue></ReapRow>
+                  {r.profissionalNome && <ReapRow><ReapLabel>Profissional</ReapLabel><ReapValue>{r.profissionalNome}</ReapValue></ReapRow>}
                   <ReapRow><ReapLabel>Intervalo</ReapLabel><ReapValue>{r.intervaloDias} dias</ReapValue></ReapRow>
                   <ReapRow>
                     <ReapLabel>Status</ReapLabel>
                     <ReapValue><Badge $bg={urg.bg} $color={urg.color}>{urg.label}</Badge></ReapValue>
                   </ReapRow>
-                  {r.agendado && <ReapRow><ReapLabel /><ReapValue><Badge $bg="#f0ebe4" $color="#8a7560">✓ Agendado</Badge></ReapValue></ReapRow>}
                 </ReapCardBody>
                 <ReapCardFooter>
                   <Button variant="outline" size="sm" onClick={() => { setSelected(r); setIsModalOpen(true); }}>Agendar</Button>
-                  <a href={`tel:${r.telefone}`} style={{ textDecoration: 'none' }}>
-                    <Button variant="ghost" size="sm" icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 9.79 19.79 19.79 0 0 1 1.69 1.11a2 2 0 0 1 2-2.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>}>Ligar</Button>
-                  </a>
+                  {r.pacienteTelefone && (
+                    <a href={`tel:${r.pacienteTelefone}`} style={{ textDecoration: 'none' }}>
+                      <Button variant="ghost" size="sm" icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 9.79 19.79 19.79 0 0 1 1.69 1.11a2 2 0 0 1 2-2.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>}>Ligar</Button>
+                    </a>
+                  )}
                 </ReapCardFooter>
               </ReapCard>
             );
           })}
         </CardsGrid>
       ) : (
-        <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden' }}>
-          <TableWrapper>
+        <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 596 }}>
+          <TableWrapper style={{ flex: 1 }}>
             <Table>
               <Thead>
                 <tr>
@@ -215,23 +235,20 @@ export default function Reaplicacoes() {
                 </tr>
               </Thead>
               <Tbody>
-                {filtered.map(r => {
-                  const dias = diasRestantes(r.proximaData);
+                {filtered.length === 0 ? (
+                  <tr><td colSpan={8} style={{ textAlign: 'center', padding: 48, color: '#bbb' }}>Nenhum alerta encontrado.</td></tr>
+                ) : filtered.map(r => {
+                  const dias = diasRestantes(r.proximaReaplicacao);
                   const urg  = getUrgencia(dias);
                   return (
                     <Tr key={r.id}>
-                      <Td style={{ fontWeight: 600, color: '#1a1a1a' }}>{r.paciente}</Td>
+                      <Td style={{ fontWeight: 600, color: '#1a1a1a' }}>{r.pacienteNome ?? `Paciente ${r.pacienteId}`}</Td>
                       <Td><Badge $bg="rgba(187,161,136,0.15)" $color="#BBA188">{r.procedimento}</Badge></Td>
-                      <Td style={{ color: '#888', fontSize: '0.82rem' }}>{r.ultimaData}</Td>
-                      <Td style={{ fontWeight: 600, color: dias <= 7 ? '#c0392b' : '#1a1a1a' }}>{r.proximaData.split('-').reverse().join('/')}</Td>
+                      <Td style={{ color: '#888', fontSize: '0.82rem' }}>{r.ultimaAplicacao ? new Date(r.ultimaAplicacao).toLocaleDateString('pt-BR') : '—'}</Td>
+                      <Td style={{ fontWeight: 600, color: dias <= 7 ? '#c0392b' : '#1a1a1a' }}>{new Date(r.proximaReaplicacao).toLocaleDateString('pt-BR')}</Td>
                       <Td><span style={{ fontWeight: 700, color: urg.color }}>{dias < 0 ? `${Math.abs(dias)}d atrás` : `${dias}d`}</span></Td>
-                      <Td style={{ fontSize: '0.85rem' }}>{r.profissional}</Td>
-                      <Td>
-                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                          <Badge $bg={urg.bg} $color={urg.color}>{urg.label}</Badge>
-                          {r.agendado && <Badge $bg="#f0ebe4" $color="#8a7560">Agendado</Badge>}
-                        </div>
-                      </Td>
+                      <Td style={{ fontSize: '0.85rem' }}>{r.profissionalNome ?? '—'}</Td>
+                      <Td><Badge $bg={urg.bg} $color={urg.color}>{urg.label}</Badge></Td>
                       <Td>
                         <ActionGroup>
                           <IconBtn title="Agendar reaplicação" onClick={() => { setSelected(r); setIsModalOpen(true); }}>
@@ -251,19 +268,19 @@ export default function Reaplicacoes() {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={`Agendar Reaplicação — ${selected?.paciente}`}
+        title={`Agendar Reaplicação — ${selected?.pacienteNome ?? ''}`}
         size="md"
         footer={<><Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button><Button variant="primary">Confirmar</Button></>}
       >
         <FormGrid>
           <div style={{ gridColumn: 'span 2', padding: '12px 16px', background: '#fdf9f5', borderRadius: 10, border: '1px solid #f0ebe4', fontSize: '0.88rem', color: '#666' }}>
-            <strong style={{ color: '#1a1a1a' }}>{selected?.paciente}</strong> — {selected?.procedimento}<br />
-            Última: <strong>{selected?.ultimaData}</strong> · Intervalo: <strong>{selected?.intervaloDias} dias</strong>
+            <strong style={{ color: '#1a1a1a' }}>{selected?.pacienteNome}</strong> — {selected?.procedimento}<br />
+            Intervalo: <strong>{selected?.intervaloDias} dias</strong>
           </div>
           <Input label="Data da Reaplicação" type="date" />
           <Input label="Horário" type="time" />
           <Select label="Procedimento" options={procedureOptions} placeholder={selected?.procedimento || 'Selecione...'} />
-          <Input label="Profissional" defaultValue={selected?.profissional} />
+          <Input label="Profissional" defaultValue={selected?.profissionalNome ?? ''} />
           <div style={{ gridColumn: 'span 2' }}><Input label="Observações" placeholder="Informações adicionais..." /></div>
         </FormGrid>
       </Modal>

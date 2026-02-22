@@ -10,9 +10,10 @@ interface ModalProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  closeOnOverlayClick?: boolean;
 }
 
-export default function Modal({ isOpen, onClose, title, children, footer, size = 'md' }: ModalProps) {
+export default function Modal({ isOpen, onClose, title, children, footer, size = 'md', closeOnOverlayClick = true }: ModalProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     if (isOpen) document.addEventListener('keydown', handleKeyDown);
@@ -22,7 +23,7 @@ export default function Modal({ isOpen, onClose, title, children, footer, size =
   if (!isOpen) return null;
 
   return (
-    <Overlay onClick={onClose}>
+    <Overlay onClick={closeOnOverlayClick ? onClose : undefined}>
       <ModalBox $size={size} onClick={e => e.stopPropagation()}>
         {title && (
           <ModalHeader>

@@ -5,11 +5,6 @@ export type ValidationError = {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export const ADMIN_CREDENTIALS = {
-  email: 'admin@gmail.com',
-  password: '12345678'
-};
-
 export function validateEmail(email: string): ValidationError | null {
   if (!email || email.trim() === '') {
     return { field: 'email', message: 'Por favor, insira seu e-mail' };
@@ -37,13 +32,6 @@ export function validateCredentials(email: string, password: string): Validation
   const passwordError = validatePassword(password);
   if (passwordError) return passwordError;
 
-  if (email !== ADMIN_CREDENTIALS.email || password !== ADMIN_CREDENTIALS.password) {
-    return {
-      field: 'password',
-      message: 'E-mail ou senha incorretos. Apenas administradores podem acessar.'
-    };
-  }
-
   return null;
 }
 
@@ -54,7 +42,7 @@ export const ERROR_MESSAGES = {
   PASSWORD_REQUIRED: 'Por favor, insira sua senha',
   PASSWORD_MIN_LENGTH: 'A senha deve ter no mínimo 8 caracteres',
   PASSWORD_INCORRECT: 'Senha incorreta. Tente novamente',
-  CREDENTIALS_INVALID: 'E-mail ou senha incorretos. Apenas administradores podem acessar.',
+  CREDENTIALS_INVALID: 'E-mail ou senha incorretos. Tente novamente.',
   UNAUTHORIZED: 'Acesso negado. Você não tem permissão para acessar esta área.',
   USER_NOT_FOUND: 'Usuário não encontrado. Verifique suas credenciais',
 };

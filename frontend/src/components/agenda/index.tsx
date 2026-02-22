@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
+import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
+import { agendamentosService, Agendamento } from '@/services/agendamentos.service';
 import {
   Container, Header, Title, ActionsRow,
   CalendarNav, CalendarTitle, CalendarGrid, DayHeader,
@@ -13,67 +15,205 @@ import {
   ToggleGroup, ToggleBtn, Legend, LegendItem, LegendDot, FormGrid,
 } from './styles';
 
-const DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-const HOURS = Array.from({ length: 11 }, (_, i) => `${i + 8}:00`);
+const NAV_MIN = { year: 2025, month: 0  };
+const NAV_MAX = { year: 2027, month: 11 };
 
 const procedureOptions = [
-  { value: 'botox', label: 'Botox Facial' },
-  { value: 'preenchimento', label: 'Preenchimento Labial' },
-  { value: 'bioestimulador', label: 'Bioestimulador' },
-  { value: 'fio-pdo', label: 'Fio de PDO' },
-  { value: 'microagulhamento', label: 'Microagulhamento' },
-  { value: 'toxina', label: 'Toxina Botulínica' },
+  { value: 'Botox Facial',         label: 'Botox Facial' },
+  { value: 'Preenchimento Labial', label: 'Preenchimento Labial' },
+  { value: 'Bioestimulador',       label: 'Bioestimulador' },
+  { value: 'Fio de PDO',           label: 'Fio de PDO' },
+  { value: 'Microagulhamento',     label: 'Microagulhamento' },
+  { value: 'Toxina Botulínica',    label: 'Toxina Botulínica' },
 ];
 
 const statusOptions = [
-  { value: 'confirmado', label: 'Confirmado' },
-  { value: 'aguardando', label: 'Aguardando' },
-  { value: 'cancelado', label: 'Cancelado' },
+  { value: 'CONFIRMADO', label: 'Confirmado' },
+  { value: 'AGENDADO',   label: 'Agendado'   },
+  { value: 'CANCELADO',  label: 'Cancelado'  },
 ];
 
-const mockEvents = [
-  { id: 1, day: 1, hour: 8, name: 'Ana Beatriz', procedure: 'Botox', color: '#BBA188', duration: 1 },
-  { id: 2, day: 1, hour: 10, name: 'Carla M.', procedure: 'Preenchimento', color: '#EBD5B0', duration: 1 },
-  { id: 3, day: 2, hour: 9, name: 'Fernanda Lima', procedure: 'Bioestimulador', color: '#1b1b1b', duration: 2 },
-  { id: 4, day: 3, hour: 14, name: 'Marina Souza', procedure: 'Fio PDO', color: '#a8906f', duration: 1 },
-  { id: 5, day: 4, hour: 11, name: 'Juliana R.', procedure: 'Toxina', color: '#BBA188', duration: 1 },
-  { id: 6, day: 5, hour: 15, name: 'Patrícia A.', procedure: 'Microagulhamento', color: '#8a7560', duration: 1 },
-];
+function getProcedureColor(proc: string): string {
+  const lower = proc.toLowerCase();
+  if (lower.includes('botox') || lower.includes('toxina')) return '#BBA188';
+  if (lower.includes('preenchimento'))                      return '#EBD5B0';
+  if (lower.includes('bioestimulador'))                     return '#1b1b1b';
+  if (lower.includes('fio'))                               return '#a8906f';
+  if (lower.includes('microagulhamento'))                  return '#8a7560';
+  return '#BBA188';
+}
 
-const calMonthEvents: Record<number, { name: string; color: string }[]> = {
-  3: [{ name: 'Ana B.', color: '#BBA188' }, { name: 'Carla M.', color: '#EBD5B0' }],
-  7: [{ name: 'Fernanda L.', color: '#1b1b1b' }],
-  10: [{ name: 'Marina S.', color: '#a8906f' }, { name: 'Juliana R.', color: '#BBA188' }, { name: '+2', color: '#999' }],
-  14: [{ name: 'Patrícia A.', color: '#8a7560' }],
-  18: [{ name: 'Ana B.', color: '#BBA188' }],
-  21: [{ name: 'Novo pac.', color: '#BBA188' }, { name: 'Carla M.', color: '#EBD5B0' }],
-  25: [{ name: 'Fernanda L.', color: '#1b1b1b' }, { name: '+1', color: '#999' }],
+interface CalEvent {
+  id: number;
+  weekDay: number; hour: number; year: number; month: number; monthDay: number;
+  name: string; procedure: string; color: string;
+}
+
+type AgendamentoField = 'nome' | 'telefone' | 'data' | 'horario' | 'procedimento' | 'status' | 'valor';
+
+interface AgendamentoForm {
+  nome: string; telefone: string; data: string; horario: string;
+  procedimento: string; status: string; valor: string; observacoes: string;
+}
+
+const DAYS  = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const HOURS = Array.from({ length: 11 }, (_, i) => `${i + 8}:00`);
+const FORM_INITIAL: AgendamentoForm = {
+  nome: '', telefone: '', data: '', horario: '',
+  procedimento: '', status: '', valor: '', observacoes: '',
 };
 
-export default function Agenda() {
-  const [view, setView] = useState<'semana' | 'mes'>('semana');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentDate] = useState(new Date());
+const VALIDATION_FIELDS = [
+  { key: 'nome'         as AgendamentoField, validate: (v: string) => !v.trim() ? 'Nome do paciente é obrigatório' : null },
+  { key: 'telefone'     as AgendamentoField, validate: (v: string) => !v.trim() ? 'Telefone é obrigatório' : null },
+  { key: 'data'         as AgendamentoField, validate: (v: string) => !v ? 'Data é obrigatória' : null },
+  { key: 'horario'      as AgendamentoField, validate: (v: string) => !v ? 'Horário é obrigatório' : null },
+  { key: 'procedimento' as AgendamentoField, validate: (v: string) => !v ? 'Selecione um procedimento' : null },
+  { key: 'status'       as AgendamentoField, validate: (v: string) => !v ? 'Selecione um status' : null },
+  { key: 'valor'        as AgendamentoField, validate: (v: string) => !v.trim() || v === 'R$ 0,00' ? 'Informe o valor do procedimento' : null },
+];
 
-  const weekStart = new Date(currentDate);
-  weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+function apiAgendamentoToCalEvent(a: Agendamento): CalEvent {
+  const d = new Date(a.dataHora);
+  return {
+    id:        a.id,
+    weekDay:   d.getDay(),
+    hour:      d.getHours(),
+    year:      d.getFullYear(),
+    month:     d.getMonth(),
+    monthDay:  d.getDate(),
+    name:      a.pacienteNome ?? 'Paciente',
+    procedure: a.procedimento,
+    color:     getProcedureColor(a.procedimento),
+  };
+}
 
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekStart);
-    d.setDate(d.getDate() + i);
+function getWeekDaysForMonth(year: number, month: number): Date[] {
+  const anchor = new Date(year, month, 1);
+  const start  = new Date(anchor);
+  start.setDate(anchor.getDate() - anchor.getDay());
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
     return d;
   });
+}
 
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const calCells = Array.from({ length: 42 }, (_, i) => {
+function parseCurrencyToNumber(v: string): number {
+  return parseFloat(v.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+}
+
+export default function Agenda() {
+  const today = new Date();
+
+  const [view,        setView]        = useState<'semana' | 'mes'>('semana');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [saving,      setSaving]      = useState(false);
+  const [form,        setForm]        = useState<AgendamentoForm>(FORM_INITIAL);
+  const [events,      setEvents]      = useState<CalEvent[]>([]);
+  const [navYear,     setNavYear]     = useState(today.getFullYear());
+  const [navMonth,    setNavMonth]    = useState(today.getMonth());
+  const [weekOffset,  setWeekOffset]  = useState(0);
+
+  const { errors, validate, clearError, clearAll } =
+    useSequentialValidation<AgendamentoField>(VALIDATION_FIELDS);
+
+  // Carregar agendamentos da API
+  useEffect(() => {
+    agendamentosService.listar()
+      .then(data => setEvents(data.map(apiAgendamentoToCalEvent)))
+      .catch(() => setEvents([]));
+  }, []);
+
+  const isAtMin = navYear === NAV_MIN.year && navMonth === NAV_MIN.month;
+  const isAtMax = navYear === NAV_MAX.year && navMonth === NAV_MAX.month;
+
+  function goToPrev() {
+    if (isAtMin) return;
+    setWeekOffset(0);
+    if (navMonth === 0) { setNavYear(y => y - 1); setNavMonth(11); }
+    else { setNavMonth(m => m - 1); }
+  }
+
+  function goToNext() {
+    if (isAtMax) return;
+    setWeekOffset(0);
+    if (navMonth === 11) { setNavYear(y => y + 1); setNavMonth(0); }
+    else { setNavMonth(m => m + 1); }
+  }
+
+  const firstDay    = new Date(navYear, navMonth, 1).getDay();
+  const daysInMonth = new Date(navYear, navMonth + 1, 0).getDate();
+  const calCells    = Array.from({ length: 42 }, (_, i) => {
     const dayNum = i - firstDay + 1;
     return dayNum > 0 && dayNum <= daysInMonth ? dayNum : null;
   });
+  const monthName = new Date(navYear, navMonth, 1)
+    .toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
-  const monthName = currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  const isCurrentMonth = navYear === today.getFullYear() && navMonth === today.getMonth();
+  const baseWeekDays   = isCurrentMonth
+    ? (() => {
+        const s = new Date(today);
+        s.setDate(today.getDate() - today.getDay());
+        return Array.from({ length: 7 }, (_, i) => { const d = new Date(s); d.setDate(s.getDate() + i); return d; });
+      })()
+    : getWeekDaysForMonth(navYear, navMonth);
+
+  const weekDays = baseWeekDays.map(d => {
+    const shifted = new Date(d);
+    shifted.setDate(d.getDate() + weekOffset * 7);
+    return shifted;
+  });
+
+  const weekTitle = `${weekDays[0].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} – ${weekDays[6].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}`;
+
+  function handleChange(field: keyof AgendamentoForm, value: string) {
+    setForm(prev => ({ ...prev, [field]: value }));
+    clearError(field as AgendamentoField);
+  }
+
+  function handleDataChange(raw: string) {
+    if (!raw) { handleChange('data', ''); return; }
+    const [yearStr, month, day] = raw.split('-');
+    const safeYear = yearStr ? yearStr.slice(0, 4) : '';
+    handleChange('data', `${safeYear}-${month ?? ''}-${day ?? ''}`);
+  }
+
+  function handleCloseModal() {
+    setForm(FORM_INITIAL);
+    clearAll();
+    setIsModalOpen(false);
+  }
+
+  async function handleSave() {
+    const isValid = validate({
+      nome: form.nome, telefone: form.telefone, data: form.data,
+      horario: form.horario, procedimento: form.procedimento,
+      status: form.status, valor: form.valor,
+    });
+    if (!isValid) return;
+
+    setSaving(true);
+    try {
+      const dataHora = `${form.data}T${form.horario}:00`;
+      const novoAgend = await agendamentosService.criar({
+        dataHora,
+        procedimento:     form.procedimento,
+        status:           form.status,
+        valor:            parseCurrencyToNumber(form.valor),
+        observacoes:      form.observacoes || undefined,
+        nomePaciente:     form.nome,
+        telefonePaciente: form.telefone,
+      });
+      setEvents(prev => [...prev, apiAgendamentoToCalEvent(novoAgend)]);
+      handleCloseModal();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Erro ao salvar agendamento');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <Container>
@@ -82,7 +222,7 @@ export default function Agenda() {
         <ActionsRow>
           <ToggleGroup>
             <ToggleBtn $active={view === 'semana'} onClick={() => setView('semana')}>Semana</ToggleBtn>
-            <ToggleBtn $active={view === 'mes'} onClick={() => setView('mes')}>Mês</ToggleBtn>
+            <ToggleBtn $active={view === 'mes'}    onClick={() => setView('mes')}>Mês</ToggleBtn>
           </ToggleGroup>
           <Button
             variant="primary"
@@ -95,21 +235,24 @@ export default function Agenda() {
       </Header>
 
       <CalendarNav>
-        <button className="nav-btn">
+        <button className="nav-btn" onClick={goToPrev} disabled={isAtMin} style={{ opacity: isAtMin ? 0.3 : 1, cursor: isAtMin ? 'not-allowed' : 'pointer' }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <CalendarTitle>
-          {view === 'semana'
-            ? `${weekDays[0].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} – ${weekDays[6].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}`
-            : monthName.charAt(0).toUpperCase() + monthName.slice(1)}
+          {view === 'semana' ? weekTitle : monthName.charAt(0).toUpperCase() + monthName.slice(1)}
         </CalendarTitle>
-        <button className="nav-btn">
+        <button className="nav-btn" onClick={goToNext} disabled={isAtMax} style={{ opacity: isAtMax ? 0.3 : 1, cursor: isAtMax ? 'not-allowed' : 'pointer' }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
         </button>
       </CalendarNav>
 
       <Legend>
-        {[{ label: 'Botox/Toxina', color: '#BBA188' }, { label: 'Preenchimento', color: '#EBD5B0' }, { label: 'Bioestimulador', color: '#1b1b1b' }, { label: 'Outros', color: '#a8906f' }].map(l => (
+        {[
+          { label: 'Botox/Toxina',   color: '#BBA188' },
+          { label: 'Preenchimento',  color: '#EBD5B0' },
+          { label: 'Bioestimulador', color: '#1b1b1b' },
+          { label: 'Outros',         color: '#a8906f' },
+        ].map(l => (
           <LegendItem key={l.label}><LegendDot $color={l.color} />{l.label}</LegendItem>
         ))}
       </Legend>
@@ -118,18 +261,25 @@ export default function Agenda() {
         <div style={{ background: 'white', borderRadius: 18, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden' }}>
           <CalendarGrid>
             {DAYS.map(d => <DayHeader key={d}>{d}</DayHeader>)}
-            {calCells.map((day, i) => (
-              <DayCell key={i} $isToday={day === currentDate.getDate()} $isEmpty={!day}>
-                {day && <>
-                  <DayNumber $isToday={day === currentDate.getDate()}>{day}</DayNumber>
-                  <EventsWrap>
-                    {(calMonthEvents[day] || []).map((ev, j) => (
-                      <EventChip key={j} $color={ev.color}>{ev.name}</EventChip>
-                    ))}
-                  </EventsWrap>
-                </>}
-              </DayCell>
-            ))}
+            {calCells.map((day, i) => {
+              const isToday = day === today.getDate() && navMonth === today.getMonth() && navYear === today.getFullYear();
+              const dayEvents = events.filter(e => e.year === navYear && e.month === navMonth && e.monthDay === day);
+              return (
+                <DayCell key={i} $isToday={isToday} $isEmpty={!day}>
+                  {day && (
+                    <>
+                      <DayNumber $isToday={isToday}>{day}</DayNumber>
+                      <EventsWrap>
+                        {dayEvents.slice(0, 3).map(ev => (
+                          <EventChip key={ev.id} $color={ev.color}>{ev.name.split(' ')[0]}</EventChip>
+                        ))}
+                        {dayEvents.length > 3 && <EventChip $color="#999">+{dayEvents.length - 3}</EventChip>}
+                      </EventsWrap>
+                    </>
+                  )}
+                </DayCell>
+              );
+            })}
           </CalendarGrid>
         </div>
       ) : (
@@ -139,7 +289,9 @@ export default function Agenda() {
             {weekDays.map((d, i) => (
               <div key={i} style={{ padding: '12px 8px', textAlign: 'center' }}>
                 <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{DAYS[i]}</div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: d.toDateString() === currentDate.toDateString() ? '#fff' : 'rgba(255,255,255,0.9)', background: d.toDateString() === currentDate.toDateString() ? 'rgba(255,255,255,0.25)' : 'transparent', borderRadius: 8, padding: '2px 0', marginTop: 2 }}>{d.getDate()}</div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: d.toDateString() === today.toDateString() ? '#fff' : 'rgba(255,255,255,0.9)', background: d.toDateString() === today.toDateString() ? 'rgba(255,255,255,0.25)' : 'transparent', borderRadius: 8, padding: '2px 0', marginTop: 2 }}>
+                  {d.getDate()}
+                </div>
               </div>
             ))}
           </div>
@@ -147,16 +299,19 @@ export default function Agenda() {
             {HOURS.map((hour, hi) => (
               <SlotRow key={hi}>
                 <TimeLabel>{hour}</TimeLabel>
-                {weekDays.map((_, di) => {
-                  const ev = mockEvents.find(e => e.day === di && e.hour === hi + 8);
+                {weekDays.map((d, di) => {
+                  const slotEvents = events.filter(e =>
+                    e.year === d.getFullYear() && e.month === d.getMonth() &&
+                    e.monthDay === d.getDate() && e.hour === hi + 8
+                  );
                   return (
                     <TimeSlot key={di}>
-                      {ev && (
-                        <EventBlock $color={ev.color}>
+                      {slotEvents.map(ev => (
+                        <EventBlock key={ev.id} $color={ev.color}>
                           <strong>{ev.name}</strong>
                           <span>{ev.procedure}</span>
                         </EventBlock>
-                      )}
+                      ))}
                     </TimeSlot>
                   );
                 })}
@@ -168,28 +323,40 @@ export default function Agenda() {
 
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleCloseModal}
         title="Novo Agendamento"
         size="md"
         footer={
           <>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-            <Button variant="primary">Salvar Agendamento</Button>
+            <Button variant="outline" onClick={handleCloseModal}>Cancelar</Button>
+            <Button variant="primary" onClick={handleSave} loading={saving}>
+              {saving ? 'Salvando...' : 'Salvar Agendamento'}
+            </Button>
           </>
         }
       >
         <FormGrid>
-          <Input label="Nome do Paciente" placeholder="Digite o nome..." />
-          <Input label="Telefone" placeholder="(00) 00000-0000" />
-          <Input label="Data" type="date" />
-          <Input label="Horário" type="time" />
+          <Input
+            label="Nome do Paciente *" placeholder="Digite o nome..."
+            value={form.nome}
+            onChange={e => handleChange('nome', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))}
+            maxLength={80} error={errors.nome}
+          />
+          <Input
+            label="Telefone *" mask="telefone" value={form.telefone}
+            inputMode="numeric" maxLength={15}
+            onValueChange={v => { setForm(p => ({ ...p, telefone: v })); clearError('telefone'); }}
+            error={errors.telefone}
+          />
+          <Input label="Data *" type="date" value={form.data} onChange={e => handleDataChange(e.target.value)} error={errors.data} />
+          <Input label="Horário *" type="time" value={form.horario} onChange={e => handleChange('horario', e.target.value)} error={errors.horario} />
           <div style={{ gridColumn: 'span 2' }}>
-            <Select label="Procedimento" options={procedureOptions} placeholder="Selecione..." />
+            <Select label="Procedimento *" placeholder="Selecione..." options={procedureOptions} value={form.procedimento} onChange={v => handleChange('procedimento', v)} error={errors.procedimento} />
           </div>
-          <Select label="Status" options={statusOptions} placeholder="Selecione..." />
-          <Input label="Valor (R$)" type="number" placeholder="0,00" />
+          <Select label="Status *" placeholder="Selecione..." options={statusOptions} value={form.status} onChange={v => handleChange('status', v)} error={errors.status} />
+          <Input label="Valor (R$) *" mask="moeda" value={form.valor} inputMode="numeric" maxLength={14} onValueChange={v => { setForm(p => ({ ...p, valor: v })); clearError('valor'); }} error={errors.valor} />
           <div style={{ gridColumn: 'span 2' }}>
-            <Input label="Observações" placeholder="Informações adicionais..." />
+            <Input label="Observações" placeholder="Informações adicionais..." maxLength={300} value={form.observacoes} onChange={e => handleChange('observacoes', e.target.value)} />
           </div>
         </FormGrid>
       </Modal>
