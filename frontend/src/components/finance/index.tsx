@@ -11,6 +11,8 @@ import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
+import { usePermissions } from '@/components/ui/hooks/usePermissions';
+import AccessDenied from '@/components/ui/AccessDenied';
 import {
   Container, Header, Title, Controls, SearchBarWrapper, SearchIconWrap, SearchInputStyled,
   FilterRow, DropdownWrapper, DropdownBtn, DropdownList, DropdownItem, ClearFilterBtn,
@@ -19,37 +21,19 @@ import {
   BarFill, BarLabel, BarValue,
 } from './styles';
 
-const typeOptions = [
-  { value: 'receita', label: 'Receita' },
-  { value: 'despesa', label: 'Despesa' },
-];
+const typeOptions      = [{ value: 'receita', label: 'Receita' }, { value: 'despesa', label: 'Despesa' }];
+const categoryOptions  = [{ value: 'procedimento', label: 'Procedimento' }, { value: 'produto', label: 'Produto' }, { value: 'aluguel', label: 'Aluguel' }, { value: 'insumo', label: 'Insumo' }, { value: 'comissao', label: 'Comissão' }, { value: 'outros', label: 'Outros' }];
+const pagamentoOptions = [{ value: 'pix', label: 'Pix' }, { value: 'cartao_cred', label: 'Cartão de Crédito' }, { value: 'cartao_deb', label: 'Cartão de Débito' }, { value: 'dinheiro', label: 'Dinheiro' }, { value: 'transferencia', label: 'Transferência Bancária' }];
+const filterTypes      = ['Todos', 'Receita', 'Despesa'];
+const filterMonths     = ['Todos', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho'];
 
-const categoryOptions = [
-  { value: 'procedimento', label: 'Procedimento' },
-  { value: 'produto',      label: 'Produto'      },
-  { value: 'aluguel',      label: 'Aluguel'      },
-  { value: 'insumo',       label: 'Insumo'       },
-  { value: 'comissao',     label: 'Comissão'     },
-  { value: 'outros',       label: 'Outros'       },
-];
-
-const pagamentoOptions = [
-  { value: 'pix',          label: 'Pix'                   },
-  { value: 'cartao_cred',  label: 'Cartão de Crédito'     },
-  { value: 'cartao_deb',   label: 'Cartão de Débito'      },
-  { value: 'dinheiro',     label: 'Dinheiro'              },
-  { value: 'transferencia',label: 'Transferência Bancária' },
-];
-
-const filterTypes  = ['Todos', 'Receita', 'Despesa'];
-const filterMonths = ['Todos', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho'];
 const mockFinance = [
   { id: 1,  date: '18/02/2025', description: 'Botox Facial - Ana Costa',          type: 'receita' as const, category: 'Procedimento', value: 800,  patient: 'Ana Costa'      },
   { id: 2,  date: '18/02/2025', description: 'Preenchimento Labial - Carla M.',   type: 'receita' as const, category: 'Procedimento', value: 1200, patient: 'Carla Mendonça' },
   { id: 3,  date: '17/02/2025', description: 'Reposição de Insumos ANVISA',       type: 'despesa' as const, category: 'Insumo',       value: 2340, patient: null             },
   { id: 4,  date: '16/02/2025', description: 'Bioestimulador - Fernanda Lima',    type: 'receita' as const, category: 'Procedimento', value: 2500, patient: 'Fernanda Lima'  },
-  { id: 5,  date: '15/02/2025', description: 'Aluguel do Espaço',                type: 'despesa' as const, category: 'Aluguel',      value: 3500, patient: null             },
-  { id: 6,  date: '14/02/2025', description: 'Fio PDO - Marina Souza',           type: 'receita' as const, category: 'Procedimento', value: 1800, patient: 'Marina Souza'   },
+  { id: 5,  date: '15/02/2025', description: 'Aluguel do Espaço',                 type: 'despesa' as const, category: 'Aluguel',      value: 3500, patient: null             },
+  { id: 6,  date: '14/02/2025', description: 'Fio PDO - Marina Souza',            type: 'receita' as const, category: 'Procedimento', value: 1800, patient: 'Marina Souza'   },
   { id: 7,  date: '13/02/2025', description: 'Comissão Profissional - Fevereiro', type: 'despesa' as const, category: 'Comissão',     value: 1280, patient: null             },
   { id: 8,  date: '12/02/2025', description: 'Microagulhamento - Patrícia A.',    type: 'receita' as const, category: 'Procedimento', value: 450,  patient: 'Patrícia Alves' },
   { id: 9,  date: '10/02/2025', description: 'Toxina Botulínica - Juliana R.',    type: 'receita' as const, category: 'Procedimento', value: 600,  patient: 'Juliana Rocha'  },
@@ -70,58 +54,46 @@ const monthlyData = [
 const fmt = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 type LancamentoField = 'tipo' | 'categoria' | 'descricao' | 'valor' | 'data' | 'pagamento';
-
-interface LancamentoForm {
-  tipo: string; categoria: string; descricao: string; valor: string;
-  data: string; paciente: string; pagamento: string;
-}
-
+interface LancamentoForm { tipo: string; categoria: string; descricao: string; valor: string; data: string; paciente: string; pagamento: string; }
 const LANCAMENTO_INITIAL: LancamentoForm = { tipo: '', categoria: '', descricao: '', valor: '', data: '', paciente: '', pagamento: '' };
-
 const LANCAMENTO_VALIDATION_FIELDS = [
-  { key: 'tipo'      as LancamentoField, validate: (v: string) => !v                           ? 'Selecione o tipo (Receita ou Despesa)' : null },
-  { key: 'categoria' as LancamentoField, validate: (v: string) => !v                           ? 'Selecione uma categoria'               : null },
-  { key: 'descricao' as LancamentoField, validate: (v: string) => !v.trim()                    ? 'Descrição é obrigatória'               : null },
-  { key: 'valor'     as LancamentoField, validate: (v: string) => !v.trim() || v === 'R$ 0,00'? 'Informe o valor do lançamento'         : null },
-  { key: 'data'      as LancamentoField, validate: (v: string) => !v                           ? 'Data é obrigatória'                    : null },
-  { key: 'pagamento' as LancamentoField, validate: (v: string) => !v                           ? 'Selecione a forma de pagamento'        : null },
+  { key: 'tipo'      as LancamentoField, validate: (v: string) => !v ? 'Selecione o tipo (Receita ou Despesa)' : null },
+  { key: 'categoria' as LancamentoField, validate: (v: string) => !v ? 'Selecione uma categoria' : null },
+  { key: 'descricao' as LancamentoField, validate: (v: string) => !v.trim() ? 'Descrição é obrigatória' : null },
+  { key: 'valor'     as LancamentoField, validate: (v: string) => !v.trim() || v === 'R$ 0,00' ? 'Informe o valor do lançamento' : null },
+  { key: 'data'      as LancamentoField, validate: (v: string) => !v ? 'Data é obrigatória' : null },
+  { key: 'pagamento' as LancamentoField, validate: (v: string) => !v ? 'Selecione a forma de pagamento' : null },
 ];
-
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE   = 10;
 const TABLE_MIN_HEIGHT = 540;
 
-function isLancFormDirty(form: LancamentoForm): boolean {
-  return (
-    form.tipo !== '' ||
-    form.categoria !== '' ||
-    form.descricao.trim() !== '' ||
-    form.valor.trim() !== '' ||
-    form.data !== '' ||
-    form.paciente.trim() !== '' ||
-    form.pagamento !== ''
-  );
+function isLancFormDirty(form: LancamentoForm) {
+  return form.tipo !== '' || form.categoria !== '' || form.descricao.trim() !== '' || form.valor.trim() !== '' || form.data !== '' || form.paciente.trim() !== '' || form.pagamento !== '';
 }
 
 export default function Finance() {
-  const [search,       setSearch]       = useState('');
-  const [filterType,   setFilterType]   = useState('Todos');
-  const [filterMonth,  setFilterMonth]  = useState('Todos');
+  const { can, isSuperAdmin } = usePermissions();
+
+  const [search, setSearch]             = useState('');
+  const [filterType, setFilterType]     = useState('Todos');
+  const [filterMonth, setFilterMonth]   = useState('Todos');
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [isModalOpen,  setIsModalOpen]  = useState(false);
-  const [exporting,    setExporting]    = useState(false);
-  const [currentPage,  setCurrentPage]  = useState(1);
-
-  // Lancamento modal states
-  const [showCancelModal,  setShowCancelModal]  = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-
-  // Export modal states
+  const [isModalOpen, setIsModalOpen]   = useState(false);
+  const [exporting, setExporting]       = useState(false);
+  const [currentPage, setCurrentPage]   = useState(1);
+  const [showCancelModal,        setShowCancelModal]        = useState(false);
+  const [showConfirmModal,       setShowConfirmModal]       = useState(false);
+  const [showSuccessModal,       setShowSuccessModal]       = useState(false);
   const [showExportConfirmModal, setShowExportConfirmModal] = useState(false);
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
-
   const [lancForm, setLancForm] = useState<LancamentoForm>(LANCAMENTO_INITIAL);
-  const { errors: lancErrors, validate: lancValidate, clearError: lancClearError, clearAll: lancClearAll } = useSequentialValidation<LancamentoField>(LANCAMENTO_VALIDATION_FIELDS);
+
+  const { errors: lancErrors, validate: lancValidate, clearError: lancClearError, clearAll: lancClearAll } =
+    useSequentialValidation<LancamentoField>(LANCAMENTO_VALIDATION_FIELDS);
+
+  if (!isSuperAdmin && !can('financeiro.read')) return <AccessDenied />;
+
+  const canCreate = isSuperAdmin || can('financeiro.create');
 
   const totalReceita = mockFinance.filter(f => f.type === 'receita').reduce((a, f) => a + f.value, 0);
   const totalDespesa = mockFinance.filter(f => f.type === 'despesa').reduce((a, f) => a + f.value, 0);
@@ -137,50 +109,27 @@ export default function Finance() {
   const totalFiltered = filtered.length;
   const totalPages    = Math.max(1, Math.ceil(totalFiltered / ITEMS_PER_PAGE));
   const safePage      = Math.min(currentPage, totalPages);
-  const startIndex    = (safePage - 1) * ITEMS_PER_PAGE;
-  const paginatedData = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedData = filtered.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
 
   function handleLancChange(field: LancamentoField | 'paciente', value: string) {
     setLancForm(prev => ({ ...prev, [field]: value }));
     if (field !== 'paciente') lancClearError(field as LancamentoField);
   }
-  function handleLancDataChange(raw: string) { if (!raw) { handleLancChange('data', ''); return; } const [yearStr, month, day] = raw.split('-'); const safeYear = yearStr ? yearStr.slice(0, 4) : ''; handleLancChange('data', `${safeYear}-${month ?? ''}-${day ?? ''}`); }
-
-  function handleCancelClick() {
-    if (isLancFormDirty(lancForm)) {
-      setShowCancelModal(true);
-    } else {
-      forceClose();
-    }
+  function handleLancDataChange(raw: string) {
+    if (!raw) { handleLancChange('data', ''); return; }
+    const [yearStr, month, day] = raw.split('-');
+    handleLancChange('data', `${(yearStr || '').slice(0, 4)}-${month ?? ''}-${day ?? ''}`);
   }
-
-  function forceClose() {
-    setLancForm(LANCAMENTO_INITIAL);
-    lancClearAll();
-    setIsModalOpen(false);
-    setShowCancelModal(false);
-  }
-
+  function handleCancelClick() { isLancFormDirty(lancForm) ? setShowCancelModal(true) : forceClose(); }
+  function forceClose() { setLancForm(LANCAMENTO_INITIAL); lancClearAll(); setIsModalOpen(false); setShowCancelModal(false); }
   function handleSaveLancClick() {
     const isValid = lancValidate({ tipo: lancForm.tipo, categoria: lancForm.categoria, descricao: lancForm.descricao, valor: lancForm.valor, data: lancForm.data, pagamento: lancForm.pagamento });
     if (!isValid) return;
     setShowConfirmModal(true);
   }
-
-  function handleConfirmSave() {
-    setShowConfirmModal(false);
-    setIsModalOpen(false);
-    setLancForm(LANCAMENTO_INITIAL);
-    lancClearAll();
-    setShowSuccessModal(true);
-  }
-
+  function handleConfirmSave() { setShowConfirmModal(false); setIsModalOpen(false); setLancForm(LANCAMENTO_INITIAL); lancClearAll(); setShowSuccessModal(true); }
   const toggle = (name: string) => setOpenDropdown(prev => prev === name ? null : name);
-
-  const handleExportClick = () => {
-    setShowExportConfirmModal(true);
-  };
-
+  const handleExportClick = () => setShowExportConfirmModal(true);
   const handleConfirmExport = async () => {
     setShowExportConfirmModal(false);
     try {
@@ -202,7 +151,9 @@ export default function Finance() {
         <Title>Financeiro</Title>
         <div style={{ display: 'flex', gap: 12 }}>
           <Button variant="outline" loading={exporting} icon={!exporting ? (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>) : undefined} onClick={handleExportClick}>{exporting ? 'Exportando...' : 'Exportar PDF'}</Button>
-          <Button variant="primary" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>} onClick={() => setIsModalOpen(true)}>Novo Lançamento</Button>
+          {canCreate && (
+            <Button variant="primary" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>} onClick={() => setIsModalOpen(true)}>Novo Lançamento</Button>
+          )}
         </div>
       </Header>
 
@@ -259,9 +210,7 @@ export default function Finance() {
         <TableWrapper style={{ minHeight: TABLE_MIN_HEIGHT }}>
           <Table>
             <Thead>
-              <tr>
-                <Th $width="12%">Data</Th><Th $width="32%">Descrição</Th><Th $width="15%">Categoria</Th><Th $width="10%">Tipo</Th><Th $width="14%">Valor</Th><Th $width="11%">Paciente</Th><Th $width="6%">Ações</Th>
-              </tr>
+              <tr><Th $width="12%">Data</Th><Th $width="32%">Descrição</Th><Th $width="15%">Categoria</Th><Th $width="10%">Tipo</Th><Th $width="14%">Valor</Th><Th $width="11%">Paciente</Th><Th $width="6%">Ações</Th></tr>
             </Thead>
             <Tbody>
               {paginatedData.length === 0 ? (
@@ -271,21 +220,10 @@ export default function Finance() {
                   <Td style={{ color: '#888' }}>{f.date}</Td>
                   <Td style={{ fontWeight: 500, color: '#1a1a1a' }}>{f.description}</Td>
                   <Td><Badge $bg="rgba(187,161,136,0.12)" $color="#a8906f">{f.category}</Badge></Td>
-                  <Td>
-                    <TypeBadge $type={f.type}>
-                      <span style={{ fontSize: '0.72rem' }}>{f.type === 'receita' ? '↑' : '↓'}</span>
-                      {f.type === 'receita' ? ' Receita' : ' Despesa'}
-                    </TypeBadge>
-                  </Td>
-                  <Td style={{ fontWeight: 700, color: f.type === 'receita' ? '#BBA188' : '#e74c3c', fontSize: '0.85rem' }}>
-                    {f.type === 'receita' ? '+' : '-'} R$ {fmt(f.value)}
-                  </Td>
+                  <Td><TypeBadge $type={f.type}><span style={{ fontSize: '0.72rem' }}>{f.type === 'receita' ? '↑' : '↓'}</span>{f.type === 'receita' ? ' Receita' : ' Despesa'}</TypeBadge></Td>
+                  <Td style={{ fontWeight: 700, color: f.type === 'receita' ? '#BBA188' : '#e74c3c', fontSize: '0.85rem' }}>{f.type === 'receita' ? '+' : '-'} R$ {fmt(f.value)}</Td>
                   <Td style={{ color: '#777' }}>{f.patient || '—'}</Td>
-                  <Td>
-                    <ActionGroup>
-                      <IconBtn><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></IconBtn>
-                    </ActionGroup>
-                  </Td>
+                  <Td><ActionGroup>{canCreate && <IconBtn><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></IconBtn>}</ActionGroup></Td>
                 </Tr>
               ))}
             </Tbody>
@@ -294,7 +232,6 @@ export default function Finance() {
         <Pagination currentPage={safePage} totalItems={totalFiltered} itemsPerPage={ITEMS_PER_PAGE} onPageChange={setCurrentPage} />
       </div>
 
-      {/* Novo Lançamento Modal */}
       <Modal isOpen={isModalOpen} onClose={handleCancelClick} closeOnOverlayClick={false} title="Novo Lançamento" size="md" footer={<><Button variant="outline" onClick={handleCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveLancClick}>Salvar</Button></>}>
         <FormGrid>
           <Select label="Tipo *" options={typeOptions} placeholder="Selecione..." value={lancForm.tipo} onChange={v => handleLancChange('tipo', v)} error={lancErrors.tipo} />
@@ -307,48 +244,11 @@ export default function Finance() {
         </FormGrid>
       </Modal>
 
-      {/* Lancamento modals */}
-      <CancelModal
-        isOpen={showCancelModal}
-        title="Deseja cancelar?"
-        message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas."
-        onConfirm={forceClose}
-        onCancel={() => setShowCancelModal(false)}
-      />
-      <ConfirmModal
-        isOpen={showConfirmModal}
-        title="Salvar lançamento?"
-        message={`Deseja registrar este lançamento de ${lancForm.tipo === 'receita' ? 'receita' : 'despesa'}${lancForm.descricao ? `: "${lancForm.descricao}"` : ''}?`}
-        confirmText="Confirmar"
-        cancelText="Voltar"
-        onConfirm={handleConfirmSave}
-        onCancel={() => setShowConfirmModal(false)}
-      />
-      <SucessModal
-        isOpen={showSuccessModal}
-        title="Sucesso!"
-        message="Lançamento registrado com sucesso!"
-        onClose={() => setShowSuccessModal(false)}
-        buttonText="Continuar"
-      />
-
-      {/* Export modals */}
-      <ConfirmModal
-        isOpen={showExportConfirmModal}
-        title="Exportar PDF?"
-        message="Deseja exportar o relatório financeiro em PDF?"
-        confirmText="Exportar"
-        cancelText="Cancelar"
-        onConfirm={handleConfirmExport}
-        onCancel={() => setShowExportConfirmModal(false)}
-      />
-      <SucessModal
-        isOpen={showExportSuccessModal}
-        title="PDF exportado!"
-        message="Relatório financeiro exportado com sucesso!"
-        onClose={() => setShowExportSuccessModal(false)}
-        buttonText="Continuar"
-      />
+      <CancelModal isOpen={showCancelModal} title="Deseja cancelar?" message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas." onConfirm={forceClose} onCancel={() => setShowCancelModal(false)} />
+      <ConfirmModal isOpen={showConfirmModal} title="Salvar lançamento?" message={`Deseja registrar este lançamento de ${lancForm.tipo === 'receita' ? 'receita' : 'despesa'}${lancForm.descricao ? `: "${lancForm.descricao}"` : ''}?`} confirmText="Confirmar" cancelText="Voltar" onConfirm={handleConfirmSave} onCancel={() => setShowConfirmModal(false)} />
+      <SucessModal isOpen={showSuccessModal} title="Sucesso!" message="Lançamento registrado com sucesso!" onClose={() => setShowSuccessModal(false)} buttonText="Continuar" />
+      <ConfirmModal isOpen={showExportConfirmModal} title="Exportar PDF?" message="Deseja exportar o relatório financeiro em PDF?" confirmText="Exportar" cancelText="Cancelar" onConfirm={handleConfirmExport} onCancel={() => setShowExportConfirmModal(false)} />
+      <SucessModal isOpen={showExportSuccessModal} title="PDF exportado!" message="Relatório financeiro exportado com sucesso!" onClose={() => setShowExportSuccessModal(false)} buttonText="Continuar" />
     </Container>
   );
 }

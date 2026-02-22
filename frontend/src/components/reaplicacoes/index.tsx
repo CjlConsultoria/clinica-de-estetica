@@ -10,8 +10,10 @@ import {
   Container, Header, Title, StatsGrid, Controls,
   SearchBarWrapper, SearchIconWrap, SearchInputStyled,
   FilterRow, DropdownWrapper, DropdownBtn, DropdownList, DropdownItem, ClearFilterBtn,
+  ToggleGroup, ToggleBtn,
   TableWrapper, Table, Thead, Th, Tbody, Tr, Td, Badge, ActionGroup, IconBtn,
   FormGrid, AlertBanner, AlertBannerIcon, AlertBannerText,
+  EmptyState,
   CardsGrid, ReapCard, ReapCardHeader, ReapAvatar, ReapPatientName, ReapPatientSub,
   ReapCardBody, ReapRow, ReapLabel, ReapValue, ReapDaysTag, ReapCardFooter,
   ProgressBarOuter, ProgressBarInner,
@@ -129,10 +131,6 @@ export default function Reaplicacoes() {
     <Container>
       <Header>
         <Title>Alertas de Reaplicação</Title>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <Button variant={view === 'cards'  ? 'primary' : 'outline'} onClick={() => { setView('cards');  setCurrentPage(1); }} icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>}>Cards</Button>
-          <Button variant={view === 'tabela' ? 'primary' : 'outline'} onClick={() => { setView('tabela'); setCurrentPage(1); }} icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>}>Tabela</Button>
-        </div>
       </Header>
 
       {urgentes > 0 && (
@@ -163,8 +161,14 @@ export default function Reaplicacoes() {
 
       <Controls>
         <SearchBarWrapper>
-          <SearchIconWrap><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></SearchIconWrap>
-          <SearchInputStyled placeholder="Buscar paciente ou procedimento..." value={search} onChange={e => handleSearchChange(e.target.value)} />
+          <SearchIconWrap>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          </SearchIconWrap>
+          <SearchInputStyled
+            placeholder="Buscar paciente ou procedimento..."
+            value={search}
+            onChange={e => handleSearchChange(e.target.value)}
+          />
         </SearchBarWrapper>
         <FilterRow>
           <DropdownWrapper>
@@ -174,7 +178,9 @@ export default function Reaplicacoes() {
             </DropdownBtn>
             {openDropStat && (
               <DropdownList>
-                {filterStatus.map(s => <DropdownItem key={s} $active={filterStat === s} onClick={() => handleFilterStat(s)}>{s}</DropdownItem>)}
+                {filterStatus.map(s => (
+                  <DropdownItem key={s} $active={filterStat === s} onClick={() => handleFilterStat(s)}>{s}</DropdownItem>
+                ))}
               </DropdownList>
             )}
           </DropdownWrapper>
@@ -185,7 +191,9 @@ export default function Reaplicacoes() {
             </DropdownBtn>
             {openDropProc && (
               <DropdownList>
-                {filterProcedures.map(p => <DropdownItem key={p} $active={filterProc === p} onClick={() => handleFilterProc(p)}>{p}</DropdownItem>)}
+                {filterProcedures.map(p => (
+                  <DropdownItem key={p} $active={filterProc === p} onClick={() => handleFilterProc(p)}>{p}</DropdownItem>
+                ))}
               </DropdownList>
             )}
           </DropdownWrapper>
@@ -195,6 +203,14 @@ export default function Reaplicacoes() {
               Limpar
             </ClearFilterBtn>
           )}
+          <ToggleGroup>
+            <ToggleBtn $active={view === 'cards'} onClick={() => { setView('cards'); setCurrentPage(1); }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            </ToggleBtn>
+            <ToggleBtn $active={view === 'tabela'} onClick={() => { setView('tabela'); setCurrentPage(1); }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+            </ToggleBtn>
+          </ToggleGroup>
         </FilterRow>
       </Controls>
 
@@ -202,10 +218,10 @@ export default function Reaplicacoes() {
         <CardsContainer>
           <div style={{ padding: 20, flex: 1, overflow: 'hidden' }}>
             {filtered.length === 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '60px 20px', color: '#bbb', textAlign: 'center' }}>
-                <h3 style={{ fontSize: '1.1rem', color: '#555', margin: '0 0 6px' }}>Nenhuma reaplicação encontrada</h3>
-                <p style={{ fontSize: '0.88rem', color: '#999', margin: 0 }}>Tente ajustar os filtros ou a busca.</p>
-              </div>
+              <EmptyState>
+                <h3>Nenhuma reaplicação encontrada</h3>
+                <p>Tente ajustar os filtros ou a busca.</p>
+              </EmptyState>
             ) : (
               <CardsGrid>
                 {paginatedCards.map((r, i) => {
@@ -238,7 +254,12 @@ export default function Reaplicacoes() {
                           <ReapLabel>Status</ReapLabel>
                           <ReapValue><Badge $bg={urg.bg} $color={urg.color}>{urg.label}</Badge></ReapValue>
                         </ReapRow>
-                        {r.agendado && <ReapRow><ReapLabel /><ReapValue><Badge $bg="#f0ebe4" $color="#8a7560">✓ Agendado</Badge></ReapValue></ReapRow>}
+                        {r.agendado && (
+                          <ReapRow>
+                            <ReapLabel />
+                            <ReapValue><Badge $bg="#f0ebe4" $color="#8a7560">✓ Agendado</Badge></ReapValue>
+                          </ReapRow>
+                        )}
                       </ReapCardBody>
                       <ReapCardFooter>
                         <Button variant="outline" size="sm" onClick={() => { setSelected(r); setIsModalOpen(true); }}>Agendar</Button>
@@ -257,23 +278,37 @@ export default function Reaplicacoes() {
             <PaginationInfo>
               {filtered.length === 0
                 ? 'Nenhum registro'
-                : `Mostrando ${startItemCards} de ${filtered.length}`
+                : `Mostrando ${safePageCards} de ${totalPagesCards}`
               }
             </PaginationInfo>
             <PaginationControls>
-              <PaginationArrow onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={safePageCards <= 1} aria-label="Página anterior">
+              <PaginationArrow
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={safePageCards <= 1}
+                aria-label="Página anterior"
+              >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
               </PaginationArrow>
               {visiblePagesCards.map((page, idx) =>
                 page === '...' ? (
                   <PageEllipsis key={`ellipsis-${idx}`}>…</PageEllipsis>
                 ) : (
-                  <PageButton key={page} $active={page === safePageCards} onClick={() => setCurrentPage(page as number)} aria-label={`Página ${page}`} aria-current={page === safePageCards ? 'page' : undefined}>
+                  <PageButton
+                    key={page}
+                    $active={page === safePageCards}
+                    onClick={() => setCurrentPage(page as number)}
+                    aria-label={`Página ${page}`}
+                    aria-current={page === safePageCards ? 'page' : undefined}
+                  >
                     {page}
                   </PageButton>
                 )
               )}
-              <PaginationArrow onClick={() => setCurrentPage(p => Math.min(totalPagesCards, p + 1))} disabled={safePageCards >= totalPagesCards} aria-label="Próxima página">
+              <PaginationArrow
+                onClick={() => setCurrentPage(p => Math.min(totalPagesCards, p + 1))}
+                disabled={safePageCards >= totalPagesCards}
+                aria-label="Próxima página"
+              >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
               </PaginationArrow>
             </PaginationControls>
@@ -281,23 +316,27 @@ export default function Reaplicacoes() {
         </CardsContainer>
       ) : (
         <TableContainer>
-          <TableWrapper style={{ flex: 1, overflow: 'hidden' }}>
+          <TableWrapper>
             <Table>
               <Thead>
                 <tr>
                   <Th $width="20%">Paciente</Th>
                   <Th $width="18%">Procedimento</Th>
-                  <Th $width="13%">Última Sessão</Th>
-                  <Th $width="13%">Próxima Data</Th>
-                  <Th $width="9%">Dias Rest.</Th>
-                  <Th $width="13%">Profissional</Th>
-                  <Th $width="9%">Status</Th>
+                  <Th $width="12%">Última Sessão</Th>
+                  <Th $width="12%">Próxima Data</Th>
+                  <Th $width="8%">Dias Rest.</Th>
+                  <Th $width="14%">Profissional</Th>
+                  <Th $width="11%">Status</Th>
                   <Th $width="5%">Ações</Th>
                 </tr>
               </Thead>
               <Tbody>
                 {filtered.length === 0 ? (
-                  <tr><Td colSpan={8} style={{ textAlign: 'center', padding: '48px 0', color: '#bbb' }}>Nenhuma reaplicação encontrada.</Td></tr>
+                  <tr>
+                    <Td colSpan={8} style={{ textAlign: 'center', padding: '48px 0', color: '#bbb' }}>
+                      Nenhuma reaplicação encontrada.
+                    </Td>
+                  </tr>
                 ) : paginatedTable.map(r => {
                   const dias = diasRestantes(r.proximaData);
                   const urg  = getUrgencia(dias);
@@ -305,10 +344,10 @@ export default function Reaplicacoes() {
                     <Tr key={r.id}>
                       <Td style={{ fontWeight: 600, color: '#1a1a1a' }}>{r.paciente}</Td>
                       <Td><Badge $bg="rgba(187,161,136,0.15)" $color="#BBA188">{r.procedimento}</Badge></Td>
-                      <Td style={{ color: '#888', fontSize: '0.82rem' }}>{r.ultimaData}</Td>
+                      <Td style={{ color: '#888' }}>{r.ultimaData}</Td>
                       <Td style={{ fontWeight: 600, color: dias <= 7 ? '#c0392b' : '#1a1a1a' }}>{r.proximaData.split('-').reverse().join('/')}</Td>
                       <Td><span style={{ fontWeight: 700, color: urg.color }}>{dias < 0 ? `${Math.abs(dias)}d atrás` : `${dias}d`}</span></Td>
-                      <Td style={{ fontSize: '0.85rem' }}>{r.profissional}</Td>
+                      <Td>{r.profissional}</Td>
                       <Td>
                         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                           <Badge $bg={urg.bg} $color={urg.color}>{urg.label}</Badge>
@@ -333,23 +372,37 @@ export default function Reaplicacoes() {
             <PaginationInfo>
               {filtered.length === 0
                 ? 'Nenhum registro'
-                : `Mostrando ${startItemTable}–${Math.min(startIdxTable + TABLE_PER_PAGE, filtered.length)} de ${filtered.length} reaplicação(ões)`
+                : `Mostrando ${safePageTable} de ${totalPagesTable}`
               }
             </PaginationInfo>
             <PaginationControls>
-              <PaginationArrow onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={safePageTable <= 1} aria-label="Página anterior">
+              <PaginationArrow
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={safePageTable <= 1}
+                aria-label="Página anterior"
+              >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
               </PaginationArrow>
               {visiblePagesTable.map((page, idx) =>
                 page === '...' ? (
                   <PageEllipsis key={`ellipsis-${idx}`}>…</PageEllipsis>
                 ) : (
-                  <PageButton key={page} $active={page === safePageTable} onClick={() => setCurrentPage(page as number)} aria-label={`Página ${page}`} aria-current={page === safePageTable ? 'page' : undefined}>
+                  <PageButton
+                    key={page}
+                    $active={page === safePageTable}
+                    onClick={() => setCurrentPage(page as number)}
+                    aria-label={`Página ${page}`}
+                    aria-current={page === safePageTable ? 'page' : undefined}
+                  >
                     {page}
                   </PageButton>
                 )
               )}
-              <PaginationArrow onClick={() => setCurrentPage(p => Math.min(totalPagesTable, p + 1))} disabled={safePageTable >= totalPagesTable} aria-label="Próxima página">
+              <PaginationArrow
+                onClick={() => setCurrentPage(p => Math.min(totalPagesTable, p + 1))}
+                disabled={safePageTable >= totalPagesTable}
+                aria-label="Próxima página"
+              >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
               </PaginationArrow>
             </PaginationControls>
@@ -362,7 +415,12 @@ export default function Reaplicacoes() {
         onClose={() => setIsModalOpen(false)}
         title={`Agendar Reaplicação — ${selected?.paciente}`}
         size="md"
-        footer={<><Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button><Button variant="primary">Confirmar</Button></>}
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+            <Button variant="primary">Confirmar</Button>
+          </>
+        }
       >
         <FormGrid>
           <div style={{ gridColumn: 'span 2', padding: '12px 16px', background: '#fdf9f5', borderRadius: 10, border: '1px solid #f0ebe4', fontSize: '0.88rem', color: '#666' }}>
@@ -373,7 +431,9 @@ export default function Reaplicacoes() {
           <Input label="Horário" type="time" />
           <Select label="Procedimento" options={procedureOptions} placeholder={selected?.procedimento || 'Selecione...'} />
           <Input label="Profissional" defaultValue={selected?.profissional} />
-          <div style={{ gridColumn: 'span 2' }}><Input label="Observações" placeholder="Informações adicionais..." /></div>
+          <div style={{ gridColumn: 'span 2' }}>
+            <Input label="Observações" placeholder="Informações adicionais..." />
+          </div>
         </FormGrid>
       </Modal>
     </Container>

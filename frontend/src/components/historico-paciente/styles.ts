@@ -142,21 +142,46 @@ export const ClearFilterBtn = styled.button`
   &:hover { background: #e74c3c; color: white; }
 `;
 
-/* ✅ 2 colunas fixas para exibir exatamente 4 cards (2x2) por página */
+export const CardsContainer = styled.div`
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 780px;
+`;
+
+export const CardsWrapper = styled.div`
+  flex: 1;
+  padding: 20px;
+  min-height: 0;
+`;
+
+export const PaginationContainer = styled.div`
+  flex-shrink: 0;
+  border-top: 1px solid #f0ebe4;
+`;
+
 export const PatientGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
+  height: 100%;
+  align-content: start;
   @media (max-width: 840px) { grid-template-columns: 1fr; }
 `;
 
 export const PatientCard = styled.div`
   background: white;
   border-radius: 18px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
   overflow: hidden;
   cursor: pointer;
   transition: all 0.25s;
+  display: flex;
+  flex-direction: column;
+  height: 330px;
   &:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(187,161,136,0.18); }
 `;
 
@@ -164,20 +189,21 @@ export const PatientCardHeader = styled.div`
   display: flex;
   align-items: flex-start;
   gap: 14px;
-  padding: 20px 20px 16px;
+  padding: 16px 18px 14px;
   border-bottom: 1px solid #f5f5f5;
+  flex-shrink: 0;
 `;
 
 export const PatientAvatar = styled.div<{ $color: string }>`
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: ${({ $color }) => $color}22;
   border: 2px solid ${({ $color }) => $color}44;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: ${({ $color }) => $color};
   flex-shrink: 0;
@@ -190,7 +216,7 @@ export const PatientInfo = styled.div`
 `;
 
 export const PatientName = styled.div`
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: #1a1a1a;
   font-family: var(--font-cabourg-bold), 'Cabourg', serif;
@@ -201,9 +227,9 @@ export const PatientName = styled.div`
 `;
 
 export const PatientSub = styled.div`
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: #999;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 `;
 
 export const StatsRow = styled.div`
@@ -223,7 +249,9 @@ export const StatPill = styled.span<{ $color: string }>`
 `;
 
 export const PatientCardBody = styled.div`
-  padding: 16px 20px;
+  padding: 12px 18px;
+  flex: 1;
+  overflow: hidden;
 `;
 
 export const TimelineWrap = styled.div`
@@ -236,14 +264,14 @@ export const TimelineItem = styled.div`
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 8px 0;
+  padding: 6px 0;
   border-bottom: 1px solid #f8f8f8;
   &:last-child { border-bottom: none; }
 `;
 
 export const TimelineDot = styled.div<{ $color: string }>`
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: ${({ $color }) => $color};
   margin-top: 5px;
@@ -256,29 +284,32 @@ export const TimelineContent = styled.div`
 `;
 
 export const TimelineDate = styled.div`
-  font-size: 0.72rem;
+  font-size: 0.69rem;
   color: #bbb;
   margin-bottom: 1px;
 `;
 
 export const TimelineTitle = styled.div`
-  font-size: 0.84rem;
+  font-size: 0.81rem;
   font-weight: 700;
   color: #333;
 `;
 
 export const TimelineDesc = styled.div`
-  font-size: 0.76rem;
+  font-size: 0.73rem;
   color: #888;
   margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 export const TimelineTag = styled.span<{ $color: string }>`
   display: inline-block;
-  margin-top: 3px;
-  padding: 1px 8px;
+  margin-top: 2px;
+  padding: 1px 7px;
   border-radius: 4px;
-  font-size: 0.67rem;
+  font-size: 0.64rem;
   font-weight: 600;
   background: ${({ $color }) => $color}14;
   color: ${({ $color }) => $color};
@@ -289,10 +320,12 @@ export const PatientCardFooter = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
+  padding: 10px 18px;
   border-top: 1px solid #f5f5f5;
   background: #fdf9f5;
+  flex-shrink: 0;
 `;
+
 
 export const DetailModal = styled.div`
   max-height: 65vh;
@@ -454,82 +487,10 @@ export const EmptyState = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 80px 20px;
+  justify-content: center;
+  height: 100%;
   text-align: center;
   color: #bbb;
   h3 { font-size: 1.1rem; font-family: var(--font-cabourg-bold), 'Cabourg', serif; color: #555; margin: 0 0 6px; }
   p  { font-size: 0.88rem; color: #999; margin: 0; }
-`;
-
-/* ─────────────── Paginação ─────────────── */
-
-export const PaginationWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 16px;
-  padding: 14px 20px;
-  border-top: 1px solid #f0ebe4;
-  min-height: 56px;
-  flex-shrink: 0;
-`;
-
-export const PaginationInfo = styled.span`
-  font-size: 0.8rem;
-  color: #999;
-  font-weight: 400;
-  white-space: nowrap;
-`;
-
-export const PaginationControls = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-`;
-
-export const PageButton = styled.button<{ $active?: boolean }>`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-  font-weight: ${({ $active }) => ($active ? '700' : '500')};
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: ${({ $active }) => ($active ? '#BBA188' : 'transparent')};
-  color: ${({ $active }) => ($active ? '#ffffff' : '#888')};
-  &:hover:not(:disabled) {
-    background: ${({ $active }) => ($active ? '#BBA188' : 'rgba(187,161,136,0.12)')};
-    color: ${({ $active }) => ($active ? '#ffffff' : '#BBA188')};
-  }
-`;
-
-export const PageEllipsis = styled.span`
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-  color: #bbb;
-  user-select: none;
-`;
-
-export const PaginationArrow = styled.button`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: #BBA188;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  &:hover:not(:disabled) { background: rgba(187,161,136,0.12); }
-  &:disabled { color: #ddd; cursor: not-allowed; }
 `;

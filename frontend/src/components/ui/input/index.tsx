@@ -3,17 +3,14 @@
 import React from 'react';
 import { InputWrapper, Label, StyledInput, ErrorText, HintText, IconLeft, IconRight } from './styles';
 
-// ─── Tipos de máscara suportados ─────────────────────────────────────────────
 export type InputMask =
-  | 'telefone'    // (00) 00000-0000
-  | 'cpf'         // 000.000.000-00
-  | 'cnpj'        // 00.000.000/0000-00
-  | 'cep'         // 00000-000
-  | 'data'        // 00/00/0000
-  | 'moeda'       // R$ 0,00
-  | 'rg';         // 00.000.000-0
-
-// ─── Funções de máscara ───────────────────────────────────────────────────────
+  | 'telefone' 
+  | 'cpf'  
+  | 'cnpj' 
+  | 'cep' 
+  | 'data'    
+  | 'moeda'     
+  | 'rg';        
 
 function applyTelefone(v: string): string {
   const d = v.replace(/\D/g, '').slice(0, 11);
@@ -85,8 +82,6 @@ const MASK_PLACEHOLDER: Record<InputMask, string> = {
   rg:       '00.000.000-0',
 };
 
-// ─── Props ────────────────────────────────────────────────────────────────────
-
 interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   label?: string;
   error?: string;
@@ -95,15 +90,10 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, '
   iconRight?: React.ReactNode;
   fullWidth?: boolean;
   mask?: InputMask;
-  /**
-   * Quando há máscara, use onValueChange para receber a string mascarada diretamente.
-   * Quando não há máscara, use onChange normalmente (evento nativo).
-   */
+
   onValueChange?: (value: string) => void;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
-
-// ─── Componente ───────────────────────────────────────────────────────────────
 
 export default function Input({
   label,
@@ -126,11 +116,9 @@ export default function Input({
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (mask) {
-      // Com máscara: aplica a máscara e entrega a string via onValueChange
       const masked = applyMask(e.target.value, mask);
       onValueChange?.(masked);
     } else {
-      // Sem máscara: repassa o evento nativo normalmente
       onChange?.(e);
     }
   }

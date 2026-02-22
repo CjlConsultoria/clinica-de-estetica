@@ -6,7 +6,7 @@ export const Container = styled.div`
   min-height: 100vh;
   background: #f5f5f5;
   box-sizing: border-box;
-  @media (max-width: 1024px) { padding: 24px 20px; }
+  @media (max-width: 1024px) { width: 100%; padding: 24px 20px; }
   @media (max-width: 768px)  { padding: 20px 16px; }
 `;
 
@@ -138,6 +138,11 @@ export const DropdownList = styled.div`
   box-shadow: 0 8px 24px rgba(0,0,0,0.1);
   z-index: 100;
   overflow: hidden;
+  animation: dropIn 0.18s ease;
+  @keyframes dropIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
 `;
 
 export const DropdownItem = styled.div<{ $active?: boolean }>`
@@ -167,9 +172,49 @@ export const ClearFilterBtn = styled.button`
   &:hover { background: #e74c3c; color: white; }
 `;
 
+export const ToggleGroup = styled.div`
+  display: flex;
+  background: white;
+  border-radius: 10px;
+  border: 1.5px solid #e8e8e8;
+  overflow: hidden;
+  margin-left: auto;
+`;
+
+export const ToggleBtn = styled.button<{ $active: boolean }>`
+  padding: 9px 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: ${({ $active }) => ($active ? '#BBA188' : 'transparent')};
+  color: ${({ $active }) => ($active ? 'white' : '#888')};
+  display: flex;
+  align-items: center;
+`;
+
+/* ─────────────── Tabela ─────────────── */
+/*
+ * TableContainer — altura fixa para exatamente 10 linhas (padrão Estoque).
+ *
+ * Estoque usa TABLE_MIN_HEIGHT = 540px para a área da tabela (TableWrapper).
+ * Paginação: 56px (min-height do PaginationWrapper).
+ * Total container: 540 + 56 = 596px.
+ */
+export const TableContainer = styled.div`
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 596px;
+`;
+
 export const TableWrapper = styled.div`
   width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
+  min-height: 540px;
 `;
 
 export const Table = styled.table`
@@ -182,14 +227,15 @@ export const Thead = styled.thead`
   background: linear-gradient(135deg, #BBA188, #a8906f);
 `;
 
+/* Padrão Estoque: padding 11px 10px, font-size 0.69rem */
 export const Th = styled.th<{ $width?: string }>`
-  padding: 13px 16px;
+  padding: 11px 10px;
   text-align: left;
-  font-size: 0.77rem;
+  font-size: 0.69rem;
   font-weight: 600;
   color: white;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
   width: ${({ $width }) => $width || 'auto'};
 `;
 
@@ -202,31 +248,35 @@ export const Tr = styled.tr`
   &:last-child { border-bottom: none; }
 `;
 
+/* Padrão Estoque: padding 10px 10px, font-size 0.78rem */
 export const Td = styled.td<{ colSpan?: number }>`
-  padding: 13px 16px;
-  font-size: 0.88rem;
+  padding: 10px 10px;
+  font-size: 0.78rem;
   color: #444;
   vertical-align: middle;
 `;
 
+/* Padrão Estoque: padding 3px 7px, font-size 0.68rem */
 export const Badge = styled.span<{ $bg?: string; $color?: string }>`
   display: inline-block;
-  padding: 4px 10px;
+  padding: 3px 7px;
   border-radius: 20px;
-  font-size: 0.74rem;
+  font-size: 0.68rem;
   font-weight: 600;
   background: ${({ $bg }) => $bg || '#f0ebe4'};
   color: ${({ $color }) => $color || '#BBA188'};
+  white-space: nowrap;
 `;
 
 export const ActionGroup = styled.div`
   display: flex;
-  gap: 6px;
+  gap: 4px;
 `;
 
+/* Padrão Estoque: 30px × 30px */
 export const IconBtn = styled.button`
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border: 1.5px solid #e8e8e8;
   border-radius: 8px;
   background: white;
@@ -236,6 +286,7 @@ export const IconBtn = styled.button`
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
   &:hover { background: #BBA188; border-color: #BBA188; color: white; }
 `;
 
@@ -246,21 +297,17 @@ export const FormGrid = styled.div`
   @media (max-width: 560px) { grid-template-columns: 1fr; }
 `;
 
-/*
- * CardsContainer — altura fixa para 2 linhas × 3 cards de reaplicação.
- *
- * Anatomia de cada ReapCard:
- *   Header:   padding 18px top + 14px bottom + avatar (42px) + border = ~80px
- *   Body:     padding 14px × 2 + progress bar (6px) + datas (14px) + margin (4+12px) + 3–4 ReapRows (28px × 4) + gaps = ~172px
- *   Footer:   padding 12px × 2 + btn height (~34px) + border = ~60px
- *   Card total ≈ 312px
- *
- * Grid: 2 linhas × 312px + 1 gap (20px) = 644px
- * Padding do wrapper: 20px top + 20px bottom = 40px
- * Área de cards: 644px + 40px = 684px
- * Paginação: 56px
- * Total container: 684 + 56 = 740px
- */
+export const EmptyState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: #bbb;
+  h3 { font-size: 1.1rem; font-family: var(--font-cabourg-bold), 'Cabourg', serif; color: #555; margin: 0 0 6px; }
+  p  { font-size: 0.88rem; color: #999; margin: 0; }
+`;
+
 export const CardsContainer = styled.div`
   background: white;
   border-radius: 16px;
@@ -268,27 +315,7 @@ export const CardsContainer = styled.div`
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 740px;
-`;
-
-/*
- * TableContainer — altura fixa para 10 linhas de tabela.
- *
- * Thead: padding 13px × 2 + texto ~14px = ~40px
- * Cada Tr: padding 13px × 2 + conteúdo ~20px + border 1px = ~47px
- * 10 linhas: 10 × 47px = 470px
- * Total tabela: 40px + 470px = 510px
- * Paginação: 56px
- * Total container: 510 + 56 = 566px
- */
-export const TableContainer = styled.div`
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  height: 566px;
+  height: 690px;
 `;
 
 export const CardsGrid = styled.div`

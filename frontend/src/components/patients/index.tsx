@@ -136,7 +136,6 @@ export default function Patients() {
   const [form,            setForm]            = useState<PacienteForm>(FORM_INITIAL);
   const [currentPage,     setCurrentPage]     = useState(1);
 
-  // Modal states
   const [showCancelModal,  setShowCancelModal]  = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -208,7 +207,6 @@ export default function Patients() {
     setIsDetailOpen(true);
   }
 
-  // Called when user clicks "Cancelar" button in the form modal
   function handleCancelClick() {
     if (isFormDirty(form)) {
       setShowCancelModal(true);
@@ -217,7 +215,6 @@ export default function Patients() {
     }
   }
 
-  // Actually closes everything and resets form
   function forceClose() {
     setForm(FORM_INITIAL);
     clearAll();
@@ -228,7 +225,6 @@ export default function Patients() {
     setShowConfirmModal(false);
   }
 
-  // Called when user clicks "Salvar" button
   function handleSaveClick() {
     const isValid = validate({
       nome:       form.nome,
@@ -241,7 +237,6 @@ export default function Patients() {
     setShowConfirmModal(true);
   }
 
-  // Called after user confirms in ConfirmModal
   function handleConfirmSave() {
     setShowConfirmModal(false);
     if (isEditing && selectedPatient) {
@@ -260,8 +255,6 @@ export default function Patients() {
     setIsModalOpen(false);
     setShowSuccessModal(true);
   }
-
-  // Called after user clicks "Continuar" in SuccessModal
   function handleSuccessClose() {
     setShowSuccessModal(false);
     setForm(FORM_INITIAL);
@@ -415,7 +408,6 @@ export default function Patients() {
         />
       </div>
 
-      {/* ─── Detail Modal ─── */}
       <Modal
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
@@ -518,7 +510,6 @@ export default function Patients() {
         )}
       </Modal>
 
-      {/* ─── Create / Edit Modal ─── */}
       <Modal
         isOpen={isModalOpen}
         onClose={handleCancelClick}
@@ -623,7 +614,6 @@ export default function Patients() {
         </div>
       </Modal>
 
-      {/* ─── Cancel Confirmation Modal ─── */}
       <CancelModal
         isOpen={showCancelModal}
         title="Deseja cancelar?"
@@ -632,7 +622,6 @@ export default function Patients() {
         onCancel={() => setShowCancelModal(false)}
       />
 
-      {/* ─── Save Confirmation Modal ─── */}
       <ConfirmModal
         isOpen={showConfirmModal}
         title={isEditing ? 'Salvar alterações?' : 'Cadastrar paciente?'}
@@ -647,7 +636,6 @@ export default function Patients() {
         onCancel={() => setShowConfirmModal(false)}
       />
 
-      {/* ─── Success Modal ─── */}
       <SucessModal
         isOpen={showSuccessModal}
         title="Sucesso!"

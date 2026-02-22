@@ -169,42 +169,6 @@ export const ToggleBtn = styled.button<{ $active: boolean }>`
   align-items: center;
 `;
 
-/*
- * CardsContainer — altura fixa calculada para exibir exatamente 2 linhas × 3 cards.
- *
- * Anatomia de cada card:
- *   Header:  padding 20px top + 20px bottom + ProcName (~1.1rem ≈ 18px) + ProcCode (~0.72rem ≈ 12px) + gap = ~74px
- *   Details: padding 16px top + 16px bottom + 4 DetailRows (cada ~22px) + 3 gaps (8px) = ~112px
- *   Actions: padding 14px top + 14px bottom + btn height (~34px) + border = ~62px
- *   Card total ≈ 248px
- *
- * Grid: 2 linhas × 248px + 1 gap (16px) = 512px
- * Padding do wrapper: 20px top + 20px bottom = 40px
- * Área de cards: 512px + 40px = 552px
- * Paginação: min-height 56px (definido em PaginationWrapper)
- * Total container: 552 + 56 = 608px
- */
-export const CardsContainer = styled.div`
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  height: 608px;
-`;
-
-/*
- * TableContainer — altura fixa calculada para exibir exatamente 10 linhas.
- *
- * Header (Thead): padding 13px × 2 + texto ~14px = ~40px
- * Cada linha (Tr): padding 13px × 2 + conteúdo ~20px + border 1px = ~47px
- * 10 linhas: 10 × 47px = 470px
- * Thead: 40px
- * Área de tabela: 40px + 470px = 510px
- * Paginação: 56px
- * Total container: 510 + 56 = 566px
- */
 export const TableContainer = styled.div`
   background: white;
   border-radius: 16px;
@@ -212,10 +176,95 @@ export const TableContainer = styled.div`
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 566px;
+  height: 596px;
 `;
 
-/* ✅ 3 colunas fixas para 6 cards por página (2 linhas × 3 colunas) */
+export const TableWrapper = styled.div`
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  min-height: 540px;
+`;
+
+export const Table = styled.table`
+  width: 100%;
+  min-width: 700px;
+  border-collapse: collapse;
+`;
+
+export const Thead = styled.thead`
+  background: linear-gradient(135deg, #BBA188, #a8906f);
+`;
+
+export const Th = styled.th<{ $width?: string }>`
+  padding: 11px 10px;
+  text-align: left;
+  font-size: 0.69rem;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  width: ${({ $width }) => $width || 'auto'};
+`;
+
+export const Tbody = styled.tbody``;
+
+export const Tr = styled.tr`
+  border-bottom: 1px solid #f5f5f5;
+  transition: background 0.15s;
+  &:hover { background: #fdf9f5; }
+  &:last-child { border-bottom: none; }
+`;
+
+export const Td = styled.td<{ colSpan?: number }>`
+  padding: 10px 10px;
+  font-size: 0.78rem;
+  color: #444;
+  vertical-align: middle;
+`;
+
+export const ActionGroup = styled.div`
+  display: flex;
+  gap: 4px;
+`;
+
+export const IconBtn = styled.button`
+  width: 30px;
+  height: 30px;
+  border: 1.5px solid #e8e8e8;
+  border-radius: 8px;
+  background: white;
+  color: #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  &:hover { background: #BBA188; border-color: #BBA188; color: white; }
+`;
+
+export const Badge = styled.span<{ $bg?: string; $color?: string }>`
+  display: inline-block;
+  padding: 3px 7px;
+  border-radius: 20px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  background: ${({ $bg }) => $bg || '#f0ebe4'};
+  color: ${({ $color }) => $color || '#BBA188'};
+  white-space: nowrap;
+`;
+
+export const CardsContainer = styled.div`
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 640px;
+`;
+
 export const CardsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -286,78 +335,6 @@ export const ProcActions = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-`;
-
-export const Badge = styled.span<{ $bg?: string; $color?: string }>`
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.74rem;
-  font-weight: 600;
-  background: ${({ $bg }) => $bg || '#f0ebe4'};
-  color: ${({ $color }) => $color || '#BBA188'};
-`;
-
-export const TableWrapper = styled.div`
-  width: 100%;
-  overflow-x: auto;
-`;
-
-export const Table = styled.table`
-  width: 100%;
-  min-width: 700px;
-  border-collapse: collapse;
-`;
-
-export const Thead = styled.thead`
-  background: linear-gradient(135deg, #BBA188, #a8906f);
-`;
-
-export const Th = styled.th<{ $width?: string }>`
-  padding: 13px 16px;
-  text-align: left;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: white;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  width: ${({ $width }) => $width || 'auto'};
-`;
-
-export const Tbody = styled.tbody``;
-
-export const Tr = styled.tr`
-  border-bottom: 1px solid #f5f5f5;
-  transition: background 0.15s;
-  &:hover { background: #fdf9f5; }
-  &:last-child { border-bottom: none; }
-`;
-
-export const Td = styled.td<{ colSpan?: number }>`
-  padding: 13px 16px;
-  font-size: 0.88rem;
-  color: #444;
-  vertical-align: middle;
-`;
-
-export const ActionGroup = styled.div`
-  display: flex;
-  gap: 6px;
-`;
-
-export const IconBtn = styled.button`
-  width: 32px;
-  height: 32px;
-  border: 1.5px solid #e8e8e8;
-  border-radius: 8px;
-  background: white;
-  color: #888;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  &:hover { background: #BBA188; border-color: #BBA188; color: white; }
 `;
 
 export const EmptyState = styled.div`

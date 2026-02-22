@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect } from 'react';
 import * as S from './styles';
 
 interface SucessModalProps {
@@ -15,13 +14,6 @@ interface SucessModalProps {
 export default function SucessModal({
   isOpen, title, message, onClose, buttonText = 'Continuar'
 }: SucessModalProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
-
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : 'unset';
     return () => { document.body.style.overflow = 'unset'; };
@@ -33,9 +25,9 @@ export default function SucessModal({
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
-  if (!isOpen || !mounted) return null;
+  if (!isOpen) return null;
 
-  const modalContent = (
+  return (
     <S.Overlay onClick={onClose}>
       <S.ModalContainer onClick={(e) => e.stopPropagation()}>
         {title ? (
@@ -50,6 +42,4 @@ export default function SucessModal({
       </S.ModalContainer>
     </S.Overlay>
   );
-
-  return createPortal(modalContent, document.body);
 }

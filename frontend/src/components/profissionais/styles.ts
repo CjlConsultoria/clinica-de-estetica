@@ -554,3 +554,72 @@ export const ObsBox = styled.div`
   line-height: 1.6;
   strong { color: #BBA188; }
 `;
+
+// ─── User Switcher (barra de perfil no topo — modo dev) ───────────────────────
+
+export const UserSwitcherBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: white;
+  border-radius: 12px;
+  border: 1.5px solid #f0ebe4;
+  margin-bottom: 20px;
+  gap: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+`;
+
+export const UserSwitcherInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  color: #BBA188;
+  font-size: 0.82rem;
+`;
+
+export const UserSwitcherName = styled.span`
+  font-size: 0.82rem;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  strong {
+    color: #1a1a1a;
+    font-weight: 600;
+  }
+`;
+
+export const UserSwitcherBadge = styled.span<{ $bg: string; $color: string }>`
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: ${({ $bg }) => $bg};
+  color: ${({ $color }) => $color};
+  white-space: nowrap;
+  flex-shrink: 0;
+`;
+
+export const UserSwitcherBtn = styled.button`
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #BBA188;
+  background: none;
+  border: 1.5px solid #BBA188;
+  border-radius: 8px;
+  padding: 5px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  flex-shrink: 0;
+
+  &:hover {
+    background: #BBA188;
+    color: white;
+  }
+`;

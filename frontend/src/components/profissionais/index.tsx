@@ -8,6 +8,10 @@ import Select from '@/components/ui/select';
 import StatCard from '@/components/ui/statcard';
 import Pagination from '@/components/ui/pagination';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
+import { usePermissions } from '@/components/ui/hooks/usePermissions';
+import { useCurrentUser } from '@/components/ui/hooks/useCurrentUser';
+import PermissionGuard from '@/components/ui/PermissionGuard';
+import MockLoginScreen from '@/components/auth/MockLoginScreen';
 import {
   Container, Header, Title, StatsGrid, Controls,
   SearchBarWrapper, SearchIconWrap, SearchInputStyled,
@@ -22,6 +26,7 @@ import {
   DetailSection, DetailSectionTitle, StatsRow, StatPill,
   InfoGrid, InfoItem, InfoLabel, InfoValue,
   ObsBox,
+  UserSwitcherBar, UserSwitcherInfo, UserSwitcherName, UserSwitcherBadge, UserSwitcherBtn,
 } from './styles';
 import { validateEmail, validatePassword, ERROR_MESSAGES } from './validation';
 
@@ -139,18 +144,18 @@ const filterAreas   = ['Todos', 'Técnica', 'Administrativa'];
 const STEP_LABELS   = ['Dados Básicos', 'Área', 'Cargo', 'Acesso'];
 
 const INITIAL_PROFISSIONAIS = [
-  { id: 1,  name: 'Ana Beatriz Lima',       email: 'ana.lima@clinica.com',        phone: '(11) 98765-4321', registro: 'CREFITO-3 112233-F', area: 'tecnica',        cargo: 'esteticista',    especialidade: 'estetica-facial',          status: 'ativo',   atendimentos: 142, ultimoAcesso: '20/02/2025', observacoes: '' },
-  { id: 2,  name: 'Dra. Clara Andrade',     email: 'clara.andrade@clinica.com',   phone: '(11) 97654-3210', registro: 'CRM/SP 654321',      area: 'tecnica',        cargo: 'dermatologista', especialidade: 'dermatologia-clinica',      status: 'ativo',   atendimentos: 98,  ultimoAcesso: '19/02/2025', observacoes: '' },
-  { id: 3,  name: 'Juliana Ferreira',       email: 'juliana.f@clinica.com',       phone: '(31) 94321-0987', registro: 'COREN/SP 901234',    area: 'tecnica',        cargo: 'enfermeiro',     especialidade: 'enfermagem-estetica',       status: 'ativo',   atendimentos: 55,  ultimoAcesso: '17/02/2025', observacoes: '' },
-  { id: 4,  name: 'Rafael Costa',           email: 'rafael.costa@clinica.com',    phone: '(21) 95432-1098', registro: '',                   area: 'administrativa', cargo: 'recepcionista',  especialidade: '',                          status: 'inativo', atendimentos: 0,   ultimoAcesso: '10/01/2025', observacoes: '' },
-  { id: 5,  name: 'Mariana Souza',          email: 'mariana.s@clinica.com',       phone: '(21) 94321-9876', registro: 'CRBim-5 445566',     area: 'tecnica',        cargo: 'biomedico',      especialidade: 'biomedicina-estetica',      status: 'ativo',   atendimentos: 76,  ultimoAcesso: '18/02/2025', observacoes: '' },
-  { id: 6,  name: 'Patricia Gomes',         email: 'patricia.g@clinica.com',      phone: '(11) 93210-8765', registro: '',                   area: 'administrativa', cargo: 'gerente',        especialidade: '',                          status: 'ativo',   atendimentos: 0,   ultimoAcesso: '20/02/2025', observacoes: '' },
-  { id: 7,  name: 'Fernanda Oliveira',      email: 'fernanda.o@clinica.com',      phone: '(11) 91234-5678', registro: 'CREFITO-3 778899-F', area: 'tecnica',        cargo: 'fisioterapeuta', especialidade: 'dermato-funcional',         status: 'ativo',   atendimentos: 63,  ultimoAcesso: '15/02/2025', observacoes: '' },
-  { id: 8,  name: 'Dr. Lucas Mendes',       email: 'lucas.mendes@clinica.com',    phone: '(11) 99876-5432', registro: 'CRM/SP 789012',      area: 'tecnica',        cargo: 'dermatologista', especialidade: 'dermatologia-estetica',     status: 'ativo',   atendimentos: 110, ultimoAcesso: '20/02/2025', observacoes: '' },
-  { id: 9,  name: 'Camila Rocha',           email: 'camila.rocha@clinica.com',    phone: '(21) 98765-1234', registro: '',                   area: 'administrativa', cargo: 'financeiro',     especialidade: '',                          status: 'ativo',   atendimentos: 0,   ultimoAcesso: '19/02/2025', observacoes: '' },
-  { id: 10, name: 'Beatriz Santos',         email: 'beatriz.santos@clinica.com',  phone: '(31) 97654-3210', registro: 'COREN/SP 345678',    area: 'tecnica',        cargo: 'enfermeiro',     especialidade: 'procedimentos-injetaveis',  status: 'ativo',   atendimentos: 41,  ultimoAcesso: '16/02/2025', observacoes: '' },
-  { id: 11, name: 'Thiago Almeida',         email: 'thiago.a@clinica.com',        phone: '(11) 96543-2109', registro: '',                   area: 'administrativa', cargo: 'recepcionista',  especialidade: '',                          status: 'ativo',   atendimentos: 0,   ultimoAcesso: '18/02/2025', observacoes: '' },
-  { id: 12, name: 'Larissa Duarte',         email: 'larissa.d@clinica.com',       phone: '(11) 95432-1098', registro: 'CRBim-5 667788',     area: 'tecnica',        cargo: 'biomedico',      especialidade: 'laser-terapia',             status: 'inativo', atendimentos: 29,  ultimoAcesso: '05/01/2025', observacoes: '' },
+  { id: 1,  name: 'Ana Beatriz Lima',   email: 'ana.lima@clinica.com',       phone: '(11) 98765-4321', registro: 'CREFITO-3 112233-F', area: 'tecnica',        cargo: 'esteticista',    especialidade: 'estetica-facial',         status: 'ativo',   atendimentos: 142, ultimoAcesso: '20/02/2025', observacoes: '' },
+  { id: 2,  name: 'Dra. Clara Andrade', email: 'clara.andrade@clinica.com',  phone: '(11) 97654-3210', registro: 'CRM/SP 654321',      area: 'tecnica',        cargo: 'dermatologista', especialidade: 'dermatologia-clinica',     status: 'ativo',   atendimentos: 98,  ultimoAcesso: '19/02/2025', observacoes: '' },
+  { id: 3,  name: 'Juliana Ferreira',   email: 'juliana.f@clinica.com',      phone: '(31) 94321-0987', registro: 'COREN/SP 901234',    area: 'tecnica',        cargo: 'enfermeiro',     especialidade: 'enfermagem-estetica',      status: 'ativo',   atendimentos: 55,  ultimoAcesso: '17/02/2025', observacoes: '' },
+  { id: 4,  name: 'Rafael Costa',       email: 'rafael.costa@clinica.com',   phone: '(21) 95432-1098', registro: '',                   area: 'administrativa', cargo: 'recepcionista',  especialidade: '',                         status: 'inativo', atendimentos: 0,   ultimoAcesso: '10/01/2025', observacoes: '' },
+  { id: 5,  name: 'Mariana Souza',      email: 'mariana.s@clinica.com',      phone: '(21) 94321-9876', registro: 'CRBim-5 445566',     area: 'tecnica',        cargo: 'biomedico',      especialidade: 'biomedicina-estetica',     status: 'ativo',   atendimentos: 76,  ultimoAcesso: '18/02/2025', observacoes: '' },
+  { id: 6,  name: 'Patricia Gomes',     email: 'patricia.g@clinica.com',     phone: '(11) 93210-8765', registro: '',                   area: 'administrativa', cargo: 'gerente',        especialidade: '',                         status: 'ativo',   atendimentos: 0,   ultimoAcesso: '20/02/2025', observacoes: '' },
+  { id: 7,  name: 'Fernanda Oliveira',  email: 'fernanda.o@clinica.com',     phone: '(11) 91234-5678', registro: 'CREFITO-3 778899-F', area: 'tecnica',        cargo: 'fisioterapeuta', especialidade: 'dermato-funcional',        status: 'ativo',   atendimentos: 63,  ultimoAcesso: '15/02/2025', observacoes: '' },
+  { id: 8,  name: 'Dr. Lucas Mendes',   email: 'lucas.mendes@clinica.com',   phone: '(11) 99876-5432', registro: 'CRM/SP 789012',      area: 'tecnica',        cargo: 'dermatologista', especialidade: 'dermatologia-estetica',    status: 'ativo',   atendimentos: 110, ultimoAcesso: '20/02/2025', observacoes: '' },
+  { id: 9,  name: 'Camila Rocha',       email: 'camila.rocha@clinica.com',   phone: '(21) 98765-1234', registro: '',                   area: 'administrativa', cargo: 'financeiro',     especialidade: '',                         status: 'ativo',   atendimentos: 0,   ultimoAcesso: '19/02/2025', observacoes: '' },
+  { id: 10, name: 'Beatriz Santos',     email: 'beatriz.santos@clinica.com', phone: '(31) 97654-3210', registro: 'COREN/SP 345678',    area: 'tecnica',        cargo: 'enfermeiro',     especialidade: 'procedimentos-injetaveis', status: 'ativo',   atendimentos: 41,  ultimoAcesso: '16/02/2025', observacoes: '' },
+  { id: 11, name: 'Thiago Almeida',     email: 'thiago.a@clinica.com',       phone: '(11) 96543-2109', registro: '',                   area: 'administrativa', cargo: 'recepcionista',  especialidade: '',                         status: 'ativo',   atendimentos: 0,   ultimoAcesso: '18/02/2025', observacoes: '' },
+  { id: 12, name: 'Larissa Duarte',     email: 'larissa.d@clinica.com',      phone: '(11) 95432-1098', registro: 'CRBim-5 667788',     area: 'tecnica',        cargo: 'biomedico',      especialidade: 'laser-terapia',            status: 'inativo', atendimentos: 29,  ultimoAcesso: '05/01/2025', observacoes: '' },
 ];
 
 const avatarColors = ['#BBA188', '#8a7560', '#a8906f', '#c9a882', '#917255', '#d4b896'];
@@ -214,8 +219,7 @@ function CargoCard({ children, $active, onClick }: { children: React.ReactNode; 
       border: `1.5px solid ${$active ? '#BBA188' : '#e8e8e8'}`,
       borderRadius: 12,
       background: $active ? 'rgba(187,161,136,0.07)' : 'white',
-      cursor: 'pointer',
-      transition: 'all 0.18s',
+      cursor: 'pointer', transition: 'all 0.18s',
       boxShadow: $active ? '0 0 0 3px rgba(187,161,136,0.15)' : 'none',
     }}>
       {children}
@@ -234,7 +238,6 @@ function EyeBtn({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonEle
 function EyeOnIcon() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
 }
-
 function EyeOffIcon() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>;
 }
@@ -260,6 +263,14 @@ const AreaAdminIcon = () => (
 const ITEMS_PER_PAGE = 10;
 
 export default function Profissionais() {
+  const { can } = usePermissions();
+  const { currentUser, roleLabel, roleColors } = useCurrentUser();
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  const canCreate = can('profissionais.create');
+  const canEdit   = can('profissionais.edit');
+  const canRead   = can('profissionais.read');
+
   const [profissionais,        setProfissionais]        = useState<Profissional[]>(INITIAL_PROFISSIONAIS);
   const [search,               setSearch]               = useState('');
   const [filterStat,           setFilterStat]           = useState('Todos');
@@ -286,8 +297,8 @@ export default function Profissionais() {
   ]);
 
   const step3Validation = useSequentialValidation<Step3Field>([
-    { key: 'cargo',        validate: (v) => !v ? 'Selecione o cargo' : null },
-    { key: 'registro',     validate: (v) => {
+    { key: 'cargo',       validate: (v) => !v ? 'Selecione o cargo' : null },
+    { key: 'registro',    validate: (v) => {
       const config = form.cargo ? ALL_CARGO_CONFIG[form.cargo] : null;
       if (config?.requiresRegistro && !v.trim()) return `${config.registroLabel} é obrigatório`;
       return null;
@@ -300,7 +311,7 @@ export default function Profissionais() {
   ]);
 
   const step4Validation = useSequentialValidation<Step4Field>([
-    { key: 'senha',          validate: (v) => {
+    { key: 'senha', validate: (v) => {
       if (!isEditing || v) {
         if (!isEditing && !v) return 'Senha é obrigatória';
         if (v) { const err = validatePassword(v); return err ? err.message : null; }
@@ -335,10 +346,10 @@ export default function Profissionais() {
   const startIndex    = (safePage - 1) * ITEMS_PER_PAGE;
   const paginatedData = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  function handleSearchChange(value: string)      { setSearch(value);    setCurrentPage(1); }
-  function handleFilterStatChange(value: string)  { setFilterStat(value); setCurrentPage(1); setOpenDrop(null); }
-  function handleFilterAreaChange(value: string)  { setFilterArea(value); setCurrentPage(1); setOpenDrop(null); }
-  function handleClearFilters()                   { setFilterStat('Todos'); setFilterArea('Todos'); setCurrentPage(1); }
+  function handleSearchChange(value: string)     { setSearch(value);     setCurrentPage(1); }
+  function handleFilterStatChange(value: string) { setFilterStat(value); setCurrentPage(1); setOpenDrop(null); }
+  function handleFilterAreaChange(value: string) { setFilterArea(value); setCurrentPage(1); setOpenDrop(null); }
+  function handleClearFilters()                  { setFilterStat('Todos'); setFilterArea('Todos'); setCurrentPage(1); }
 
   const totalProfissionais = profissionais.length;
   const ativos             = profissionais.filter(p => p.status === 'ativo').length;
@@ -352,10 +363,10 @@ export default function Profissionais() {
       if (field === 'cargo') { next.especialidade = ''; next.registro = ''; }
       return next;
     });
-    if (field === 'nome' || field === 'email' || field === 'telefone')     step1Validation.clearError(field as Step1Field);
-    if (field === 'area')                                                    step2Validation.clearError('area');
-    if (field === 'cargo' || field === 'registro' || field === 'especialidade') step3Validation.clearError(field as Step3Field);
-    if (field === 'senha' || field === 'confirmarSenha')                    step4Validation.clearError(field as Step4Field);
+    if (field === 'nome' || field === 'email' || field === 'telefone')          step1Validation.clearError(field as Step1Field);
+    if (field === 'area')                                                         step2Validation.clearError('area');
+    if (field === 'cargo' || field === 'registro' || field === 'especialidade')  step3Validation.clearError(field as Step3Field);
+    if (field === 'senha' || field === 'confirmarSenha')                         step4Validation.clearError(field as Step4Field);
   }
 
   function validateStep(s: number): boolean {
@@ -367,33 +378,26 @@ export default function Profissionais() {
   }
 
   function nextStep() { if (!validateStep(step)) return; setStep(s => Math.min(s + 1, 4)); }
-  function prevStep()  {
-    step1Validation.clearAll();
-    step2Validation.clearAll();
-    step3Validation.clearAll();
-    step4Validation.clearAll();
+  function prevStep() {
+    step1Validation.clearAll(); step2Validation.clearAll();
+    step3Validation.clearAll(); step4Validation.clearAll();
     setStep(s => Math.max(s - 1, 1));
   }
 
   function clearAllErrors() {
-    step1Validation.clearAll();
-    step2Validation.clearAll();
-    step3Validation.clearAll();
-    step4Validation.clearAll();
+    step1Validation.clearAll(); step2Validation.clearAll();
+    step3Validation.clearAll(); step4Validation.clearAll();
   }
 
   function openNew() {
-    setIsEditing(false);
-    setSelectedProfissional(null);
-    setForm(FORM_INITIAL);
-    clearAllErrors();
-    setStep(1);
-    setIsModalOpen(true);
+    if (!canCreate) return;
+    setIsEditing(false); setSelectedProfissional(null);
+    setForm(FORM_INITIAL); clearAllErrors(); setStep(1); setIsModalOpen(true);
   }
 
   function openEdit(p: Profissional) {
-    setIsEditing(true);
-    setSelectedProfissional(p);
+    if (!canEdit) return;
+    setIsEditing(true); setSelectedProfissional(p);
     setForm({
       nome: p.name, email: p.email, telefone: p.phone,
       area: p.area as AreaType, cargo: p.cargo as Cargo,
@@ -401,34 +405,20 @@ export default function Profissionais() {
       status: p.status, observacoes: p.observacoes || '',
       senha: '', confirmarSenha: '',
     });
-    clearAllErrors();
-    setStep(1);
-    setIsDetailOpen(false);
-    setIsModalOpen(true);
+    clearAllErrors(); setStep(1); setIsDetailOpen(false); setIsModalOpen(true);
   }
 
-  function openDetail(p: Profissional) {
-    setSelectedProfissional(p);
-    setIsDetailOpen(true);
-  }
+  function openDetail(p: Profissional) { setSelectedProfissional(p); setIsDetailOpen(true); }
 
   function handleClose() {
-    setForm(FORM_INITIAL);
-    clearAllErrors();
-    setIsModalOpen(false);
-    setSelectedProfissional(null);
-    setStep(1);
-    setShowSenha(false);
-    setShowConfirm(false);
-    setIsEditing(false);
+    setForm(FORM_INITIAL); clearAllErrors(); setIsModalOpen(false);
+    setSelectedProfissional(null); setStep(1);
+    setShowSenha(false); setShowConfirm(false); setIsEditing(false);
   }
 
   function handleSave() {
     if (!validateStep(4)) return;
-    if (form.senha && form.senha !== form.confirmarSenha) {
-      step4Validation.clearAll();
-      return;
-    }
+    if (form.senha && form.senha !== form.confirmarSenha) { step4Validation.clearAll(); return; }
     const today = new Date().toLocaleDateString('pt-BR');
     if (isEditing && selectedProfissional) {
       setProfissionais(prev =>
@@ -524,15 +514,10 @@ export default function Profissionais() {
               )}
               {isEditing && (
                 <div style={{ gridColumn: cargoConfig?.requiresRegistro || cargoConfig?.requiresEspecialidade ? 'auto' : 'span 2' }}>
-                  <Select
-                    key={`status-${selectedProfissional?.id}`}
-                    label="Status do Profissional"
-                    options={statusOptions}
-                    value={form.status}
-                    onChange={v => handleChange('status', v)}
-                  />
+                  <Select key={`status-${selectedProfissional?.id}`} label="Status do Profissional"
+                    options={statusOptions} value={form.status} onChange={v => handleChange('status', v)} />
                   {form.status === 'inativo' && (
-                    <div style={{ padding: '8px 12px', backgroundColor: 'transparent', borderLeft: '3px solid #856404', borderRadius: 8, color: '#856404', fontSize: '0.82rem', display: 'flex', alignItems: 'flex-start', gap: 8, marginTop: 2 }}>
+                    <div style={{ padding: '8px 12px', borderLeft: '3px solid #856404', borderRadius: 8, color: '#856404', fontSize: '0.82rem', display: 'flex', alignItems: 'flex-start', gap: 8, marginTop: 2 }}>
                       <svg style={{ flexShrink: 0, marginTop: 1 }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                       O acesso deste profissional ao sistema será desativado.
                     </div>
@@ -608,17 +593,52 @@ export default function Profissionais() {
     </WizardNav>
   );
 
+  if (!canRead) {
+    return (
+      <Container>
+        {currentUser && roleColors && (
+          <UserSwitcherBar>
+            <UserSwitcherInfo>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <UserSwitcherName>Logado como {currentUser.name}</UserSwitcherName>
+              <UserSwitcherBadge $bg={roleColors.bg} $color={roleColors.color}>{roleLabel}</UserSwitcherBadge>
+            </UserSwitcherInfo>
+            <UserSwitcherBtn onClick={() => setShowLoginModal(true)}>Trocar perfil</UserSwitcherBtn>
+          </UserSwitcherBar>
+        )}
+        <PermissionGuard permission="profissionais.read" showDenied />
+        {showLoginModal && <MockLoginScreen onClose={() => setShowLoginModal(false)} />}
+      </Container>
+    );
+  }
+
   return (
     <Container>
+      {currentUser && roleColors && (
+        <UserSwitcherBar>
+          <UserSwitcherInfo>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <UserSwitcherName>Logado como <strong>{currentUser.name}</strong></UserSwitcherName>
+            <UserSwitcherBadge $bg={roleColors.bg} $color={roleColors.color}>{roleLabel}</UserSwitcherBadge>
+          </UserSwitcherInfo>
+          <UserSwitcherBtn onClick={() => setShowLoginModal(true)}>Trocar perfil</UserSwitcherBtn>
+        </UserSwitcherBar>
+      )}
+
       <Header>
         <Title>Profissionais</Title>
-        <Button
-          variant="primary"
-          icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>}
-          onClick={openNew}
-        >
-          Cadastrar Profissional
-        </Button>
+        <PermissionGuard permission="profissionais.create">
+          <Button
+            variant="primary"
+            icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>}
+            onClick={openNew}
+          >
+            Cadastrar Profissional
+          </Button>
+        </PermissionGuard>
       </Header>
 
       <StatsGrid>
@@ -644,7 +664,9 @@ export default function Profissionais() {
           <SearchIconWrap>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           </SearchIconWrap>
-          <SearchInputStyled type="search" placeholder="Buscar por nome ou e-mail..." value={search} onChange={e => handleSearchChange(e.target.value)} autoComplete="off" name="search-profissionais-filter" data-form-type="other" data-lpignore="true" />
+          <SearchInputStyled type="search" placeholder="Buscar por nome ou e-mail..." value={search}
+            onChange={e => handleSearchChange(e.target.value)} autoComplete="off"
+            name="search-profissionais-filter" data-form-type="other" data-lpignore="true" />
         </SearchBarWrapper>
         <FilterRow>
           <DropdownWrapper>
@@ -755,12 +777,14 @@ export default function Profissionais() {
                           <line x1="12" y1="16" x2="12.01" y2="16"/>
                         </svg>
                       </IconBtn>
-                      <IconBtn title="Editar" onClick={() => openEdit(p)}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                        </svg>
-                      </IconBtn>
+                      {canEdit && (
+                        <IconBtn title="Editar" onClick={() => openEdit(p)}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          </svg>
+                        </IconBtn>
+                      )}
                     </ActionGroup>
                   </Td>
                 </Tr>
@@ -784,13 +808,15 @@ export default function Profissionais() {
         size="lg"
         footer={
           <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'space-between' }}>
-            <Button
-              variant="outline"
-              icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
-              onClick={() => selectedProfissional && openEdit(selectedProfissional)}
-            >
-              Editar Ficha
-            </Button>
+            <PermissionGuard permission="profissionais.edit">
+              <Button
+                variant="outline"
+                icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
+                onClick={() => selectedProfissional && openEdit(selectedProfissional)}
+              >
+                Editar Ficha
+              </Button>
+            </PermissionGuard>
             <Button variant="outline" onClick={() => setIsDetailOpen(false)}>Fechar</Button>
           </div>
         }
@@ -876,37 +902,40 @@ export default function Profissionais() {
         )}
       </Modal>
 
-      <Modal
-        isOpen={isModalOpen}
-        onClose={handleClose}
-        closeOnOverlayClick={false}
-        title={isEditing ? 'Editar Profissional' : 'Cadastrar Profissional'}
-        size="lg"
-        footer={modalFooter}
-      >
-        <form autoComplete="off" onSubmit={e => e.preventDefault()} style={{ display: 'contents' }}>
-          <WizardSteps>
-            {STEP_LABELS.map((label, idx) => {
-              const num     = idx + 1;
-              const done    = num < step;
-              const current = num === step;
-              return (
-                <WizardStep key={num}>
-                  {idx > 0 && <WizardStepLine $done={done || current} />}
-                  <WizardStepCircle $done={done} $current={current}>
-                    {done
-                      ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
-                      : num
-                    }
-                  </WizardStepCircle>
-                  <WizardStepLabel $current={current}>{label}</WizardStepLabel>
-                </WizardStep>
-              );
-            })}
-          </WizardSteps>
-          {renderStepContent()}
-        </form>
-      </Modal>
+      <PermissionGuard anyOf={['profissionais.create', 'profissionais.edit']}>
+        <Modal
+          isOpen={isModalOpen}
+          onClose={handleClose}
+          closeOnOverlayClick={false}
+          title={isEditing ? 'Editar Profissional' : 'Cadastrar Profissional'}
+          size="lg"
+          footer={modalFooter}
+        >
+          <form autoComplete="off" onSubmit={e => e.preventDefault()} style={{ display: 'contents' }}>
+            <WizardSteps>
+              {STEP_LABELS.map((label, idx) => {
+                const num     = idx + 1;
+                const done    = num < step;
+                const current = num === step;
+                return (
+                  <WizardStep key={num}>
+                    {idx > 0 && <WizardStepLine $done={done || current} />}
+                    <WizardStepCircle $done={done} $current={current}>
+                      {done
+                        ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                        : num
+                      }
+                    </WizardStepCircle>
+                    <WizardStepLabel $current={current}>{label}</WizardStepLabel>
+                  </WizardStep>
+                );
+              })}
+            </WizardSteps>
+            {renderStepContent()}
+          </form>
+        </Modal>
+      </PermissionGuard>
+      {showLoginModal && <MockLoginScreen onClose={() => setShowLoginModal(false)} />}
     </Container>
   );
 }

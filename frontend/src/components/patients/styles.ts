@@ -316,8 +316,6 @@ export const WizardNav = styled.div`
   width: 100%;
 `;
 
-/* ─────────────── Modal Detalhes ─────────────── */
-
 export const DetailModal = styled.div`
   max-height: 65vh;
   overflow-y: auto;

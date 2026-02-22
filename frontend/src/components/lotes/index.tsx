@@ -266,7 +266,6 @@ export default function Lotes() {
         <Pagination currentPage={safePage} totalItems={totalFiltered} itemsPerPage={ITEMS_PER_PAGE} onPageChange={setCurrentPage} />
       </div>
 
-      {/* Form Modal */}
       <Modal isOpen={isModalOpen} onClose={handleCancelClick} closeOnOverlayClick={false} title={selected ? 'Editar Lote' : 'Registrar Novo Lote'} size="lg" footer={<><Button variant="outline" onClick={handleCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveClick}>Salvar Lote</Button></>}>
         <FormGrid>
           <Input label="Número do Lote *" placeholder="Ex: LOT-2025-BTX-001" value={form.lote} onChange={(e) => handleChange('lote', e.target.value.toUpperCase())} error={errors.lote} />
@@ -283,7 +282,6 @@ export default function Lotes() {
         </FormGrid>
       </Modal>
 
-      {/* Detail Modal */}
       <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} title={`Rastreabilidade — ${selected?.lote}`} size="xl" footer={<Button variant="outline" onClick={() => setIsDetailOpen(false)}>Fechar</Button>}>
         {selected && (
           <>

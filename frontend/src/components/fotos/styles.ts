@@ -150,14 +150,12 @@ export const Badge = styled.span<{ $bg?: string; $color?: string }>`
   color: ${({ $color }) => $color || '#BBA188'};
 `;
 
-/* ─── Grid e Cards ─── */
 
 export const PatientsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(2, 1fr);
   gap: 20px;
-  /* altura fixa equivalente a 2 linhas de cards — não muda com quantidade */
   height: 720px;
   align-items: stretch;
   @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); height: auto; }
@@ -172,7 +170,6 @@ export const PatientFotoCard = styled.div`
   transition: all 0.25s;
   display: flex;
   flex-direction: column;
-  /* ocupa 100% da célula do grid para todas as linhas terem a mesma altura */
   height: 100%;
   &:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
 `;
@@ -215,10 +212,8 @@ export const PatientSub = styled.div`
 export const PatientCardBody = styled.div`
   padding: 12px 16px;
   flex: 1;
-  /* scroll vertical interno — card não cresce, usuário rola as fotos */
   overflow-y: auto;
   overflow-x: hidden;
-  /* scrollbar discreta no tema do sistema */
   scrollbar-width: thin;
   scrollbar-color: #e0d4c8 transparent;
   &::-webkit-scrollbar { width: 4px; }
@@ -238,7 +233,6 @@ export const PatientCardFooter = styled.div`
 
 export const FotoGrid = styled.div`
   display: grid;
-  /* exatamente 3 colunas iguais */
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   width: 100%;
@@ -248,7 +242,6 @@ export const FotoItem = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
-  /* largura controlada pelo grid, não pelo item */
   min-width: 0;
 `;
 
@@ -286,8 +279,6 @@ export const FotoEmpty = styled.div`
   svg { color: #ddd; }
 `;
 
-/* ─── Modais ─── */
-
 export const SectionLabel = styled.div`
   font-size: 0.78rem;
   font-weight: 600;
@@ -312,7 +303,6 @@ export const FormGrid = styled.div`
   @media (max-width: 560px) { grid-template-columns: 1fr; }
 `;
 
-/* ─── Upload ─── */
 
 export const UploadZone = styled.div`
   border: 2px dashed #e0d4c8;
