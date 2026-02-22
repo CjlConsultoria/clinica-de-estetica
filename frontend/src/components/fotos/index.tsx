@@ -1,28 +1,46 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
+import CancelModal from '@/components/modals/cancelModal';
+import ConfirmModal from '@/components/modals/confirmModal';
+import SucessModal from '@/components/modals/sucessModal';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
-import { pacientesService, Paciente } from '@/services/pacientes.service';
-import { fotosService, FotoPaciente } from '@/services/fotos.service';
 import {
   Container, Header, Title, Controls,
   SearchBarWrapper, SearchIconWrap, SearchInputStyled,
   FilterRow, DropdownWrapper, DropdownBtn, DropdownList, DropdownItem, ClearFilterBtn,
   PatientsGrid, PatientFotoCard, PatientCardHeader, PatientAvatar, PatientName, PatientSub,
-  PatientCardBody, FotoGrid, FotoItem, FotoLabel, FotoDate, FotoEmpty,
-  CompareSection, CompareTitle, CompareGrid, CompareSide, CompareSideLabel, CompareImg,
-  UploadZone, UploadIcon, UploadText, UploadHint,
-  FormGrid, Badge,
+  PatientCardBody, PatientCardFooter, FotoGrid, FotoItem, FotoImg, FotoLabel, FotoDate, FotoEmpty,
+  CompareSection, CompareGrid, CompareSide, CompareSideLabel, CompareImg,
+  UploadZone, UploadIcon, UploadText, UploadHint, UploadPreview,
+  FormGrid, SectionLabel, WizardNav, Badge, SavedBanner,
+  PaginationWrapper, PaginationInfo, PaginationControls, PageButton, PageEllipsis, PaginationArrow,
 } from './styles';
 
-type UploadField = 'paciente' | 'dataFoto' | 'procedimento' | 'momento';
+type UploadField = 'pacienteId' | 'dataFoto' | 'procedimento' | 'momento';
+
+interface Foto {
+  id: number;
+  tipo: string;
+  procedimento: string;
+  data: string;
+  imgUrl?: string;
+}
+
+interface PatientData {
+  id: number;
+  name: string;
+  initials: string;
+  color: string;
+  lastProcedure: string;
+  fotos: Foto[];
+}
 
 interface UploadForm {
-  paciente: string;
   pacienteId: string;
   dataFoto: string;
   procedimento: string;
@@ -30,76 +48,231 @@ interface UploadForm {
   observacoes: string;
 }
 
+interface CompareForm {
+  pacienteId: string;
+  procedimento: string;
+  dataAntes: string;
+  dataDepois: string;
+  observacoes: string;
+}
+
 const UPLOAD_INITIAL: UploadForm = {
-  paciente: '', pacienteId: '', dataFoto: '', procedimento: '', momento: '', observacoes: '',
+  pacienteId: '', dataFoto: '', procedimento: '', momento: '', observacoes: '',
+};
+
+const COMPARE_INITIAL: CompareForm = {
+  pacienteId: '', procedimento: '', dataAntes: '', dataDepois: '', observacoes: '',
 };
 
 const UPLOAD_VALIDATION = [
-  { key: 'paciente'     as UploadField, validate: (v: string) => !v.trim() ? 'Selecione ou informe o paciente' : null },
+  { key: 'pacienteId'   as UploadField, validate: (v: string) => !v ? 'Selecione o paciente' : null },
   { key: 'dataFoto'     as UploadField, validate: (v: string) => !v ? 'Data da foto é obrigatória' : null },
   { key: 'procedimento' as UploadField, validate: (v: string) => !v ? 'Selecione o procedimento' : null },
   { key: 'momento'      as UploadField, validate: (v: string) => !v ? 'Selecione o momento' : null },
 ];
 
 const procedureOptions = [
-  { value: 'botox',            label: 'Botox Facial'         },
-  { value: 'preenchimento',    label: 'Preenchimento Labial'  },
-  { value: 'bioestimulador',   label: 'Bioestimulador'        },
-  { value: 'fio-pdo',          label: 'Fio de PDO'            },
-  { value: 'microagulhamento', label: 'Microagulhamento'      },
-  { value: 'peeling',          label: 'Peelings Químicos'     },
+  { value: 'botox',            label: 'Botox Facial'        },
+  { value: 'preenchimento',    label: 'Preenchimento Labial' },
+  { value: 'bioestimulador',   label: 'Bioestimulador'       },
+  { value: 'fio-pdo',          label: 'Fio de PDO'           },
+  { value: 'microagulhamento', label: 'Microagulhamento'     },
+  { value: 'peeling',          label: 'Peelings Químicos'    },
 ];
 
 const momentoOptions = [
-  { value: 'ANTES',   label: 'Antes do Procedimento'  },
-  { value: 'DEPOIS',  label: 'Depois do Procedimento' },
-  { value: 'RETORNO', label: 'Retorno / Follow-up'    },
+  { value: 'antes',   label: 'Antes do Procedimento'  },
+  { value: 'depois',  label: 'Depois do Procedimento' },
+  { value: 'retorno', label: 'Retorno / Follow-up'    },
 ];
 
 const filterProcedures = ['Todos', 'Botox', 'Preenchimento', 'Bioestimulador', 'Fio PDO', 'Microagulhamento'];
 
+const INITIAL_PATIENTS: PatientData[] = [
+  {
+    id: 1, name: 'Ana Beatriz Costa', initials: 'AB', color: '#BBA188',
+    lastProcedure: 'Botox Facial',
+    fotos: [
+      { id: 1,  tipo: 'antes',   procedimento: 'Botox Facial',    data: '10/01/2025' },
+      { id: 2,  tipo: 'depois',  procedimento: 'Botox Facial',    data: '10/01/2025' },
+      { id: 3,  tipo: 'retorno', procedimento: 'Botox Facial',    data: '24/01/2025' },
+      { id: 4,  tipo: 'antes',   procedimento: 'Botox Facial',    data: '18/02/2025' },
+      { id: 5,  tipo: 'depois',  procedimento: 'Botox Facial',    data: '18/02/2025' },
+      { id: 6,  tipo: 'retorno', procedimento: 'Botox Facial',    data: '05/03/2025' },
+      { id: 7,  tipo: 'antes',   procedimento: 'Bioestimulador',  data: '12/03/2025' },
+      { id: 8,  tipo: 'depois',  procedimento: 'Bioestimulador',  data: '12/03/2025' },
+      { id: 9,  tipo: 'retorno', procedimento: 'Bioestimulador',  data: '26/03/2025' },
+    ],
+  },
+  {
+    id: 2, name: 'Carla Mendonça', initials: 'CM', color: '#a8906f',
+    lastProcedure: 'Preenchimento Labial',
+    fotos: [
+      { id: 1, tipo: 'antes',   procedimento: 'Preenchimento Labial', data: '15/01/2025' },
+      { id: 2, tipo: 'depois',  procedimento: 'Preenchimento Labial', data: '15/01/2025' },
+      { id: 3, tipo: 'retorno', procedimento: 'Preenchimento Labial', data: '01/02/2025' },
+      { id: 4, tipo: 'antes',   procedimento: 'Botox Facial',         data: '10/02/2025' },
+      { id: 5, tipo: 'depois',  procedimento: 'Botox Facial',         data: '10/02/2025' },
+      { id: 6, tipo: 'retorno', procedimento: 'Botox Facial',         data: '24/02/2025' },
+      { id: 7, tipo: 'antes',   procedimento: 'Bioestimulador',       data: '10/03/2025' },
+      { id: 8, tipo: 'depois',  procedimento: 'Bioestimulador',       data: '10/03/2025' },
+      { id: 9, tipo: 'retorno', procedimento: 'Bioestimulador',       data: '24/03/2025' },
+    ],
+  },
+  {
+    id: 3, name: 'Fernanda Lima', initials: 'FL', color: '#1b1b1b',
+    lastProcedure: 'Bioestimulador',
+    fotos: [
+      { id: 1, tipo: 'antes',   procedimento: 'Bioestimulador',  data: '05/01/2025' },
+      { id: 2, tipo: 'depois',  procedimento: 'Bioestimulador',  data: '05/01/2025' },
+      { id: 3, tipo: 'retorno', procedimento: 'Bioestimulador',  data: '20/01/2025' },
+      { id: 4, tipo: 'antes',   procedimento: 'Peeling Químico', data: '05/02/2025' },
+      { id: 5, tipo: 'depois',  procedimento: 'Peeling Químico', data: '05/02/2025' },
+      { id: 6, tipo: 'retorno', procedimento: 'Peeling Químico', data: '19/02/2025' },
+      { id: 7, tipo: 'antes',   procedimento: 'Fio de PDO',      data: '05/03/2025' },
+      { id: 8, tipo: 'depois',  procedimento: 'Fio de PDO',      data: '05/03/2025' },
+      { id: 9, tipo: 'retorno', procedimento: 'Fio de PDO',      data: '19/03/2025' },
+    ],
+  },
+  {
+    id: 4, name: 'Marina Souza', initials: 'MS', color: '#BBA188',
+    lastProcedure: 'Fio PDO',
+    fotos: [
+      { id: 1, tipo: 'antes',   procedimento: 'Fio de PDO',   data: '08/01/2025' },
+      { id: 2, tipo: 'depois',  procedimento: 'Fio de PDO',   data: '08/01/2025' },
+      { id: 3, tipo: 'retorno', procedimento: 'Fio de PDO',   data: '22/01/2025' },
+      { id: 4, tipo: 'antes',   procedimento: 'Botox Facial', data: '05/02/2025' },
+      { id: 5, tipo: 'depois',  procedimento: 'Botox Facial', data: '05/02/2025' },
+      { id: 6, tipo: 'retorno', procedimento: 'Botox Facial', data: '19/02/2025' },
+      { id: 7, tipo: 'antes',   procedimento: 'Fio de PDO',   data: '05/03/2025' },
+      { id: 8, tipo: 'depois',  procedimento: 'Fio de PDO',   data: '05/03/2025' },
+      { id: 9, tipo: 'retorno', procedimento: 'Fio de PDO',   data: '19/03/2025' },
+    ],
+  },
+  {
+    id: 5, name: 'Juliana Rocha', initials: 'JR', color: '#8a7560',
+    lastProcedure: 'Botox Facial',
+    fotos: [
+      { id: 1, tipo: 'antes',   procedimento: 'Botox Facial', data: '02/01/2025' },
+      { id: 2, tipo: 'depois',  procedimento: 'Botox Facial', data: '02/01/2025' },
+      { id: 3, tipo: 'retorno', procedimento: 'Botox Facial', data: '16/01/2025' },
+      { id: 4, tipo: 'antes',   procedimento: 'Fio de PDO',   data: '05/02/2025' },
+      { id: 5, tipo: 'depois',  procedimento: 'Fio de PDO',   data: '05/02/2025' },
+      { id: 6, tipo: 'retorno', procedimento: 'Fio de PDO',   data: '19/02/2025' },
+      { id: 7, tipo: 'antes',   procedimento: 'Botox Facial', data: '05/03/2025' },
+      { id: 8, tipo: 'depois',  procedimento: 'Botox Facial', data: '05/03/2025' },
+      { id: 9, tipo: 'retorno', procedimento: 'Botox Facial', data: '19/03/2025' },
+    ],
+  },
+  {
+    id: 6, name: 'Patrícia Alves', initials: 'PA', color: '#c9a882',
+    lastProcedure: 'Microagulhamento',
+    fotos: [
+      { id: 1, tipo: 'antes',   procedimento: 'Microagulhamento', data: '20/11/2024' },
+      { id: 2, tipo: 'depois',  procedimento: 'Microagulhamento', data: '20/11/2024' },
+      { id: 3, tipo: 'retorno', procedimento: 'Microagulhamento', data: '04/12/2024' },
+      { id: 4, tipo: 'antes',   procedimento: 'Microagulhamento', data: '20/12/2024' },
+      { id: 5, tipo: 'depois',  procedimento: 'Microagulhamento', data: '20/12/2024' },
+      { id: 6, tipo: 'retorno', procedimento: 'Microagulhamento', data: '15/01/2025' },
+      { id: 7, tipo: 'antes',   procedimento: 'Peeling Químico',  data: '05/02/2025' },
+      { id: 8, tipo: 'depois',  procedimento: 'Peeling Químico',  data: '05/02/2025' },
+      { id: 9, tipo: 'retorno', procedimento: 'Peeling Químico',  data: '19/02/2025' },
+    ],
+  },
+  {
+    id: 7, name: 'Roberta Gomes', initials: 'RG', color: '#917255',
+    lastProcedure: 'Preenchimento Labial',
+    fotos: [
+      { id: 1, tipo: 'antes',   procedimento: 'Preenchimento Labial', data: '15/11/2024' },
+      { id: 2, tipo: 'depois',  procedimento: 'Preenchimento Labial', data: '15/11/2024' },
+      { id: 3, tipo: 'retorno', procedimento: 'Preenchimento Labial', data: '29/11/2024' },
+      { id: 4, tipo: 'antes',   procedimento: 'Botox Facial',         data: '15/12/2024' },
+      { id: 5, tipo: 'depois',  procedimento: 'Botox Facial',         data: '15/12/2024' },
+      { id: 6, tipo: 'retorno', procedimento: 'Botox Facial',         data: '29/12/2024' },
+      { id: 7, tipo: 'antes',   procedimento: 'Bioestimulador',       data: '15/01/2025' },
+      { id: 8, tipo: 'depois',  procedimento: 'Bioestimulador',       data: '15/01/2025' },
+      { id: 9, tipo: 'retorno', procedimento: 'Bioestimulador',       data: '29/01/2025' },
+    ],
+  },
+];
+
 const tipoColors: Record<string, { bg: string; color: string; label: string }> = {
-  ANTES:   { bg: '#fff3cd', color: '#856404', label: 'Antes'   },
-  antes:   { bg: '#fff3cd', color: '#856404', label: 'Antes'   },
-  DEPOIS:  { bg: '#f0ebe4', color: '#8a7560', label: 'Depois'  },
-  depois:  { bg: '#f0ebe4', color: '#8a7560', label: 'Depois'  },
-  RETORNO: { bg: 'rgba(187,161,136,0.15)', color: '#BBA188', label: 'Retorno' },
+  antes:   { bg: '#fff3cd',                color: '#856404', label: 'Antes'   },
+  depois:  { bg: '#f0ebe4',                color: '#8a7560', label: 'Depois'  },
   retorno: { bg: 'rgba(187,161,136,0.15)', color: '#BBA188', label: 'Retorno' },
 };
 
-const AVATAR_COLORS = ['#BBA188', '#a8906f', '#1b1b1b', '#8a7560', '#EBD5B0'];
-
-function getInitials(name: string): string {
-  const parts = name.trim().split(' ');
-  if (parts.length >= 2) return parts[0][0].toUpperCase() + parts[parts.length - 1][0].toUpperCase();
-  return parts[0]?.[0]?.toUpperCase() ?? '?';
+function readFileAsDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
-function formatDate(dt: string | null | undefined): string {
-  if (!dt) return '';
-  try {
-    return new Date(dt).toLocaleDateString('pt-BR');
-  } catch { return dt; }
+function formatDateDisplay(raw: string): string {
+  if (!raw || !raw.includes('-')) return raw;
+  const [y, m, d] = raw.split('-');
+  return `${d}/${m}/${y}`;
 }
 
-interface PatientWithFotos {
-  paciente: Paciente;
-  fotos: FotoPaciente[];
-  color: string;
+let nextFotoId = 100;
+
+const CARDS_PER_PAGE = 6;
+
+function getVisiblePages(currentPage: number, totalPages: number): (number | '...')[] {
+  if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
+  const pages: (number | '...')[] = [];
+  const half = 2;
+  let start = Math.max(2, currentPage - half);
+  let end   = Math.min(totalPages - 1, currentPage + half);
+  if (currentPage <= half + 1) end   = Math.min(totalPages - 1, 4);
+  if (currentPage >= totalPages - half) start = Math.max(2, totalPages - 3);
+  pages.push(1);
+  if (start > 2) pages.push('...');
+  for (let i = start; i <= end; i++) pages.push(i);
+  if (end < totalPages - 1) pages.push('...');
+  if (totalPages > 1) pages.push(totalPages);
+  return pages;
+}
+
+function isUploadFormDirty(form: UploadForm): boolean {
+  return (
+    form.pacienteId !== '' ||
+    form.dataFoto !== '' ||
+    form.procedimento !== '' ||
+    form.momento !== '' ||
+    form.observacoes.trim() !== ''
+  );
 }
 
 export default function Fotos() {
-  const [search,                setSearch]                = useState('');
-  const [filterProc,            setFilterProc]            = useState('Todos');
-  const [openDropProc,          setOpenDropProc]          = useState(false);
-  const [selectedPatient,       setSelectedPatient]       = useState<PatientWithFotos | null>(null);
-  const [isUploadOpen,          setIsUploadOpen]          = useState(false);
-  const [isCompareOpen,         setIsCompareOpen]         = useState(false);
-  const [uploadForm,            setUploadForm]            = useState<UploadForm>(UPLOAD_INITIAL);
-  const [uploadFile,            setUploadFile]            = useState<File | null>(null);
-  const [patients,              setPatients]              = useState<PatientWithFotos[]>([]);
-  const [loading,               setLoading]               = useState(true);
-  const [patientOptions,        setPatientOptions]        = useState<{ value: string; label: string }[]>([]);
+  const [patients, setPatients] = useState<PatientData[]>(INITIAL_PATIENTS);
+
+  const [search,        setSearch]        = useState('');
+  const [filterProc,    setFilterProc]    = useState('Todos');
+  const [openDropProc,  setOpenDropProc]  = useState(false);
+  const [isUploadOpen,  setIsUploadOpen]  = useState(false);
+  const [isCompareOpen, setIsCompareOpen] = useState(false);
+  const [currentPage,   setCurrentPage]   = useState(1);
+
+  const [uploadForm,    setUploadForm]    = useState<UploadForm>(UPLOAD_INITIAL);
+  const [uploadPreview, setUploadPreview] = useState<string | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
+
+  const [compareForm,   setCompareForm]   = useState<CompareForm>(COMPARE_INITIAL);
+  const [compareAntes,  setCompareAntes]  = useState<string | null>(null);
+  const [compareDepois, setCompareDepois] = useState<string | null>(null);
+  const [compareSaved,  setCompareSaved]  = useState(false);
+  const compareAntesRef  = useRef<HTMLInputElement>(null);
+  const compareDepoisRef = useRef<HTMLInputElement>(null);
+
+  const [showCancelUploadModal,  setShowCancelUploadModal]  = useState(false);
+  const [showConfirmUploadModal, setShowConfirmUploadModal] = useState(false);
+  const [showSuccessModal,       setShowSuccessModal]       = useState(false);
+  const [showConfirmCompareModal,setShowConfirmCompareModal]= useState(false);
+  const [showSuccessCompareModal,setShowSuccessCompareModal]= useState(false);
 
   const {
     errors: uploadErrors,
@@ -108,33 +281,27 @@ export default function Fotos() {
     clearAll: clearUploadAll,
   } = useSequentialValidation<UploadField>(UPLOAD_VALIDATION);
 
-  async function carregarPacientes() {
-    try {
-      setLoading(true);
-      const pacs = await pacientesService.listarTodos(200);
-      setPatientOptions(pacs.map(p => ({ value: String(p.id), label: p.nome })));
-      // Load fotos for each patient
-      const withFotos = await Promise.all(pacs.map(async (p, idx) => {
-        try {
-          const fotos = await fotosService.listarPorPaciente(p.id);
-          return { paciente: p, fotos, color: AVATAR_COLORS[idx % AVATAR_COLORS.length] };
-        } catch {
-          return { paciente: p, fotos: [], color: AVATAR_COLORS[idx % AVATAR_COLORS.length] };
-        }
-      }));
-      setPatients(withFotos);
-    } catch {
-      // silent - show empty state
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => { carregarPacientes(); }, []);
+  const patientOptions = patients.map(p => ({ value: String(p.id), label: p.name }));
 
   const filtered = patients.filter(p =>
-    p.paciente.nome.toLowerCase().includes(search.toLowerCase())
+    p.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const totalPages  = Math.max(1, Math.ceil(filtered.length / CARDS_PER_PAGE));
+  const safePage    = Math.min(currentPage, totalPages);
+  const startIdx    = (safePage - 1) * CARDS_PER_PAGE;
+  const paginated   = filtered.slice(startIdx, startIdx + CARDS_PER_PAGE);
+  const startItem   = filtered.length === 0 ? 0 : startIdx + 1;
+  const endItem     = Math.min(safePage * CARDS_PER_PAGE, filtered.length);
+  const visiblePages = getVisiblePages(safePage, totalPages);
+
+  function handleSearchChange(v: string) { setSearch(v); setCurrentPage(1); }
+
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadPreview(await readFileAsDataURL(file));
+  }
 
   function handleUploadChange(field: keyof UploadForm, value: string) {
     setUploadForm(prev => ({ ...prev, [field]: value }));
@@ -144,65 +311,169 @@ export default function Fotos() {
   function handleUploadDateChange(raw: string) {
     if (!raw) { handleUploadChange('dataFoto', ''); return; }
     const [yearStr, month, day] = raw.split('-');
-    const safeYear = yearStr ? yearStr.slice(0, 4) : '';
-    handleUploadChange('dataFoto', `${safeYear}-${month ?? ''}-${day ?? ''}`);
+    handleUploadChange('dataFoto', `${(yearStr ?? '').slice(0, 4)}-${month ?? ''}-${day ?? ''}`);
   }
 
-  function handleCloseUpload() {
+  function handleCancelUploadClick() {
+    if (isUploadFormDirty(uploadForm) || uploadPreview) {
+      setShowCancelUploadModal(true);
+    } else {
+      forceCloseUpload();
+    }
+  }
+
+  function forceCloseUpload() {
     setUploadForm(UPLOAD_INITIAL);
-    setUploadFile(null);
+    setUploadPreview(null);
+    if (uploadInputRef.current) uploadInputRef.current.value = '';
     clearUploadAll();
     setIsUploadOpen(false);
+    setShowCancelUploadModal(false);
+    setShowConfirmUploadModal(false);
   }
 
-  async function handleSaveUpload() {
+  function handleSaveUploadClick() {
     const isValid = validateUpload({
-      paciente: uploadForm.pacienteId || uploadForm.paciente,
-      dataFoto: uploadForm.dataFoto,
+      pacienteId:   uploadForm.pacienteId,
+      dataFoto:     uploadForm.dataFoto,
       procedimento: uploadForm.procedimento,
-      momento: uploadForm.momento,
+      momento:      uploadForm.momento,
     });
     if (!isValid) return;
-    if (!uploadFile) { alert('Selecione um arquivo de foto.'); return; }
-    const pacId = parseInt(uploadForm.pacienteId);
-    if (!pacId) { alert('Selecione um paciente válido.'); return; }
-    try {
-      await fotosService.upload(pacId, uploadForm.momento, uploadFile, uploadForm.observacoes || undefined, uploadForm.procedimento || undefined);
-      await carregarPacientes();
-      handleCloseUpload();
-    } catch {
-      alert('Erro ao fazer upload da foto.');
-    }
+    setShowConfirmUploadModal(true);
   }
 
-  function openUpload(patient?: PatientWithFotos) {
-    if (patient) {
-      setSelectedPatient(patient);
-      setUploadForm(prev => ({
-        ...prev,
-        paciente: patient.paciente.nome,
-        pacienteId: String(patient.paciente.id),
-      }));
-    }
+  function handleConfirmUpload() {
+    const patient = patients.find(p => String(p.id) === uploadForm.pacienteId);
+    if (!patient) return;
+
+    const procedimentoLabel =
+      procedureOptions.find(o => o.value === uploadForm.procedimento)?.label ?? uploadForm.procedimento;
+
+    const novaFoto: Foto = {
+      id:           nextFotoId++,
+      tipo:         uploadForm.momento,
+      procedimento: procedimentoLabel,
+      data:         formatDateDisplay(uploadForm.dataFoto),
+      imgUrl:       uploadPreview ?? undefined,
+    };
+
+    setPatients(prev =>
+      prev.map(p =>
+        p.id === patient.id
+          ? { ...p, fotos: [...p.fotos, novaFoto], lastProcedure: procedimentoLabel }
+          : p
+      )
+    );
+
+    setShowConfirmUploadModal(false);
+    setIsUploadOpen(false);
+    setUploadForm(UPLOAD_INITIAL);
+    setUploadPreview(null);
+    if (uploadInputRef.current) uploadInputRef.current.value = '';
+    clearUploadAll();
+    setShowSuccessModal(true);
+  }
+
+  function openUpload(patient?: PatientData) {
+    setUploadForm({ ...UPLOAD_INITIAL, pacienteId: patient ? String(patient.id) : '' });
+    setUploadPreview(null);
+    clearUploadAll();
     setIsUploadOpen(true);
   }
 
-  if (loading) return <Container><p style={{ padding: 32, color: '#888' }}>Carregando pacientes...</p></Container>;
+  function handleCompareChange(field: keyof CompareForm, value: string) {
+    setCompareForm(prev => ({ ...prev, [field]: value }));
+  }
+
+  async function handleCompareAntesSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCompareAntes(await readFileAsDataURL(file));
+  }
+
+  async function handleCompareDepoisSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCompareDepois(await readFileAsDataURL(file));
+  }
+
+  function handleSaveComparativoClick() {
+    if (!compareForm.pacienteId) return;
+    setShowConfirmCompareModal(true);
+  }
+
+  function handleConfirmComparativo() {
+    const patient = patients.find(p => String(p.id) === compareForm.pacienteId);
+    if (!patient) return;
+
+    const procedimentoLabel =
+      procedureOptions.find(o => o.value === compareForm.procedimento)?.label ?? 'Procedimento';
+
+    const novasFotos: Foto[] = [];
+
+    if (compareAntes) {
+      novasFotos.push({
+        id: nextFotoId++, tipo: 'antes', procedimento: procedimentoLabel,
+        data: formatDateDisplay(compareForm.dataAntes) || '—', imgUrl: compareAntes,
+      });
+    }
+    if (compareDepois) {
+      novasFotos.push({
+        id: nextFotoId++, tipo: 'depois', procedimento: procedimentoLabel,
+        data: formatDateDisplay(compareForm.dataDepois) || '—', imgUrl: compareDepois,
+      });
+    }
+    if (novasFotos.length === 0) return;
+
+    setPatients(prev =>
+      prev.map(p =>
+        p.id === patient.id
+          ? { ...p, fotos: [...p.fotos, ...novasFotos], lastProcedure: procedimentoLabel }
+          : p
+      )
+    );
+
+    setShowConfirmCompareModal(false);
+    setIsCompareOpen(false);
+    setCompareAntes(null);
+    setCompareDepois(null);
+    setCompareForm(COMPARE_INITIAL);
+    if (compareAntesRef.current)  compareAntesRef.current.value  = '';
+    if (compareDepoisRef.current) compareDepoisRef.current.value = '';
+    setShowSuccessCompareModal(true);
+  }
+
+  function openCompare(patient?: PatientData) {
+    setCompareForm({ ...COMPARE_INITIAL, pacienteId: patient ? String(patient.id) : '' });
+    setCompareAntes(null);
+    setCompareDepois(null);
+    setCompareSaved(false);
+    setIsCompareOpen(true);
+  }
+
+  function handleCloseCompare() {
+    setIsCompareOpen(false);
+    setCompareAntes(null);
+    setCompareDepois(null);
+    setCompareForm(COMPARE_INITIAL);
+    setCompareSaved(false);
+    if (compareAntesRef.current)  compareAntesRef.current.value  = '';
+    if (compareDepoisRef.current) compareDepoisRef.current.value = '';
+  }
 
   return (
     <Container>
       <Header>
         <Title>Histórico Fotográfico</Title>
         <div style={{ display: 'flex', gap: 12 }}>
-          <Button
-            variant="outline"
+          <Button variant="outline"
             icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>}
-            onClick={() => setIsCompareOpen(true)}
+            onClick={() => openCompare()}
           >
             Comparar Fotos
           </Button>
-          <Button
-            variant="primary"
+          <Button variant="primary"
             icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>}
             onClick={() => openUpload()}
           >
@@ -216,9 +487,8 @@ export default function Fotos() {
           <SearchIconWrap>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           </SearchIconWrap>
-          <SearchInputStyled placeholder="Buscar paciente..." value={search} onChange={e => setSearch(e.target.value)} />
+          <SearchInputStyled placeholder="Buscar paciente..." value={search} onChange={e => handleSearchChange(e.target.value)} />
         </SearchBarWrapper>
-
         <FilterRow>
           <DropdownWrapper>
             <DropdownBtn onClick={() => setOpenDropProc(!openDropProc)}>
@@ -228,13 +498,13 @@ export default function Fotos() {
             {openDropProc && (
               <DropdownList>
                 {filterProcedures.map(p => (
-                  <DropdownItem key={p} $active={filterProc === p} onClick={() => { setFilterProc(p); setOpenDropProc(false); }}>{p}</DropdownItem>
+                  <DropdownItem key={p} $active={filterProc === p} onClick={() => { setFilterProc(p); setOpenDropProc(false); setCurrentPage(1); }}>{p}</DropdownItem>
                 ))}
               </DropdownList>
             )}
           </DropdownWrapper>
           {filterProc !== 'Todos' && (
-            <ClearFilterBtn onClick={() => setFilterProc('Todos')}>
+            <ClearFilterBtn onClick={() => { setFilterProc('Todos'); setCurrentPage(1); }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
               Limpar
             </ClearFilterBtn>
@@ -242,186 +512,263 @@ export default function Fotos() {
         </FilterRow>
       </Controls>
 
-      <PatientsGrid>
-        {filtered.length === 0 ? (
-          <p style={{ padding: 32, color: '#bbb', gridColumn: '1/-1' }}>Nenhum paciente encontrado.</p>
-        ) : filtered.map(entry => (
-          <PatientFotoCard key={entry.paciente.id}>
-            <PatientCardHeader>
-              <PatientAvatar $color={entry.color}>{getInitials(entry.paciente.nome)}</PatientAvatar>
-              <div>
-                <PatientName>{entry.paciente.nome}</PatientName>
-                <PatientSub>{entry.fotos.length} foto(s)</PatientSub>
-              </div>
-            </PatientCardHeader>
-
-            <PatientCardBody>
-              {entry.fotos.length === 0 ? (
-                <FotoEmpty>
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                  <span>Nenhuma foto cadastrada</span>
-                </FotoEmpty>
-              ) : (
-                <FotoGrid>
-                  {entry.fotos.slice(0, 4).map(foto => (
-                    <FotoItem key={foto.id}>
-                      <div style={{ width: '100%', paddingBottom: '100%', background: `linear-gradient(135deg, ${entry.color}22, ${entry.color}44)`, borderRadius: 8, position: 'relative', overflow: 'hidden' }}>
-                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: entry.color, opacity: 0.5 }}>
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                        </div>
-                        <Badge $bg={tipoColors[foto.tipo]?.bg} $color={tipoColors[foto.tipo]?.color} style={{ position: 'absolute', top: 4, left: 4 }}>
-                          {tipoColors[foto.tipo]?.label ?? foto.tipo}
-                        </Badge>
-                      </div>
-                      <FotoLabel>{foto.procedimento ?? '—'}</FotoLabel>
-                      <FotoDate>{formatDate(foto.dataFoto ?? foto.criadoEm)}</FotoDate>
-                    </FotoItem>
-                  ))}
-                </FotoGrid>
-              )}
-            </PatientCardBody>
-
-            <div style={{ padding: '0 16px 16px', display: 'flex', gap: 8 }}>
-              <Button variant="outline" size="sm" onClick={() => { setSelectedPatient(entry); setIsCompareOpen(true); }}>Comparar</Button>
-              <Button variant="ghost" size="sm" onClick={() => openUpload(entry)}>+ Foto</Button>
+      <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '20px 20px 0', flex: 1 }}>
+          {filtered.length === 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', color: '#ccc', gap: 12, minHeight: 400 }}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <span style={{ fontSize: '0.9rem' }}>Nenhum paciente encontrado</span>
             </div>
-          </PatientFotoCard>
-        ))}
-      </PatientsGrid>
+          ) : (
+            <PatientsGrid>
+              {paginated.map(patient => (
+                <PatientFotoCard key={patient.id}>
+                  <PatientCardHeader>
+                    <PatientAvatar $color={patient.color}>{patient.initials}</PatientAvatar>
+                    <div>
+                      <PatientName>{patient.name}</PatientName>
+                      <PatientSub>{patient.lastProcedure} · {patient.fotos.length} foto(s)</PatientSub>
+                    </div>
+                  </PatientCardHeader>
 
-      <Modal
-        isOpen={isUploadOpen}
-        onClose={handleCloseUpload}
-        title="Adicionar Foto"
-        size="md"
+                  <PatientCardBody>
+                    {patient.fotos.length === 0 ? (
+                      <FotoEmpty>
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span>Nenhuma foto cadastrada</span>
+                      </FotoEmpty>
+                    ) : (
+                      <FotoGrid>
+                        {patient.fotos.map(foto => (
+                          <FotoItem key={foto.id}>
+                            <div style={{ width: '100%', paddingBottom: '100%', background: foto.imgUrl ? 'transparent' : `linear-gradient(135deg, ${patient.color}22, ${patient.color}44)`, borderRadius: 8, position: 'relative', overflow: 'hidden' }}>
+                              {foto.imgUrl
+                                ? <FotoImg src={foto.imgUrl} alt={foto.tipo} />
+                                : (
+                                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: patient.color, opacity: 0.5 }}>
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                  </div>
+                                )
+                              }
+                              <Badge $bg={tipoColors[foto.tipo]?.bg} $color={tipoColors[foto.tipo]?.color} style={{ position: 'absolute', top: 4, left: 4 }}>
+                                {tipoColors[foto.tipo]?.label}
+                              </Badge>
+                            </div>
+                            <FotoLabel>{foto.procedimento}</FotoLabel>
+                            <FotoDate>{foto.data}</FotoDate>
+                          </FotoItem>
+                        ))}
+                      </FotoGrid>
+                    )}
+                  </PatientCardBody>
+
+                  <PatientCardFooter>
+                    <Button variant="outline" size="sm" onClick={() => openCompare(patient)}>Comparar</Button>
+                    <Button variant="ghost"   size="sm" onClick={() => openUpload(patient)}>+ Foto</Button>
+                  </PatientCardFooter>
+                </PatientFotoCard>
+              ))}
+            </PatientsGrid>
+          )}
+        </div>
+
+        <PaginationWrapper>
+          <PaginationInfo>
+            {filtered.length === 0
+              ? 'Nenhum registro'
+              : `Mostrando ${startItem} de ${filtered.length} paciente(s)`
+            }
+          </PaginationInfo>
+          <PaginationControls>
+            <PaginationArrow onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={safePage <= 1} aria-label="Página anterior">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+            </PaginationArrow>
+            {visiblePages.map((page, idx) =>
+              page === '...' ? (
+                <PageEllipsis key={`ellipsis-${idx}`}>…</PageEllipsis>
+              ) : (
+                <PageButton key={page} $active={page === safePage} onClick={() => setCurrentPage(page as number)} aria-label={`Página ${page}`} aria-current={page === safePage ? 'page' : undefined}>
+                  {page}
+                </PageButton>
+              )
+            )}
+            <PaginationArrow onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={safePage >= totalPages} aria-label="Próxima página">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+            </PaginationArrow>
+          </PaginationControls>
+        </PaginationWrapper>
+      </div>
+
+      <Modal isOpen={isUploadOpen} onClose={handleCancelUploadClick} closeOnOverlayClick={false} title="Adicionar Foto" size="lg"
         footer={
-          <>
-            <Button variant="outline" onClick={handleCloseUpload}>Cancelar</Button>
-            <Button variant="primary" onClick={handleSaveUpload}>Salvar Foto</Button>
-          </>
+          <WizardNav>
+            <Button variant="outline" onClick={handleCancelUploadClick}>Cancelar</Button>
+            <Button variant="primary" onClick={handleSaveUploadClick}>Salvar Foto</Button>
+          </WizardNav>
         }
       >
-        <FormGrid>
-          <div style={{ gridColumn: 'span 2' }}>
-            <UploadZone onClick={() => document.getElementById('foto-file-input')?.click()}>
-              <UploadIcon>
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              </UploadIcon>
-              <UploadText>{uploadFile ? uploadFile.name : 'Clique para selecionar ou arraste a foto aqui'}</UploadText>
-              <UploadHint>JPG, PNG ou WEBP · Máx. 10MB</UploadHint>
-              <input
-                id="foto-file-input"
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
-              />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, overflowY: 'auto', maxHeight: '65vh', paddingRight: 4 }}>
+          <div>
+            <SectionLabel style={{ marginBottom: 12 }}>Imagem</SectionLabel>
+            <input ref={uploadInputRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handleFileSelect} />
+            <UploadZone onClick={() => uploadInputRef.current?.click()}>
+              {uploadPreview
+                ? <UploadPreview src={uploadPreview} alt="preview" />
+                : (
+                  <>
+                    <UploadIcon><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></UploadIcon>
+                    <UploadText>Clique para selecionar ou arraste a foto aqui</UploadText>
+                    <UploadHint>JPG, PNG ou WEBP · Máx. 10MB</UploadHint>
+                  </>
+                )}
             </UploadZone>
+            {uploadPreview && (
+              <div style={{ textAlign: 'center', marginTop: 8 }}>
+                <button type="button"
+                  onClick={e => { e.stopPropagation(); setUploadPreview(null); if (uploadInputRef.current) uploadInputRef.current.value = ''; }}
+                  style={{ fontSize: '0.78rem', color: '#e74c3c', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+                  Remover imagem
+                </button>
+              </div>
+            )}
           </div>
 
-          <div style={{ gridColumn: 'span 2' }}>
-            <Select
-              label="Paciente *"
-              options={patientOptions}
-              placeholder="Selecione o paciente..."
-              value={uploadForm.pacienteId}
-              onChange={(v) => {
-                const label = patientOptions.find(p => p.value === v)?.label ?? '';
-                setUploadForm(prev => ({ ...prev, pacienteId: v, paciente: label }));
-                clearUploadError('paciente');
-              }}
-              error={uploadErrors.paciente}
-            />
+          <div>
+            <SectionLabel style={{ marginBottom: 12 }}>Dados da Foto</SectionLabel>
+            <FormGrid>
+              <div style={{ gridColumn: 'span 2' }}>
+                <Select label="Paciente *" options={patientOptions} placeholder="Selecione o paciente" value={uploadForm.pacienteId} onChange={v => handleUploadChange('pacienteId', v)} error={uploadErrors.pacienteId} />
+              </div>
+              <Input label="Data da Foto *" type="date" value={uploadForm.dataFoto} onChange={e => handleUploadDateChange(e.target.value)} error={uploadErrors.dataFoto} />
+              <Select label="Procedimento *" options={procedureOptions} placeholder="Selecione o procedimento" value={uploadForm.procedimento} onChange={v => handleUploadChange('procedimento', v)} error={uploadErrors.procedimento} />
+              <div style={{ gridColumn: 'span 2' }}>
+                <Select label="Momento *" options={momentoOptions} placeholder="Selecione o momento" value={uploadForm.momento} onChange={v => handleUploadChange('momento', v)} error={uploadErrors.momento} />
+              </div>
+              <div style={{ gridColumn: 'span 2' }}>
+                <Input label="Observações" placeholder="Digite observações sobre esta foto" maxLength={200} value={uploadForm.observacoes} onChange={e => handleUploadChange('observacoes', e.target.value)} />
+              </div>
+            </FormGrid>
           </div>
-
-          <Input
-            label="Data da Foto *"
-            type="date"
-            value={uploadForm.dataFoto}
-            onChange={(e) => handleUploadDateChange(e.target.value)}
-            error={uploadErrors.dataFoto}
-          />
-
-          <Select
-            label="Procedimento *"
-            options={procedureOptions}
-            placeholder="Selecione..."
-            value={uploadForm.procedimento}
-            onChange={(v) => handleUploadChange('procedimento', v)}
-            error={uploadErrors.procedimento}
-          />
-
-          <div style={{ gridColumn: 'span 2' }}>
-            <Select
-              label="Momento *"
-              options={momentoOptions}
-              placeholder="Selecione..."
-              value={uploadForm.momento}
-              onChange={(v) => handleUploadChange('momento', v)}
-              error={uploadErrors.momento}
-            />
-          </div>
-
-          <div style={{ gridColumn: 'span 2' }}>
-            <Input
-              label="Observações"
-              placeholder="Notas sobre esta foto..."
-              maxLength={200}
-              value={uploadForm.observacoes}
-              onChange={(e) => handleUploadChange('observacoes', e.target.value)}
-            />
-          </div>
-        </FormGrid>
+        </div>
       </Modal>
 
-      <Modal
-        isOpen={isCompareOpen}
-        onClose={() => setIsCompareOpen(false)}
-        title={`Comparativo Antes / Depois${selectedPatient ? ` — ${selectedPatient.paciente.nome}` : ''}`}
-        size="xl"
-        footer={<Button variant="outline" onClick={() => setIsCompareOpen(false)}>Fechar</Button>}
+      <Modal isOpen={isCompareOpen} onClose={handleCloseCompare} closeOnOverlayClick={false} title="Comparativo Antes / Depois" size="xl"
+        footer={
+          <WizardNav>
+            <Button variant="outline" onClick={handleCloseCompare}>Fechar</Button>
+            <Button variant="primary" onClick={handleSaveComparativoClick}
+              icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>}
+            >
+              Salvar Comparativo
+            </Button>
+          </WizardNav>
+        }
       >
-        <CompareSection>
-          <div style={{ marginBottom: 20 }}>
-            <Select
-              label="Selecionar Paciente"
-              options={patientOptions}
-              placeholder="Selecione o paciente..."
-              value={selectedPatient ? String(selectedPatient.paciente.id) : ''}
-              onChange={(v) => {
-                const found = patients.find(p => String(p.paciente.id) === v);
-                if (found) setSelectedPatient(found);
-              }}
-            />
-          </div>
-          <div style={{ marginBottom: 20 }}>
-            <Select label="Procedimento" options={procedureOptions} placeholder="Todos os procedimentos..." />
-          </div>
-          <CompareGrid>
-            <CompareSide>
-              <CompareSideLabel $tipo="antes">Antes</CompareSideLabel>
-              <CompareImg $color="#BBA188">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                <span>{selectedPatient && selectedPatient.fotos.filter(f => f.tipo === 'ANTES' || f.tipo === 'antes').length > 0 ? `${selectedPatient.fotos.filter(f => f.tipo === 'ANTES' || f.tipo === 'antes').length} foto(s) disponível` : 'Nenhuma foto'}</span>
-              </CompareImg>
-              <Input label="Data (Antes)" type="date" />
-            </CompareSide>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: '#BBA188', fontWeight: 700 }}>↔</div>
-            <CompareSide>
-              <CompareSideLabel $tipo="depois">Depois</CompareSideLabel>
-              <CompareImg $color="#a8906f">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                <span>{selectedPatient && selectedPatient.fotos.filter(f => f.tipo === 'DEPOIS' || f.tipo === 'depois').length > 0 ? `${selectedPatient.fotos.filter(f => f.tipo === 'DEPOIS' || f.tipo === 'depois').length} foto(s) disponível` : 'Nenhuma foto'}</span>
-              </CompareImg>
-              <Input label="Data (Depois)" type="date" />
-            </CompareSide>
-          </CompareGrid>
-          <div style={{ marginTop: 20, padding: 16, background: '#fdf9f5', borderRadius: 12, border: '1px solid #f0ebe4' }}>
-            <CompareTitle>Observações do Comparativo</CompareTitle>
-            <Input label="" placeholder="Descreva o resultado observado na comparação..." />
-          </div>
-        </CompareSection>
+        <div style={{ overflowY: 'auto', maxHeight: '65vh', paddingRight: 4 }}>
+          <CompareSection>
+            <input ref={compareAntesRef}  type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handleCompareAntesSelect}  />
+            <input ref={compareDepoisRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handleCompareDepoisSelect} />
+
+            <div>
+              <SectionLabel style={{ marginBottom: 12 }}>Seleção</SectionLabel>
+              <FormGrid>
+                <Select label="Paciente *" options={patientOptions} placeholder="Selecione o paciente" value={compareForm.pacienteId} onChange={v => handleCompareChange('pacienteId', v)} />
+                <Select label="Procedimento" options={procedureOptions} placeholder="Selecione o procedimento" value={compareForm.procedimento} onChange={v => handleCompareChange('procedimento', v)} />
+              </FormGrid>
+            </div>
+
+            <div style={{ marginTop: 24 }}>
+              <SectionLabel style={{ marginBottom: 12 }}>Fotos — clique para selecionar</SectionLabel>
+              <CompareGrid>
+                <CompareSide>
+                  <CompareSideLabel $tipo="antes">Antes</CompareSideLabel>
+                  <CompareImg $color="#BBA188" $hasImage={!!compareAntes} onClick={() => compareAntesRef.current?.click()}>
+                    {compareAntes
+                      ? <img src={compareAntes} alt="antes" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10 }} />
+                      : (<><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Clique para selecionar</span></>)
+                    }
+                  </CompareImg>
+                  {compareAntes && (
+                    <button type="button" onClick={() => { setCompareAntes(null); if (compareAntesRef.current) compareAntesRef.current.value = ''; }}
+                      style={{ fontSize: '0.75rem', color: '#e74c3c', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', textAlign: 'center' }}>
+                      Remover
+                    </button>
+                  )}
+                  <Input label="Data (Antes)" type="date" value={compareForm.dataAntes} onChange={e => handleCompareChange('dataAntes', e.target.value)} />
+                </CompareSide>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: '#BBA188', fontWeight: 700 }}>↔</div>
+
+                <CompareSide>
+                  <CompareSideLabel $tipo="depois">Depois</CompareSideLabel>
+                  <CompareImg $color="#a8906f" $hasImage={!!compareDepois} onClick={() => compareDepoisRef.current?.click()}>
+                    {compareDepois
+                      ? <img src={compareDepois} alt="depois" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10 }} />
+                      : (<><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Clique para selecionar</span></>)
+                    }
+                  </CompareImg>
+                  {compareDepois && (
+                    <button type="button" onClick={() => { setCompareDepois(null); if (compareDepoisRef.current) compareDepoisRef.current.value = ''; }}
+                      style={{ fontSize: '0.75rem', color: '#e74c3c', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', textAlign: 'center' }}>
+                      Remover
+                    </button>
+                  )}
+                  <Input label="Data (Depois)" type="date" value={compareForm.dataDepois} onChange={e => handleCompareChange('dataDepois', e.target.value)} />
+                </CompareSide>
+              </CompareGrid>
+            </div>
+
+            <div style={{ marginTop: 24 }}>
+              <SectionLabel style={{ marginBottom: 12 }}>Observações do Comparativo</SectionLabel>
+              <Input label="" placeholder="Digite o resultado observado na comparação" value={compareForm.observacoes} onChange={e => handleCompareChange('observacoes', e.target.value)} />
+            </div>
+          </CompareSection>
+        </div>
       </Modal>
+
+      <CancelModal
+        isOpen={showCancelUploadModal}
+        title="Deseja cancelar?"
+        message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas."
+        onConfirm={forceCloseUpload}
+        onCancel={() => setShowCancelUploadModal(false)}
+      />
+
+      <ConfirmModal
+        isOpen={showConfirmUploadModal}
+        title="Salvar foto?"
+        message="Tem certeza que deseja salvar esta foto no histórico do paciente?"
+        confirmText="Confirmar"
+        cancelText="Voltar"
+        onConfirm={handleConfirmUpload}
+        onCancel={() => setShowConfirmUploadModal(false)}
+      />
+
+      <SucessModal
+        isOpen={showSuccessModal}
+        title="Sucesso!"
+        message="Foto adicionada com sucesso!"
+        onClose={() => setShowSuccessModal(false)}
+        buttonText="Continuar"
+      />
+
+      <ConfirmModal
+        isOpen={showConfirmCompareModal}
+        title="Salvar comparativo?"
+        message="Tem certeza que deseja salvar este comparativo no histórico do paciente?"
+        confirmText="Confirmar"
+        cancelText="Voltar"
+        onConfirm={handleConfirmComparativo}
+        onCancel={() => setShowConfirmCompareModal(false)}
+      />
+
+      <SucessModal
+        isOpen={showSuccessCompareModal}
+        title="Sucesso!"
+        message="Comparativo salvo com sucesso!"
+        onClose={() => setShowSuccessCompareModal(false)}
+        buttonText="Continuar"
+      />
     </Container>
   );
 }

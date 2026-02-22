@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import * as S from './styles';
 
 interface SucessModalProps {
@@ -28,7 +27,7 @@ export default function SucessModal({
 
   if (!isOpen) return null;
 
-  const modalContent = (
+  return (
     <S.Overlay onClick={onClose}>
       <S.ModalContainer onClick={(e) => e.stopPropagation()}>
         {title ? (
@@ -43,6 +42,4 @@ export default function SucessModal({
       </S.ModalContainer>
     </S.Overlay>
   );
-
-  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
 }

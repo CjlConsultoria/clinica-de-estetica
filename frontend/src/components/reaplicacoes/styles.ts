@@ -6,7 +6,7 @@ export const Container = styled.div`
   min-height: 100vh;
   background: #f5f5f5;
   box-sizing: border-box;
-  @media (max-width: 1024px) { padding: 24px 20px; }
+  @media (max-width: 1024px) { width: 100%; padding: 24px 20px; }
   @media (max-width: 768px)  { padding: 20px 16px; }
 `;
 
@@ -138,6 +138,11 @@ export const DropdownList = styled.div`
   box-shadow: 0 8px 24px rgba(0,0,0,0.1);
   z-index: 100;
   overflow: hidden;
+  animation: dropIn 0.18s ease;
+  @keyframes dropIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
 `;
 
 export const DropdownItem = styled.div<{ $active?: boolean }>`
@@ -167,9 +172,49 @@ export const ClearFilterBtn = styled.button`
   &:hover { background: #e74c3c; color: white; }
 `;
 
+export const ToggleGroup = styled.div`
+  display: flex;
+  background: white;
+  border-radius: 10px;
+  border: 1.5px solid #e8e8e8;
+  overflow: hidden;
+  margin-left: auto;
+`;
+
+export const ToggleBtn = styled.button<{ $active: boolean }>`
+  padding: 9px 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: ${({ $active }) => ($active ? '#BBA188' : 'transparent')};
+  color: ${({ $active }) => ($active ? 'white' : '#888')};
+  display: flex;
+  align-items: center;
+`;
+
+/* ─────────────── Tabela ─────────────── */
+/*
+ * TableContainer — altura fixa para exatamente 10 linhas (padrão Estoque).
+ *
+ * Estoque usa TABLE_MIN_HEIGHT = 540px para a área da tabela (TableWrapper).
+ * Paginação: 56px (min-height do PaginationWrapper).
+ * Total container: 540 + 56 = 596px.
+ */
+export const TableContainer = styled.div`
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 596px;
+`;
+
 export const TableWrapper = styled.div`
   width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
+  min-height: 540px;
 `;
 
 export const Table = styled.table`
@@ -182,14 +227,15 @@ export const Thead = styled.thead`
   background: linear-gradient(135deg, #BBA188, #a8906f);
 `;
 
+/* Padrão Estoque: padding 11px 10px, font-size 0.69rem */
 export const Th = styled.th<{ $width?: string }>`
-  padding: 13px 16px;
+  padding: 11px 10px;
   text-align: left;
-  font-size: 0.77rem;
+  font-size: 0.69rem;
   font-weight: 600;
   color: white;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
   width: ${({ $width }) => $width || 'auto'};
 `;
 
@@ -202,31 +248,35 @@ export const Tr = styled.tr`
   &:last-child { border-bottom: none; }
 `;
 
-export const Td = styled.td`
-  padding: 13px 16px;
-  font-size: 0.88rem;
+/* Padrão Estoque: padding 10px 10px, font-size 0.78rem */
+export const Td = styled.td<{ colSpan?: number }>`
+  padding: 10px 10px;
+  font-size: 0.78rem;
   color: #444;
   vertical-align: middle;
 `;
 
+/* Padrão Estoque: padding 3px 7px, font-size 0.68rem */
 export const Badge = styled.span<{ $bg?: string; $color?: string }>`
   display: inline-block;
-  padding: 4px 10px;
+  padding: 3px 7px;
   border-radius: 20px;
-  font-size: 0.74rem;
+  font-size: 0.68rem;
   font-weight: 600;
   background: ${({ $bg }) => $bg || '#f0ebe4'};
   color: ${({ $color }) => $color || '#BBA188'};
+  white-space: nowrap;
 `;
 
 export const ActionGroup = styled.div`
   display: flex;
-  gap: 6px;
+  gap: 4px;
 `;
 
+/* Padrão Estoque: 30px × 30px */
 export const IconBtn = styled.button`
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border: 1.5px solid #e8e8e8;
   border-radius: 8px;
   background: white;
@@ -236,6 +286,7 @@ export const IconBtn = styled.button`
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
   &:hover { background: #BBA188; border-color: #BBA188; color: white; }
 `;
 
@@ -246,10 +297,32 @@ export const FormGrid = styled.div`
   @media (max-width: 560px) { grid-template-columns: 1fr; }
 `;
 
+export const EmptyState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: #bbb;
+  h3 { font-size: 1.1rem; font-family: var(--font-cabourg-bold), 'Cabourg', serif; color: #555; margin: 0 0 6px; }
+  p  { font-size: 0.88rem; color: #999; margin: 0; }
+`;
+
+export const CardsContainer = styled.div`
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 690px;
+`;
+
 export const CardsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
+  @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); }
   @media (max-width: 640px) { grid-template-columns: 1fr; }
 `;
 
@@ -351,4 +424,77 @@ export const ReapCardFooter = styled.div`
   display: flex;
   gap: 8px;
   justify-content: flex-end;
+`;
+
+/* ─────────────── Paginação ─────────────── */
+
+export const PaginationWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 14px 20px;
+  border-top: 1px solid #f0ebe4;
+  min-height: 56px;
+  flex-shrink: 0;
+`;
+
+export const PaginationInfo = styled.span`
+  font-size: 0.8rem;
+  color: #999;
+  font-weight: 400;
+  white-space: nowrap;
+`;
+
+export const PaginationControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+export const PageButton = styled.button<{ $active?: boolean }>`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: ${({ $active }) => ($active ? '700' : '500')};
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: ${({ $active }) => ($active ? '#BBA188' : 'transparent')};
+  color: ${({ $active }) => ($active ? '#ffffff' : '#888')};
+  &:hover:not(:disabled) {
+    background: ${({ $active }) => ($active ? '#BBA188' : 'rgba(187,161,136,0.12)')};
+    color: ${({ $active }) => ($active ? '#ffffff' : '#BBA188')};
+  }
+`;
+
+export const PageEllipsis = styled.span`
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #bbb;
+  user-select: none;
+`;
+
+export const PaginationArrow = styled.button`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #BBA188;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  &:hover:not(:disabled) { background: rgba(187,161,136,0.12); }
+  &:disabled { color: #ddd; cursor: not-allowed; }
 `;

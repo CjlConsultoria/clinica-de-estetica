@@ -1,12 +1,17 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
 import StatCard from '@/components/ui/statcard';
 import Pagination from '@/components/ui/pagination';
+import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
+import { usePermissions } from '@/components/ui/hooks/usePermissions';
+import { useCurrentUser } from '@/components/ui/hooks/useCurrentUser';
+import PermissionGuard from '@/components/ui/PermissionGuard';
+import MockLoginScreen from '@/components/auth/MockLoginScreen';
 import {
   Container, Header, Title, StatsGrid, Controls,
   SearchBarWrapper, SearchIconWrap, SearchInputStyled,
@@ -21,9 +26,9 @@ import {
   DetailSection, DetailSectionTitle, StatsRow, StatPill,
   InfoGrid, InfoItem, InfoLabel, InfoValue,
   ObsBox,
+  UserSwitcherBar, UserSwitcherInfo, UserSwitcherName, UserSwitcherBadge, UserSwitcherBtn,
 } from './styles';
 import { validateEmail, validatePassword, ERROR_MESSAGES } from './validation';
-import { usuariosService } from '@/services/usuarios.service';
 
 type AreaType = 'tecnica' | 'administrativa' | '';
 type CargoTecnico = 'esteticista' | 'biomedico' | 'enfermeiro' | 'dermatologista' | 'fisioterapeuta';
@@ -138,6 +143,20 @@ const filterStatus  = ['Todos', 'Ativo', 'Inativo'];
 const filterAreas   = ['Todos', 'Técnica', 'Administrativa'];
 const STEP_LABELS   = ['Dados Básicos', 'Área', 'Cargo', 'Acesso'];
 
+const INITIAL_PROFISSIONAIS = [
+  { id: 1,  name: 'Ana Beatriz Lima',   email: 'ana.lima@clinica.com',       phone: '(11) 98765-4321', registro: 'CREFITO-3 112233-F', area: 'tecnica',        cargo: 'esteticista',    especialidade: 'estetica-facial',         status: 'ativo',   atendimentos: 142, ultimoAcesso: '20/02/2025', observacoes: '' },
+  { id: 2,  name: 'Dra. Clara Andrade', email: 'clara.andrade@clinica.com',  phone: '(11) 97654-3210', registro: 'CRM/SP 654321',      area: 'tecnica',        cargo: 'dermatologista', especialidade: 'dermatologia-clinica',     status: 'ativo',   atendimentos: 98,  ultimoAcesso: '19/02/2025', observacoes: '' },
+  { id: 3,  name: 'Juliana Ferreira',   email: 'juliana.f@clinica.com',      phone: '(31) 94321-0987', registro: 'COREN/SP 901234',    area: 'tecnica',        cargo: 'enfermeiro',     especialidade: 'enfermagem-estetica',      status: 'ativo',   atendimentos: 55,  ultimoAcesso: '17/02/2025', observacoes: '' },
+  { id: 4,  name: 'Rafael Costa',       email: 'rafael.costa@clinica.com',   phone: '(21) 95432-1098', registro: '',                   area: 'administrativa', cargo: 'recepcionista',  especialidade: '',                         status: 'inativo', atendimentos: 0,   ultimoAcesso: '10/01/2025', observacoes: '' },
+  { id: 5,  name: 'Mariana Souza',      email: 'mariana.s@clinica.com',      phone: '(21) 94321-9876', registro: 'CRBim-5 445566',     area: 'tecnica',        cargo: 'biomedico',      especialidade: 'biomedicina-estetica',     status: 'ativo',   atendimentos: 76,  ultimoAcesso: '18/02/2025', observacoes: '' },
+  { id: 6,  name: 'Patricia Gomes',     email: 'patricia.g@clinica.com',     phone: '(11) 93210-8765', registro: '',                   area: 'administrativa', cargo: 'gerente',        especialidade: '',                         status: 'ativo',   atendimentos: 0,   ultimoAcesso: '20/02/2025', observacoes: '' },
+  { id: 7,  name: 'Fernanda Oliveira',  email: 'fernanda.o@clinica.com',     phone: '(11) 91234-5678', registro: 'CREFITO-3 778899-F', area: 'tecnica',        cargo: 'fisioterapeuta', especialidade: 'dermato-funcional',        status: 'ativo',   atendimentos: 63,  ultimoAcesso: '15/02/2025', observacoes: '' },
+  { id: 8,  name: 'Dr. Lucas Mendes',   email: 'lucas.mendes@clinica.com',   phone: '(11) 99876-5432', registro: 'CRM/SP 789012',      area: 'tecnica',        cargo: 'dermatologista', especialidade: 'dermatologia-estetica',    status: 'ativo',   atendimentos: 110, ultimoAcesso: '20/02/2025', observacoes: '' },
+  { id: 9,  name: 'Camila Rocha',       email: 'camila.rocha@clinica.com',   phone: '(21) 98765-1234', registro: '',                   area: 'administrativa', cargo: 'financeiro',     especialidade: '',                         status: 'ativo',   atendimentos: 0,   ultimoAcesso: '19/02/2025', observacoes: '' },
+  { id: 10, name: 'Beatriz Santos',     email: 'beatriz.santos@clinica.com', phone: '(31) 97654-3210', registro: 'COREN/SP 345678',    area: 'tecnica',        cargo: 'enfermeiro',     especialidade: 'procedimentos-injetaveis', status: 'ativo',   atendimentos: 41,  ultimoAcesso: '16/02/2025', observacoes: '' },
+  { id: 11, name: 'Thiago Almeida',     email: 'thiago.a@clinica.com',       phone: '(11) 96543-2109', registro: '',                   area: 'administrativa', cargo: 'recepcionista',  especialidade: '',                         status: 'ativo',   atendimentos: 0,   ultimoAcesso: '18/02/2025', observacoes: '' },
+  { id: 12, name: 'Larissa Duarte',     email: 'larissa.d@clinica.com',      phone: '(11) 95432-1098', registro: 'CRBim-5 667788',     area: 'tecnica',        cargo: 'biomedico',      especialidade: 'laser-terapia',            status: 'inativo', atendimentos: 29,  ultimoAcesso: '05/01/2025', observacoes: '' },
+];
 
 const avatarColors = ['#BBA188', '#8a7560', '#a8906f', '#c9a882', '#917255', '#d4b896'];
 
@@ -166,17 +185,27 @@ interface ProfissionalForm {
 
 const FORM_INITIAL: ProfissionalForm = {
   nome: '', email: '', telefone: '',
-  area: '', cargo: '', especialidade: '', registro: '', status: '', observacoes: '',
+  area: '', cargo: '', especialidade: '', registro: '', status: 'ativo', observacoes: '',
   senha: '', confirmarSenha: '',
 };
 
-type Errors = Partial<Record<keyof ProfissionalForm, string>>;
+type Step1Field = 'nome' | 'email' | 'telefone';
+type Step2Field = 'area';
+type Step3Field = 'cargo' | 'registro' | 'especialidade';
+type Step4Field = 'senha' | 'confirmarSenha';
 
 type Profissional = {
   id: number; name: string; email: string; phone: string;
   registro: string; area: string; cargo: string; especialidade: string;
   status: string; atendimentos: number; ultimoAcesso: string; observacoes: string;
 };
+
+function getEspecialidadeLabel(cargo: string, value: string): string {
+  if (!value) return '—';
+  const config = ALL_CARGO_CONFIG[cargo];
+  if (!config?.especialidades) return value;
+  return config.especialidades.find(e => e.value === value)?.label || value;
+}
 
 function getInitials(name: string) {
   return name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
@@ -190,8 +219,7 @@ function CargoCard({ children, $active, onClick }: { children: React.ReactNode; 
       border: `1.5px solid ${$active ? '#BBA188' : '#e8e8e8'}`,
       borderRadius: 12,
       background: $active ? 'rgba(187,161,136,0.07)' : 'white',
-      cursor: 'pointer',
-      transition: 'all 0.18s',
+      cursor: 'pointer', transition: 'all 0.18s',
       boxShadow: $active ? '0 0 0 3px rgba(187,161,136,0.15)' : 'none',
     }}>
       {children}
@@ -210,12 +238,10 @@ function EyeBtn({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonEle
 function EyeOnIcon() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
 }
-
 function EyeOffIcon() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>;
 }
 
-/* Ícones SVG cinza escuro para as áreas de atuação */
 const AreaTecnicaIcon = () => (
   <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
     <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/>
@@ -236,42 +262,16 @@ const AreaAdminIcon = () => (
 
 const ITEMS_PER_PAGE = 10;
 
-// Mapeamento entre cargo frontend e enum backend
-const CARGO_TO_BACKEND: Record<string, string> = {
-  esteticista:    'ESTETICISTA',
-  biomedico:      'MEDICO',
-  enfermeiro:     'ENFERMEIRO',
-  dermatologista: 'MEDICO',
-  fisioterapeuta: 'FISIOTERAPEUTA',
-  recepcionista:  'RECEPCIONISTA',
-  gerente:        'GERENTE',
-  financeiro:     'FINANCEIRO',
-};
-
-const CARGO_FROM_BACKEND: Record<string, string> = {
-  ESTETICISTA:    'esteticista',
-  MEDICO:         'dermatologista',
-  ENFERMEIRO:     'enfermeiro',
-  FISIOTERAPEUTA: 'fisioterapeuta',
-  NUTRICIONISTA:  'biomedico',
-  PSICOLOGO:      'biomedico',
-  RECEPCIONISTA:  'recepcionista',
-  GERENTE:        'gerente',
-  FINANCEIRO:     'financeiro',
-  TI:             'recepcionista',
-  RH:             'recepcionista',
-};
-
-const AREA_FROM_BACKEND: Record<string, AreaType> = {
-  TECNICA:        'tecnica',
-  ADMINISTRATIVA: 'administrativa',
-};
-
 export default function Profissionais() {
-  const [profissionais,        setProfissionais]        = useState<Profissional[]>([]);
-  const [loading,              setLoading]              = useState(true);
-  const [loadError,            setLoadError]            = useState<string | null>(null);
-  const [saving,               setSaving]               = useState(false);
+  const { can } = usePermissions();
+  const { currentUser, roleLabel, roleColors } = useCurrentUser();
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  const canCreate = can('profissionais.create');
+  const canEdit   = can('profissionais.edit');
+  const canRead   = can('profissionais.read');
+
+  const [profissionais,        setProfissionais]        = useState<Profissional[]>(INITIAL_PROFISSIONAIS);
   const [search,               setSearch]               = useState('');
   const [filterStat,           setFilterStat]           = useState('Todos');
   const [filterArea,           setFilterArea]           = useState('Todos');
@@ -280,48 +280,53 @@ export default function Profissionais() {
   const [isDetailOpen,         setIsDetailOpen]         = useState(false);
   const [selectedProfissional, setSelectedProfissional] = useState<Profissional | null>(null);
   const [form,                 setForm]                 = useState<ProfissionalForm>(FORM_INITIAL);
-  const [errors,               setErrors]               = useState<Errors>({});
   const [step,                 setStep]                 = useState(1);
   const [showSenha,            setShowSenha]            = useState(false);
   const [showConfirm,          setShowConfirm]          = useState(false);
   const [isEditing,            setIsEditing]            = useState(false);
   const [currentPage,          setCurrentPage]          = useState(1);
 
-  const carregarProfissionais = useCallback(async () => {
-    try {
-      setLoading(true);
-      setLoadError(null);
-      const usuarios = await usuariosService.listar();
-      const mapped: Profissional[] = usuarios.map(u => ({
-        id: u.id,
-        name: u.nome,
-        email: u.email,
-        phone: u.telefone ?? '',
-        registro: u.registro ?? '',
-        area: AREA_FROM_BACKEND[u.areaProfissional ?? ''] ?? '',
-        cargo: CARGO_FROM_BACKEND[u.cargo ?? ''] ?? '',
-        especialidade: u.especialidade ?? '',
-        status: u.ativo ? 'ativo' : 'inativo',
-        atendimentos: u.atendimentos ?? 0,
-        ultimoAcesso: u.criadoEm ? new Date(u.criadoEm).toLocaleDateString('pt-BR') : '—',
-        observacoes: u.observacoes ?? '',
-      }));
-      setProfissionais(mapped);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Erro ao carregar profissionais';
-      setLoadError(msg);
-      console.error('Erro ao carregar profissionais:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const step1Validation = useSequentialValidation<Step1Field>([
+    { key: 'nome',     validate: (v) => !v.trim() ? 'Nome completo é obrigatório' : null },
+    { key: 'email',    validate: (v) => { const err = validateEmail(v); return err ? err.message : null; } },
+    { key: 'telefone', validate: (v) => !v.trim() ? 'Telefone é obrigatório' : null },
+  ]);
 
-  useEffect(() => {
-    carregarProfissionais();
-  }, [carregarProfissionais]);
+  const step2Validation = useSequentialValidation<Step2Field>([
+    { key: 'area', validate: (v) => !v ? 'Selecione uma área' : null },
+  ]);
 
-  const cargoConfig   = form.cargo ? ALL_CARGO_CONFIG[form.cargo] : null;
-  const cargoOptions  =
+  const step3Validation = useSequentialValidation<Step3Field>([
+    { key: 'cargo',       validate: (v) => !v ? 'Selecione o cargo' : null },
+    { key: 'registro',    validate: (v) => {
+      const config = form.cargo ? ALL_CARGO_CONFIG[form.cargo] : null;
+      if (config?.requiresRegistro && !v.trim()) return `${config.registroLabel} é obrigatório`;
+      return null;
+    }},
+    { key: 'especialidade', validate: (v) => {
+      const config = form.cargo ? ALL_CARGO_CONFIG[form.cargo] : null;
+      if (config?.requiresEspecialidade && !v) return 'Selecione a área de atuação';
+      return null;
+    }},
+  ]);
+
+  const step4Validation = useSequentialValidation<Step4Field>([
+    { key: 'senha', validate: (v) => {
+      if (!isEditing || v) {
+        if (!isEditing && !v) return 'Senha é obrigatória';
+        if (v) { const err = validatePassword(v); return err ? err.message : null; }
+      }
+      return null;
+    }},
+    { key: 'confirmarSenha', validate: (v) => {
+      if (!isEditing && !v.trim()) return ERROR_MESSAGES.PASSWORD_CONFIRM_REQUIRED;
+      if (form.senha && !v.trim()) return ERROR_MESSAGES.PASSWORD_CONFIRM_REQUIRED;
+      return null;
+    }},
+  ]);
+
+  const cargoConfig  = form.cargo ? ALL_CARGO_CONFIG[form.cargo] : null;
+  const cargoOptions =
     form.area === 'tecnica'
       ? Object.entries(CARGO_TECNICO_CONFIG).map(([v, c]) => ({ value: v, label: c.label }))
       : form.area === 'administrativa'
@@ -335,36 +340,16 @@ export default function Profissionais() {
     return matchSearch && matchStat && matchArea;
   });
 
-  // Paginação
   const totalFiltered = filtered.length;
   const totalPages    = Math.max(1, Math.ceil(totalFiltered / ITEMS_PER_PAGE));
   const safePage      = Math.min(currentPage, totalPages);
   const startIndex    = (safePage - 1) * ITEMS_PER_PAGE;
   const paginatedData = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  // Resetar página ao mudar filtros/busca
-  function handleSearchChange(value: string) {
-    setSearch(value);
-    setCurrentPage(1);
-  }
-
-  function handleFilterStatChange(value: string) {
-    setFilterStat(value);
-    setCurrentPage(1);
-    setOpenDrop(null);
-  }
-
-  function handleFilterAreaChange(value: string) {
-    setFilterArea(value);
-    setCurrentPage(1);
-    setOpenDrop(null);
-  }
-
-  function handleClearFilters() {
-    setFilterStat('Todos');
-    setFilterArea('Todos');
-    setCurrentPage(1);
-  }
+  function handleSearchChange(value: string)     { setSearch(value);     setCurrentPage(1); }
+  function handleFilterStatChange(value: string) { setFilterStat(value); setCurrentPage(1); setOpenDrop(null); }
+  function handleFilterAreaChange(value: string) { setFilterArea(value); setCurrentPage(1); setOpenDrop(null); }
+  function handleClearFilters()                  { setFilterStat('Todos'); setFilterArea('Todos'); setCurrentPage(1); }
 
   const totalProfissionais = profissionais.length;
   const ativos             = profissionais.filter(p => p.status === 'ativo').length;
@@ -378,60 +363,41 @@ export default function Profissionais() {
       if (field === 'cargo') { next.especialidade = ''; next.registro = ''; }
       return next;
     });
-    setErrors(prev => ({ ...prev, [field]: undefined }));
+    if (field === 'nome' || field === 'email' || field === 'telefone')          step1Validation.clearError(field as Step1Field);
+    if (field === 'area')                                                         step2Validation.clearError('area');
+    if (field === 'cargo' || field === 'registro' || field === 'especialidade')  step3Validation.clearError(field as Step3Field);
+    if (field === 'senha' || field === 'confirmarSenha')                         step4Validation.clearError(field as Step4Field);
   }
 
   function validateStep(s: number): boolean {
-    const e: Errors = {};
-    if (s === 1) {
-      if (!form.nome.trim())     e.nome     = 'Nome completo é obrigatório';
-      const emailErr = validateEmail(form.email);
-      if (emailErr)              e.email    = emailErr.message;
-      if (!form.telefone.trim()) e.telefone = 'Telefone é obrigatório';
-    }
-    if (s === 2) {
-      if (!form.area) e.area = 'Selecione uma área';
-    }
-    if (s === 3) {
-      if (!form.cargo)  e.cargo  = 'Selecione o cargo';
-      if (!form.status) e.status = 'Selecione um status';
-      if (cargoConfig?.requiresRegistro && !form.registro.trim())
-        e.registro = `${cargoConfig.registroLabel} é obrigatório`;
-      if (cargoConfig?.requiresEspecialidade && !form.especialidade)
-        e.especialidade = 'Selecione a área de atuação';
-    }
-    if (s === 4) {
-      if (!isEditing) {
-        // Cadastro novo: senha obrigatória
-        const senhaErr = validatePassword(form.senha);
-        if (senhaErr)                    e.senha          = senhaErr.message;
-        if (!form.confirmarSenha.trim()) e.confirmarSenha = ERROR_MESSAGES.PASSWORD_CONFIRM_REQUIRED;
-      } else if (form.senha) {
-        // Edição: se preencheu senha, confirmar também
-        const senhaErr = validatePassword(form.senha);
-        if (senhaErr)                    e.senha          = senhaErr.message;
-        if (!form.confirmarSenha.trim()) e.confirmarSenha = ERROR_MESSAGES.PASSWORD_CONFIRM_REQUIRED;
-      }
-    }
-    setErrors(e);
-    return Object.keys(e).length === 0;
+    if (s === 1) return step1Validation.validate({ nome: form.nome, email: form.email, telefone: form.telefone });
+    if (s === 2) return step2Validation.validate({ area: form.area });
+    if (s === 3) return step3Validation.validate({ cargo: form.cargo, registro: form.registro, especialidade: form.especialidade });
+    if (s === 4) return step4Validation.validate({ senha: form.senha, confirmarSenha: form.confirmarSenha });
+    return true;
   }
 
   function nextStep() { if (!validateStep(step)) return; setStep(s => Math.min(s + 1, 4)); }
-  function prevStep()  { setErrors({}); setStep(s => Math.max(s - 1, 1)); }
+  function prevStep() {
+    step1Validation.clearAll(); step2Validation.clearAll();
+    step3Validation.clearAll(); step4Validation.clearAll();
+    setStep(s => Math.max(s - 1, 1));
+  }
+
+  function clearAllErrors() {
+    step1Validation.clearAll(); step2Validation.clearAll();
+    step3Validation.clearAll(); step4Validation.clearAll();
+  }
 
   function openNew() {
-    setIsEditing(false);
-    setSelectedProfissional(null);
-    setForm(FORM_INITIAL);
-    setErrors({});
-    setStep(1);
-    setIsModalOpen(true);
+    if (!canCreate) return;
+    setIsEditing(false); setSelectedProfissional(null);
+    setForm(FORM_INITIAL); clearAllErrors(); setStep(1); setIsModalOpen(true);
   }
 
   function openEdit(p: Profissional) {
-    setIsEditing(true);
-    setSelectedProfissional(p);
+    if (!canEdit) return;
+    setIsEditing(true); setSelectedProfissional(p);
     setForm({
       nome: p.name, email: p.email, telefone: p.phone,
       area: p.area as AreaType, cargo: p.cargo as Cargo,
@@ -439,64 +405,43 @@ export default function Profissionais() {
       status: p.status, observacoes: p.observacoes || '',
       senha: '', confirmarSenha: '',
     });
-    setErrors({});
-    setStep(1);
-    setIsDetailOpen(false);
-    setIsModalOpen(true);
+    clearAllErrors(); setStep(1); setIsDetailOpen(false); setIsModalOpen(true);
   }
 
-  function openDetail(p: Profissional) {
-    setSelectedProfissional(p);
-    setIsDetailOpen(true);
-  }
+  function openDetail(p: Profissional) { setSelectedProfissional(p); setIsDetailOpen(true); }
 
   function handleClose() {
-    setForm(FORM_INITIAL);
-    setErrors({});
-    setIsModalOpen(false);
-    setSelectedProfissional(null);
-    setStep(1);
-    setShowSenha(false);
-    setShowConfirm(false);
-    setIsEditing(false);
+    setForm(FORM_INITIAL); clearAllErrors(); setIsModalOpen(false);
+    setSelectedProfissional(null); setStep(1);
+    setShowSenha(false); setShowConfirm(false); setIsEditing(false);
   }
 
-  async function handleSave() {
+  function handleSave() {
     if (!validateStep(4)) return;
-    if (form.senha && form.senha !== form.confirmarSenha) {
-      setErrors(prev => ({ ...prev, confirmarSenha: ERROR_MESSAGES.PASSWORD_MISMATCH }));
-      return;
+    if (form.senha && form.senha !== form.confirmarSenha) { step4Validation.clearAll(); return; }
+    const today = new Date().toLocaleDateString('pt-BR');
+    if (isEditing && selectedProfissional) {
+      setProfissionais(prev =>
+        prev.map(p => p.id === selectedProfissional.id
+          ? { ...p, name: form.nome, email: form.email, phone: form.telefone, area: form.area, cargo: form.cargo, especialidade: form.especialidade, registro: form.registro, status: form.status, observacoes: form.observacoes }
+          : p
+        )
+      );
+    } else {
+      setProfissionais(prev => [...prev, {
+        id: Date.now(), name: form.nome, email: form.email, phone: form.telefone,
+        registro: form.registro, area: form.area, cargo: form.cargo,
+        especialidade: form.especialidade, status: 'ativo',
+        atendimentos: 0, ultimoAcesso: today, observacoes: form.observacoes,
+      }]);
     }
-    setSaving(true);
-    try {
-      const backendCargo = CARGO_TO_BACKEND[form.cargo] ?? form.cargo.toUpperCase();
-      const payload = {
-        nome: form.nome,
-        email: form.email,
-        senha: form.senha || '',
-        cargo: backendCargo,
-        telefone: form.telefone || undefined,
-        especialidade: form.especialidade || undefined,
-        registro: form.registro || undefined,
-        observacoes: form.observacoes || undefined,
-      };
-      if (isEditing && selectedProfissional) {
-        await usuariosService.atualizar(selectedProfissional.id, payload);
-        // Se status mudou para inativo, chamar endpoint de inativação
-        if (form.status === 'inativo' && selectedProfissional.status === 'ativo') {
-          await usuariosService.inativar(selectedProfissional.id);
-        }
-      } else {
-        await usuariosService.criar(payload);
-      }
-      await carregarProfissionais();
-      handleClose();
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Erro ao salvar profissional');
-    } finally {
-      setSaving(false);
-    }
+    handleClose();
   }
+
+  const errors1 = step1Validation.errors;
+  const errors2 = step2Validation.errors;
+  const errors3 = step3Validation.errors;
+  const errors4 = step4Validation.errors;
 
   function renderStepContent() {
     switch (step) {
@@ -508,12 +453,12 @@ export default function Profissionais() {
               <div style={{ gridColumn: 'span 2' }}>
                 <Input label="Nome Completo *" placeholder="Ex: Ana Beatriz Lima" value={form.nome}
                   onChange={e => handleChange('nome', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s.]/g, ''))}
-                  maxLength={80} error={errors.nome} />
+                  maxLength={80} error={errors1.nome} />
               </div>
               <Input label="E-mail de Acesso *" type="email" placeholder="Digite seu e-mail"
-                value={form.email} onChange={e => handleChange('email', e.target.value)} error={errors.email} />
+                value={form.email} onChange={e => handleChange('email', e.target.value)} error={errors1.email} />
               <Input label="Telefone *" mask="telefone" value={form.telefone} inputMode="numeric"
-                maxLength={15} onValueChange={v => handleChange('telefone', v)} error={errors.telefone} />
+                maxLength={15} onValueChange={v => handleChange('telefone', v)} error={errors1.telefone} />
             </FormGrid>
           </StepSection>
         );
@@ -521,7 +466,7 @@ export default function Profissionais() {
         return (
           <StepSection>
             <SectionLabel>Selecione a Área de Atuação</SectionLabel>
-            {errors.area && <p style={{ color: '#e74c3c', fontSize: '0.82rem', margin: '4px 0 12px' }}>{errors.area}</p>}
+            {errors2.area && <p style={{ color: '#e74c3c', fontSize: '0.82rem', margin: '4px 0 12px' }}>{errors2.area}</p>}
             <AreaGrid>
               <AreaCard $active={form.area === 'tecnica'} onClick={() => handleChange('area', 'tecnica')}>
                 <AreaIcon><AreaTecnicaIcon /></AreaIcon>
@@ -555,19 +500,29 @@ export default function Profissionais() {
                     );
                   })}
                 </div>
-                {errors.cargo && <p style={{ color: '#e74c3c', fontSize: '0.82rem', marginTop: 6 }}>{errors.cargo}</p>}
+                {errors3.cargo && <p style={{ color: '#e74c3c', fontSize: '0.82rem', marginTop: 6 }}>{errors3.cargo}</p>}
               </div>
-              <Select label="Status *" options={statusOptions} placeholder="Selecione..."
-                value={form.status} onChange={v => handleChange('status', v)} error={errors.status} />
               {cargoConfig?.requiresRegistro && (
                 <Input label={`${cargoConfig.registroLabel} *`} placeholder={cargoConfig.registroPlaceholder}
                   value={form.registro} onChange={e => handleChange('registro', e.target.value.toUpperCase())}
-                  maxLength={30} error={errors.registro} />
+                  maxLength={30} error={errors3.registro} />
               )}
               {cargoConfig?.requiresEspecialidade && cargoConfig.especialidades && (
-                <Select label="Área de Especialização *" options={cargoConfig.especialidades}
+                <Select key={`esp-${form.cargo}`} label="Área de Especialização *" options={cargoConfig.especialidades}
                   placeholder="Selecione..." value={form.especialidade}
-                  onChange={v => handleChange('especialidade', v)} error={errors.especialidade} />
+                  onChange={v => handleChange('especialidade', v)} error={errors3.especialidade} />
+              )}
+              {isEditing && (
+                <div style={{ gridColumn: cargoConfig?.requiresRegistro || cargoConfig?.requiresEspecialidade ? 'auto' : 'span 2' }}>
+                  <Select key={`status-${selectedProfissional?.id}`} label="Status do Profissional"
+                    options={statusOptions} value={form.status} onChange={v => handleChange('status', v)} />
+                  {form.status === 'inativo' && (
+                    <div style={{ padding: '8px 12px', borderLeft: '3px solid #856404', borderRadius: 8, color: '#856404', fontSize: '0.82rem', display: 'flex', alignItems: 'flex-start', gap: 8, marginTop: 2 }}>
+                      <svg style={{ flexShrink: 0, marginTop: 1 }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                      O acesso deste profissional ao sistema será desativado.
+                    </div>
+                  )}
+                </div>
               )}
               <div style={{ gridColumn: 'span 2' }}>
                 <Input label="Observações" placeholder="Informações adicionais sobre o profissional..."
@@ -584,7 +539,7 @@ export default function Profissionais() {
               <div style={{ position: 'relative' }}>
                 <Input label={isEditing ? 'Nova Senha' : 'Senha *'} type={showSenha ? 'text' : 'password'}
                   placeholder="Digite sua senha" value={form.senha}
-                  onChange={e => handleChange('senha', e.target.value)} error={errors.senha} />
+                  onChange={e => handleChange('senha', e.target.value)} error={errors4.senha} />
                 <EyeBtn type="button" onClick={() => setShowSenha(p => !p)} tabIndex={-1}>
                   {showSenha ? <EyeOffIcon /> : <EyeOnIcon />}
                 </EyeBtn>
@@ -592,7 +547,7 @@ export default function Profissionais() {
               <div style={{ position: 'relative' }}>
                 <Input label={isEditing ? 'Confirmar Nova Senha' : 'Confirmar Senha *'} type={showConfirm ? 'text' : 'password'}
                   placeholder="Digite sua senha" value={form.confirmarSenha}
-                  onChange={e => handleChange('confirmarSenha', e.target.value)} error={errors.confirmarSenha} />
+                  onChange={e => handleChange('confirmarSenha', e.target.value)} error={errors4.confirmarSenha} />
                 <EyeBtn type="button" onClick={() => setShowConfirm(p => !p)} tabIndex={-1}>
                   {showConfirm ? <EyeOffIcon /> : <EyeOnIcon />}
                 </EyeBtn>
@@ -607,9 +562,9 @@ export default function Profissionais() {
                     ['Telefone',      form.telefone],
                     ['Área',          form.area === 'tecnica' ? 'Técnica' : 'Administrativa'],
                     ['Cargo',         cargoConfig?.label || '—'],
-                    ['Especialidade', form.especialidade || '—'],
+                    ['Especialidade', cargoConfig?.especialidades?.find(e => e.value === form.especialidade)?.label || form.especialidade || '—'],
                     ['Registro',      form.registro || '—'],
-                    ['Status',        form.status === 'ativo' ? 'Ativo' : 'Inativo'],
+                    ...(isEditing ? [['Status', form.status === 'ativo' ? 'Ativo' : 'Inativo'] as [string, string]] : []),
                   ] as [string, string][]).map(([label, value]) => (
                     <div key={label}>
                       <span style={{ fontSize: '0.72rem', color: '#bbb', display: 'block' }}>{label}</span>
@@ -633,22 +588,57 @@ export default function Profissionais() {
       }
       {step < 4
         ? <Button variant="primary" onClick={nextStep}>Continuar →</Button>
-        : <Button variant="primary" onClick={handleSave} disabled={saving}>{saving ? 'Salvando...' : isEditing ? 'Salvar Alterações' : 'Cadastrar Profissional'}</Button>
+        : <Button variant="primary" onClick={handleSave}>{isEditing ? 'Salvar Alterações' : 'Cadastrar Profissional'}</Button>
       }
     </WizardNav>
   );
 
+  if (!canRead) {
+    return (
+      <Container>
+        {currentUser && roleColors && (
+          <UserSwitcherBar>
+            <UserSwitcherInfo>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <UserSwitcherName>Logado como {currentUser.name}</UserSwitcherName>
+              <UserSwitcherBadge $bg={roleColors.bg} $color={roleColors.color}>{roleLabel}</UserSwitcherBadge>
+            </UserSwitcherInfo>
+            <UserSwitcherBtn onClick={() => setShowLoginModal(true)}>Trocar perfil</UserSwitcherBtn>
+          </UserSwitcherBar>
+        )}
+        <PermissionGuard permission="profissionais.read" showDenied />
+        {showLoginModal && <MockLoginScreen onClose={() => setShowLoginModal(false)} />}
+      </Container>
+    );
+  }
+
   return (
     <Container>
+      {currentUser && roleColors && (
+        <UserSwitcherBar>
+          <UserSwitcherInfo>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <UserSwitcherName>Logado como <strong>{currentUser.name}</strong></UserSwitcherName>
+            <UserSwitcherBadge $bg={roleColors.bg} $color={roleColors.color}>{roleLabel}</UserSwitcherBadge>
+          </UserSwitcherInfo>
+          <UserSwitcherBtn onClick={() => setShowLoginModal(true)}>Trocar perfil</UserSwitcherBtn>
+        </UserSwitcherBar>
+      )}
+
       <Header>
         <Title>Profissionais</Title>
-        <Button
-          variant="primary"
-          icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>}
-          onClick={openNew}
-        >
-          Cadastrar Profissional
-        </Button>
+        <PermissionGuard permission="profissionais.create">
+          <Button
+            variant="primary"
+            icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>}
+            onClick={openNew}
+          >
+            Cadastrar Profissional
+          </Button>
+        </PermissionGuard>
       </Header>
 
       <StatsGrid>
@@ -668,14 +658,15 @@ export default function Profissionais() {
 
       <Controls>
         <SearchBarWrapper>
-          {/* Hidden honeypot fields to prevent browser autofill on the search input */}
           <input type="text" name="prevent-autofill-name" autoComplete="off" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
           <input type="email" name="prevent-autofill-email" autoComplete="off" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
           <input type="password" name="prevent-autofill-pass" autoComplete="off" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
           <SearchIconWrap>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           </SearchIconWrap>
-          <SearchInputStyled type="search" placeholder="Buscar por nome ou e-mail..." value={search} onChange={e => handleSearchChange(e.target.value)} autoComplete="off" name="search-profissionais-filter" data-form-type="other" data-lpignore="true" />
+          <SearchInputStyled type="search" placeholder="Buscar por nome ou e-mail..." value={search}
+            onChange={e => handleSearchChange(e.target.value)} autoComplete="off"
+            name="search-profissionais-filter" data-form-type="other" data-lpignore="true" />
         </SearchBarWrapper>
         <FilterRow>
           <DropdownWrapper>
@@ -731,20 +722,7 @@ export default function Profissionais() {
               </tr>
             </Thead>
             <Tbody>
-              {loading ? (
-                <tr><td colSpan={10}>
-                  <EmptyState><p>Carregando profissionais...</p></EmptyState>
-                </td></tr>
-              ) : loadError ? (
-                <tr><td colSpan={10}>
-                  <EmptyState>
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    <h3>Erro ao carregar dados</h3>
-                    <p>{loadError}</p>
-                    <Button variant="outline" onClick={carregarProfissionais} style={{ marginTop: 12 }}>Tentar novamente</Button>
-                  </EmptyState>
-                </td></tr>
-              ) : paginatedData.length === 0 ? (
+              {paginatedData.length === 0 ? (
                 <tr><td colSpan={10}>
                   <EmptyState>
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -776,7 +754,7 @@ export default function Profissionais() {
                       {ALL_CARGO_CONFIG[p.cargo]?.label || p.cargo}
                     </RoleTag>
                   </Td>
-                  <Td $muted>{p.especialidade || '—'}</Td>
+                  <Td $muted>{getEspecialidadeLabel(p.cargo, p.especialidade)}</Td>
                   <Td>
                     {p.registro
                       ? <code style={{ fontSize: '0.71rem', color: '#888', background: '#f5f5f5', padding: '2px 5px', borderRadius: 4 }}>{p.registro}</code>
@@ -799,12 +777,14 @@ export default function Profissionais() {
                           <line x1="12" y1="16" x2="12.01" y2="16"/>
                         </svg>
                       </IconBtn>
-                      <IconBtn title="Editar" onClick={() => openEdit(p)}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                        </svg>
-                      </IconBtn>
+                      {canEdit && (
+                        <IconBtn title="Editar" onClick={() => openEdit(p)}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          </svg>
+                        </IconBtn>
+                      )}
                     </ActionGroup>
                   </Td>
                 </Tr>
@@ -828,13 +808,15 @@ export default function Profissionais() {
         size="lg"
         footer={
           <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'space-between' }}>
-            <Button
-              variant="outline"
-              icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
-              onClick={() => selectedProfissional && openEdit(selectedProfissional)}
-            >
-              Editar Ficha
-            </Button>
+            <PermissionGuard permission="profissionais.edit">
+              <Button
+                variant="outline"
+                icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
+                onClick={() => selectedProfissional && openEdit(selectedProfissional)}
+              >
+                Editar Ficha
+              </Button>
+            </PermissionGuard>
             <Button variant="outline" onClick={() => setIsDetailOpen(false)}>Fechar</Button>
           </div>
         }
@@ -891,7 +873,7 @@ export default function Profissionais() {
                 {selectedProfissional.especialidade && (
                   <InfoItem>
                     <InfoLabel>Especialidade</InfoLabel>
-                    <InfoValue>{selectedProfissional.especialidade}</InfoValue>
+                    <InfoValue>{getEspecialidadeLabel(selectedProfissional.cargo, selectedProfissional.especialidade)}</InfoValue>
                   </InfoItem>
                 )}
                 {selectedProfissional.registro && (
@@ -920,37 +902,40 @@ export default function Profissionais() {
         )}
       </Modal>
 
-      <Modal
-        isOpen={isModalOpen}
-        onClose={handleClose}
-        closeOnOverlayClick={false}
-        title={isEditing ? 'Editar Profissional' : 'Cadastrar Profissional'}
-        size="lg"
-        footer={modalFooter}
-      >
-        <form autoComplete="off" onSubmit={e => e.preventDefault()} style={{ display: 'contents' }}>
-          <WizardSteps>
-            {STEP_LABELS.map((label, idx) => {
-              const num     = idx + 1;
-              const done    = num < step;
-              const current = num === step;
-              return (
-                <WizardStep key={num}>
-                  {idx > 0 && <WizardStepLine $done={done || current} />}
-                  <WizardStepCircle $done={done} $current={current}>
-                    {done
-                      ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
-                      : num
-                    }
-                  </WizardStepCircle>
-                  <WizardStepLabel $current={current}>{label}</WizardStepLabel>
-                </WizardStep>
-              );
-            })}
-          </WizardSteps>
-          {renderStepContent()}
-        </form>
-      </Modal>
+      <PermissionGuard anyOf={['profissionais.create', 'profissionais.edit']}>
+        <Modal
+          isOpen={isModalOpen}
+          onClose={handleClose}
+          closeOnOverlayClick={false}
+          title={isEditing ? 'Editar Profissional' : 'Cadastrar Profissional'}
+          size="lg"
+          footer={modalFooter}
+        >
+          <form autoComplete="off" onSubmit={e => e.preventDefault()} style={{ display: 'contents' }}>
+            <WizardSteps>
+              {STEP_LABELS.map((label, idx) => {
+                const num     = idx + 1;
+                const done    = num < step;
+                const current = num === step;
+                return (
+                  <WizardStep key={num}>
+                    {idx > 0 && <WizardStepLine $done={done || current} />}
+                    <WizardStepCircle $done={done} $current={current}>
+                      {done
+                        ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                        : num
+                      }
+                    </WizardStepCircle>
+                    <WizardStepLabel $current={current}>{label}</WizardStepLabel>
+                  </WizardStep>
+                );
+              })}
+            </WizardSteps>
+            {renderStepContent()}
+          </form>
+        </Modal>
+      </PermissionGuard>
+      {showLoginModal && <MockLoginScreen onClose={() => setShowLoginModal(false)} />}
     </Container>
   );
 }

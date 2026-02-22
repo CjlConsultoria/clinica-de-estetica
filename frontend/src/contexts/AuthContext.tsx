@@ -1,16 +1,12 @@
 'use client';
-import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
-import { authService } from '@/services/auth.service';
-import { setToken, removeToken } from '@/lib/api';
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { CurrentUser, MOCK_USERS as PERMISSION_USERS, Role } from '@/types/auth';
 
 export interface User {
   id: string;
   name: string;
   email: string;
   role: 'admin' | 'seller';
-  cargo?: string;
-  cargoDescricao?: string;
-  areaProfissional?: string;
 }
 
 interface LoginCredentials {
@@ -18,68 +14,63 @@ interface LoginCredentials {
   password: string;
 }
 
+const MOCK_LOGIN_USERS = [
+  { id: '1', name: 'Administrador', email: 'admin@gmail.com', password: '12345678', role: 'admin' as const },
+];
+
 interface AuthContextType {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
   login: (credentials: LoginCredentials) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  currentUser: CurrentUser | null;
+  switchUser: (userId: number) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const USER_KEY = 'clinica_user';
-const TOKEN_KEY = 'clinica_token';
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setTokenState] = useState<string | null>(null);
-
-  useEffect(() => {
-    const savedToken = localStorage.getItem(TOKEN_KEY);
-    const savedUser  = localStorage.getItem(USER_KEY);
-    if (savedToken && savedUser) {
-      try {
-        setTokenState(savedToken);
-        setUser(JSON.parse(savedUser));
-      } catch {
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(USER_KEY);
-      }
-    }
-  }, []);
+  const [user, setUser]               = useState<User | null>(null);
+  const [token, setToken]             = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(PERMISSION_USERS[0]);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
-    try {
-      const data = await authService.login({ email: credentials.email, senha: credentials.password });
-
-      const userData: User = {
-        id:    String(data.usuarioId),
-        name:  data.nome,
-        email: data.email,
-        role:  data.role === 'ADMIN' ? 'admin' : 'seller',
-      };
-
+    const found = MOCK_LOGIN_USERS.find(
+      (u) => u.email === credentials.email && u.password === credentials.password
+    );
+    if (found) {
+      const { password, ...userData } = found;
       setUser(userData);
-      setTokenState(data.token);
-      localStorage.setItem(USER_KEY, JSON.stringify(userData));
-
+      setToken('mock-token');
+      setCurrentUser(PERMISSION_USERS[0]);
       return { success: true };
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Erro ao fazer login.';
-      return { success: false, error: message };
     }
+    return { success: false, error: 'E-mail ou senha incorretos.' };
   }, []);
 
   const logout = useCallback(() => {
-    authService.logout();
     setUser(null);
-    setTokenState(null);
-    localStorage.removeItem(USER_KEY);
+    setToken(null);
+    setCurrentUser(null);
+  }, []);
+
+  const switchUser = useCallback((userId: number) => {
+    const found = PERMISSION_USERS.find((u) => u.id === userId) ?? null;
+    setCurrentUser(found);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated: !!user, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        isAuthenticated: !!user,
+        login,
+        logout,
+        currentUser,
+        switchUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

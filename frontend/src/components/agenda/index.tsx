@@ -1,12 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
+import CancelModal from '@/components/modals/cancelModal';
+import ConfirmModal from '@/components/modals/confirmModal';
+import SucessModal from '@/components/modals/sucessModal';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
-import { agendamentosService, Agendamento } from '@/services/agendamentos.service';
+import { usePermissions } from '@/components/ui/hooks/usePermissions';
+import AccessDenied from '@/components/ui/AccessDenied';
 import {
   Container, Header, Title, ActionsRow,
   CalendarNav, CalendarTitle, CalendarGrid, DayHeader,
@@ -16,36 +20,35 @@ import {
 } from './styles';
 
 const NAV_MIN = { year: 2025, month: 0  };
-const NAV_MAX = { year: 2027, month: 11 };
+const NAV_MAX = { year: 2026, month: 11 };
 
 const procedureOptions = [
-  { value: 'Botox Facial',         label: 'Botox Facial' },
-  { value: 'Preenchimento Labial', label: 'Preenchimento Labial' },
-  { value: 'Bioestimulador',       label: 'Bioestimulador' },
-  { value: 'Fio de PDO',           label: 'Fio de PDO' },
-  { value: 'Microagulhamento',     label: 'Microagulhamento' },
-  { value: 'Toxina Botulínica',    label: 'Toxina Botulínica' },
+  { value: 'botox',            label: 'Botox Facial'        },
+  { value: 'preenchimento',    label: 'Preenchimento Labial' },
+  { value: 'bioestimulador',   label: 'Bioestimulador'       },
+  { value: 'fio-pdo',          label: 'Fio de PDO'           },
+  { value: 'microagulhamento', label: 'Microagulhamento'     },
+  { value: 'toxina',           label: 'Toxina Botulínica'    },
 ];
 
 const statusOptions = [
-  { value: 'CONFIRMADO', label: 'Confirmado' },
-  { value: 'AGENDADO',   label: 'Agendado'   },
-  { value: 'CANCELADO',  label: 'Cancelado'  },
+  { value: 'confirmado', label: 'Confirmado' },
+  { value: 'aguardando', label: 'Aguardando' },
+  { value: 'cancelado',  label: 'Cancelado'  },
 ];
 
-function getProcedureColor(proc: string): string {
-  const lower = proc.toLowerCase();
-  if (lower.includes('botox') || lower.includes('toxina')) return '#BBA188';
-  if (lower.includes('preenchimento'))                      return '#EBD5B0';
-  if (lower.includes('bioestimulador'))                     return '#1b1b1b';
-  if (lower.includes('fio'))                               return '#a8906f';
-  if (lower.includes('microagulhamento'))                  return '#8a7560';
-  return '#BBA188';
-}
+const PROCEDURE_COLOR: Record<string, string> = {
+  botox:            '#BBA188',
+  toxina:           '#BBA188',
+  preenchimento:    '#EBD5B0',
+  bioestimulador:   '#1b1b1b',
+  'fio-pdo':        '#a8906f',
+  microagulhamento: '#8a7560',
+};
 
 interface CalEvent {
-  id: number;
-  weekDay: number; hour: number; year: number; month: number; monthDay: number;
+  id: number; weekDay: number; hour: number;
+  year: number; month: number; monthDay: number;
   name: string; procedure: string; color: string;
 }
 
@@ -63,67 +66,67 @@ const FORM_INITIAL: AgendamentoForm = {
   procedimento: '', status: '', valor: '', observacoes: '',
 };
 
+const INITIAL_EVENTS: CalEvent[] = [
+  { id: 1, weekDay: 0, hour: 8,  year: 2026, month: 1, monthDay: 1,  name: 'Ana Beatriz',   procedure: 'Botox Facial',      color: '#BBA188' },
+  { id: 2, weekDay: 0, hour: 10, year: 2026, month: 1, monthDay: 1,  name: 'Carla M.',      procedure: 'Preenchimento',     color: '#EBD5B0' },
+  { id: 3, weekDay: 1, hour: 9,  year: 2026, month: 1, monthDay: 9,  name: 'Fernanda Lima', procedure: 'Bioestimulador',    color: '#1b1b1b' },
+  { id: 4, weekDay: 3, hour: 14, year: 2026, month: 1, monthDay: 11, name: 'Marina Souza',  procedure: 'Fio PDO',           color: '#a8906f' },
+  { id: 5, weekDay: 4, hour: 11, year: 2026, month: 1, monthDay: 19, name: 'Juliana R.',    procedure: 'Toxina Botulínica', color: '#BBA188' },
+  { id: 6, weekDay: 5, hour: 15, year: 2026, month: 1, monthDay: 20, name: 'Patrícia A.',   procedure: 'Microagulhamento',  color: '#8a7560' },
+];
+
 const VALIDATION_FIELDS = [
-  { key: 'nome'         as AgendamentoField, validate: (v: string) => !v.trim() ? 'Nome do paciente é obrigatório' : null },
-  { key: 'telefone'     as AgendamentoField, validate: (v: string) => !v.trim() ? 'Telefone é obrigatório' : null },
-  { key: 'data'         as AgendamentoField, validate: (v: string) => !v ? 'Data é obrigatória' : null },
-  { key: 'horario'      as AgendamentoField, validate: (v: string) => !v ? 'Horário é obrigatório' : null },
-  { key: 'procedimento' as AgendamentoField, validate: (v: string) => !v ? 'Selecione um procedimento' : null },
-  { key: 'status'       as AgendamentoField, validate: (v: string) => !v ? 'Selecione um status' : null },
+  { key: 'nome'         as AgendamentoField, validate: (v: string) => !v.trim() ? 'Nome do paciente é obrigatório'    : null },
+  { key: 'telefone'     as AgendamentoField, validate: (v: string) => !v.trim() ? 'Telefone é obrigatório'            : null },
+  { key: 'data'         as AgendamentoField, validate: (v: string) => !v        ? 'Data é obrigatória'                : null },
+  { key: 'horario'      as AgendamentoField, validate: (v: string) => !v        ? 'Horário é obrigatório'             : null },
+  { key: 'procedimento' as AgendamentoField, validate: (v: string) => !v        ? 'Selecione um procedimento'         : null },
+  { key: 'status'       as AgendamentoField, validate: (v: string) => !v        ? 'Selecione um status'               : null },
   { key: 'valor'        as AgendamentoField, validate: (v: string) => !v.trim() || v === 'R$ 0,00' ? 'Informe o valor do procedimento' : null },
 ];
 
-function apiAgendamentoToCalEvent(a: Agendamento): CalEvent {
-  const d = new Date(a.dataHora);
-  return {
-    id:        a.id,
-    weekDay:   d.getDay(),
-    hour:      d.getHours(),
-    year:      d.getFullYear(),
-    month:     d.getMonth(),
-    monthDay:  d.getDate(),
-    name:      a.pacienteNome ?? 'Paciente',
-    procedure: a.procedimento,
-    color:     getProcedureColor(a.procedimento),
-  };
-}
+function parseHour(h: string)       { return parseInt(h.split(':')[0], 10); }
+function parseDayOfMonth(d: string) { return parseInt(d.split('-')[2], 10); }
+function parseDayOfWeek(d: string)  { return new Date(`${d}T12:00:00`).getDay(); }
+function parseYear(d: string)       { return parseInt(d.split('-')[0], 10); }
+function parseMonth(d: string)      { return parseInt(d.split('-')[1], 10) - 1; }
 
 function getWeekDaysForMonth(year: number, month: number): Date[] {
   const anchor = new Date(year, month, 1);
   const start  = new Date(anchor);
   start.setDate(anchor.getDate() - anchor.getDay());
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(start);
-    d.setDate(start.getDate() + i);
-    return d;
-  });
+  return Array.from({ length: 7 }, (_, i) => { const d = new Date(start); d.setDate(start.getDate() + i); return d; });
 }
 
-function parseCurrencyToNumber(v: string): number {
-  return parseFloat(v.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+function isFormDirty(form: AgendamentoForm): boolean {
+  return form.nome.trim() !== '' || form.telefone.trim() !== '' || form.data !== '' ||
+    form.horario !== '' || form.procedimento !== '' || form.status !== '' ||
+    form.valor.trim() !== '' || form.observacoes.trim() !== '';
 }
 
 export default function Agenda() {
+  const { can, isSuperAdmin } = usePermissions();
   const today = new Date();
 
   const [view,        setView]        = useState<'semana' | 'mes'>('semana');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [saving,      setSaving]      = useState(false);
   const [form,        setForm]        = useState<AgendamentoForm>(FORM_INITIAL);
-  const [events,      setEvents]      = useState<CalEvent[]>([]);
+  const [events,      setEvents]      = useState<CalEvent[]>(INITIAL_EVENTS);
+  const [nextId,      setNextId]      = useState(100);
   const [navYear,     setNavYear]     = useState(today.getFullYear());
   const [navMonth,    setNavMonth]    = useState(today.getMonth());
   const [weekOffset,  setWeekOffset]  = useState(0);
+  const [showCancelModal,  setShowCancelModal]  = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage,   setSuccessMessage]   = useState('');
 
   const { errors, validate, clearError, clearAll } =
     useSequentialValidation<AgendamentoField>(VALIDATION_FIELDS);
 
-  // Carregar agendamentos da API
-  useEffect(() => {
-    agendamentosService.listar()
-      .then(data => setEvents(data.map(apiAgendamentoToCalEvent)))
-      .catch(() => setEvents([]));
-  }, []);
+  if (!isSuperAdmin && !can('agenda.read') && !can('agenda.read_own')) return <AccessDenied />;
+
+  const canCreate = isSuperAdmin || can('agenda.create');
 
   const isAtMin = navYear === NAV_MIN.year && navMonth === NAV_MIN.month;
   const isAtMax = navYear === NAV_MAX.year && navMonth === NAV_MAX.month;
@@ -134,7 +137,6 @@ export default function Agenda() {
     if (navMonth === 0) { setNavYear(y => y - 1); setNavMonth(11); }
     else { setNavMonth(m => m - 1); }
   }
-
   function goToNext() {
     if (isAtMax) return;
     setWeekOffset(0);
@@ -144,76 +146,46 @@ export default function Agenda() {
 
   const firstDay    = new Date(navYear, navMonth, 1).getDay();
   const daysInMonth = new Date(navYear, navMonth + 1, 0).getDate();
-  const calCells    = Array.from({ length: 42 }, (_, i) => {
-    const dayNum = i - firstDay + 1;
-    return dayNum > 0 && dayNum <= daysInMonth ? dayNum : null;
-  });
-  const monthName = new Date(navYear, navMonth, 1)
-    .toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-
+  const calCells    = Array.from({ length: 42 }, (_, i) => { const d = i - firstDay + 1; return d > 0 && d <= daysInMonth ? d : null; });
+  const monthName   = new Date(navYear, navMonth, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   const isCurrentMonth = navYear === today.getFullYear() && navMonth === today.getMonth();
-  const baseWeekDays   = isCurrentMonth
-    ? (() => {
-        const s = new Date(today);
-        s.setDate(today.getDate() - today.getDay());
-        return Array.from({ length: 7 }, (_, i) => { const d = new Date(s); d.setDate(s.getDate() + i); return d; });
-      })()
+
+  const baseWeekDays = isCurrentMonth
+    ? (() => { const s = new Date(today); s.setDate(today.getDate() - today.getDay()); return Array.from({ length: 7 }, (_, i) => { const d = new Date(s); d.setDate(s.getDate() + i); return d; }); })()
     : getWeekDaysForMonth(navYear, navMonth);
 
-  const weekDays = baseWeekDays.map(d => {
-    const shifted = new Date(d);
-    shifted.setDate(d.getDate() + weekOffset * 7);
-    return shifted;
-  });
-
+  const weekDays = baseWeekDays.map(d => { const s = new Date(d); s.setDate(d.getDate() + weekOffset * 7); return s; });
   const weekTitle = `${weekDays[0].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} – ${weekDays[6].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}`;
 
-  function handleChange(field: keyof AgendamentoForm, value: string) {
-    setForm(prev => ({ ...prev, [field]: value }));
-    clearError(field as AgendamentoField);
-  }
-
+  function handleChange(field: keyof AgendamentoForm, value: string) { setForm(prev => ({ ...prev, [field]: value })); clearError(field as AgendamentoField); }
+  function handleMaskedChange(field: keyof AgendamentoForm, value: string) { setForm(prev => ({ ...prev, [field]: value })); clearError(field as AgendamentoField); }
   function handleDataChange(raw: string) {
     if (!raw) { handleChange('data', ''); return; }
     const [yearStr, month, day] = raw.split('-');
-    const safeYear = yearStr ? yearStr.slice(0, 4) : '';
-    handleChange('data', `${safeYear}-${month ?? ''}-${day ?? ''}`);
+    handleChange('data', `${(yearStr || '').slice(0, 4)}-${month ?? ''}-${day ?? ''}`);
   }
-
-  function handleCloseModal() {
-    setForm(FORM_INITIAL);
-    clearAll();
-    setIsModalOpen(false);
-  }
-
-  async function handleSave() {
-    const isValid = validate({
-      nome: form.nome, telefone: form.telefone, data: form.data,
-      horario: form.horario, procedimento: form.procedimento,
-      status: form.status, valor: form.valor,
-    });
+  function handleCancelClick() { isFormDirty(form) ? setShowCancelModal(true) : forceClose(); }
+  function forceClose() { setForm(FORM_INITIAL); clearAll(); setIsModalOpen(false); setShowCancelModal(false); setShowConfirmModal(false); }
+  function handleSaveClick() {
+    const isValid = validate({ nome: form.nome, telefone: form.telefone, data: form.data, horario: form.horario, procedimento: form.procedimento, status: form.status, valor: form.valor });
     if (!isValid) return;
-
-    setSaving(true);
-    try {
-      const dataHora = `${form.data}T${form.horario}:00`;
-      const novoAgend = await agendamentosService.criar({
-        dataHora,
-        procedimento:     form.procedimento,
-        status:           form.status,
-        valor:            parseCurrencyToNumber(form.valor),
-        observacoes:      form.observacoes || undefined,
-        nomePaciente:     form.nome,
-        telefonePaciente: form.telefone,
-      });
-      setEvents(prev => [...prev, apiAgendamentoToCalEvent(novoAgend)]);
-      handleCloseModal();
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Erro ao salvar agendamento');
-    } finally {
-      setSaving(false);
-    }
+    setShowConfirmModal(true);
   }
+  function handleConfirmSave() {
+    const procedureLabel = procedureOptions.find(p => p.value === form.procedimento)?.label ?? form.procedimento;
+    const novoEvento: CalEvent = {
+      id: nextId, weekDay: parseDayOfWeek(form.data), hour: parseHour(form.horario),
+      year: parseYear(form.data), month: parseMonth(form.data), monthDay: parseDayOfMonth(form.data),
+      name: form.nome, procedure: procedureLabel, color: PROCEDURE_COLOR[form.procedimento] ?? '#BBA188',
+    };
+    setEvents(prev => [...prev, novoEvento]);
+    setNextId(n => n + 1);
+    setShowConfirmModal(false);
+    setIsModalOpen(false);
+    setSuccessMessage('Agendamento salvo com sucesso!');
+    setShowSuccessModal(true);
+  }
+  function handleSuccessClose() { setShowSuccessModal(false); setSuccessMessage(''); setForm(FORM_INITIAL); clearAll(); }
 
   return (
     <Container>
@@ -224,13 +196,11 @@ export default function Agenda() {
             <ToggleBtn $active={view === 'semana'} onClick={() => setView('semana')}>Semana</ToggleBtn>
             <ToggleBtn $active={view === 'mes'}    onClick={() => setView('mes')}>Mês</ToggleBtn>
           </ToggleGroup>
-          <Button
-            variant="primary"
-            icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>}
-            onClick={() => setIsModalOpen(true)}
-          >
-            Novo Agendamento
-          </Button>
+          {canCreate && (
+            <Button variant="primary" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>} onClick={() => setIsModalOpen(true)}>
+              Novo Agendamento
+            </Button>
+          )}
         </ActionsRow>
       </Header>
 
@@ -238,21 +208,14 @@ export default function Agenda() {
         <button className="nav-btn" onClick={goToPrev} disabled={isAtMin} style={{ opacity: isAtMin ? 0.3 : 1, cursor: isAtMin ? 'not-allowed' : 'pointer' }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
-        <CalendarTitle>
-          {view === 'semana' ? weekTitle : monthName.charAt(0).toUpperCase() + monthName.slice(1)}
-        </CalendarTitle>
+        <CalendarTitle>{view === 'semana' ? weekTitle : monthName.charAt(0).toUpperCase() + monthName.slice(1)}</CalendarTitle>
         <button className="nav-btn" onClick={goToNext} disabled={isAtMax} style={{ opacity: isAtMax ? 0.3 : 1, cursor: isAtMax ? 'not-allowed' : 'pointer' }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
         </button>
       </CalendarNav>
 
       <Legend>
-        {[
-          { label: 'Botox/Toxina',   color: '#BBA188' },
-          { label: 'Preenchimento',  color: '#EBD5B0' },
-          { label: 'Bioestimulador', color: '#1b1b1b' },
-          { label: 'Outros',         color: '#a8906f' },
-        ].map(l => (
+        {[{ label: 'Botox/Toxina', color: '#BBA188' }, { label: 'Preenchimento', color: '#EBD5B0' }, { label: 'Bioestimulador', color: '#1b1b1b' }, { label: 'Outros', color: '#a8906f' }].map(l => (
           <LegendItem key={l.label}><LegendDot $color={l.color} />{l.label}</LegendItem>
         ))}
       </Legend>
@@ -266,17 +229,7 @@ export default function Agenda() {
               const dayEvents = events.filter(e => e.year === navYear && e.month === navMonth && e.monthDay === day);
               return (
                 <DayCell key={i} $isToday={isToday} $isEmpty={!day}>
-                  {day && (
-                    <>
-                      <DayNumber $isToday={isToday}>{day}</DayNumber>
-                      <EventsWrap>
-                        {dayEvents.slice(0, 3).map(ev => (
-                          <EventChip key={ev.id} $color={ev.color}>{ev.name.split(' ')[0]}</EventChip>
-                        ))}
-                        {dayEvents.length > 3 && <EventChip $color="#999">+{dayEvents.length - 3}</EventChip>}
-                      </EventsWrap>
-                    </>
-                  )}
+                  {day && (<><DayNumber $isToday={isToday}>{day}</DayNumber><EventsWrap>{dayEvents.slice(0, 3).map(ev => <EventChip key={ev.id} $color={ev.color}>{ev.name.split(' ')[0]}</EventChip>)}{dayEvents.length > 3 && <EventChip $color="#999">+{dayEvents.length - 3}</EventChip>}</EventsWrap></>)}
                 </DayCell>
               );
             })}
@@ -289,9 +242,7 @@ export default function Agenda() {
             {weekDays.map((d, i) => (
               <div key={i} style={{ padding: '12px 8px', textAlign: 'center' }}>
                 <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{DAYS[i]}</div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: d.toDateString() === today.toDateString() ? '#fff' : 'rgba(255,255,255,0.9)', background: d.toDateString() === today.toDateString() ? 'rgba(255,255,255,0.25)' : 'transparent', borderRadius: 8, padding: '2px 0', marginTop: 2 }}>
-                  {d.getDate()}
-                </div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: d.toDateString() === today.toDateString() ? '#fff' : 'rgba(255,255,255,0.9)', background: d.toDateString() === today.toDateString() ? 'rgba(255,255,255,0.25)' : 'transparent', borderRadius: 8, padding: '2px 0', marginTop: 2 }}>{d.getDate()}</div>
               </div>
             ))}
           </div>
@@ -300,20 +251,8 @@ export default function Agenda() {
               <SlotRow key={hi}>
                 <TimeLabel>{hour}</TimeLabel>
                 {weekDays.map((d, di) => {
-                  const slotEvents = events.filter(e =>
-                    e.year === d.getFullYear() && e.month === d.getMonth() &&
-                    e.monthDay === d.getDate() && e.hour === hi + 8
-                  );
-                  return (
-                    <TimeSlot key={di}>
-                      {slotEvents.map(ev => (
-                        <EventBlock key={ev.id} $color={ev.color}>
-                          <strong>{ev.name}</strong>
-                          <span>{ev.procedure}</span>
-                        </EventBlock>
-                      ))}
-                    </TimeSlot>
-                  );
+                  const slotEvents = events.filter(e => e.year === d.getFullYear() && e.month === d.getMonth() && e.monthDay === d.getDate() && e.hour === hi + 8);
+                  return (<TimeSlot key={di}>{slotEvents.map(ev => <EventBlock key={ev.id} $color={ev.color}><strong>{ev.name}</strong><span>{ev.procedure}</span></EventBlock>)}</TimeSlot>);
                 })}
               </SlotRow>
             ))}
@@ -321,45 +260,24 @@ export default function Agenda() {
         </WeekView>
       )}
 
-      <Modal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        title="Novo Agendamento"
-        size="md"
-        footer={
-          <>
-            <Button variant="outline" onClick={handleCloseModal}>Cancelar</Button>
-            <Button variant="primary" onClick={handleSave} loading={saving}>
-              {saving ? 'Salvando...' : 'Salvar Agendamento'}
-            </Button>
-          </>
-        }
+      <Modal isOpen={isModalOpen} onClose={handleCancelClick} closeOnOverlayClick={false} title="Novo Agendamento" size="md"
+        footer={<><Button variant="outline" onClick={handleCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveClick}>Salvar Agendamento</Button></>}
       >
         <FormGrid>
-          <Input
-            label="Nome do Paciente *" placeholder="Digite o nome..."
-            value={form.nome}
-            onChange={e => handleChange('nome', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))}
-            maxLength={80} error={errors.nome}
-          />
-          <Input
-            label="Telefone *" mask="telefone" value={form.telefone}
-            inputMode="numeric" maxLength={15}
-            onValueChange={v => { setForm(p => ({ ...p, telefone: v })); clearError('telefone'); }}
-            error={errors.telefone}
-          />
+          <Input label="Nome do Paciente *" placeholder="Digite o nome..." value={form.nome} onChange={e => handleChange('nome', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))} maxLength={80} error={errors.nome} />
+          <Input label="Telefone *" mask="telefone" value={form.telefone} inputMode="numeric" maxLength={15} onValueChange={v => handleMaskedChange('telefone', v)} error={errors.telefone} />
           <Input label="Data *" type="date" value={form.data} onChange={e => handleDataChange(e.target.value)} error={errors.data} />
           <Input label="Horário *" type="time" value={form.horario} onChange={e => handleChange('horario', e.target.value)} error={errors.horario} />
-          <div style={{ gridColumn: 'span 2' }}>
-            <Select label="Procedimento *" placeholder="Selecione..." options={procedureOptions} value={form.procedimento} onChange={v => handleChange('procedimento', v)} error={errors.procedimento} />
-          </div>
+          <div style={{ gridColumn: 'span 2' }}><Select label="Procedimento *" placeholder="Selecione..." options={procedureOptions} value={form.procedimento} onChange={v => handleChange('procedimento', v)} error={errors.procedimento} /></div>
           <Select label="Status *" placeholder="Selecione..." options={statusOptions} value={form.status} onChange={v => handleChange('status', v)} error={errors.status} />
-          <Input label="Valor (R$) *" mask="moeda" value={form.valor} inputMode="numeric" maxLength={14} onValueChange={v => { setForm(p => ({ ...p, valor: v })); clearError('valor'); }} error={errors.valor} />
-          <div style={{ gridColumn: 'span 2' }}>
-            <Input label="Observações" placeholder="Informações adicionais..." maxLength={300} value={form.observacoes} onChange={e => handleChange('observacoes', e.target.value)} />
-          </div>
+          <Input label="Valor (R$) *" mask="moeda" value={form.valor} inputMode="numeric" maxLength={14} onValueChange={v => handleMaskedChange('valor', v)} error={errors.valor} />
+          <div style={{ gridColumn: 'span 2' }}><Input label="Observações" placeholder="Informações adicionais..." maxLength={300} value={form.observacoes} onChange={e => handleChange('observacoes', e.target.value)} /></div>
         </FormGrid>
       </Modal>
+
+      <CancelModal isOpen={showCancelModal} title="Deseja cancelar?" message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas." onConfirm={forceClose} onCancel={() => setShowCancelModal(false)} />
+      <ConfirmModal isOpen={showConfirmModal} title="Salvar agendamento?" message={`Tem certeza que deseja agendar ${form.nome || 'este paciente'}?`} confirmText="Confirmar" cancelText="Voltar" onConfirm={handleConfirmSave} onCancel={() => setShowConfirmModal(false)} />
+      <SucessModal isOpen={showSuccessModal} title="Sucesso!" message={successMessage} onClose={handleSuccessClose} buttonText="Continuar" />
     </Container>
   );
 }

@@ -1,5 +1,4 @@
-'use client';
-
+import React from 'react';
 import styled, { css, keyframes } from 'styled-components';
 
 const spin = keyframes`

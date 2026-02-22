@@ -1,10 +1,15 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
+import Select from '@/components/ui/select';
 import StatCard from '@/components/ui/statcard';
+import Pagination from '@/components/ui/pagination';
+import CancelModal from '@/components/modals/cancelModal';
+import ConfirmModal from '@/components/modals/confirmModal';
+import SucessModal from '@/components/modals/sucessModal';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import {
   Container, Header, Title, Controls,
@@ -18,28 +23,32 @@ import {
   FullTimeline, FullTimelineItem, FullDot, FullContent, FullDate,
   FullTitle, FullDesc, FullTags, FullTag, StatsRow, StatPill,
   EmptyState, FormGrid,
+  CardsContainer, CardsWrapper, PaginationContainer,
 } from './styles';
-import { pacientesService } from '@/services/pacientes.service';
-import { agendamentosService, type Agendamento } from '@/services/agendamentos.service';
-import { financeiroService, type Lancamento } from '@/services/financeiro.service';
 
-type NovoPacienteField =
-  | 'nome' | 'cpf' | 'nascimento' | 'telefone' | 'email';
+type NovoPacienteField = 'nome' | 'cpf' | 'nascimento' | 'telefone' | 'email';
+type AtendimentoField  = 'procedure' | 'units' | 'value' | 'professional' | 'lote' | 'date';
 
 interface NovoPacienteForm {
-  nome: string;
-  cpf: string;
-  nascimento: string;
-  telefone: string;
-  email: string;
-  observacoes: string;
+  nome: string; cpf: string; nascimento: string;
+  telefone: string; email: string; observacoes: string;
 }
 
-const FORM_INITIAL: NovoPacienteForm = {
+interface AtendimentoForm {
+  date: string; procedure: string; units: string;
+  value: string; professional: string; lote: string;
+  nextVisit: string; observacoes: string;
+}
+
+const PACIENTE_INITIAL: NovoPacienteForm = {
   nome: '', cpf: '', nascimento: '', telefone: '', email: '', observacoes: '',
 };
 
-const VALIDATION_FIELDS = [
+const ATENDIMENTO_INITIAL: AtendimentoForm = {
+  date: '', procedure: '', units: '', value: '', professional: '', lote: '', nextVisit: '', observacoes: '',
+};
+
+const PACIENTE_VALIDATION = [
   { key: 'nome'       as NovoPacienteField, validate: (v: string) => !v.trim() ? 'Nome completo é obrigatório' : null },
   { key: 'cpf'        as NovoPacienteField, validate: (v: string) => !v.trim() ? 'CPF é obrigatório' : null },
   { key: 'nascimento' as NovoPacienteField, validate: (v: string) => !v ? 'Data de nascimento é obrigatória' : null },
@@ -47,34 +56,112 @@ const VALIDATION_FIELDS = [
   { key: 'email'      as NovoPacienteField, validate: (v: string) => !v.trim() ? 'E-mail é obrigatório' : null },
 ];
 
+const ATENDIMENTO_VALIDATION = [
+  { key: 'date'         as AtendimentoField, validate: (v: string) => !v ? 'Data do atendimento é obrigatória' : null },
+  { key: 'procedure'    as AtendimentoField, validate: (v: string) => !v.trim() ? 'Procedimento é obrigatório' : null },
+  { key: 'units'        as AtendimentoField, validate: (v: string) => !v.trim() ? 'Quantidade/unidade é obrigatória' : null },
+  { key: 'value'        as AtendimentoField, validate: (v: string) => !v.trim() || v === 'R$ 0,00' ? 'Valor é obrigatório' : null },
+  { key: 'professional' as AtendimentoField, validate: (v: string) => !v.trim() ? 'Profissional é obrigatório' : null },
+  { key: 'lote'         as AtendimentoField, validate: (v: string) => !v.trim() ? 'Lote ANVISA é obrigatório' : null },
+];
+
 const filterOptions = ['Todos', 'Ativos', 'Inativos', 'Alto Valor'];
 
-interface HistoryItem {
-  id: number;
-  date: string;
-  procedure: string;
-  units: string;
-  value: number;
-  professional: string;
-  lote: string;
-  status: string;
-}
+const procedureOptions = [
+  { value: 'Botox Facial',         label: 'Botox Facial'         },
+  { value: 'Preenchimento Labial', label: 'Preenchimento Labial' },
+  { value: 'Bioestimulador',       label: 'Bioestimulador'       },
+  { value: 'Fio de PDO',           label: 'Fio de PDO'           },
+  { value: 'Microagulhamento',     label: 'Microagulhamento'     },
+  { value: 'Toxina Botulínica',    label: 'Toxina Botulínica'    },
+  { value: 'Outro',                label: 'Outro'                },
+];
 
-interface Patient {
-  id: number;
-  name: string;
-  phone: string;
-  email: string;
-  birthdate: string;
-  since: string;
-  status: string;
-  totalSpent: number;
-  totalSessions: number;
-  lastVisit: string;
-  nextVisit: string | null;
-  observations: string;
-  history: HistoryItem[];
-}
+const professionalOptions = [
+  { value: 'Maria Oliveira', label: 'Maria Oliveira' },
+  { value: 'Clara Andrade',  label: 'Clara Andrade'  },
+  { value: 'Beatriz Santos', label: 'Beatriz Santos' },
+];
+
+type HistoryItem = {
+  id: number; date: string; procedure: string; units: string;
+  value: number; professional: string; lote: string; status: string;
+};
+
+type Patient = {
+  id: number; name: string; phone: string; email: string;
+  birthdate: string; since: string; status: string;
+  totalSpent: number; totalSessions: number;
+  lastVisit: string; nextVisit: string | null;
+  observations: string; history: HistoryItem[];
+};
+
+const INITIAL_PATIENTS: Patient[] = [
+  {
+    id: 1, name: 'Ana Beatriz Costa', phone: '(11) 99872-3141', email: 'ana@email.com',
+    birthdate: '1990-03-14', since: 'Mar 2023', status: 'ativo',
+    totalSpent: 8400, totalSessions: 12, lastVisit: '18/02/2025', nextVisit: '18/05/2025',
+    observations: 'Paciente VIP. Alergia a lidocaína em pomada. Prefere horários matinais.',
+    history: [
+      { id: 1, date: '18/02/2025', procedure: 'Botox Facial',         units: '40U',      value: 980,  professional: 'Maria Oliveira', lote: 'BTX-2025-003', status: 'realizado' },
+      { id: 2, date: '18/11/2024', procedure: 'Botox Facial',         units: '40U',      value: 980,  professional: 'Maria Oliveira', lote: 'BTX-2024-087', status: 'realizado' },
+      { id: 3, date: '15/08/2024', procedure: 'Preenchimento Labial', units: '1ml',      value: 1200, professional: 'Clara Andrade',  lote: 'PRE-2024-042', status: 'realizado' },
+      { id: 4, date: '10/05/2024', procedure: 'Bioestimulador',       units: '1 frasco', value: 1800, professional: 'Maria Oliveira', lote: 'BIO-2024-011', status: 'realizado' },
+      { id: 5, date: '20/02/2024', procedure: 'Botox Facial',         units: '40U',      value: 980,  professional: 'Maria Oliveira', lote: 'BTX-2024-015', status: 'realizado' },
+    ],
+  },
+  {
+    id: 2, name: 'Carla Mendonça', phone: '(11) 97654-2211', email: 'carla@email.com',
+    birthdate: '1985-07-22', since: 'Jun 2023', status: 'ativo',
+    totalSpent: 4500, totalSessions: 6, lastVisit: '15/02/2025', nextVisit: '15/05/2025',
+    observations: 'Tende a apresentar hematomas. Usar técnica retrógrada.',
+    history: [
+      { id: 1, date: '15/02/2025', procedure: 'Preenchimento Labial', units: '1ml', value: 1200, professional: 'Maria Oliveira', lote: 'PRE-2025-007', status: 'realizado' },
+      { id: 2, date: '20/09/2024', procedure: 'Botox Facial',         units: '30U', value: 750,  professional: 'Beatriz Santos', lote: 'BTX-2024-062', status: 'realizado' },
+      { id: 3, date: '10/04/2024', procedure: 'Preenchimento Labial', units: '1ml', value: 1200, professional: 'Maria Oliveira', lote: 'PRE-2024-029', status: 'realizado' },
+    ],
+  },
+  {
+    id: 3, name: 'Fernanda Lima', phone: '(11) 98877-5544', email: 'fernanda@email.com',
+    birthdate: '1992-11-08', since: 'Jan 2024', status: 'ativo',
+    totalSpent: 3600, totalSessions: 4, lastVisit: '10/02/2025', nextVisit: null,
+    observations: '',
+    history: [
+      { id: 1, date: '10/02/2025', procedure: 'Bioestimulador', units: '1 frasco', value: 1800, professional: 'Clara Andrade', lote: 'BIO-2025-003', status: 'realizado' },
+      { id: 2, date: '10/08/2024', procedure: 'Bioestimulador', units: '1 frasco', value: 1800, professional: 'Clara Andrade', lote: 'BIO-2024-049', status: 'realizado' },
+    ],
+  },
+  {
+    id: 4, name: 'Marina Souza', phone: '(21) 99123-7788', email: 'marina@email.com',
+    birthdate: '1988-04-30', since: 'Set 2022', status: 'ativo',
+    totalSpent: 12800, totalSessions: 18, lastVisit: '05/01/2025', nextVisit: '05/04/2025',
+    observations: 'Paciente antiga. Protocolo personalizado de manutenção trimestral.',
+    history: [
+      { id: 1, date: '05/01/2025', procedure: 'Fio de PDO',           units: '10 fios', value: 2500, professional: 'Beatriz Santos', lote: 'FIO-2025-001', status: 'realizado' },
+      { id: 2, date: '05/10/2024', procedure: 'Botox Facial',         units: '50U',     value: 1200, professional: 'Maria Oliveira', lote: 'BTX-2024-081', status: 'realizado' },
+      { id: 3, date: '05/07/2024', procedure: 'Preenchimento Labial', units: '2ml',     value: 2400, professional: 'Clara Andrade',  lote: 'PRE-2024-055', status: 'realizado' },
+    ],
+  },
+  {
+    id: 5, name: 'Juliana Rocha', phone: '(11) 91234-5678', email: 'juliana@email.com',
+    birthdate: '1995-09-15', since: 'Nov 2024', status: 'ativo',
+    totalSpent: 980, totalSessions: 1, lastVisit: '10/01/2025', nextVisit: '10/04/2025',
+    observations: 'Primeira sessão. Orientada sobre protocolo inicial.',
+    history: [
+      { id: 1, date: '10/01/2025', procedure: 'Toxina Botulínica', units: '20U', value: 980, professional: 'Maria Oliveira', lote: 'BTX-2025-001', status: 'realizado' },
+    ],
+  },
+  {
+    id: 6, name: 'Patrícia Alves', phone: '(11) 97788-1122', email: 'patricia@email.com',
+    birthdate: '1978-12-01', since: 'Dez 2022', status: 'inativo',
+    totalSpent: 5600, totalSessions: 7, lastVisit: '20/12/2024', nextVisit: null,
+    observations: 'Última sessão foi de microagulhamento. Sem retorno agendado.',
+    history: [
+      { id: 1, date: '20/12/2024', procedure: 'Microagulhamento', units: '1 sessão', value: 800, professional: 'Beatriz Santos', lote: 'MIC-2024-019', status: 'realizado' },
+      { id: 2, date: '20/09/2024', procedure: 'Microagulhamento', units: '1 sessão', value: 800, professional: 'Beatriz Santos', lote: 'MIC-2024-010', status: 'realizado' },
+    ],
+  },
+];
 
 const procedureColors: Record<string, string> = {
   'Botox Facial':         '#BBA188',
@@ -83,6 +170,7 @@ const procedureColors: Record<string, string> = {
   'Fio de PDO':           '#a8906f',
   'Microagulhamento':     '#8a7560',
   'Toxina Botulínica':    '#BBA188',
+  'Outro':                '#BBA188',
 };
 
 function getInitials(name: string) {
@@ -90,119 +178,89 @@ function getInitials(name: string) {
 }
 
 function getAge(birthdate: string) {
-  if (!birthdate) return 0;
   const diff = Date.now() - new Date(birthdate).getTime();
   return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
 }
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return '—';
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('pt-BR');
+  if (dateStr.includes('/')) return dateStr;
+  const [y, m, d] = dateStr.split('-');
+  if (!y || !m || !d) return dateStr;
+  return `${d}/${m}/${y}`;
 }
 
-function formatSince(dateStr: string): string {
-  if (!dateStr) return '—';
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+function toInputDate(dateStr: string): string {
+  if (!dateStr) return '';
+  if (dateStr.includes('/')) {
+    const [d, m, y] = dateStr.split('/');
+    return `${y}-${m}-${d}`;
+  }
+  return dateStr;
 }
 
-function buildPatients(
-  pacientes: Awaited<ReturnType<typeof pacientesService.listarTodos>>,
-  agendamentos: Agendamento[],
-  lancamentos: Lancamento[],
-): Patient[] {
-  const now = new Date();
+function parseMoeda(v: string): number {
+  const clean = v.replace(/[R$\s.]/g, '').replace(',', '.');
+  return parseFloat(clean) || 0;
+}
 
-  return pacientes.map(p => {
-    const ags = agendamentos.filter(a => a.pacienteId === p.id);
-    const lcs = lancamentos.filter(l => l.pacienteId === p.id);
+function todayInputDate(): string {
+  return new Date().toISOString().split('T')[0];
+}
 
-    const realizados = ags.filter(a => a.status === 'REALIZADO');
-    const futuros    = ags.filter(a =>
-      (a.status === 'AGENDADO' || a.status === 'CONFIRMADO') &&
-      new Date(a.dataHora) > now
-    ).sort((a, b) => new Date(a.dataHora).getTime() - new Date(b.dataHora).getTime());
+const CARDS_PER_PAGE = 4;
 
-    const totalSpent  = lcs
-      .filter(l => l.status === 'PAGO')
-      .reduce((sum, l) => sum + (l.valorLiquido ?? l.valor ?? 0), 0);
+function isNewFormDirty(form: NovoPacienteForm): boolean {
+  return form.nome.trim() !== '' || form.cpf.trim() !== '' || form.nascimento !== '' ||
+    form.telefone.trim() !== '' || form.email.trim() !== '' || form.observacoes.trim() !== '';
+}
 
-    const lastVisitAg = realizados
-      .sort((a, b) => new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime())[0];
+function isEditFormDirty(form: NovoPacienteForm): boolean {
+  return form.nome.trim() !== '' || form.email.trim() !== '' || form.telefone.trim() !== '' ||
+    form.nascimento !== '' || form.observacoes.trim() !== '';
+}
 
-    // Monta history a partir de agendamentos ordenados do mais recente
-    const history: HistoryItem[] = ags
-      .slice()
-      .sort((a, b) => new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime())
-      .map(a => {
-        const lancamento = lcs.find(l => l.agendamentoId === a.id);
-        return {
-          id:           a.id,
-          date:         formatDate(a.dataHora),
-          procedure:    a.tipoConsulta ?? a.procedimento ?? 'Consulta',
-          units:        '—',
-          value:        lancamento?.valorLiquido ?? lancamento?.valor ?? 0,
-          professional: a.medicoNome ?? '—',
-          lote:         '—',
-          status:       a.status?.toLowerCase() ?? 'agendado',
-        };
-      });
-
-    return {
-      id:             p.id,
-      name:           p.nome,
-      phone:          p.telefone ?? p.celular ?? '',
-      email:          p.email,
-      birthdate:      p.dataNascimento ?? '',
-      since:          formatSince(p.criadoEm ?? ''),
-      status:         p.ativo ? 'ativo' : 'inativo',
-      totalSpent,
-      totalSessions:  realizados.length,
-      lastVisit:      lastVisitAg ? formatDate(lastVisitAg.dataHora) : '—',
-      nextVisit:      futuros[0] ? formatDate(futuros[0].dataHora) : null,
-      observations:   p.observacoes ?? '',
-      history,
-    };
-  });
+function isAtendimentoFormDirty(form: AtendimentoForm): boolean {
+  return form.procedure.trim() !== '' || form.units.trim() !== '' || form.value.trim() !== '' ||
+    form.professional.trim() !== '' || form.lote.trim() !== '';
 }
 
 export default function HistoricoPaciente() {
-  const [patients,     setPatients]     = useState<Patient[]>([]);
-  const [loading,      setLoading]      = useState(true);
-  const [loadError,    setLoadError]    = useState<string | null>(null);
+  const [patients,     setPatients]     = useState<Patient[]>(INITIAL_PATIENTS);
   const [search,       setSearch]       = useState('');
   const [filter,       setFilter]       = useState('Todos');
   const [openDropdown, setOpenDropdown] = useState(false);
   const [selected,     setSelected]     = useState<Patient | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isNewOpen,    setIsNewOpen]    = useState(false);
-  const [saving,       setSaving]       = useState(false);
+  const [isEditOpen,   setIsEditOpen]   = useState(false);
   const [exporting,    setExporting]    = useState(false);
-  const [form,         setForm]         = useState<NovoPacienteForm>(FORM_INITIAL);
+  const [form,         setForm]         = useState<NovoPacienteForm>(PACIENTE_INITIAL);
+  const [editForm,     setEditForm]     = useState<NovoPacienteForm>(PACIENTE_INITIAL);
+  const [editErrors,   setEditErrors]   = useState<Partial<Record<NovoPacienteField, string>>>({});
+  const [currentPage,  setCurrentPage]  = useState(1);
 
-  const { errors, validate, clearError, clearAll } =
-    useSequentialValidation<NovoPacienteField>(VALIDATION_FIELDS);
+  const [isAtendimentoOpen,     setIsAtendimentoOpen]     = useState(false);
+  const [atendimentoForm,       setAtendimentoForm]       = useState<AtendimentoForm>(ATENDIMENTO_INITIAL);
+  const [showCancelAtend,       setShowCancelAtend]       = useState(false);
+  const [showConfirmAtend,      setShowConfirmAtend]      = useState(false);
 
-  const carregar = useCallback(async () => {
-    try {
-      setLoading(true);
-      setLoadError(null);
-      const [pacientes, agendamentos, lancamentosPage] = await Promise.all([
-        pacientesService.listarTodos(200),
-        agendamentosService.listarTodos(500),
-        financeiroService.listar(0, 500),
-      ]);
-      const lancamentos = lancamentosPage.content ?? [];
-      setPatients(buildPatients(pacientes, agendamentos, lancamentos));
-    } catch (err) {
-      setLoadError(err instanceof Error ? err.message : 'Erro ao carregar dados');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const [showCancelNewModal,   setShowCancelNewModal]   = useState(false);
+  const [showCancelEditModal,  setShowCancelEditModal]  = useState(false);
+  const [showConfirmNewModal,  setShowConfirmNewModal]  = useState(false);
+  const [showConfirmEditModal, setShowConfirmEditModal] = useState(false);
+  const [showSuccessModal,     setShowSuccessModal]     = useState(false);
+  const [successMessage,       setSuccessMessage]       = useState('');
 
-  useEffect(() => { carregar(); }, [carregar]);
+  const {
+    errors: pacienteErrors, validate: validatePaciente,
+    clearError: clearPacienteError, clearAll: clearPacienteAll,
+  } = useSequentialValidation<NovoPacienteField>(PACIENTE_VALIDATION);
+
+  const {
+    errors: atendErrors, validate: validateAtend,
+    clearError: clearAtendError, clearAll: clearAtendAll,
+  } = useSequentialValidation<AtendimentoField>(ATENDIMENTO_VALIDATION);
 
   const filtered = patients.filter(p => {
     const matchSearch =
@@ -210,77 +268,229 @@ export default function HistoricoPaciente() {
       p.phone.includes(search) ||
       p.email.toLowerCase().includes(search.toLowerCase());
     const matchFilter =
-      filter === 'Todos'     ||
+      filter === 'Todos' ||
       (filter === 'Ativos'     && p.status === 'ativo')   ||
       (filter === 'Inativos'   && p.status === 'inativo') ||
       (filter === 'Alto Valor' && p.totalSpent >= 5000);
     return matchSearch && matchFilter;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / CARDS_PER_PAGE));
+  const safePage   = Math.min(currentPage, totalPages);
+  const startIdx   = (safePage - 1) * CARDS_PER_PAGE;
+  const paginated  = filtered.slice(startIdx, startIdx + CARDS_PER_PAGE);
+
   const totalPacientes = patients.length;
   const ativos         = patients.filter(p => p.status === 'ativo').length;
   const totalSessoes   = patients.reduce((a, p) => a + p.totalSessions, 0);
   const totalReceita   = patients.reduce((a, p) => a + p.totalSpent, 0);
 
+  function handleSearchChange(v: string) { setSearch(v);  setCurrentPage(1); }
+  function handleFilterChange(v: string) { setFilter(v);  setCurrentPage(1); setOpenDropdown(false); }
+  function handleClearFilter()           { setFilter('Todos'); setCurrentPage(1); }
+
+  function openDetail(p: Patient) { setSelected(p); setIsDetailOpen(true); }
+
+  function syncSelected(updated: Patient) {
+    setSelected(updated);
+    setPatients(prev => prev.map(p => p.id === updated.id ? updated : p));
+  }
+
+
   function handleChange(field: keyof NovoPacienteForm, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
-    clearError(field as NovoPacienteField);
+    clearPacienteError(field as NovoPacienteField);
   }
 
   function handleMaskedChange(field: keyof NovoPacienteForm, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
-    clearError(field as NovoPacienteField);
+    clearPacienteError(field as NovoPacienteField);
   }
 
   function handleDateChange(field: 'nascimento', raw: string) {
     if (!raw) { handleChange(field, ''); return; }
     const [yearStr, month, day] = raw.split('-');
-    const safeYear = yearStr ? yearStr.slice(0, 4) : '';
-    handleChange(field, `${safeYear}-${month ?? ''}-${day ?? ''}`);
+    handleChange(field, `${(yearStr ?? '').slice(0, 4)}-${month ?? ''}-${day ?? ''}`);
   }
 
-  function handleCloseNew() {
-    setForm(FORM_INITIAL);
-    clearAll();
+  function handleCancelNewClick() {
+    if (isNewFormDirty(form)) setShowCancelNewModal(true);
+    else forceCloseNew();
+  }
+
+  function forceCloseNew() {
+    setForm(PACIENTE_INITIAL); clearPacienteAll();
+    setIsNewOpen(false); setShowCancelNewModal(false); setShowConfirmNewModal(false);
+  }
+
+  function handleSaveNewClick() {
+    const ok = validatePaciente({ nome: form.nome, cpf: form.cpf, nascimento: form.nascimento, telefone: form.telefone, email: form.email });
+    if (!ok) return;
+    setShowConfirmNewModal(true);
+  }
+
+  function handleConfirmNew() {
+    const newPatient: Patient = {
+      id:            Date.now(),
+      name:          form.nome,
+      phone:         form.telefone,
+      email:         form.email,
+      birthdate:     form.nascimento,
+      since:         new Date().toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }),
+      status:        'ativo',
+      totalSpent:    0,
+      totalSessions: 0,
+      lastVisit:     '—',
+      nextVisit:     null,
+      observations:  form.observacoes,
+      history:       [],
+    };
+    setPatients(prev => [newPatient, ...prev]);
+    setShowConfirmNewModal(false);
     setIsNewOpen(false);
+    setSuccessMessage('Paciente cadastrado com sucesso!');
+    setShowSuccessModal(true);
   }
 
-  async function handleSaveNew() {
-    const isValid = validate({
-      nome:       form.nome,
-      cpf:        form.cpf,
-      nascimento: form.nascimento,
-      telefone:   form.telefone,
-      email:      form.email,
+
+  function handleEditChange(field: keyof NovoPacienteForm, value: string) {
+    setEditForm(prev => ({ ...prev, [field]: value }));
+    setEditErrors(prev => ({ ...prev, [field]: undefined }));
+  }
+
+  function handleEditDateChange(raw: string) {
+    if (!raw) { handleEditChange('nascimento', ''); return; }
+    const [yearStr, month, day] = raw.split('-');
+    handleEditChange('nascimento', `${(yearStr ?? '').slice(0, 4)}-${month ?? ''}-${day ?? ''}`);
+  }
+
+  function validateEditForm(): boolean {
+    const e: Partial<Record<NovoPacienteField, string>> = {};
+    if (!editForm.nome.trim())     e.nome       = 'Nome completo é obrigatório';
+    if (!editForm.cpf.trim())      e.cpf        = 'CPF é obrigatório';
+    if (!editForm.nascimento)      e.nascimento = 'Data de nascimento é obrigatória';
+    if (!editForm.telefone.trim()) e.telefone   = 'Telefone é obrigatório';
+    if (!editForm.email.trim())    e.email      = 'E-mail é obrigatório';
+    setEditErrors(e);
+    return Object.keys(e).length === 0;
+  }
+
+  function openEdit(p: Patient) {
+    setEditForm({ nome: p.name, cpf: '', nascimento: toInputDate(p.birthdate), telefone: p.phone, email: p.email, observacoes: p.observations });
+    setEditErrors({});
+    setIsDetailOpen(false);
+    setIsEditOpen(true);
+  }
+
+  function handleCancelEditClick() {
+    if (isEditFormDirty(editForm)) setShowCancelEditModal(true);
+    else forceCloseEdit();
+  }
+
+  function forceCloseEdit() {
+    setEditForm(PACIENTE_INITIAL); setEditErrors({});
+    setIsEditOpen(false); setShowCancelEditModal(false); setShowConfirmEditModal(false);
+  }
+
+  function handleSaveEditClick() {
+    if (!validateEditForm()) return;
+    setShowConfirmEditModal(true);
+  }
+
+  function handleConfirmEdit() {
+    if (!selected) return;
+    const updated: Patient = {
+      ...selected,
+      name:         editForm.nome,
+      phone:        editForm.telefone,
+      email:        editForm.email,
+      birthdate:    editForm.nascimento,
+      observations: editForm.observacoes,
+    };
+    syncSelected(updated);
+    setShowConfirmEditModal(false);
+    setIsEditOpen(false);
+    setSuccessMessage('Alterações salvas com sucesso!');
+    setShowSuccessModal(true);
+  }
+
+  function openAtendimento() {
+    setAtendimentoForm({ ...ATENDIMENTO_INITIAL, date: todayInputDate() });
+    clearAtendAll();
+    setIsDetailOpen(false);
+    setIsAtendimentoOpen(true);
+  }
+
+  function handleAtendChange(field: keyof AtendimentoForm, value: string) {
+    setAtendimentoForm(prev => ({ ...prev, [field]: value }));
+    clearAtendError(field as AtendimentoField);
+  }
+
+  function handleCancelAtendClick() {
+    if (isAtendimentoFormDirty(atendimentoForm)) setShowCancelAtend(true);
+    else forceCloseAtend();
+  }
+
+  function forceCloseAtend() {
+    setAtendimentoForm(ATENDIMENTO_INITIAL); clearAtendAll();
+    setIsAtendimentoOpen(false); setShowCancelAtend(false); setShowConfirmAtend(false);
+    if (selected) setIsDetailOpen(true);
+  }
+
+  function handleSaveAtendClick() {
+    const ok = validateAtend({
+      date:         atendimentoForm.date,
+      procedure:    atendimentoForm.procedure,
+      units:        atendimentoForm.units,
+      value:        atendimentoForm.value,
+      professional: atendimentoForm.professional,
+      lote:         atendimentoForm.lote,
     });
-    if (!isValid) return;
-    setSaving(true);
-    try {
-      await pacientesService.criar({
-        nome:           form.nome,
-        email:          form.email,
-        telefone:       form.telefone,
-        cpf:            form.cpf,
-        dataNascimento: form.nascimento || undefined,
-        observacoes:    form.observacoes || undefined,
-      });
-      await carregar();
-      handleCloseNew();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Erro ao cadastrar paciente');
-    } finally {
-      setSaving(false);
-    }
+    if (!ok) return;
+    setShowConfirmAtend(true);
   }
 
-  function openDetail(p: Patient) {
-    setSelected(p);
-    setIsDetailOpen(true);
+  function handleConfirmAtend() {
+    if (!selected) return;
+
+    const valor = parseMoeda(atendimentoForm.value);
+
+    const newItem: HistoryItem = {
+      id:           Date.now(),
+      date:         formatDate(atendimentoForm.date),
+      procedure:    atendimentoForm.procedure,
+      units:        atendimentoForm.units,
+      value:        valor,
+      professional: atendimentoForm.professional,
+      lote:         atendimentoForm.lote,
+      status:       'realizado',
+    };
+
+    const nextVisit = atendimentoForm.nextVisit
+      ? formatDate(atendimentoForm.nextVisit)
+      : selected.nextVisit;
+
+    const updated: Patient = {
+      ...selected,
+      history:       [newItem, ...selected.history],
+      totalSessions: selected.totalSessions + 1,
+      totalSpent:    selected.totalSpent + valor,
+      lastVisit:     formatDate(atendimentoForm.date),
+      nextVisit,
+      status:        'ativo',
+    };
+
+    syncSelected(updated);
+    setShowConfirmAtend(false);
+    setIsAtendimentoOpen(false);
+    clearAtendAll();
+    setSuccessMessage('Atendimento registrado com sucesso!');
+    setShowSuccessModal(true);
   }
+
 
   const handleExportFicha = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); e.stopPropagation();
     if (!selected) return;
     setExporting(true);
     let objectUrl: string | null = null;
@@ -297,9 +507,9 @@ export default function HistoricoPaciente() {
       const blob    = await response.blob();
       objectUrl     = URL.createObjectURL(blob);
       const name    = selected.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
-      const link         = document.createElement('a');
-      link.href          = objectUrl;
-      link.download      = `ficha-${name}.pdf`;
+      const link    = document.createElement('a');
+      link.href     = objectUrl;
+      link.download = `ficha-${name}.pdf`;
       link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
@@ -312,6 +522,16 @@ export default function HistoricoPaciente() {
       if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl!), 1000);
     }
   };
+
+  function handleSuccessClose() {
+    setShowSuccessModal(false);
+    setSuccessMessage('');
+    setForm(PACIENTE_INITIAL);
+    clearPacienteAll();
+    if (selected && !isDetailOpen && !isNewOpen && !isEditOpen) {
+      setIsDetailOpen(true);
+    }
+  }
 
   return (
     <Container>
@@ -333,24 +553,36 @@ export default function HistoricoPaciente() {
         />
         <StatCard label="Pacientes Ativos" value={ativos} color="#8a7560"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>}
-          trend={totalPacientes > 0 ? { value: `${Math.round((ativos / totalPacientes) * 100)}% retorno`, positive: true } : undefined}
+          trend={{ value: `${Math.round((ativos / totalPacientes) * 100)}% retorno`, positive: true }}
         />
         <StatCard label="Total de Sessões" value={totalSessoes} color="#a8906f"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>}
         />
         <StatCard label="Receita Total" value={`R$ ${totalReceita.toLocaleString('pt-BR')}`} color="#BBA188"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>}
+          trend={{ value: '+R$ 6.800 vs mês', positive: true }}
         />
       </StatsGrid>
 
       <Controls>
         <SearchBarWrapper>
+          <input type="text"     name="prevent-autofill-name"  autoComplete="off" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
+          <input type="email"    name="prevent-autofill-email" autoComplete="off" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
+          <input type="password" name="prevent-autofill-pass"  autoComplete="off" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
           <SearchIconWrap>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           </SearchIconWrap>
-          <SearchInputStyled placeholder="Buscar por nome, telefone ou e-mail..." value={search} onChange={e => setSearch(e.target.value)} />
+          <SearchInputStyled
+            type="search"
+            placeholder="Buscar por nome, telefone ou e-mail..."
+            value={search}
+            onChange={e => handleSearchChange(e.target.value)}
+            autoComplete="off"
+            name="search-historico-filter"
+            data-form-type="other"
+            data-lpignore="true"
+          />
         </SearchBarWrapper>
-
         <FilterRow>
           <DropdownWrapper>
             <DropdownBtn type="button" onClick={() => setOpenDropdown(!openDropdown)}>
@@ -360,13 +592,13 @@ export default function HistoricoPaciente() {
             {openDropdown && (
               <DropdownList>
                 {filterOptions.map(f => (
-                  <DropdownItem key={f} $active={filter === f} onClick={() => { setFilter(f); setOpenDropdown(false); }}>{f}</DropdownItem>
+                  <DropdownItem key={f} $active={filter === f} onClick={() => handleFilterChange(f)}>{f}</DropdownItem>
                 ))}
               </DropdownList>
             )}
           </DropdownWrapper>
           {filter !== 'Todos' && (
-            <ClearFilterBtn type="button" onClick={() => setFilter('Todos')}>
+            <ClearFilterBtn type="button" onClick={handleClearFilter}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
               Limpar
             </ClearFilterBtn>
@@ -374,77 +606,83 @@ export default function HistoricoPaciente() {
         </FilterRow>
       </Controls>
 
-      {loading ? (
-        <EmptyState><h3>Carregando pacientes...</h3><p>Buscando dados do servidor.</p></EmptyState>
-      ) : loadError ? (
-        <EmptyState>
-          <h3>Erro ao carregar dados</h3>
-          <p>{loadError}</p>
-          <Button type="button" variant="outline" onClick={carregar} style={{ marginTop: 12 }}>Tentar novamente</Button>
-        </EmptyState>
-      ) : filtered.length === 0 ? (
-        <EmptyState><h3>Nenhum paciente encontrado</h3><p>Tente ajustar os filtros ou a busca.</p></EmptyState>
-      ) : (
-        <PatientGrid>
-          {filtered.map(patient => (
-            <PatientCard key={patient.id} onClick={() => openDetail(patient)}>
-              <PatientCardHeader>
-                <PatientAvatar $color={patient.status === 'inativo' ? '#95a5a6' : '#BBA188'}>
-                  {getInitials(patient.name)}
-                </PatientAvatar>
-                <PatientInfo>
-                  <PatientName>{patient.name}</PatientName>
-                  <PatientSub>
-                    {patient.birthdate ? `${getAge(patient.birthdate)} anos · ` : ''}
-                    Cliente desde {patient.since}
-                  </PatientSub>
-                  <StatsRow>
-                    <StatPill $color="#BBA188">{patient.totalSessions} sessões</StatPill>
-                    <StatPill $color="#8a7560">R$ {patient.totalSpent.toLocaleString('pt-BR')}</StatPill>
-                    {patient.status === 'inativo' && <StatPill $color="#95a5a6">Inativo</StatPill>}
-                  </StatsRow>
-                </PatientInfo>
-              </PatientCardHeader>
-              <PatientCardBody>
-                <div style={{ fontSize: '0.76rem', color: '#aaa', marginBottom: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Últimos procedimentos</div>
-                {patient.history.length === 0 ? (
-                  <div style={{ fontSize: '0.82rem', color: '#ccc', padding: '8px 0' }}>Sem agendamentos registrados</div>
-                ) : (
-                  <TimelineWrap>
-                    {patient.history.slice(0, 3).map((h, i) => (
-                      <TimelineItem key={i}>
-                        <TimelineDot $color={procedureColors[h.procedure] || '#BBA188'} />
-                        <TimelineContent>
-                          <TimelineDate>{h.date}</TimelineDate>
-                          <TimelineTitle>{h.procedure}</TimelineTitle>
-                          <TimelineDesc>
-                            {h.value > 0 ? `R$ ${h.value.toLocaleString('pt-BR')} · ` : ''}{h.professional}
-                          </TimelineDesc>
-                          {h.lote !== '—' && <TimelineTag $color={procedureColors[h.procedure] || '#BBA188'}>{h.lote}</TimelineTag>}
-                        </TimelineContent>
-                      </TimelineItem>
-                    ))}
-                    {patient.history.length > 3 && (
-                      <div style={{ fontSize: '0.78rem', color: '#BBA188', paddingLeft: 24, fontWeight: 600 }}>
-                        +{patient.history.length - 3} procedimento(s) anteriores
-                      </div>
-                    )}
-                  </TimelineWrap>
-                )}
-              </PatientCardBody>
-              <PatientCardFooter>
-                <div style={{ fontSize: '0.8rem', color: '#888' }}>
-                  <span style={{ fontWeight: 600, color: '#555' }}>Última visita:</span> {patient.lastVisit}
-                </div>
-                {patient.nextVisit
-                  ? <div style={{ fontSize: '0.8rem', color: '#BBA188', fontWeight: 600 }}>Próxima: {patient.nextVisit}</div>
-                  : <div style={{ fontSize: '0.78rem', color: '#ccc' }}>Sem agendamento</div>
-                }
-              </PatientCardFooter>
-            </PatientCard>
-          ))}
-        </PatientGrid>
-      )}
+      <CardsContainer>
+        <CardsWrapper>
+          {filtered.length === 0 ? (
+            <EmptyState>
+              <h3>Nenhum paciente encontrado</h3>
+              <p>Tente ajustar os filtros ou a busca.</p>
+            </EmptyState>
+          ) : (
+            <PatientGrid>
+              {paginated.map(patient => (
+                <PatientCard key={patient.id} onClick={() => openDetail(patient)}>
+                  <PatientCardHeader>
+                    <PatientAvatar $color={patient.status === 'inativo' ? '#95a5a6' : '#BBA188'}>
+                      {getInitials(patient.name)}
+                    </PatientAvatar>
+                    <PatientInfo>
+                      <PatientName>{patient.name}</PatientName>
+                      <PatientSub>{getAge(patient.birthdate)} anos · Cliente desde {patient.since}</PatientSub>
+                      <StatsRow>
+                        <StatPill $color="#BBA188">{patient.totalSessions} sessões</StatPill>
+                        <StatPill $color="#8a7560">R$ {patient.totalSpent.toLocaleString('pt-BR')}</StatPill>
+                        {patient.status === 'inativo' && <StatPill $color="#95a5a6">Inativo</StatPill>}
+                      </StatsRow>
+                    </PatientInfo>
+                  </PatientCardHeader>
+                  <PatientCardBody>
+                    <div style={{ fontSize: '0.76rem', color: '#aaa', marginBottom: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Últimos procedimentos
+                    </div>
+                    <TimelineWrap>
+                      {patient.history.slice(0, 3).map((h, i) => (
+                        <TimelineItem key={i}>
+                          <TimelineDot $color={procedureColors[h.procedure] || '#BBA188'} />
+                          <TimelineContent>
+                            <TimelineDate>{h.date}</TimelineDate>
+                            <TimelineTitle>{h.procedure}</TimelineTitle>
+                            <TimelineDesc>{h.units} · R$ {h.value.toLocaleString('pt-BR')} · {h.professional}</TimelineDesc>
+                            <TimelineTag $color={procedureColors[h.procedure] || '#BBA188'}>{h.lote}</TimelineTag>
+                          </TimelineContent>
+                        </TimelineItem>
+                      ))}
+                      {patient.history.length > 3 && (
+                        <div style={{ fontSize: '0.78rem', color: '#BBA188', paddingLeft: 24, fontWeight: 600 }}>
+                          +{patient.history.length - 3} procedimento(s) anteriores
+                        </div>
+                      )}
+                      {patient.history.length === 0 && (
+                        <div style={{ fontSize: '0.82rem', color: '#ccc', paddingLeft: 4 }}>
+                          Nenhum procedimento registrado.
+                        </div>
+                      )}
+                    </TimelineWrap>
+                  </PatientCardBody>
+                  <PatientCardFooter>
+                    <div style={{ fontSize: '0.8rem', color: '#888' }}>
+                      <span style={{ fontWeight: 600, color: '#555' }}>Última visita:</span> {patient.lastVisit}
+                    </div>
+                    {patient.nextVisit
+                      ? <div style={{ fontSize: '0.8rem', color: '#BBA188', fontWeight: 600 }}>Próxima: {patient.nextVisit}</div>
+                      : <div style={{ fontSize: '0.78rem', color: '#ccc' }}>Sem agendamento</div>
+                    }
+                  </PatientCardFooter>
+                </PatientCard>
+              ))}
+            </PatientGrid>
+          )}
+        </CardsWrapper>
+
+        <PaginationContainer>
+          <Pagination
+            currentPage={safePage}
+            totalItems={filtered.length}
+            itemsPerPage={CARDS_PER_PAGE}
+            onPageChange={setCurrentPage}
+          />
+        </PaginationContainer>
+      </CardsContainer>
 
       <Modal
         isOpen={isDetailOpen}
@@ -454,12 +692,31 @@ export default function HistoricoPaciente() {
         footer={
           <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', gap: 10 }}>
-              <Button type="button" variant="outline" icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}>Editar Ficha</Button>
-              <Button type="button" variant="primary" onClick={handleExportFicha} disabled={exporting}
+              <Button
+                type="button"
+                variant="primary"
+                icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>}
+                onClick={openAtendimento}
+              >
+                Novo Atendimento
+              </Button>
+              <Button type="button" variant="outline"
+                icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
+                onClick={() => selected && openEdit(selected)}
+              >
+                Editar Ficha
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleExportFicha}
+                disabled={exporting}
                 icon={exporting
                   ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
                   : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>}
-              >{exporting ? 'Gerando PDF...' : 'Exportar Ficha'}</Button>
+              >
+                {exporting ? 'Gerando...' : 'Exportar PDF'}
+              </Button>
             </div>
             <Button type="button" variant="outline" onClick={() => setIsDetailOpen(false)}>Fechar</Button>
           </div>
@@ -469,41 +726,54 @@ export default function HistoricoPaciente() {
         {selected && (
           <DetailModal>
             <DetailHeader>
-              <DetailAvatar $color="#BBA188">{getInitials(selected.name)}</DetailAvatar>
+              <DetailAvatar $color={selected.status === 'ativo' ? '#BBA188' : '#95a5a6'}>
+                {getInitials(selected.name)}
+              </DetailAvatar>
               <div>
                 <DetailName>{selected.name}</DetailName>
                 <DetailMeta>
                   <DetailMetaItem>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.72 9.81a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.63 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9a16 16 0 0 0 6.92 6.92l1.37-1.37a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 23 17z"/></svg>
-                    {selected.phone || '—'}
+                    {selected.phone}
                   </DetailMetaItem>
                   <DetailMetaItem>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                     {selected.email}
                   </DetailMetaItem>
-                  {selected.birthdate && (
-                    <DetailMetaItem>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                      {getAge(selected.birthdate)} anos · Cliente desde {selected.since}
-                    </DetailMetaItem>
-                  )}
+                  <DetailMetaItem>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                    {getAge(selected.birthdate)} anos · Nascimento: {formatDate(selected.birthdate)} · Cliente desde {selected.since}
+                  </DetailMetaItem>
                 </DetailMeta>
                 <StatsRow style={{ marginTop: 12 }}>
                   <StatPill $color="#BBA188">{selected.totalSessions} sessões</StatPill>
                   <StatPill $color="#8a7560">R$ {selected.totalSpent.toLocaleString('pt-BR')} gastos</StatPill>
                   {selected.nextVisit && <StatPill $color="#a8906f">Próx: {selected.nextVisit}</StatPill>}
+                  <StatPill $color={selected.status === 'ativo' ? '#8a7560' : '#95a5a6'}>
+                    {selected.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                  </StatPill>
                 </StatsRow>
               </div>
             </DetailHeader>
+
             {selected.observations && (
               <div style={{ background: '#fdf9f5', borderRadius: 10, padding: '12px 16px', border: '1px solid #f0ebe4', fontSize: '0.85rem', color: '#666', marginBottom: 24, lineHeight: 1.6 }}>
                 <strong style={{ color: '#BBA188' }}>⚠ Observações: </strong>{selected.observations}
               </div>
             )}
+
             <DetailSection>
-              <DetailSectionTitle>Histórico Completo de Procedimentos</DetailSectionTitle>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <DetailSectionTitle style={{ margin: 0, borderBottom: 'none', paddingBottom: 0 }}>
+                  Histórico Completo de Procedimentos
+                </DetailSectionTitle>
+              </div>
+              <div style={{ height: 1, background: '#f0ebe4', marginBottom: 14 }} />
+
               {selected.history.length === 0 ? (
-                <div style={{ color: '#bbb', fontSize: '0.88rem', padding: '16px 0' }}>Nenhum agendamento registrado para este paciente.</div>
+                <div style={{ fontSize: '0.85rem', color: '#bbb', padding: '20px 0', textAlign: 'center' }}>
+                  Nenhum procedimento registrado. Clique em &quot;Novo Atendimento&quot; para começar.
+                </div>
               ) : (
                 <FullTimeline>
                   {selected.history.map((h, i) => (
@@ -513,14 +783,13 @@ export default function HistoricoPaciente() {
                         <FullDate>{h.date}</FullDate>
                         <FullTitle>{h.procedure}</FullTitle>
                         <FullDesc>
-                          {h.value > 0 && <><span style={{ fontWeight: 700, color: '#1a1a1a' }}>R$ {h.value.toLocaleString('pt-BR')}</span><span>·</span></>}
-                          <span>{h.professional}</span>
+                          <span>{h.units}</span><span>·</span>
+                          <span style={{ fontWeight: 700, color: '#1a1a1a' }}>R$ {h.value.toLocaleString('pt-BR')}</span>
+                          <span>·</span><span>{h.professional}</span>
                         </FullDesc>
                         <FullTags>
-                          {h.lote !== '—' && <FullTag $color={procedureColors[h.procedure] || '#BBA188'}>Lote: {h.lote}</FullTag>}
-                          <FullTag $color={h.status === 'realizado' ? '#8a7560' : h.status === 'cancelado' ? '#e74c3c' : '#BBA188'}>
-                            {h.status.charAt(0).toUpperCase() + h.status.slice(1)}
-                          </FullTag>
+                          <FullTag $color={procedureColors[h.procedure] || '#BBA188'}>Lote: {h.lote}</FullTag>
+                          <FullTag $color="#8a7560">Realizado</FullTag>
                         </FullTags>
                       </FullContent>
                     </FullTimelineItem>
@@ -533,82 +802,269 @@ export default function HistoricoPaciente() {
       </Modal>
 
       <Modal
-        isOpen={isNewOpen}
-        onClose={handleCloseNew}
-        title="Novo Paciente"
-        size="md"
+        isOpen={isAtendimentoOpen}
+        onClose={handleCancelAtendClick}
+        closeOnOverlayClick={false}
+        title={`Novo Atendimento — ${selected?.name ?? ''}`}
+        size="lg"
         footer={
-          <>
-            <Button type="button" variant="outline" onClick={handleCloseNew}>Cancelar</Button>
-            <Button type="button" variant="primary" onClick={handleSaveNew} disabled={saving}>
-              {saving ? 'Cadastrando...' : 'Cadastrar Paciente'}
-            </Button>
-          </>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <Button type="button" variant="outline" onClick={handleCancelAtendClick}>Cancelar</Button>
+            <Button type="button" variant="primary" onClick={handleSaveAtendClick}>Registrar Atendimento</Button>
+          </div>
         }
       >
-        <FormGrid>
-          <div style={{ gridColumn: 'span 2' }}>
-            <Input
-              label="Nome Completo *"
-              placeholder="Nome completo da paciente..."
-              value={form.nome}
-              onChange={(e) => {
-                const val = e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
-                handleChange('nome', val);
-              }}
-              maxLength={80}
-              error={errors.nome}
-            />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, overflowY: 'auto', maxHeight: '65vh', paddingRight: 4 }}>
+          {selected?.observations && (
+            <div style={{ background: '#fff8f0', borderRadius: 10, padding: '10px 14px', border: '1px solid #f0ebe4', fontSize: '0.83rem', color: '#666', lineHeight: 1.5 }}>
+              <strong style={{ color: '#BBA188' }}>⚠ Atenção: </strong>{selected.observations}
+            </div>
+          )}
+
+          <div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#BBA188', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '1px solid #f0ebe4', paddingBottom: 6, marginBottom: 12 }}>
+              Dados do Procedimento
+            </div>
+            <FormGrid>
+              <Input
+                label="Data do Atendimento *"
+                type="date"
+                value={atendimentoForm.date}
+                onChange={e => handleAtendChange('date', e.target.value)}
+                error={atendErrors.date}
+              />
+              <Select
+                label="Procedimento *"
+                options={procedureOptions}
+                placeholder="Selecione..."
+                value={atendimentoForm.procedure}
+                onChange={v => handleAtendChange('procedure', v)}
+                error={atendErrors.procedure}
+              />
+              <Input
+                label="Quantidade / Unidade *"
+                placeholder="Ex: 40U, 1ml, 1 frasco"
+                value={atendimentoForm.units}
+                onChange={e => handleAtendChange('units', e.target.value)}
+                error={atendErrors.units}
+              />
+              <Input
+                label="Valor Cobrado (R$) *"
+                mask="moeda"
+                value={atendimentoForm.value}
+                inputMode="numeric"
+                maxLength={14}
+                onValueChange={v => handleAtendChange('value', v)}
+                error={atendErrors.value}
+              />
+              <Select
+                label="Profissional Responsável *"
+                options={professionalOptions}
+                placeholder="Selecione..."
+                value={atendimentoForm.professional}
+                onChange={v => handleAtendChange('professional', v)}
+                error={atendErrors.professional}
+              />
+              <Input
+                label="Lote ANVISA *"
+                placeholder="Ex: BTX-2025-003"
+                value={atendimentoForm.lote}
+                onChange={e => handleAtendChange('lote', e.target.value.toUpperCase())}
+                error={atendErrors.lote}
+              />
+            </FormGrid>
           </div>
 
-          <Input
-            label="CPF *"
-            mask="cpf"
-            value={form.cpf}
-            inputMode="numeric"
-            maxLength={14}
-            onValueChange={(v) => handleMaskedChange('cpf', v)}
-            error={errors.cpf}
-          />
-
-          <Input
-            label="Data de Nascimento *"
-            type="date"
-            value={form.nascimento}
-            onChange={(e) => handleDateChange('nascimento', e.target.value)}
-            error={errors.nascimento}
-          />
-
-          <Input
-            label="Telefone *"
-            mask="telefone"
-            value={form.telefone}
-            inputMode="numeric"
-            maxLength={15}
-            onValueChange={(v) => handleMaskedChange('telefone', v)}
-            error={errors.telefone}
-          />
-
-          <Input
-            label="E-mail *"
-            type="email"
-            placeholder="email@exemplo.com"
-            value={form.email}
-            onChange={(e) => handleChange('email', e.target.value)}
-            error={errors.email}
-          />
-
-          <div style={{ gridColumn: 'span 2' }}>
-            <Input
-              label="Observações / Alergias"
-              placeholder="Alergias, preferências, observações importantes..."
-              maxLength={300}
-              value={form.observacoes}
-              onChange={(e) => handleChange('observacoes', e.target.value)}
-            />
+          <div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#BBA188', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '1px solid #f0ebe4', paddingBottom: 6, marginBottom: 12 }}>
+              Próximo Retorno e Observações
+            </div>
+            <FormGrid>
+              <Input
+                label="Próxima Visita"
+                type="date"
+                value={atendimentoForm.nextVisit}
+                onChange={e => handleAtendChange('nextVisit', e.target.value)}
+              />
+              <div style={{ gridColumn: 'span 2' }}>
+                <Input
+                  label="Observações do Atendimento"
+                  placeholder="Reações, intercorrências, orientações pós-procedimento..."
+                  maxLength={400}
+                  value={atendimentoForm.observacoes}
+                  onChange={e => handleAtendChange('observacoes', e.target.value)}
+                />
+              </div>
+            </FormGrid>
           </div>
-        </FormGrid>
+        </div>
       </Modal>
+
+      <Modal
+        isOpen={isEditOpen}
+        onClose={handleCancelEditClick}
+        closeOnOverlayClick={false}
+        title="Editar Paciente"
+        size="lg"
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <Button type="button" variant="outline" onClick={handleCancelEditClick}>Cancelar</Button>
+            <Button type="button" variant="primary" onClick={handleSaveEditClick}>Salvar Alterações</Button>
+          </div>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, overflowY: 'auto', maxHeight: '65vh', paddingRight: 4 }}>
+          <div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#BBA188', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '1px solid #f0ebe4', paddingBottom: 6, marginBottom: 12 }}>
+              Dados Pessoais
+            </div>
+            <FormGrid>
+              <div style={{ gridColumn: 'span 2' }}>
+                <Input
+                  label="Nome Completo *"
+                  placeholder="Digite o nome completo"
+                  value={editForm.nome}
+                  onChange={e => handleEditChange('nome', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))}
+                  maxLength={80}
+                  error={editErrors.nome}
+                />
+              </div>
+              <Input label="E-mail *" type="email" placeholder="Digite o e-mail" value={editForm.email} onChange={e => handleEditChange('email', e.target.value)} error={editErrors.email} />
+              <Input label="Telefone *" mask="telefone" placeholder="Digite o telefone" value={editForm.telefone} inputMode="numeric" maxLength={15} onValueChange={v => handleEditChange('telefone', v)} error={editErrors.telefone} />
+              <Input label="Data de Nascimento *" type="date" value={editForm.nascimento} onChange={e => handleEditDateChange(e.target.value)} error={editErrors.nascimento} />
+              <Input label="CPF *" mask="cpf" placeholder="Digite o CPF" value={editForm.cpf} inputMode="numeric" maxLength={14} onValueChange={v => handleEditChange('cpf', v)} error={editErrors.cpf} />
+            </FormGrid>
+          </div>
+          <div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#BBA188', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '1px solid #f0ebe4', paddingBottom: 6, marginBottom: 12 }}>
+              Observações
+            </div>
+            <FormGrid>
+              <div style={{ gridColumn: 'span 2' }}>
+                <Input
+                  label="Observações / Alergias"
+                  placeholder="Digite observações de saúde relevantes ou alergias"
+                  maxLength={300}
+                  value={editForm.observacoes}
+                  onChange={e => handleEditChange('observacoes', e.target.value)}
+                />
+              </div>
+            </FormGrid>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={isNewOpen}
+        onClose={handleCancelNewClick}
+        closeOnOverlayClick={false}
+        title="Novo Paciente"
+        size="lg"
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <Button type="button" variant="outline" onClick={handleCancelNewClick}>Cancelar</Button>
+            <Button type="button" variant="primary" onClick={handleSaveNewClick}>Cadastrar Paciente</Button>
+          </div>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, overflowY: 'auto', maxHeight: '65vh', paddingRight: 4 }}>
+          <div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#BBA188', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '1px solid #f0ebe4', paddingBottom: 6, marginBottom: 12 }}>
+              Dados Pessoais
+            </div>
+            <FormGrid>
+              <div style={{ gridColumn: 'span 2' }}>
+                <Input
+                  label="Nome Completo *"
+                  placeholder="Digite o nome completo"
+                  value={form.nome}
+                  onChange={e => handleChange('nome', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))}
+                  maxLength={80}
+                  error={pacienteErrors.nome}
+                />
+              </div>
+              <Input label="E-mail *" type="email" placeholder="Digite o e-mail" value={form.email} onChange={e => handleChange('email', e.target.value)} error={pacienteErrors.email} />
+              <Input label="Telefone *" mask="telefone" placeholder="Digite o telefone" value={form.telefone} inputMode="numeric" maxLength={15} onValueChange={v => handleMaskedChange('telefone', v)} error={pacienteErrors.telefone} />
+              <Input label="Data de Nascimento *" type="date" value={form.nascimento} onChange={e => handleDateChange('nascimento', e.target.value)} error={pacienteErrors.nascimento} />
+              <Input label="CPF *" mask="cpf" placeholder="Digite o CPF" value={form.cpf} inputMode="numeric" maxLength={14} onValueChange={v => handleMaskedChange('cpf', v)} error={pacienteErrors.cpf} />
+            </FormGrid>
+          </div>
+          <div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#BBA188', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '1px solid #f0ebe4', paddingBottom: 6, marginBottom: 12 }}>
+              Observações
+            </div>
+            <FormGrid>
+              <div style={{ gridColumn: 'span 2' }}>
+                <Input
+                  label="Observações / Alergias"
+                  placeholder="Digite observações de saúde relevantes ou alergias"
+                  maxLength={300}
+                  value={form.observacoes}
+                  onChange={e => handleChange('observacoes', e.target.value)}
+                />
+              </div>
+            </FormGrid>
+          </div>
+        </div>
+      </Modal>
+
+      <CancelModal
+        isOpen={showCancelNewModal}
+        title="Deseja cancelar?"
+        message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas."
+        onConfirm={forceCloseNew}
+        onCancel={() => setShowCancelNewModal(false)}
+      />
+      <CancelModal
+        isOpen={showCancelEditModal}
+        title="Deseja cancelar?"
+        message="Você fez alterações na ficha. Se continuar, as alterações serão perdidas."
+        onConfirm={forceCloseEdit}
+        onCancel={() => setShowCancelEditModal(false)}
+      />
+      <CancelModal
+        isOpen={showCancelAtend}
+        title="Deseja cancelar o atendimento?"
+        message="Os dados preenchidos serão perdidos. Deseja continuar?"
+        onConfirm={forceCloseAtend}
+        onCancel={() => setShowCancelAtend(false)}
+      />
+
+      <ConfirmModal
+        isOpen={showConfirmNewModal}
+        title="Cadastrar paciente?"
+        message={`Tem certeza que deseja cadastrar ${form.nome || 'este paciente'}?`}
+        confirmText="Confirmar"
+        cancelText="Voltar"
+        onConfirm={handleConfirmNew}
+        onCancel={() => setShowConfirmNewModal(false)}
+      />
+      <ConfirmModal
+        isOpen={showConfirmEditModal}
+        title="Salvar alterações?"
+        message="Tem certeza que deseja salvar as alterações feitas na ficha deste paciente?"
+        confirmText="Confirmar"
+        cancelText="Voltar"
+        onConfirm={handleConfirmEdit}
+        onCancel={() => setShowConfirmEditModal(false)}
+      />
+      <ConfirmModal
+        isOpen={showConfirmAtend}
+        title="Registrar atendimento?"
+        message={`Confirma o registro do atendimento de ${selected?.name ?? 'este paciente'}?`}
+        confirmText="Confirmar"
+        cancelText="Voltar"
+        onConfirm={handleConfirmAtend}
+        onCancel={() => setShowConfirmAtend(false)}
+      />
+
+      <SucessModal
+        isOpen={showSuccessModal}
+        title="Sucesso!"
+        message={successMessage}
+        onClose={handleSuccessClose}
+        buttonText="Continuar"
+      />
     </Container>
   );
 }
