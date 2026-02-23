@@ -38,7 +38,10 @@ export const criarLancamento = (data: LancamentoRequest) =>
 export const registrarPagamento = (id: number, formaPagamento: string) =>
   apiFetch<LancamentoResponse>(`/api/financeiro/lancamentos/${id}/pagar`, {
     method: 'PATCH',
-    body: JSON.stringify({ formaPagamento }),
+    body: JSON.stringify({
+      formaPagamento,
+      dataPagamento: new Date().toISOString().split('T')[0],
+    }),
   });
 
 export const cancelarLancamento = (id: number) =>
