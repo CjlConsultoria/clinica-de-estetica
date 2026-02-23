@@ -3,7 +3,8 @@ import localFont from 'next/font/local';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { StyledComponentsRegistry } from '@/components/StyledComponentsRegistry';
 import LayoutWrapper from '@/components/LayoutWrapper';
-import DebugPanelWrapper from '@/components/ui/DebugPanelWrapper'; 
+import DebugPanelWrapper from '@/components/ui/DebugPanelWrapper';
+import PaymentGuard from '@/components/ui/PaymentGuard';
 import './globals.css';
 
 const cabourgRegular = localFont({ src: '../fonts/CabourgOT-Regular.otf', variable: '--font-cabourg-regular', display: 'swap' });
@@ -30,9 +31,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <StyledComponentsRegistry>
           <AuthProvider>
             <LayoutWrapper>
-              {children}
+              <PaymentGuard>
+                {children}
+              </PaymentGuard>
             </LayoutWrapper>
-            <DebugPanelWrapper /> 
+
+            <DebugPanelWrapper />
           </AuthProvider>
         </StyledComponentsRegistry>
       </body>

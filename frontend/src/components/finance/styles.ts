@@ -323,3 +323,93 @@ export const FormGrid = styled.div`
   gap: 16px;
   @media (max-width: 560px) { grid-template-columns: 1fr; }
 `;
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Novos componentes — Seção Fatura (view empresa)
+───────────────────────────────────────────────────────────────────────────── */
+
+export const FaturaSection = styled.div`
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  margin-bottom: 28px;
+  border-left: 4px solid #BBA188;
+`;
+
+export const FaturaCard = styled.div<{ $highlight?: boolean }>`
+  background: ${({ $highlight }) => $highlight ? 'linear-gradient(135deg, #fdfaf7 0%, #f9f4ef 100%)' : '#fafafa'};
+  border: 1.5px solid ${({ $highlight }) => $highlight ? 'rgba(187,161,136,0.35)' : '#f0f0f0'};
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 768px) {
+    grid-column: span 2;
+  }
+`;
+
+export const FaturaHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+`;
+
+export const FaturaStatus = styled.span<{ $status: 'pago' | 'pendente' | 'vencido' | 'cancelado' }>`
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
+  background: ${({ $status }) => ({
+    pago:      'rgba(138,117,96,0.12)',
+    pendente:  'rgba(234,179,8,0.12)',
+    vencido:   'rgba(231,76,60,0.12)',
+    cancelado: 'rgba(150,150,150,0.12)',
+  }[$status])};
+  color: ${({ $status }) => ({
+    pago:      '#8a7560',
+    pendente:  '#ca8a04',
+    vencido:   '#e74c3c',
+    cancelado: '#888',
+  }[$status])};
+`;
+
+export const FaturaInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 0;
+  border-top: 1px solid rgba(187,161,136,0.15);
+  border-bottom: 1px solid rgba(187,161,136,0.15);
+  margin-bottom: 16px;
+`;
+
+export const FaturaRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+export const FaturaLabel = styled.span`
+  font-size: 0.78rem;
+  color: #999;
+  font-family: var(--font-metropolis-regular), 'Metropolis', sans-serif;
+`;
+
+export const FaturaValue = styled.span<{ $alert?: boolean }>`
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: ${({ $alert }) => ($alert ? '#e74c3c' : '#444')};
+  font-family: var(--font-inter-variable-regular), 'Inter', sans-serif;
+`;
+
+export const FaturaActions = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+`;

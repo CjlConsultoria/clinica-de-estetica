@@ -1,12 +1,13 @@
 'use client';
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { CurrentUser, MOCK_USERS as PERMISSION_USERS, Role } from '@/types/auth';
+import { CurrentUser, MOCK_USERS as PERMISSION_USERS } from '@/types/auth';
 
 export interface User {
   id: string;
   name: string;
   email: string;
   role: 'admin' | 'seller';
+  companyId: string | null; 
 }
 
 interface LoginCredentials {
@@ -15,7 +16,7 @@ interface LoginCredentials {
 }
 
 const MOCK_LOGIN_USERS = [
-  { id: '1', name: 'Administrador', email: 'admin@gmail.com', password: '12345678', role: 'admin' as const },
+  { id: '1', name: 'Administrador', email: 'admin@gmail.com', password: '12345678', role: 'admin' as const, companyId: null },
 ];
 
 interface AuthContextType {
@@ -29,6 +30,7 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser]               = useState<User | null>(null);
   const [token, setToken]             = useState<string | null>(null);
