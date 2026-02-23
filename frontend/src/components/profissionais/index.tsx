@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -12,6 +12,11 @@ import { usePermissions } from '@/components/ui/hooks/usePermissions';
 import { useCurrentUser } from '@/components/ui/hooks/useCurrentUser';
 import PermissionGuard from '@/components/ui/PermissionGuard';
 import MockLoginScreen from '@/components/auth/MockLoginScreen';
+import {
+  listarUsuarios, criarUsuario, atualizarUsuario, inativarUsuario,
+  mapBackendCargo, mapFrontendCargo,
+  type UsuarioResponse,
+} from '@/services/usuariosApi';
 import {
   Container, Header, Title, StatsGrid, Controls,
   SearchBarWrapper, SearchIconWrap, SearchInputStyled,
@@ -143,21 +148,6 @@ const filterStatus  = ['Todos', 'Ativo', 'Inativo'];
 const filterAreas   = ['Todos', 'Técnica', 'Administrativa'];
 const STEP_LABELS   = ['Dados Básicos', 'Área', 'Cargo', 'Acesso'];
 
-const INITIAL_PROFISSIONAIS = [
-  { id: 1,  name: 'Ana Beatriz Lima',   email: 'ana.lima@clinica.com',       phone: '(11) 98765-4321', registro: 'CREFITO-3 112233-F', area: 'tecnica',        cargo: 'esteticista',    especialidade: 'estetica-facial',         status: 'ativo',   atendimentos: 142, ultimoAcesso: '20/02/2025', observacoes: '' },
-  { id: 2,  name: 'Dra. Clara Andrade', email: 'clara.andrade@clinica.com',  phone: '(11) 97654-3210', registro: 'CRM/SP 654321',      area: 'tecnica',        cargo: 'dermatologista', especialidade: 'dermatologia-clinica',     status: 'ativo',   atendimentos: 98,  ultimoAcesso: '19/02/2025', observacoes: '' },
-  { id: 3,  name: 'Juliana Ferreira',   email: 'juliana.f@clinica.com',      phone: '(31) 94321-0987', registro: 'COREN/SP 901234',    area: 'tecnica',        cargo: 'enfermeiro',     especialidade: 'enfermagem-estetica',      status: 'ativo',   atendimentos: 55,  ultimoAcesso: '17/02/2025', observacoes: '' },
-  { id: 4,  name: 'Rafael Costa',       email: 'rafael.costa@clinica.com',   phone: '(21) 95432-1098', registro: '',                   area: 'administrativa', cargo: 'recepcionista',  especialidade: '',                         status: 'inativo', atendimentos: 0,   ultimoAcesso: '10/01/2025', observacoes: '' },
-  { id: 5,  name: 'Mariana Souza',      email: 'mariana.s@clinica.com',      phone: '(21) 94321-9876', registro: 'CRBim-5 445566',     area: 'tecnica',        cargo: 'biomedico',      especialidade: 'biomedicina-estetica',     status: 'ativo',   atendimentos: 76,  ultimoAcesso: '18/02/2025', observacoes: '' },
-  { id: 6,  name: 'Patricia Gomes',     email: 'patricia.g@clinica.com',     phone: '(11) 93210-8765', registro: '',                   area: 'administrativa', cargo: 'gerente',        especialidade: '',                         status: 'ativo',   atendimentos: 0,   ultimoAcesso: '20/02/2025', observacoes: '' },
-  { id: 7,  name: 'Fernanda Oliveira',  email: 'fernanda.o@clinica.com',     phone: '(11) 91234-5678', registro: 'CREFITO-3 778899-F', area: 'tecnica',        cargo: 'fisioterapeuta', especialidade: 'dermato-funcional',        status: 'ativo',   atendimentos: 63,  ultimoAcesso: '15/02/2025', observacoes: '' },
-  { id: 8,  name: 'Dr. Lucas Mendes',   email: 'lucas.mendes@clinica.com',   phone: '(11) 99876-5432', registro: 'CRM/SP 789012',      area: 'tecnica',        cargo: 'dermatologista', especialidade: 'dermatologia-estetica',    status: 'ativo',   atendimentos: 110, ultimoAcesso: '20/02/2025', observacoes: '' },
-  { id: 9,  name: 'Camila Rocha',       email: 'camila.rocha@clinica.com',   phone: '(21) 98765-1234', registro: '',                   area: 'administrativa', cargo: 'financeiro',     especialidade: '',                         status: 'ativo',   atendimentos: 0,   ultimoAcesso: '19/02/2025', observacoes: '' },
-  { id: 10, name: 'Beatriz Santos',     email: 'beatriz.santos@clinica.com', phone: '(31) 97654-3210', registro: 'COREN/SP 345678',    area: 'tecnica',        cargo: 'enfermeiro',     especialidade: 'procedimentos-injetaveis', status: 'ativo',   atendimentos: 41,  ultimoAcesso: '16/02/2025', observacoes: '' },
-  { id: 11, name: 'Thiago Almeida',     email: 'thiago.a@clinica.com',       phone: '(11) 96543-2109', registro: '',                   area: 'administrativa', cargo: 'recepcionista',  especialidade: '',                         status: 'ativo',   atendimentos: 0,   ultimoAcesso: '18/02/2025', observacoes: '' },
-  { id: 12, name: 'Larissa Duarte',     email: 'larissa.d@clinica.com',      phone: '(11) 95432-1098', registro: 'CRBim-5 667788',     area: 'tecnica',        cargo: 'biomedico',      especialidade: 'laser-terapia',            status: 'inativo', atendimentos: 29,  ultimoAcesso: '05/01/2025', observacoes: '' },
-];
-
 const avatarColors = ['#BBA188', '#8a7560', '#a8906f', '#c9a882', '#917255', '#d4b896'];
 
 const statusColors: Record<string, { bg: string; color: string }> = {
@@ -199,6 +189,26 @@ type Profissional = {
   registro: string; area: string; cargo: string; especialidade: string;
   status: string; atendimentos: number; ultimoAcesso: string; observacoes: string;
 };
+
+function mapUsuario(u: UsuarioResponse): Profissional {
+  const area = u.areaProfissional === 'TECNICA' ? 'tecnica'
+             : u.areaProfissional === 'ADMINISTRATIVA' ? 'administrativa'
+             : 'administrativa';
+  return {
+    id:           u.id,
+    name:         u.nome,
+    email:        u.email,
+    phone:        u.telefone ?? '—',
+    registro:     u.registro ?? '',
+    area,
+    cargo:        mapBackendCargo(u.cargo),
+    especialidade: u.especialidade ?? '',
+    status:       u.ativo ? 'ativo' : 'inativo',
+    atendimentos: u.atendimentos ?? 0,
+    ultimoAcesso: '—',
+    observacoes:  u.observacoes ?? '',
+  };
+}
 
 function getEspecialidadeLabel(cargo: string, value: string): string {
   if (!value) return '—';
@@ -271,7 +281,8 @@ export default function Profissionais() {
   const canEdit   = can('profissionais.edit');
   const canRead   = can('profissionais.read');
 
-  const [profissionais,        setProfissionais]        = useState<Profissional[]>(INITIAL_PROFISSIONAIS);
+  const [profissionais,        setProfissionais]        = useState<Profissional[]>([]);
+  const [loading,              setLoading]              = useState(true);
   const [search,               setSearch]               = useState('');
   const [filterStat,           setFilterStat]           = useState('Todos');
   const [filterArea,           setFilterArea]           = useState('Todos');
@@ -324,6 +335,13 @@ export default function Profissionais() {
       return null;
     }},
   ]);
+
+  useEffect(() => {
+    listarUsuarios()
+      .then(list => setProfissionais(list.map(mapUsuario)))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
 
   const cargoConfig  = form.cargo ? ALL_CARGO_CONFIG[form.cargo] : null;
   const cargoOptions =
@@ -399,7 +417,7 @@ export default function Profissionais() {
     if (!canEdit) return;
     setIsEditing(true); setSelectedProfissional(p);
     setForm({
-      nome: p.name, email: p.email, telefone: p.phone,
+      nome: p.name, email: p.email, telefone: p.phone === '—' ? '' : p.phone,
       area: p.area as AreaType, cargo: p.cargo as Cargo,
       especialidade: p.especialidade, registro: p.registro,
       status: p.status, observacoes: p.observacoes || '',
@@ -416,26 +434,43 @@ export default function Profissionais() {
     setShowSenha(false); setShowConfirm(false); setIsEditing(false);
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!validateStep(4)) return;
     if (form.senha && form.senha !== form.confirmarSenha) { step4Validation.clearAll(); return; }
-    const today = new Date().toLocaleDateString('pt-BR');
-    if (isEditing && selectedProfissional) {
-      setProfissionais(prev =>
-        prev.map(p => p.id === selectedProfissional.id
-          ? { ...p, name: form.nome, email: form.email, phone: form.telefone, area: form.area, cargo: form.cargo, especialidade: form.especialidade, registro: form.registro, status: form.status, observacoes: form.observacoes }
-          : p
-        )
-      );
-    } else {
-      setProfissionais(prev => [...prev, {
-        id: Date.now(), name: form.nome, email: form.email, phone: form.telefone,
-        registro: form.registro, area: form.area, cargo: form.cargo,
-        especialidade: form.especialidade, status: 'ativo',
-        atendimentos: 0, ultimoAcesso: today, observacoes: form.observacoes,
-      }]);
+
+    const payload = {
+      nome:          form.nome,
+      email:         form.email,
+      senha:         (!isEditing || form.senha) ? form.senha : undefined,
+      cargo:         mapFrontendCargo(form.cargo),
+      telefone:      form.telefone || undefined,
+      especialidade: form.especialidade || undefined,
+      registro:      form.registro || undefined,
+      observacoes:   form.observacoes || undefined,
+    };
+
+    try {
+      if (isEditing && selectedProfissional) {
+        const updated = await atualizarUsuario(selectedProfissional.id, payload);
+        setProfissionais(prev => prev.map(p => p.id === selectedProfissional.id ? mapUsuario(updated) : p));
+      } else {
+        const created = await criarUsuario(payload);
+        setProfissionais(prev => [...prev, mapUsuario(created)]);
+      }
+      handleClose();
+    } catch (err) {
+      alert((err as Error).message);
     }
-    handleClose();
+  }
+
+  async function handleInativar(p: Profissional) {
+    if (!confirm(`Deseja inativar ${p.name}?`)) return;
+    try {
+      await inativarUsuario(p.id);
+      setProfissionais(prev => prev.map(x => x.id === p.id ? { ...x, status: 'inativo' } : x));
+    } catch (err) {
+      alert((err as Error).message);
+    }
   }
 
   const errors1 = step1Validation.errors;
@@ -642,16 +677,16 @@ export default function Profissionais() {
       </Header>
 
       <StatsGrid>
-        <StatCard label="Total de Profissionais" value={totalProfissionais} color="#BBA188"
+        <StatCard label="Total de Profissionais" value={loading ? '...' : totalProfissionais} color="#BBA188"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
         />
-        <StatCard label="Ativos" value={ativos} color="#8a7560"
+        <StatCard label="Ativos" value={loading ? '...' : ativos} color="#8a7560"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>}
         />
-        <StatCard label="Inativos" value={inativos} color="#EBD5B0"
+        <StatCard label="Inativos" value={loading ? '...' : inativos} color="#EBD5B0"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>}
         />
-        <StatCard label="Atendimentos Total" value={totalAtend} color="#a8906f"
+        <StatCard label="Atendimentos Total" value={loading ? '...' : totalAtend} color="#a8906f"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3h6"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M21 9v6"/><path d="M21 15v4a2 2 0 0 1-2 2h-4"/><path d="M15 21H9"/><path d="M9 21H5a2 2 0 0 1-2-2v-4"/><path d="M3 15V9"/></svg>}
         />
       </StatsGrid>
@@ -722,7 +757,13 @@ export default function Profissionais() {
               </tr>
             </Thead>
             <Tbody>
-              {paginatedData.length === 0 ? (
+              {loading ? (
+                <tr><td colSpan={10}>
+                  <EmptyState>
+                    <p>Carregando profissionais...</p>
+                  </EmptyState>
+                </td></tr>
+              ) : paginatedData.length === 0 ? (
                 <tr><td colSpan={10}>
                   <EmptyState>
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -764,7 +805,7 @@ export default function Profissionais() {
                   <Td $center $bold>{p.atendimentos || '—'}</Td>
                   <Td $muted>{p.ultimoAcesso}</Td>
                   <Td>
-                    <Badge $bg={statusColors[p.status].bg} $color={statusColors[p.status].color}>
+                    <Badge $bg={statusColors[p.status]?.bg ?? '#f5f5f5'} $color={statusColors[p.status]?.color ?? '#888'}>
                       {p.status === 'ativo' ? 'Ativo' : 'Inativo'}
                     </Badge>
                   </Td>
@@ -808,15 +849,22 @@ export default function Profissionais() {
         size="lg"
         footer={
           <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'space-between' }}>
-            <PermissionGuard permission="profissionais.edit">
-              <Button
-                variant="outline"
-                icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
-                onClick={() => selectedProfissional && openEdit(selectedProfissional)}
-              >
-                Editar Ficha
-              </Button>
-            </PermissionGuard>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <PermissionGuard permission="profissionais.edit">
+                <Button
+                  variant="outline"
+                  icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
+                  onClick={() => selectedProfissional && openEdit(selectedProfissional)}
+                >
+                  Editar Ficha
+                </Button>
+              </PermissionGuard>
+              {canEdit && selectedProfissional?.status === 'ativo' && (
+                <Button variant="outline" onClick={() => selectedProfissional && handleInativar(selectedProfissional)}>
+                  Inativar
+                </Button>
+              )}
+            </div>
             <Button variant="outline" onClick={() => setIsDetailOpen(false)}>Fechar</Button>
           </div>
         }

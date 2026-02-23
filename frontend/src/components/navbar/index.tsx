@@ -87,7 +87,7 @@ const navSections = [
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const { can, isSuperAdmin } = usePermissions();
   const { currentUser } = useCurrentUser();
   const [isOpen, setIsOpen] = useState(false);
@@ -166,7 +166,7 @@ export default function Navbar() {
 
           <TopSection $collapsed={collapsed}>
             <TitleText>Clínica Estética</TitleText>
-            <GreetingText>Olá, {user?.name ?? 'Administrador'}</GreetingText>
+            <GreetingText>Olá, {currentUser?.name ?? 'Administrador'}</GreetingText>
           </TopSection>
 
           <LogoCollapsed $collapsed={collapsed}>

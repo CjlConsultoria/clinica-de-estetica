@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -22,6 +22,10 @@ import {
   DetailSection, DetailSectionTitle, StatsRow, StatPill,
   InfoGrid, InfoItem, InfoLabel, InfoValue, ObsBox,
 } from './styles';
+import {
+  listarPacientes, criarPaciente, atualizarPaciente,
+  PacienteResponse,
+} from '@/services/pacientesApi';
 
 interface PacienteForm {
   nome: string;
@@ -60,22 +64,37 @@ const statusColors: Record<string, { bg: string; color: string }> = {
 
 const avatarColors = ['#BBA188', '#8a7560', '#a8906f', '#c9a882', '#917255', '#d4b896'];
 
-const INITIAL_PATIENTS = [
-  { id: 1,  name: 'Ana Beatriz Costa',  email: 'ana.costa@email.com',     phone: '(11) 98765-4321', birthdate: '1988-03-15', cpf: '123.456.789-00', lastVisit: '18/02/2025', procedure: 'Botox',            status: 'ativo',   visits: 8,  indicacao: 'Instagram',          observacoes: 'Alergia a látex' },
-  { id: 2,  name: 'Carla Mendonça',     email: 'carla.m@email.com',       phone: '(11) 97654-3210', birthdate: '1992-07-22', cpf: '234.567.890-11', lastVisit: '15/02/2025', procedure: 'Preenchimento',    status: 'ativo',   visits: 5,  indicacao: 'Indicação de amiga', observacoes: '' },
-  { id: 3,  name: 'Fernanda Lima',      email: 'fernanda.lima@email.com', phone: '(11) 96543-2109', birthdate: '1985-11-05', cpf: '345.678.901-22', lastVisit: '10/02/2025', procedure: 'Bioestimulador',   status: 'ativo',   visits: 3,  indicacao: 'Google',             observacoes: 'Gestante, verificar procedimentos' },
-  { id: 4,  name: 'Marina Souza',       email: 'marina.s@email.com',      phone: '(21) 95432-1098', birthdate: '1990-04-30', cpf: '456.789.012-33', lastVisit: '08/01/2025', procedure: 'Fio PDO',          status: 'ativo',   visits: 6,  indicacao: 'Instagram',          observacoes: '' },
-  { id: 5,  name: 'Juliana Rocha',      email: 'juliana.r@email.com',     phone: '(21) 94321-0987', birthdate: '1995-09-14', cpf: '567.890.123-44', lastVisit: '05/01/2025', procedure: 'Botox',            status: 'ativo',   visits: 2,  indicacao: 'Indicação médico',   observacoes: '' },
-  { id: 6,  name: 'Patrícia Alves',     email: 'patricia.a@email.com',    phone: '(31) 93210-9876', birthdate: '1982-12-19', cpf: '678.901.234-55', lastVisit: '20/12/2024', procedure: 'Microagulhamento', status: 'inativo', visits: 12, indicacao: 'Google',             observacoes: 'Histórico de queloides' },
-  { id: 7,  name: 'Roberta Gomes',      email: 'roberta.g@email.com',     phone: '(31) 92109-8765', birthdate: '1998-06-08', cpf: '789.012.345-66', lastVisit: '15/12/2024', procedure: 'Preenchimento',    status: 'ativo',   visits: 1,  indicacao: 'TikTok',             observacoes: '' },
-  { id: 8,  name: 'Sandra Oliveira',    email: 'sandra.o@email.com',      phone: '(41) 91098-7654', birthdate: '1978-02-25', cpf: '890.123.456-77', lastVisit: '10/11/2024', procedure: 'Bioestimulador',   status: 'inativo', visits: 7,  indicacao: 'Indicação de amiga', observacoes: '' },
-  { id: 9,  name: 'Luciana Ferreira',   email: 'luciana.f@email.com',     phone: '(11) 90987-6543', birthdate: '1991-01-10', cpf: '901.234.567-88', lastVisit: '12/02/2025', procedure: 'Botox',            status: 'ativo',   visits: 4,  indicacao: 'Instagram',          observacoes: '' },
-  { id: 10, name: 'Renata Cardoso',     email: 'renata.c@email.com',      phone: '(21) 99876-5432', birthdate: '1987-08-03', cpf: '012.345.678-99', lastVisit: '20/01/2025', procedure: 'Fio PDO',          status: 'ativo',   visits: 9,  indicacao: 'Google',             observacoes: 'Diabética tipo 2' },
-  { id: 11, name: 'Camila Torres',      email: 'camila.t@email.com',      phone: '(31) 98765-0123', birthdate: '1994-05-17', cpf: '111.222.333-44', lastVisit: '05/02/2025', procedure: 'Preenchimento',    status: 'ativo',   visits: 2,  indicacao: 'Indicação de amiga', observacoes: '' },
-  { id: 12, name: 'Beatriz Nunes',      email: 'beatriz.n@email.com',     phone: '(41) 97654-9012', birthdate: '2000-11-28', cpf: '222.333.444-55', lastVisit: '01/01/2025', procedure: 'Microagulhamento', status: 'ativo',   visits: 1,  indicacao: 'Instagram',          observacoes: '' },
-];
+interface Patient {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  birthdate: string;
+  cpf: string;
+  lastVisit: string;
+  procedure: string;
+  status: string;
+  visits: number;
+  indicacao: string;
+  observacoes: string;
+}
 
-type Patient = typeof INITIAL_PATIENTS[0];
+function mapPaciente(p: PacienteResponse): Patient {
+  return {
+    id:          p.id,
+    name:        p.nome,
+    email:       p.email ?? '',
+    phone:       p.celular ?? p.telefone ?? '',
+    birthdate:   p.dataNascimento ?? '',
+    cpf:         p.cpf,
+    lastVisit:   '—',
+    procedure:   '—',
+    status:      p.ativo ? 'ativo' : 'inativo',
+    visits:      0,
+    indicacao:   '',
+    observacoes: p.observacoes ?? '',
+  };
+}
 
 const ITEMS_PER_PAGE = 10;
 
@@ -124,7 +143,8 @@ function isFormDirty(form: PacienteForm): boolean {
 }
 
 export default function Patients() {
-  const [patients,        setPatients]        = useState<Patient[]>(INITIAL_PATIENTS);
+  const [patients,        setPatients]        = useState<Patient[]>([]);
+  const [loading,         setLoading]         = useState(true);
   const [search,          setSearch]          = useState('');
   const [filterSt,        setFilterSt]        = useState('Todos');
   const [filterProc,      setFilterProc]      = useState('Todos');
@@ -141,6 +161,16 @@ export default function Patients() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const { errors, validate, clearError, clearAll } = useSequentialValidation<PacienteField>(VALIDATION_FIELDS);
+
+  const fetchPatients = () => {
+    setLoading(true);
+    listarPacientes()
+      .then(r => setPatients(r.content.map(mapPaciente)))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { fetchPatients(); }, []);
 
   const filtered = patients.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.email.includes(search);
@@ -237,24 +267,31 @@ export default function Patients() {
     setShowConfirmModal(true);
   }
 
-  function handleConfirmSave() {
+  async function handleConfirmSave() {
     setShowConfirmModal(false);
-    if (isEditing && selectedPatient) {
-      setPatients(prev => prev.map(p => p.id === selectedPatient.id
-        ? { ...p, name: form.nome, email: form.email, phone: form.telefone, birthdate: form.nascimento, cpf: form.cpf, status: form.status, indicacao: form.indicacao, observacoes: form.observacoes }
-        : p
-      ));
-    } else {
-      const today = new Date().toLocaleDateString('pt-BR');
-      setPatients(prev => [...prev, {
-        id: Date.now(), name: form.nome, email: form.email, phone: form.telefone,
-        birthdate: form.nascimento, cpf: form.cpf, lastVisit: today, procedure: '—',
-        status: 'ativo', visits: 0, indicacao: form.indicacao, observacoes: form.observacoes,
-      }]);
+    const payload = {
+      nome:           form.nome,
+      cpf:            form.cpf,
+      email:          form.email || undefined,
+      celular:        form.telefone || undefined,
+      dataNascimento: form.nascimento || undefined,
+      observacoes:    form.observacoes || undefined,
+    };
+    try {
+      if (isEditing && selectedPatient) {
+        const updated = await atualizarPaciente(selectedPatient.id, payload);
+        setPatients(prev => prev.map(p => p.id === selectedPatient.id ? mapPaciente(updated) : p));
+      } else {
+        const created = await criarPaciente(payload);
+        setPatients(prev => [...prev, mapPaciente(created)]);
+      }
+      setIsModalOpen(false);
+      setShowSuccessModal(true);
+    } catch (err) {
+      alert((err as Error).message);
     }
-    setIsModalOpen(false);
-    setShowSuccessModal(true);
   }
+
   function handleSuccessClose() {
     setShowSuccessModal(false);
     setForm(FORM_INITIAL);
@@ -286,7 +323,7 @@ export default function Patients() {
         <StatCard label="Inativos" value={inativos} color="#EBD5B0"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>}
         />
-        <StatCard label="Novos este mês" value={3} color="#a8906f"
+        <StatCard label="Total Cadastrados" value={patients.length} color="#a8906f"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>}
         />
       </StatsGrid>
@@ -358,7 +395,13 @@ export default function Patients() {
               </tr>
             </Thead>
             <Tbody>
-              {paginatedData.length === 0 ? (
+              {loading ? (
+                <tr><td colSpan={8}>
+                  <EmptyState>
+                    <p style={{ color: '#bbb' }}>Carregando pacientes...</p>
+                  </EmptyState>
+                </td></tr>
+              ) : paginatedData.length === 0 ? (
                 <tr><td colSpan={8}>
                   <EmptyState>
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
@@ -444,11 +487,9 @@ export default function Patients() {
                   </DetailMetaItem>
                 </DetailMeta>
                 <StatsRow style={{ marginTop: 10 }}>
-                  <StatPill $color="#BBA188">{selectedPatient.visits} visitas</StatPill>
                   <StatPill $color={selectedPatient.status === 'ativo' ? '#8a7560' : '#888'}>
                     {selectedPatient.status === 'ativo' ? 'Ativo' : 'Inativo'}
                   </StatPill>
-                  <StatPill $color="#a8906f">{selectedPatient.procedure}</StatPill>
                 </StatsRow>
               </div>
             </DetailHeader>
@@ -476,24 +517,6 @@ export default function Patients() {
                     <code style={{ fontSize: '0.83rem', color: '#888', background: '#f5f5f5', padding: '3px 8px', borderRadius: 5 }}>
                       {selectedPatient.cpf}
                     </code>
-                  </InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>Como nos conheceu</InfoLabel>
-                  <InfoValue>{selectedPatient.indicacao || '—'}</InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>Último Procedimento</InfoLabel>
-                  <InfoValue>{selectedPatient.procedure}</InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>Última Visita</InfoLabel>
-                  <InfoValue>{selectedPatient.lastVisit}</InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>Total de Visitas</InfoLabel>
-                  <InfoValue style={{ fontWeight: 700, color: '#1a1a1a', fontSize: '1.1rem' }}>
-                    {selectedPatient.visits}
                   </InfoValue>
                 </InfoItem>
                 <InfoItem>
@@ -526,7 +549,6 @@ export default function Patients() {
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24, overflowY: 'auto', maxHeight: '65vh', paddingRight: 4 }}>
-
           <div>
             <SectionLabel style={{ marginBottom: 12 }}>Dados Pessoais</SectionLabel>
             <FormGrid>
@@ -577,7 +599,6 @@ export default function Patients() {
               />
             </FormGrid>
           </div>
-
           <div>
             <SectionLabel style={{ marginBottom: 12 }}>Informações Adicionais</SectionLabel>
             <FormGrid>
@@ -610,7 +631,6 @@ export default function Patients() {
               </div>
             </FormGrid>
           </div>
-
         </div>
       </Modal>
 
@@ -639,11 +659,7 @@ export default function Patients() {
       <SucessModal
         isOpen={showSuccessModal}
         title="Sucesso!"
-        message={
-          isEditing
-            ? 'Alterações salvas com sucesso!'
-            : 'Paciente cadastrado com sucesso!'
-        }
+        message={isEditing ? 'Alterações salvas com sucesso!' : 'Paciente cadastrado com sucesso!'}
         onClose={handleSuccessClose}
         buttonText="Continuar"
       />

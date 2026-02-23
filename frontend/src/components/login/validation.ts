@@ -5,11 +5,6 @@ export type ValidationError = {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export const ADMIN_CREDENTIALS = {
-  email: 'admin@gmail.com',
-  password: '12345678'
-};
-
 export function validateEmail(email: string): ValidationError | null {
   if (!email || email.trim() === '') {
     return { field: 'email', message: 'Por favor, insira seu e-mail' };
@@ -30,6 +25,7 @@ export function validatePassword(password: string): ValidationError | null {
   return null;
 }
 
+/** Valida apenas o formato — a verificação de credenciais é feita pelo backend. */
 export function validateCredentials(email: string, password: string): ValidationError | null {
   const emailError = validateEmail(email);
   if (emailError) return emailError;
@@ -37,43 +33,23 @@ export function validateCredentials(email: string, password: string): Validation
   const passwordError = validatePassword(password);
   if (passwordError) return passwordError;
 
-  if (email !== ADMIN_CREDENTIALS.email || password !== ADMIN_CREDENTIALS.password) {
-    return {
-      field: 'password',
-      message: 'E-mail ou senha incorretos. Apenas administradores podem acessar.'
-    };
-  }
-
   return null;
 }
 
 export const ERROR_MESSAGES = {
-  EMAIL_REQUIRED: 'Por favor, insira seu e-mail',
-  EMAIL_INVALID: 'E-mail inválido. Verifique o formato',
-  EMAIL_NOT_FOUND: 'E-mail não encontrado no sistema',
+  EMAIL_REQUIRED:    'Por favor, insira seu e-mail',
+  EMAIL_INVALID:     'E-mail inválido. Verifique o formato',
   PASSWORD_REQUIRED: 'Por favor, insira sua senha',
   PASSWORD_MIN_LENGTH: 'A senha deve ter no mínimo 8 caracteres',
-  PASSWORD_INCORRECT: 'Senha incorreta. Tente novamente',
-  CREDENTIALS_INVALID: 'E-mail ou senha incorretos. Apenas administradores podem acessar.',
-  UNAUTHORIZED: 'Acesso negado. Você não tem permissão para acessar esta área.',
-  USER_NOT_FOUND: 'Usuário não encontrado. Verifique suas credenciais',
+  UNAUTHORIZED:      'Acesso negado. Você não tem permissão para acessar esta área.',
 };
 
-export type ModalErrorType = 'CREDENTIALS_INVALID' | 'UNAUTHORIZED' | 'USER_NOT_FOUND';
-
 export function shouldShowModal(error: ValidationError | null): boolean {
+  // Apenas erros do campo 'general' são exibidos em modal
   if (!error) return false;
-  const modalErrors = [
-    ERROR_MESSAGES.CREDENTIALS_INVALID,
-    ERROR_MESSAGES.UNAUTHORIZED,
-    ERROR_MESSAGES.USER_NOT_FOUND
-  ];
-  return modalErrors.includes(error.message);
+  return error.field === 'general';
 }
 
-export function getModalTitle(message: string): string {
-  if (message === ERROR_MESSAGES.CREDENTIALS_INVALID) return 'Login inválido!';
-  if (message === ERROR_MESSAGES.UNAUTHORIZED) return 'Acesso negado!';
-  if (message === ERROR_MESSAGES.USER_NOT_FOUND) return 'Usuário não encontrado!';
-  return 'Erro!';
+export function getModalTitle(_message: string): string {
+  return 'Erro no login';
 }
