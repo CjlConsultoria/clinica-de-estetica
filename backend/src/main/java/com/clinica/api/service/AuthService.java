@@ -39,6 +39,8 @@ public class AuthService {
                 .nome(usuario.getNome())
                 .email(usuario.getEmail())
                 .role(usuario.getRole())
+                .cargo(usuario.getCargo())
+                .areaProfissional(usuario.getAreaProfissional())
                 .build();
     }
 
@@ -52,6 +54,12 @@ public class AuthService {
                 .email(request.getEmail())
                 .senha(passwordEncoder.encode(request.getSenha()))
                 .role(request.getRole())
+                .cargo(request.getCargo())
+                .areaProfissional(request.getCargo() != null ? request.getCargo().getArea() : null)
+                .telefone(request.getTelefone())
+                .especialidade(request.getEspecialidade())
+                .registro(request.getRegistro())
+                .observacoes(request.getObservacoes())
                 .ativo(true)
                 .build();
 
@@ -65,6 +73,8 @@ public class AuthService {
                 .nome(usuario.getNome())
                 .email(usuario.getEmail())
                 .role(usuario.getRole())
+                .cargo(usuario.getCargo())
+                .areaProfissional(usuario.getAreaProfissional())
                 .build();
     }
 }

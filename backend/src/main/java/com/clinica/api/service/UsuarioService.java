@@ -134,15 +134,19 @@ public class UsuarioService {
 
 
     private Role resolverRole(UsuarioRequest request) {
+        if (request.getRole() != null) {
+            return request.getRole();
+        }
         if (request.getCargo() != null) {
-            return request.getCargo().getArea() == AreaProfissional.TECNICA
-                    ? Role.MEDICO
-                    : Role.RECEPCIONISTA;
+            return switch (request.getCargo()) {
+                case GERENTE    -> Role.GERENTE;
+                case FINANCEIRO -> Role.FINANCEIRO;
+                case RECEPCIONISTA -> Role.RECEPCIONISTA;
+                // Área técnica: todos os profissionais clínicos
+                default         -> Role.TECNICO;
+            };
         }
-        if (request.getRole() == null) {
-            throw new BusinessException("Informe o cargo do profissional ou a role de acesso");
-        }
-        return request.getRole();
+        throw new BusinessException("Informe o cargo do profissional ou a role de acesso");
     }
 
     private Usuario findById(Long id) {

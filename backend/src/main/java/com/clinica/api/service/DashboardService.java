@@ -43,7 +43,7 @@ public class DashboardService {
         BigDecimal receitaMes = lancamentoRepository.somarReceitasPorPeriodo(inicioMes, fimMes);
         BigDecimal receitaPendente = lancamentoRepository.somarPendentes();
 
-        long totalMedicos = usuarioRepository.findByRole(Role.MEDICO).size();
+        long totalMedicos = usuarioRepository.findByRole(Role.TECNICO).size();
 
         return DashboardResponse.builder()
                 .totalPacientes(totalPacientes)
