@@ -124,11 +124,9 @@ export default function FinanceEmpresa() {
   const [isModalOpen,   setIsModalOpen]   = useState(false);
   const [exporting,     setExporting]     = useState(false);
   const [currentPage,   setCurrentPage]   = useState(1);
-  const [showCancelModal,        setShowCancelModal]        = useState(false);
-  const [showConfirmModal,       setShowConfirmModal]       = useState(false);
-  const [showSuccessModal,       setShowSuccessModal]       = useState(false);
-  const [showExportConfirmModal, setShowExportConfirmModal] = useState(false);
-  const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
+  const [showCancelModal,  setShowCancelModal]  = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [lancForm,      setLancForm]      = useState<LancamentoForm>(LANCAMENTO_INITIAL);
   const [showFaturaSection,setShowFaturaSection]=useState(true);
   const [paidNow,       setPaidNow]       = useState(false);
@@ -180,9 +178,7 @@ export default function FinanceEmpresa() {
   }
   function handleConfirmSave(){setShowConfirmModal(false);setIsModalOpen(false);setLancForm(LANCAMENTO_INITIAL);lancClearAll();setShowSuccessModal(true);}
   const toggle=(name:string)=>setOpenDropdown(prev=>prev===name?null:name);
-  const handleExportClick=()=>setShowExportConfirmModal(true);
-  const handleConfirmExport=async()=>{
-    setShowExportConfirmModal(false);
+  const handleExportClick=async()=>{
     try{
       setExporting(true);
       const response=await fetch('/api/relatorios/financeiro',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({transactions:mockFinance,monthlyData,month:'Fevereiro 2025',totalReceita,totalDespesa,saldo})});
@@ -192,7 +188,6 @@ export default function FinanceEmpresa() {
       const a=document.createElement('a');
       a.href=url;a.download='relatorio-financeiro-fevereiro-2025.pdf';a.click();
       URL.revokeObjectURL(url);
-      setShowExportSuccessModal(true);
     }catch(err){console.error('[Exportar PDF]',err);alert('Erro ao exportar o PDF. Tente novamente.');}finally{setExporting(false);}
   };
 
@@ -394,8 +389,6 @@ export default function FinanceEmpresa() {
       <CancelModal isOpen={showCancelModal} title="Deseja cancelar?" message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas." onConfirm={forceClose} onCancel={()=>setShowCancelModal(false)}/>
       <ConfirmModal isOpen={showConfirmModal} title="Salvar lançamento?" message={`Deseja registrar este lançamento de ${lancForm.tipo==='receita'?'receita':'despesa'}${lancForm.descricao?`: "${lancForm.descricao}"`:''}}?`} confirmText="Confirmar" cancelText="Voltar" onConfirm={handleConfirmSave} onCancel={()=>setShowConfirmModal(false)}/>
       <SucessModal isOpen={showSuccessModal} title="Sucesso!" message="Lançamento registrado com sucesso!" onClose={()=>setShowSuccessModal(false)} buttonText="Continuar"/>
-      <ConfirmModal isOpen={showExportConfirmModal} title="Exportar PDF?" message="Deseja exportar o relatório financeiro em PDF?" confirmText="Exportar" cancelText="Cancelar" onConfirm={handleConfirmExport} onCancel={()=>setShowExportConfirmModal(false)}/>
-      <SucessModal isOpen={showExportSuccessModal} title="PDF exportado!" message="Relatório financeiro exportado com sucesso!" onClose={()=>setShowExportSuccessModal(false)} buttonText="Continuar"/>
 
       <PaymentModal
         isOpen={showPaymentModal}

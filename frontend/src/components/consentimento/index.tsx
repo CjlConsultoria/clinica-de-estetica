@@ -10,6 +10,7 @@ import Pagination from '@/components/ui/pagination';
 import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
+import ErrorModal from '@/components/modals/errorModal';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import { usePermissions } from '@/components/ui/hooks/usePermissions';
 import AccessDenied from '@/components/ui/AccessDenied';
@@ -21,7 +22,14 @@ import {
   FormGrid, SignatureBox, SignatureCanvas, SignatureLabel,
   TermoViewer, TermoTitle, TermoBody, TermoSection, TermoText,
   AlertBanner, AlertBannerIcon, AlertBannerText,
+  ConsentimentoTabsRow, ConsentimentoTabButton, ConsentimentoCard,
+  ConsentimentoContentArea, ConsentimentoScrollWrapper, ConsentimentoTextDisplay,
+  ConsentimentoEditableTextarea, ConsentimentoCustomScrollbar, ConsentimentoScrollThumb,
+  ConsentimentoEmptyState, ConsentimentoEmptyIconWrap, ConsentimentoEmptyText,
+  ConsentimentoFooterRow, ConsentimentoLastUpdateWrap, ConsentimentoLastUpdateLabel,
+  ConsentimentoLastUpdateDate,
 } from './styles';
+import React, { useRef, useLayoutEffect } from 'react';
 
 type TermoField =
   | 'paciente' | 'cpf' | 'nascimento' | 'procedimento' | 'dataProcedimento' | 'profissional' | 'email';
@@ -84,6 +92,22 @@ type Termo = typeof mockTermos[0];
 const ITEMS_PER_PAGE   = 10;
 const TABLE_MIN_HEIGHT = 540;
 
+const DEFAULT_CONSENTIMENTO_TEXT =
+`1. Descrição do Procedimento e Consentimento
+Eu, paciente acima identificado(a), declaro que fui devidamente informado(a) sobre o procedimento, seus objetivos, riscos, alternativas e possíveis complicações, tendo compreendido todas as informações prestadas pelo profissional responsável. Declaro ainda que as informações por mim fornecidas são verdadeiras, e que não omiti nenhum dado relevante sobre meu estado de saúde, alergias ou medicamentos em uso.
+
+2. Riscos e Complicações
+Estou ciente de que qualquer procedimento estético pode apresentar riscos e complicações, incluindo mas não se limitando a: reações alérgicas, hematomas, assimetrias temporárias e, em casos raros, complicações mais graves. Fui informado(a) sobre todos esses riscos e aceito submeter-me a este procedimento voluntariamente, sem qualquer coerção.
+
+3. Cuidados Pós-Procedimento
+Declaro ter recebido e compreendido as orientações de cuidados pós-procedimento, incluindo restrições de atividade física, exposição solar e uso de produtos. Comprometo-me a seguir as instruções do profissional responsável e a entrar em contato com a clínica em caso de qualquer intercorrência.
+
+4. Autorização de Imagem
+Autorizo, mediante consentimento expresso, o registro fotográfico e/ou videográfico antes, durante e após o procedimento, para fins de acompanhamento clínico e documentação do prontuário, sendo vedada qualquer divulgação sem minha autorização prévia e por escrito.
+
+5. Proteção de Dados (LGPD)
+Estou ciente de que meus dados pessoais e de saúde serão tratados em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei 13.709/2018), sendo utilizados exclusivamente para fins de atendimento clínico e gestão do prontuário eletrônico, com sigilo garantido pela equipe profissional.`;
+
 function isFormDirty(form: TermoForm): boolean {
   return (
     form.paciente.trim() !== '' || form.cpf.trim() !== '' || form.nascimento !== '' ||
@@ -92,9 +116,16 @@ function isFormDirty(form: TermoForm): boolean {
   );
 }
 
+// Tipo para controlar qual aba está ativa
+type ActiveTab = 'termos' | 'consentimento';
+
 export default function Consentimento() {
   const { can, isSuperAdmin } = usePermissions();
 
+  // ── Aba ativa ───────────────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState<ActiveTab>('termos');
+
+  // ── Estados da tabela ───────────────────────────────────────────────────
   const [search,        setSearch]        = useState('');
   const [filterStat,    setFilterStat]    = useState('Todos');
   const [openDropStat,  setOpenDropStat]  = useState(false);
@@ -110,6 +141,26 @@ export default function Consentimento() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  // ── Estados da aba de edição do texto do consentimento ──────────────────
+  const [consentimentoText,    setConsentimentoText]    = useState(DEFAULT_CONSENTIMENTO_TEXT);
+  const [backupConsentimento,  setBackupConsentimento]  = useState('');
+  const [isEditingConsent,     setIsEditingConsent]     = useState(false);
+  const [isSavingConsent,      setIsSavingConsent]      = useState(false);
+  const [consentLastDate,      setConsentLastDate]      = useState('');
+  const [consentLastTime,      setConsentLastTime]      = useState('');
+
+  const [consentCancelModalOpen,  setConsentCancelModalOpen]  = useState(false);
+  const [consentConfirmModalOpen, setConsentConfirmModalOpen] = useState(false);
+  const [consentSucessModalOpen,  setConsentSucessModalOpen]  = useState(false);
+  const [consentErrorModalOpen,   setConsentErrorModalOpen]   = useState(false);
+  const [consentErrorMessage,     setConsentErrorMessage]     = useState('');
+
+  // ── Scroll refs ─────────────────────────────────────────────────────────
+  const consentTextareaRef  = useRef<HTMLTextAreaElement>(null);
+  const consentDisplayRef   = useRef<HTMLDivElement>(null);
+  const consentThumbRef     = useRef<HTMLDivElement>(null);
+  const consentThumbRefEdit = useRef<HTMLDivElement>(null);
+
   const { errors, validate, clearError, clearAll } =
     useSequentialValidation<TermoField>(VALIDATION_FIELDS);
 
@@ -117,6 +168,86 @@ export default function Consentimento() {
 
   const canCreate = isSuperAdmin || can('consentimento.create');
 
+  // ── Scroll helpers ──────────────────────────────────────────────────────
+  function updateConsentThumb(el: HTMLElement, thumb: HTMLElement) {
+    const ratio = el.clientHeight / el.scrollHeight;
+    const h     = Math.max(30, ratio * el.clientHeight);
+    const pct   = el.scrollTop / (el.scrollHeight - el.clientHeight || 1);
+    thumb.style.height = h + 'px';
+    thumb.style.top    = pct * (el.clientHeight - h) + 'px';
+  }
+
+  function onConsentScroll(
+    ref: React.RefObject<HTMLElement | null>,
+    tRef: React.RefObject<HTMLDivElement | null>,
+  ) {
+    if (ref.current && tRef.current) updateConsentThumb(ref.current, tRef.current);
+  }
+
+  function onConsentThumbMouseDown(
+    e: React.MouseEvent,
+    ref: React.RefObject<HTMLElement | null>,
+  ) {
+    e.preventDefault();
+    const track = (e.target as HTMLElement).parentElement;
+    if (!track || !ref.current) return;
+    const move = (ev: MouseEvent) => {
+      const rect  = track.getBoundingClientRect();
+      const ratio = Math.min(Math.max(0, ev.clientY - rect.top), rect.height) / rect.height;
+      ref.current!.scrollTop = ratio * (ref.current!.scrollHeight - ref.current!.clientHeight);
+    };
+    const up = () => {
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseup', up);
+    };
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+  }
+
+  useLayoutEffect(() => {
+    const el   = isEditingConsent ? consentTextareaRef.current : consentDisplayRef.current;
+    const tRef = isEditingConsent ? consentThumbRefEdit.current : consentThumbRef.current;
+    if (el && tRef) setTimeout(() => updateConsentThumb(el, tRef), 50);
+  }, [isEditingConsent, consentimentoText]);
+
+  // ── Edit / Save / Cancel do consentimento ───────────────────────────────
+  function startConsentEdit() {
+    setBackupConsentimento(consentimentoText);
+    setIsEditingConsent(true);
+  }
+
+  function handleConsentCancelConfirmed() {
+    setConsentCancelModalOpen(false);
+    setIsEditingConsent(false);
+    setConsentimentoText(backupConsentimento);
+  }
+
+  function handleConsentSaveClick() {
+    if (!consentimentoText.trim()) {
+      setConsentErrorMessage('Não é possível salvar o texto de consentimento vazio.');
+      setConsentErrorModalOpen(true);
+      return;
+    }
+    setConsentConfirmModalOpen(true);
+  }
+
+  async function handleConsentSaveConfirmed() {
+    setConsentConfirmModalOpen(false);
+    setIsSavingConsent(true);
+
+    /* TODO: chamar API aqui para persistir consentimentoText */
+    await new Promise(r => setTimeout(r, 600));
+
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    setConsentLastDate(pad(now.getDate()) + '/' + pad(now.getMonth() + 1) + '/' + now.getFullYear());
+    setConsentLastTime(pad(now.getHours()) + ':' + pad(now.getMinutes()));
+    setIsEditingConsent(false);
+    setIsSavingConsent(false);
+    setConsentSucessModalOpen(true);
+  }
+
+  // ── Filtros / paginação ─────────────────────────────────────────────────
   const filtered = mockTermos.filter(t => {
     const matchSearch = t.paciente.toLowerCase().includes(search.toLowerCase()) || t.procedimento.toLowerCase().includes(search.toLowerCase());
     const matchStat   = filterStat === 'Todos' || t.status === filterStat.toLowerCase();
@@ -157,7 +288,11 @@ export default function Consentimento() {
     setExporting(true);
     let objectUrl: string | null = null;
     try {
-      const response = await fetch('/api/relatorios/consentimento', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ termo: selectedTermo }) });
+      const response = await fetch('/api/relatorios/consentimento', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ termo: selectedTermo, consentimentoText }),
+      });
       if (!response.ok) throw new Error('Erro ao gerar PDF');
       const blob = await response.blob();
       objectUrl  = URL.createObjectURL(blob);
@@ -173,7 +308,7 @@ export default function Consentimento() {
     <Container>
       <Header>
         <Title>Consentimento Digital</Title>
-        {canCreate && (
+        {canCreate && activeTab === 'termos' && (
           <Button variant="primary" icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>} onClick={() => setIsNovoOpen(true)}>
             Novo Termo
           </Button>
@@ -194,58 +329,197 @@ export default function Consentimento() {
         <StatCard label="Expirados"      value={expirados}   color="#95a5a6" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>} />
       </StatsGrid>
 
-      <Controls>
-        <SearchBarWrapper>
-          <SearchIconWrap><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></SearchIconWrap>
-          <SearchInputStyled placeholder="Buscar por paciente ou procedimento..." value={search} onChange={e => handleSearchChange(e.target.value)} />
-        </SearchBarWrapper>
-        <FilterRow>
-          <DropdownWrapper>
-            <DropdownBtn onClick={() => setOpenDropStat(!openDropStat)}><span>{filterStat}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg></DropdownBtn>
-            {openDropStat && (<DropdownList>{filterStatus.map(s => (<DropdownItem key={s} $active={filterStat === s} onClick={() => handleFilterStatChange(s)}>{s}</DropdownItem>))}</DropdownList>)}
-          </DropdownWrapper>
-          {filterStat !== 'Todos' && (<ClearFilterBtn onClick={() => { setFilterStat('Todos'); setCurrentPage(1); }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>Limpar</ClearFilterBtn>)}
-        </FilterRow>
-      </Controls>
+      {/* ─────────────────────────────────────────────────────────────────
+          ABAS: Termos de Consentimento | Texto do Consentimento
+      ───────────────────────────────────────────────────────────────── */}
+      <ConsentimentoTabsRow>
+        <ConsentimentoTabButton
+          $active={activeTab === 'termos'}
+          onClick={() => setActiveTab('termos')}
+        >
+          Termos de Consentimento
+        </ConsentimentoTabButton>
+        <ConsentimentoTabButton
+          $active={activeTab === 'consentimento'}
+          onClick={() => setActiveTab('consentimento')}
+        >
+          Texto do Consentimento
+        </ConsentimentoTabButton>
+      </ConsentimentoTabsRow>
 
-      <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <TableWrapper style={{ minHeight: TABLE_MIN_HEIGHT }}>
-          <Table>
-            <Thead>
-              <tr>
-                <Th $width="20%">Paciente</Th><Th $width="18%">Procedimento</Th><Th $width="12%">Criado em</Th><Th $width="14%">Assinado em</Th><Th $width="14%">Profissional</Th><Th $width="8%">Versão</Th><Th $width="8%">Status</Th><Th $width="6%">Ações</Th>
-              </tr>
-            </Thead>
-            <Tbody>
-              {paginatedData.map(termo => (
-                <Tr key={termo.id}>
-                  <Td style={{ fontWeight: 600, color: '#1a1a1a' }}>{termo.paciente}</Td>
-                  <Td><Badge $bg="rgba(187,161,136,0.15)" $color="#BBA188">{termo.procedimento}</Badge></Td>
-                  <Td style={{ color: '#777' }}>{termo.dataCriacao}</Td>
-                  <Td style={{ color: '#555' }}>{termo.assinadoEm ?? <span style={{ color: '#ccc' }}>—</span>}</Td>
-                  <Td>{termo.profissional}</Td>
-                  <Td><code style={{ fontSize: '0.71rem', color: '#999', background: '#f5f5f5', padding: '2px 5px', borderRadius: 4 }}>{termo.versao}</code></Td>
-                  <Td><Badge $bg={statusConfig[termo.status]?.bg} $color={statusConfig[termo.status]?.color}>{statusConfig[termo.status]?.label}</Badge></Td>
-                  <Td>
-                    <ActionGroup>
-                      <IconBtn title="Ver termo" onClick={() => { setSelectedTermo(termo); setIsViewOpen(true); }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                      </IconBtn>
-                      {canCreate && termo.status === 'pendente' && (
-                        <IconBtn title="Coletar assinatura" onClick={() => { setSelectedTermo(termo); setSigned(false); setIsSignOpen(true); }} style={{ borderColor: '#d4a84b', color: '#d4a84b' }}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                        </IconBtn>
-                      )}
-                    </ActionGroup>
-                  </Td>
-                </Tr>
-              ))}
-            </Tbody>
-          </Table>
-        </TableWrapper>
-        <Pagination currentPage={safePage} totalItems={totalFiltered} itemsPerPage={ITEMS_PER_PAGE} onPageChange={setCurrentPage} />
-      </div>
+      {/* ─────────────────────────────────────────────────────────────────
+          ABA 1: TABELA DE TERMOS
+      ───────────────────────────────────────────────────────────────── */}
+      {activeTab === 'termos' && (
+        <ConsentimentoCard $activeFirst>
+          <Controls style={{ marginBottom: 20 }}>
+            <SearchBarWrapper>
+              <SearchIconWrap><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></SearchIconWrap>
+              <SearchInputStyled placeholder="Buscar por paciente ou procedimento..." value={search} onChange={e => handleSearchChange(e.target.value)} />
+            </SearchBarWrapper>
+            <FilterRow>
+              <DropdownWrapper>
+                <DropdownBtn onClick={() => setOpenDropStat(!openDropStat)}><span>{filterStat}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg></DropdownBtn>
+                {openDropStat && (<DropdownList>{filterStatus.map(s => (<DropdownItem key={s} $active={filterStat === s} onClick={() => handleFilterStatChange(s)}>{s}</DropdownItem>))}</DropdownList>)}
+              </DropdownWrapper>
+              {filterStat !== 'Todos' && (<ClearFilterBtn onClick={() => { setFilterStat('Todos'); setCurrentPage(1); }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>Limpar</ClearFilterBtn>)}
+            </FilterRow>
+          </Controls>
 
+          <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <TableWrapper>
+              <Table>
+                <Thead>
+                  <tr>
+                    <Th $width="20%">Paciente</Th><Th $width="18%">Procedimento</Th><Th $width="12%">Criado em</Th><Th $width="14%">Assinado em</Th><Th $width="14%">Profissional</Th><Th $width="8%">Versão</Th><Th $width="8%">Status</Th><Th $width="6%">Ações</Th>
+                  </tr>
+                </Thead>
+                <Tbody>
+                  {paginatedData.map(termo => (
+                    <Tr key={termo.id}>
+                      <Td style={{ fontWeight: 600, color: '#1a1a1a' }}>{termo.paciente}</Td>
+                      <Td><Badge $bg="rgba(187,161,136,0.15)" $color="#BBA188">{termo.procedimento}</Badge></Td>
+                      <Td style={{ color: '#777' }}>{termo.dataCriacao}</Td>
+                      <Td style={{ color: '#555' }}>{termo.assinadoEm ?? <span style={{ color: '#ccc' }}>—</span>}</Td>
+                      <Td>{termo.profissional}</Td>
+                      <Td><code style={{ fontSize: '0.71rem', color: '#999', background: '#f5f5f5', padding: '2px 5px', borderRadius: 4 }}>{termo.versao}</code></Td>
+                      <Td><Badge $bg={statusConfig[termo.status]?.bg} $color={statusConfig[termo.status]?.color}>{statusConfig[termo.status]?.label}</Badge></Td>
+                      <Td>
+                        <ActionGroup>
+                          <IconBtn title="Ver termo" onClick={() => { setSelectedTermo(termo); setIsViewOpen(true); }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                          </IconBtn>
+                          {canCreate && termo.status === 'pendente' && (
+                            <IconBtn title="Coletar assinatura" onClick={() => { setSelectedTermo(termo); setSigned(false); setIsSignOpen(true); }} style={{ borderColor: '#d4a84b', color: '#d4a84b' }}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                            </IconBtn>
+                          )}
+                        </ActionGroup>
+                      </Td>
+                    </Tr>
+                  ))}
+                </Tbody>
+              </Table>
+            </TableWrapper>
+            <Pagination currentPage={safePage} totalItems={totalFiltered} itemsPerPage={ITEMS_PER_PAGE} onPageChange={setCurrentPage} />
+          </div>
+        </ConsentimentoCard>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────────
+          ABA 2: TEXTO DO CONSENTIMENTO
+      ───────────────────────────────────────────────────────────────── */}
+      {activeTab === 'consentimento' && (
+        <ConsentimentoCard $activeFirst>
+          <ConsentimentoContentArea>
+            <ConsentimentoScrollWrapper>
+
+              {isEditingConsent && (
+                <>
+                  <ConsentimentoEditableTextarea
+                    ref={consentTextareaRef}
+                    value={consentimentoText}
+                    onChange={(e) => setConsentimentoText(e.target.value)}
+                    onScroll={() => onConsentScroll(consentTextareaRef, consentThumbRefEdit)}
+                  />
+                  <ConsentimentoCustomScrollbar>
+                    <ConsentimentoScrollThumb
+                      ref={consentThumbRefEdit}
+                      onMouseDown={(e) => onConsentThumbMouseDown(e, consentTextareaRef)}
+                    />
+                  </ConsentimentoCustomScrollbar>
+                </>
+              )}
+
+              {!isEditingConsent && consentimentoText && (
+                <>
+                  <ConsentimentoTextDisplay
+                    ref={consentDisplayRef}
+                    onScroll={() => onConsentScroll(consentDisplayRef, consentThumbRef)}
+                  >
+                    {consentimentoText}
+                  </ConsentimentoTextDisplay>
+                  <ConsentimentoCustomScrollbar>
+                    <ConsentimentoScrollThumb
+                      ref={consentThumbRef}
+                      onMouseDown={(e) => onConsentThumbMouseDown(e, consentDisplayRef)}
+                    />
+                  </ConsentimentoCustomScrollbar>
+                </>
+              )}
+
+              {!isEditingConsent && !consentimentoText && (
+                <ConsentimentoEmptyState>
+                  <ConsentimentoEmptyIconWrap>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                  </ConsentimentoEmptyIconWrap>
+                  <ConsentimentoEmptyText>
+                    Texto de consentimento não encontrado.
+                  </ConsentimentoEmptyText>
+                </ConsentimentoEmptyState>
+              )}
+
+            </ConsentimentoScrollWrapper>
+          </ConsentimentoContentArea>
+
+          <ConsentimentoFooterRow>
+            {(consentLastDate || isEditingConsent || consentimentoText) && (
+              <ConsentimentoLastUpdateWrap>
+                <ConsentimentoLastUpdateLabel>Última alteração:</ConsentimentoLastUpdateLabel>
+                <ConsentimentoLastUpdateDate>{consentLastDate}</ConsentimentoLastUpdateDate>
+                <ConsentimentoLastUpdateDate>{consentLastTime}</ConsentimentoLastUpdateDate>
+              </ConsentimentoLastUpdateWrap>
+            )}
+
+            {isEditingConsent && (
+              <Button variant="outline" onClick={() => setConsentCancelModalOpen(true)}>
+                Cancelar
+              </Button>
+            )}
+
+            <Button
+              variant="primary"
+              loading={isSavingConsent}
+              onClick={isEditingConsent ? handleConsentSaveClick : startConsentEdit}
+            >
+              {isEditingConsent ? 'Salvar' : 'Editar'}
+            </Button>
+          </ConsentimentoFooterRow>
+        </ConsentimentoCard>
+      )}
+
+      {/* ── Modais da aba de consentimento ──────────────────────────────── */}
+      <CancelModal
+        isOpen={consentCancelModalOpen}
+        title="Cancelar edição?"
+        message="Todas as alterações feitas serão perdidas. Deseja continuar?"
+        onConfirm={handleConsentCancelConfirmed}
+        onCancel={() => setConsentCancelModalOpen(false)}
+      />
+      <ConfirmModal
+        isOpen={consentConfirmModalOpen}
+        title="Modificar Texto do Consentimento?"
+        message="Ao realizar essa alteração, o novo texto será utilizado em todos os PDFs gerados a partir de agora."
+        onConfirm={handleConsentSaveConfirmed}
+        onCancel={() => setConsentConfirmModalOpen(false)}
+      />
+      <SucessModal
+        isOpen={consentSucessModalOpen}
+        title="Texto atualizado!"
+        message="O texto do consentimento foi atualizado com sucesso!"
+        onClose={() => setConsentSucessModalOpen(false)}
+      />
+      <ErrorModal
+        isOpen={consentErrorModalOpen}
+        title="Ocorreu um erro"
+        message={consentErrorMessage}
+        onClose={() => setConsentErrorModalOpen(false)}
+      />
+
+      {/* ── Modal: Novo Termo ─────────────────────────────────────────────── */}
       <Modal isOpen={isNovoOpen} onClose={handleCancelClick} closeOnOverlayClick={false} title="Novo Termo de Consentimento" size="md" footer={<><Button variant="outline" onClick={handleCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveNovoClick}>Gerar Termo</Button></>}>
         <FormGrid>
           <div style={{ gridColumn: 'span 2' }}><Input label="Nome do Paciente *" placeholder="Nome completo do paciente..." value={form.paciente} onChange={e => handleChange('paciente', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))} maxLength={80} error={errors.paciente} /></div>
@@ -258,6 +532,7 @@ export default function Consentimento() {
         </FormGrid>
       </Modal>
 
+      {/* ── Modal: Visualizar Termo ──────────────────────────────────────── */}
       <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title="Termo de Consentimento" size="lg"
         footer={
           <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'space-between' }}>
@@ -272,7 +547,10 @@ export default function Consentimento() {
             <TermoTitle>TERMO DE CONSENTIMENTO INFORMADO</TermoTitle>
             <TermoText style={{ textAlign: 'center', color: '#999', fontSize: '0.82rem', marginBottom: 24 }}>Versão {selectedTermo.versao} · Gerado em {selectedTermo.dataCriacao}</TermoText>
             <TermoSection><h4>Dados do Paciente</h4><p><strong>Nome:</strong> {selectedTermo.paciente}</p><p><strong>Procedimento:</strong> {selectedTermo.procedimento}</p><p><strong>Profissional Responsável:</strong> {selectedTermo.profissional}</p></TermoSection>
-            <TermoSection><h4>Descrição do Procedimento</h4><TermoBody>Eu, paciente acima identificado(a), declaro que fui devidamente informado(a) sobre o procedimento de <strong>{selectedTermo.procedimento}</strong>, seus objetivos, riscos, alternativas e possíveis complicações.</TermoBody></TermoSection>
+            <TermoSection>
+              <h4>Descrição do Procedimento</h4>
+              <TermoBody style={{ whiteSpace: 'pre-wrap' }}>{consentimentoText}</TermoBody>
+            </TermoSection>
             <TermoSection>
               <h4>Consentimento e Assinatura</h4>
               {selectedTermo.status === 'assinado' ? (
@@ -288,6 +566,7 @@ export default function Consentimento() {
         )}
       </Modal>
 
+      {/* ── Modal: Assinar ───────────────────────────────────────────────── */}
       <Modal isOpen={isSignOpen} onClose={() => setIsSignOpen(false)} title={`Assinatura Digital — ${selectedTermo?.paciente}`} size="md" footer={<><Button variant="outline" onClick={() => setIsSignOpen(false)}>Cancelar</Button><Button variant="primary" onClick={() => setSigned(true)} disabled={signed}>{signed ? '✓ Assinatura Coletada' : 'Confirmar Assinatura'}</Button></>}>
         <div style={{ marginBottom: 20, fontSize: '0.88rem', color: '#666', lineHeight: 1.6 }}>O paciente <strong style={{ color: '#1a1a1a' }}>{selectedTermo?.paciente}</strong> deve assinar abaixo para confirmar o procedimento de <strong style={{ color: '#BBA188' }}>{selectedTermo?.procedimento}</strong>.</div>
         <SignatureBox>
@@ -299,6 +578,7 @@ export default function Consentimento() {
         <div style={{ marginTop: 16, padding: 12, background: '#fdf9f5', borderRadius: 10, border: '1px solid #f0ebe4', fontSize: '0.78rem', color: '#888' }}><strong>Registro automático:</strong> IP, data, hora e dispositivo serão salvos para fins legais (LGPD).</div>
       </Modal>
 
+      {/* ── Modais da tabela ─────────────────────────────────────────────── */}
       <CancelModal isOpen={showCancelModal} title="Deseja cancelar?" message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas." onConfirm={forceClose} onCancel={() => setShowCancelModal(false)} />
       <ConfirmModal isOpen={showConfirmModal} title="Gerar termo?" message={`Tem certeza que deseja gerar o termo de consentimento para ${form.paciente || 'este paciente'}?`} confirmText="Confirmar" cancelText="Voltar" onConfirm={handleConfirmSave} onCancel={() => setShowConfirmModal(false)} />
       <SucessModal isOpen={showSuccessModal} title="Sucesso!" message="Termo de consentimento gerado com sucesso!" onClose={() => setShowSuccessModal(false)} buttonText="Continuar" />

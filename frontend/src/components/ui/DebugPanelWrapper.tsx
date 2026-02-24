@@ -160,7 +160,7 @@ export default function PermissionDebugPanel() {
         alignItems: 'center', userSelect: 'none',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span>🔐</span>
+          <span></span>
           <span style={{ fontWeight: 700, letterSpacing: 0.5 }}>Debug Multi-tenant</span>
         </div>
         <span style={{ fontSize: 10, opacity: 0.5 }}>{open ? '▼' : '▲'}</span>
@@ -203,7 +203,7 @@ export default function PermissionDebugPanel() {
                   </span>
                 ) : (
                   <span style={{ background: '#2d1e1e', color: '#cb7e7e', borderRadius: 4, padding: '1px 6px', fontSize: 10 }}>
-                    🌐 Todas as empresas
+                    Todas as empresas
                   </span>
                 )}
               </div>
@@ -221,9 +221,9 @@ export default function PermissionDebugPanel() {
                 cursor: 'pointer', fontFamily: 'monospace', fontSize: 11,
                 fontWeight: tab === t ? 700 : 400, textTransform: 'capitalize',
               }}>
-                {t === 'perfil' && '👤 '}
-                {t === 'permissoes' && '🔑 '}
-                {t === 'empresas' && '🏢 '}
+                {t === 'perfil' && ' '}
+                {t === 'permissoes' && ' '}
+                {t === 'empresas' && ' '}
                 {t}
               </button>
             ))}
@@ -262,7 +262,7 @@ export default function PermissionDebugPanel() {
                 {usersPerCompany.map(({ company, users }) => (
                   <div key={company.id}>
                     <div style={{ color: '#555', fontSize: 10, margin: '8px 0 4px', textTransform: 'uppercase', letterSpacing: 1 }}>
-                      🏢 {company.name}
+                     {company.name}
                     </div>
                     {users.map(u => {
                       const uc = ROLE_COLORS[u.role];
@@ -305,17 +305,17 @@ export default function PermissionDebugPanel() {
                 {/* Badge de status */}
                 {isSuperAdmin && (
                   <div style={{ padding: '6px 10px', background: '#1b1b1b', borderRadius: 8, border: '1px solid #BBA18844', color: '#BBA188', fontSize: 11, fontWeight: 700, textAlign: 'center', marginBottom: 4 }}>
-                    ⭐ SUPER ADMIN — todas as permissões liberadas
+                    SUPER ADMIN — todas as permissões liberadas
                   </div>
                 )}
                 {isCompanyAdmin && (
                   <div style={{ padding: '6px 10px', background: '#1a2b1a', borderRadius: 8, border: '1px solid #7ecb7e44', color: '#7ecb7e', fontSize: 11, fontWeight: 700, textAlign: 'center', marginBottom: 4 }}>
-                    🏢 ADMIN DA EMPRESA — acesso total dentro de {MOCK_COMPANIES.find(c => c.id === companyId)?.name}
+                    ADMIN DA EMPRESA — acesso total dentro de {MOCK_COMPANIES.find(c => c.id === companyId)?.name}
                   </div>
                 )}
                 {!isSuperAdmin && !isCompanyAdmin && hasCustom && (
                   <div style={{ padding: '6px 10px', background: '#2d1a00', borderRadius: 8, border: '1px solid #c97a3a44', color: '#c97a3a', fontSize: 11, fontWeight: 700, textAlign: 'center', marginBottom: 4 }}>
-                    ✎ Permissões personalizadas ativas
+                    Permissões personalizadas ativas
                   </div>
                 )}
                 {!isSuperAdmin && !isCompanyAdmin && !hasCustom && (

@@ -120,8 +120,6 @@ export default function FinanceSuperAdmin() {
   const [cobrancaCompetencia,setCobrancaCompetencia]  = useState('');
   const [cobrancaObs,        setCobrancaObs]          = useState('');
 
-  const [showConfirmExport, setShowConfirmExport] = useState(false);
-  const [showSuccessExport, setShowSuccessExport] = useState(false);
   const [exportando,        setExportando]        = useState(false);
 
   const [showSuccessDownload,setShowSuccessDownload] = useState(false);
@@ -197,10 +195,10 @@ export default function FinanceSuperAdmin() {
     setEmpresas(prev=>prev.map(e=>e.id===selectedEmpresa.id?{...e,status:'pendente'}:e));
     setShowConfirmCobranca(false);setShowSuccessCobranca(true);
   }
-  async function handleConfirmExport(){
-    setShowConfirmExport(false);setExportando(true);
+  async function handleExportClick(){
+    setExportando(true);
     await new Promise(r=>setTimeout(r,1200));
-    setExportando(false);setShowSuccessExport(true);
+    setExportando(false);
   }
   function handleDownloadFatura(h:HistoricoFatura){
     setFaturaDownloadNome(`${h.empresaNome} — ${h.competencia}`);setShowSuccessDownload(true);
@@ -215,7 +213,7 @@ export default function FinanceSuperAdmin() {
             Gerencie as assinaturas e cobranças de todas as clínicas cadastradas
           </p>
         </div>
-        <Button variant="outline" loading={exportando} icon={!exportando?IcoExport:undefined} onClick={()=>setShowConfirmExport(true)}>
+        <Button variant="outline" loading={exportando} icon={!exportando?IcoExport:undefined} onClick={handleExportClick}>
           {exportando?'Exportando...':'Exportar Relatório'}
         </Button>
       </Header>
@@ -408,8 +406,6 @@ export default function FinanceSuperAdmin() {
       <SucessModal  isOpen={showSuccessPlano} title="Assinatura atualizada!" message="As alterações foram salvas com sucesso." onClose={()=>setShowSuccessPlano(false)} buttonText="Continuar"/>
       <ConfirmModal isOpen={showConfirmCobranca} title="Registrar cobrança?" message={`Confirma a geração de uma nova cobrança para "${selectedEmpresa?.nome}" com vencimento ${cobrancaVencimento?cobrancaVencimento.split('-').reverse().join('/'):hoje()}?`} confirmText="Confirmar" cancelText="Voltar" onConfirm={handleConfirmCobranca} onCancel={()=>setShowConfirmCobranca(false)}/>
       <SucessModal  isOpen={showSuccessCobranca} title="Cobrança registrada!" message="A cobrança foi gerada e aparece agora no Histórico de Faturas." onClose={()=>setShowSuccessCobranca(false)} buttonText="Continuar"/>
-      <ConfirmModal isOpen={showConfirmExport} title="Exportar relatório?" message="Deseja exportar o relatório de cobranças e assinaturas em PDF?" confirmText="Exportar" cancelText="Cancelar" onConfirm={handleConfirmExport} onCancel={()=>setShowConfirmExport(false)}/>
-      <SucessModal  isOpen={showSuccessExport} title="Relatório exportado!" message="O relatório de cobranças foi gerado com sucesso." onClose={()=>setShowSuccessExport(false)} buttonText="Continuar"/>
       <SucessModal  isOpen={showSuccessDownload} title="Fatura baixada!" message={`A fatura de "${faturaDownloadNome}" foi preparada para download.`} onClose={()=>setShowSuccessDownload(false)} buttonText="Continuar"/>
 
       <PaymentModal

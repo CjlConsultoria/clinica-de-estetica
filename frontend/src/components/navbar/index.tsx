@@ -19,6 +19,7 @@ import {
   RefreshCcw,
   ClipboardList,
   Stethoscope,
+  ScrollText,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
@@ -79,6 +80,7 @@ const navSections = [
       { label: 'Financeiro',     href: '/finance',            icon: DollarSign,      permission: 'financeiro.read'       as Permission, permissionAlt: null },
       { label: 'Comissões',      href: '/comissoes',          icon: BadgeDollarSign, permission: 'comissoes.read'        as Permission, permissionAlt: 'comissoes.read_own'     as Permission },
       { label: 'Relatórios',     href: '/reports',            icon: BarChart3,       permission: 'relatorios.financeiro' as Permission, permissionAlt: null },
+      { label: 'Termos de Uso',  href: '/termos',             icon: ScrollText,      permission: 'configuracoes.read'    as Permission, permissionAlt: null },
       { label: 'Configurações',  href: '/settings',           icon: Settings,        permission: 'configuracoes.read'    as Permission, permissionAlt: null },
     ],
   },
@@ -217,36 +219,6 @@ export default function Navbar() {
         </div>
 
         <div style={{ width: '100%' }}>
-          <LogoutDivider $collapsed={collapsed} />
-
-          <SectionDividerWrap $collapsed={collapsed} $isBottom>
-            <SectionDividerLine $collapsed={collapsed} />
-            <SectionDividerLabel $collapsed={collapsed}>Perfil</SectionDividerLabel>
-            <SectionDividerLine $collapsed={collapsed} />
-          </SectionDividerWrap>
-
-          <LogoutButton
-            type="button"
-            onClick={() => setShowSwitcher(true)}
-            $collapsed={collapsed}
-          >
-            <div style={{
-              width: 18, height: 18,
-              borderRadius: 5,
-              background: roleColors?.bg ?? '#2a2a2a',
-              color: roleColors?.color ?? '#95A5A6',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '0.55rem', fontWeight: 700, flexShrink: 0,
-              marginLeft: '23px',
-            }}>
-              {currentUser?.name?.split(' ').slice(0, 2).map(n => n[0]).join('') ?? '?'}
-            </div>
-            <LogoutText $collapsed={collapsed} style={{ color: roleColors?.color ?? '#95A5A6' }}>
-              {roleLabel}
-            </LogoutText>
-            <NavTooltip>Trocar perfil ({roleLabel})</NavTooltip>
-          </LogoutButton>
-
           <LogoutDivider $collapsed={collapsed} />
 
           <SectionDividerWrap $collapsed={collapsed} $isBottom>
