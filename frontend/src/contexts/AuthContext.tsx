@@ -1,4 +1,5 @@
 'use client';
+<<<<<<< HEAD
 import React, {
   createContext,
   useContext,
@@ -24,6 +25,17 @@ function mapBackendRoleToFrontend(
     case 'FINANCEIRO':    return 'financeiro';
     default:              return 'recepcionista';
   }
+=======
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { CurrentUser, MOCK_USERS as PERMISSION_USERS } from '@/types/auth';
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'seller';
+  companyId: string | null; 
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 }
 
 function mapAreaToFrontend(
@@ -80,13 +92,21 @@ interface LoginCredentials {
   password: string;
 }
 
+const MOCK_LOGIN_USERS = [
+  { id: '1', name: 'Administrador', email: 'admin@gmail.com', password: '12345678', role: 'admin' as const, companyId: null },
+];
+
 interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   currentUser: CurrentUser | null;
   login: (credentials: LoginCredentials) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+<<<<<<< HEAD
   /** Apenas para o painel de debug de desenvolvimento */
+=======
+  currentUser: CurrentUser | null;
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   switchUser: (userId: number) => void;
 }
 
@@ -95,6 +115,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+<<<<<<< HEAD
   const [token, setToken]             = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
 
@@ -120,6 +141,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setCurrentUser(user);
       persistSession(data.token, user);
 
+=======
+  const [user, setUser]               = useState<User | null>(null);
+  const [token, setToken]             = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(PERMISSION_USERS[0]);
+
+  const login = useCallback(async (credentials: LoginCredentials) => {
+    const found = MOCK_LOGIN_USERS.find(
+      (u) => u.email === credentials.email && u.password === credentials.password
+    );
+    if (found) {
+      const { password, ...userData } = found;
+      setUser(userData);
+      setToken('mock-token');
+      setCurrentUser(PERMISSION_USERS[0]);
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
       return { success: true };
     } catch (err) {
       return { success: false, error: getApiErrorMessage(err, 'login') };
@@ -129,10 +165,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     setToken(null);
     setCurrentUser(null);
+<<<<<<< HEAD
     clearSession();
   }, []);
 
   /** Troca de usuário pelo painel de debug (só em desenvolvimento) */
+=======
+  }, []);
+
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   const switchUser = useCallback((userId: number) => {
     const found = PERMISSION_USERS.find((u) => u.id === userId) ?? null;
     setCurrentUser(found);
@@ -141,11 +182,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
+<<<<<<< HEAD
         token,
         isAuthenticated: !!token && !!currentUser,
         currentUser,
         login,
         logout,
+=======
+        user,
+        token,
+        isAuthenticated: !!user,
+        login,
+        logout,
+        currentUser,
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
         switchUser,
       }}
     >

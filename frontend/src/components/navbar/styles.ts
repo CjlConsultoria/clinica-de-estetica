@@ -53,17 +53,18 @@ export const NavbarContainer = styled.div<NavbarContainerProps>`
 export const MobileMenuButton = styled.button`
   display: none;
   position: fixed;
-  top: 20px;
-  left: 20px;
-  z-index: 999;
+  top: 16px;
+  left: 16px;
+  z-index: 1100;
   background-color: #BBA188;
   border: none;
-  padding: 12px;
+  padding: 10px;
   border-radius: 8px;
   cursor: pointer;
   color: #fff;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  transition: all 0.3s;
+  transition: background 0.3s;
+
   &:hover { background-color: #a8906f; }
 
   @media (max-width: 1024px) {
@@ -149,7 +150,7 @@ export const TopSection = styled.div<{ $collapsed: boolean }>`
     max-width: 240px;
     opacity: 1;
     padding-left: 20px;
-    margin-top: 0;
+    margin-top: 52px;
   }
 `;
 
@@ -228,10 +229,7 @@ export const DividerTop = styled.div<{ $collapsed?: boolean }>`
   }
 
   @media (max-width: 1024px) {
-    transform: scaleX(1);
-    opacity: 1;
-    margin-top: 15px;
-    margin-bottom: 8px;
+    display: none;
   }
 `;
 
@@ -487,9 +485,7 @@ export const LogoutDivider = styled.div<{ $collapsed: boolean }>`
   }
 
   @media (max-width: 1024px) {
-    transform: scaleX(1);
-    opacity: 1;
-    margin: 8px 0;
+    display: none;
   }
 `;
 

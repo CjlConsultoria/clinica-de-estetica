@@ -6,8 +6,24 @@ export const Container = styled.div`
   min-height: 100vh;
   background: #f5f5f5;
   box-sizing: border-box;
+<<<<<<< HEAD
   @media (max-width: 1024px) { width: 100%; padding: 24px 20px; }
   @media (max-width: 768px)  { padding: 20px 16px; }
+=======
+  overflow-x: hidden;
+
+  @media (max-width: 1024px) {
+    padding: 72px 20px 24px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 72px 14px 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 68px 12px 20px;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const Header = styled.div`
@@ -17,6 +33,10 @@ export const Header = styled.div`
   margin-bottom: 28px;
   flex-wrap: wrap;
   gap: 16px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 20px;
+  }
 `;
 
 export const Title = styled.h1`
@@ -25,6 +45,14 @@ export const Title = styled.h1`
   color: #BBA188;
   margin: 0;
   font-weight: 600;
+
+  @media (max-width: 768px) {
+    font-size: 1.6rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.4rem;
+  }
 `;
 
 export const AlertBanner = styled.div`
@@ -36,6 +64,13 @@ export const AlertBanner = styled.div`
   border-radius: 12px;
   padding: 14px 18px;
   margin-bottom: 24px;
+
+  @media (max-width: 480px) {
+    padding: 12px 14px;
+    gap: 10px;
+    margin-bottom: 16px;
+    border-radius: 10px;
+  }
 `;
 
 export const AlertBannerIcon = styled.div`
@@ -50,6 +85,10 @@ export const AlertBannerText = styled.p`
   color: #533f03;
   line-height: 1.5;
   strong { font-weight: 700; }
+
+  @media (max-width: 480px) {
+    font-size: 0.82rem;
+  }
 `;
 
 export const StatsGrid = styled.div`
@@ -57,7 +96,21 @@ export const StatsGrid = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 18px;
   margin-bottom: 28px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
 `;
+
+/* ── Controls (search + filters) ── */
 
 export const Controls = styled.div`
   display: flex;
@@ -65,13 +118,24 @@ export const Controls = styled.div`
   margin-bottom: 24px;
   flex-wrap: wrap;
   align-items: center;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
 `;
 
 export const SearchBarWrapper = styled.div`
   position: relative;
   flex: 1;
   max-width: 380px;
-  @media (max-width: 768px) { max-width: 100%; }
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    width: 100%;
+  }
 `;
 
 export const SearchIconWrap = styled.div`
@@ -94,8 +158,18 @@ export const SearchInputStyled = styled.input`
   color: #333;
   transition: all 0.25s;
   box-sizing: border-box;
-  &:focus { outline: none; border-color: #BBA188; box-shadow: 0 0 0 3px rgba(187,161,136,0.15); }
+
+  &:focus {
+    outline: none;
+    border-color: #BBA188;
+    box-shadow: 0 0 0 3px rgba(187,161,136,0.15);
+  }
   &::placeholder { color: #bbb; }
+
+  @media (max-width: 480px) {
+    font-size: 0.85rem;
+    padding: 10px 14px 10px 40px;
+  }
 `;
 
 export const FilterRow = styled.div`
@@ -103,10 +177,18 @@ export const FilterRow = styled.div`
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 export const DropdownWrapper = styled.div`
   position: relative;
+
+  @media (max-width: 768px) {
+    flex: 1;
+  }
 `;
 
 export const DropdownBtn = styled.button`
@@ -124,7 +206,15 @@ export const DropdownBtn = styled.button`
   min-width: 150px;
   justify-content: space-between;
   transition: all 0.2s;
+  width: 100%;
+
   &:hover { border-color: #BBA188; }
+
+  @media (max-width: 480px) {
+    font-size: 0.84rem;
+    padding: 9px 14px;
+    min-width: unset;
+  }
 `;
 
 export const DropdownList = styled.div`
@@ -139,6 +229,10 @@ export const DropdownList = styled.div`
   z-index: 100;
   overflow: hidden;
   animation: dropIn 0.18s ease;
+<<<<<<< HEAD
+=======
+
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   @keyframes dropIn {
     from { opacity: 0; transform: translateY(-8px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -153,6 +247,7 @@ export const DropdownItem = styled.div<{ $active?: boolean }>`
   font-weight: ${({ $active }) => ($active ? '600' : '400')};
   cursor: pointer;
   border-bottom: 1px solid #f5f5f5;
+
   &:last-child { border-bottom: none; }
   &:hover { background: rgba(187,161,136,0.08); color: #BBA188; }
 `;
@@ -169,7 +264,56 @@ export const ClearFilterBtn = styled.button`
   font-size: 0.84rem;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+
   &:hover { background: #e74c3c; color: white; }
+
+  @media (max-width: 480px) {
+    font-size: 0.78rem;
+    padding: 8px 12px;
+  }
+`;
+
+export const ToggleGroup = styled.div`
+  display: flex;
+  background: white;
+  border-radius: 10px;
+  border: 1.5px solid #e8e8e8;
+  overflow: hidden;
+  margin-left: auto;
+  flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    margin-left: 0;
+    align-self: flex-end;
+  }
+`;
+
+export const ToggleBtn = styled.button<{ $active: boolean }>`
+  padding: 9px 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: ${({ $active }) => ($active ? '#BBA188' : 'transparent')};
+  color: ${({ $active }) => ($active ? 'white' : '#888')};
+  display: flex;
+  align-items: center;
+`;
+
+export const TableContainer = styled.div`
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 596px;
+
+  @media (max-width: 768px) {
+    height: auto;
+    border-radius: 12px;
+  }
 `;
 
 export const ToggleGroup = styled.div`
@@ -215,12 +359,26 @@ export const TableWrapper = styled.div`
   overflow-x: auto;
   overflow-y: hidden;
   min-height: 540px;
+<<<<<<< HEAD
+=======
+  -webkit-overflow-scrolling: touch;
+
+  @media (max-width: 768px) {
+    min-height: unset;
+    overflow-y: auto;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const Table = styled.table`
   width: 100%;
   min-width: 850px;
   border-collapse: collapse;
+
+  @media (max-width: 768px) {
+    table-layout: auto;
+    min-width: 640px;
+  }
 `;
 
 export const Thead = styled.thead`
@@ -237,6 +395,8 @@ export const Th = styled.th<{ $width?: string }>`
   text-transform: uppercase;
   letter-spacing: 0.4px;
   width: ${({ $width }) => $width || 'auto'};
+  white-space: nowrap;
+  overflow: hidden;
 `;
 
 export const Tbody = styled.tbody``;
@@ -244,16 +404,23 @@ export const Tbody = styled.tbody``;
 export const Tr = styled.tr`
   border-bottom: 1px solid #f5f5f5;
   transition: background 0.15s;
+
   &:hover { background: #fdf9f5; }
   &:last-child { border-bottom: none; }
 `;
 
+<<<<<<< HEAD
 /* Padrão Estoque: padding 10px 10px, font-size 0.78rem */
+=======
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 export const Td = styled.td<{ colSpan?: number }>`
   padding: 10px 10px;
   font-size: 0.78rem;
   color: #444;
   vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 /* Padrão Estoque: padding 3px 7px, font-size 0.68rem */
@@ -287,6 +454,10 @@ export const IconBtn = styled.button`
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
+<<<<<<< HEAD
+=======
+
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   &:hover { background: #BBA188; border-color: #BBA188; color: white; }
 `;
 
@@ -294,7 +465,39 @@ export const FormGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  @media (max-width: 560px) { grid-template-columns: 1fr; }
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const EmptyState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: #bbb;
+
+  h3 { font-size: 1.1rem; font-family: var(--font-cabourg-bold), 'Cabourg', serif; color: #555; margin: 0 0 6px; }
+  p  { font-size: 0.88rem; color: #999; margin: 0; }
+`;
+
+/* ─────────────── Cards ─────────────── */
+
+export const CardsContainer = styled.div`
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 690px;
+
+  @media (max-width: 768px) {
+    height: auto;
+    border-radius: 12px;
+  }
 `;
 
 export const EmptyState = styled.div`
@@ -322,8 +525,21 @@ export const CardsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
+<<<<<<< HEAD
   @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); }
   @media (max-width: 640px) { grid-template-columns: 1fr; }
+=======
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const ReapCard = styled.div<{ $urgente?: boolean }>`
@@ -333,7 +549,12 @@ export const ReapCard = styled.div<{ $urgente?: boolean }>`
   overflow: hidden;
   border: 1.5px solid ${({ $urgente }) => ($urgente ? '#fdecea' : 'transparent')};
   transition: all 0.25s;
+
   &:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+
+  @media (max-width: 768px) {
+    border-radius: 12px;
+  }
 `;
 
 export const ReapCardHeader = styled.div`
@@ -342,6 +563,11 @@ export const ReapCardHeader = styled.div`
   gap: 12px;
   padding: 18px 18px 14px;
   border-bottom: 1px solid #f5f5f5;
+
+  @media (max-width: 480px) {
+    padding: 14px 14px 12px;
+    gap: 10px;
+  }
 `;
 
 export const ReapAvatar = styled.div<{ $color: string }>`
@@ -356,18 +582,33 @@ export const ReapAvatar = styled.div<{ $color: string }>`
   font-size: 0.82rem;
   font-weight: 700;
   flex-shrink: 0;
+
+  @media (max-width: 480px) {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+  }
 `;
 
 export const ReapPatientName = styled.div`
   font-size: 0.92rem;
   font-weight: 700;
   color: #1a1a1a;
+
+  @media (max-width: 480px) {
+    font-size: 0.84rem;
+  }
 `;
 
 export const ReapPatientSub = styled.div`
   font-size: 0.76rem;
   color: #999;
   margin-top: 2px;
+
+  @media (max-width: 480px) {
+    font-size: 0.7rem;
+  }
 `;
 
 export const ReapDaysTag = styled.div<{ $color: string; $bg: string }>`
@@ -378,10 +619,19 @@ export const ReapDaysTag = styled.div<{ $color: string; $bg: string }>`
   border-radius: 8px;
   font-size: 0.8rem;
   font-weight: 700;
+
+  @media (max-width: 480px) {
+    font-size: 0.72rem;
+    padding: 5px 8px;
+  }
 `;
 
 export const ReapCardBody = styled.div`
   padding: 14px 18px;
+
+  @media (max-width: 480px) {
+    padding: 12px 14px;
+  }
 `;
 
 export const ProgressBarOuter = styled.div`
@@ -404,18 +654,27 @@ export const ReapRow = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 6px;
+
   &:last-child { margin-bottom: 0; }
 `;
 
 export const ReapLabel = styled.span`
   font-size: 0.78rem;
   color: #999;
+
+  @media (max-width: 480px) {
+    font-size: 0.72rem;
+  }
 `;
 
 export const ReapValue = styled.span`
   font-size: 0.84rem;
   color: #333;
   font-weight: 600;
+
+  @media (max-width: 480px) {
+    font-size: 0.78rem;
+  }
 `;
 
 export const ReapCardFooter = styled.div`
@@ -424,6 +683,19 @@ export const ReapCardFooter = styled.div`
   display: flex;
   gap: 8px;
   justify-content: flex-end;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) {
+    padding: 10px 14px;
+    gap: 6px;
+
+    /* Botões ocupam metade cada */
+    & > * {
+      flex: 1;
+    }
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 /* ─────────────── Paginação ─────────────── */
@@ -437,6 +709,15 @@ export const PaginationWrapper = styled.div`
   border-top: 1px solid #f0ebe4;
   min-height: 56px;
   flex-shrink: 0;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) {
+    gap: 8px;
+    padding: 12px 14px;
+    justify-content: space-between;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PaginationInfo = styled.span`
@@ -444,12 +725,26 @@ export const PaginationInfo = styled.span`
   color: #999;
   font-weight: 400;
   white-space: nowrap;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) {
+    font-size: 0.72rem;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PaginationControls = styled.div`
   display: flex;
   align-items: center;
   gap: 4px;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) {
+    gap: 2px;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PageButton = styled.button<{ $active?: boolean }>`
@@ -466,10 +761,23 @@ export const PageButton = styled.button<{ $active?: boolean }>`
   transition: all 0.2s ease;
   background: ${({ $active }) => ($active ? '#BBA188' : 'transparent')};
   color: ${({ $active }) => ($active ? '#ffffff' : '#888')};
+<<<<<<< HEAD
+=======
+
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   &:hover:not(:disabled) {
     background: ${({ $active }) => ($active ? '#BBA188' : 'rgba(187,161,136,0.12)')};
     color: ${({ $active }) => ($active ? '#ffffff' : '#BBA188')};
   }
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) {
+    width: 28px;
+    height: 28px;
+    font-size: 0.74rem;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PageEllipsis = styled.span`
@@ -481,6 +789,15 @@ export const PageEllipsis = styled.span`
   font-size: 0.85rem;
   color: #bbb;
   user-select: none;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) {
+    width: 24px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PaginationArrow = styled.button`
@@ -495,6 +812,17 @@ export const PaginationArrow = styled.button`
   color: #BBA188;
   cursor: pointer;
   transition: all 0.2s ease;
+<<<<<<< HEAD
   &:hover:not(:disabled) { background: rgba(187,161,136,0.12); }
   &:disabled { color: #ddd; cursor: not-allowed; }
+=======
+
+  &:hover:not(:disabled) { background: rgba(187,161,136,0.12); }
+  &:disabled { color: #ddd; cursor: not-allowed; }
+
+  @media (max-width: 480px) {
+    width: 28px;
+    height: 28px;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;

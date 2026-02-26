@@ -18,22 +18,23 @@ interface TermoData {
 
 interface RequestBody {
   termo: TermoData;
+  consentimentoText?: string;
 }
 
-const C_PRIMARY:  [number,number,number] = [187, 161, 136];
-const C_BLACK:    [number,number,number] = [27,  27,  27 ];
-const C_DARK:     [number,number,number] = [26,  26,  26 ];
-const C_GRAY:     [number,number,number] = [100, 100, 100];
-const C_MUTED:    [number,number,number] = [153, 153, 153];
-const C_LIGHT:    [number,number,number] = [187, 187, 187];
-const C_WHITE:    [number,number,number] = [255, 255, 255];
-const C_BG:       [number,number,number] = [255, 255, 255];
-const C_CREAM:    [number,number,number] = [253, 249, 245];
-const C_BORDER:   [number,number,number] = [240, 235, 228];
-const C_SIGNED:   [number,number,number] = [138, 117, 96 ];
-const C_SIGNED_BG:[number,number,number] = [240, 235, 228];
-const C_PENDING:  [number,number,number] = [133, 100, 4  ];
-const C_PENDING_BG:[number,number,number]= [255, 243, 205];
+const C_PRIMARY:   [number,number,number] = [187, 161, 136];
+const C_BLACK:     [number,number,number] = [27,  27,  27 ];
+const C_DARK:      [number,number,number] = [26,  26,  26 ];
+const C_GRAY:      [number,number,number] = [100, 100, 100];
+const C_MUTED:     [number,number,number] = [153, 153, 153];
+const C_LIGHT:     [number,number,number] = [187, 187, 187];
+const C_WHITE:     [number,number,number] = [255, 255, 255];
+const C_BG:        [number,number,number] = [255, 255, 255];
+const C_CREAM:     [number,number,number] = [253, 249, 245];
+const C_BORDER:    [number,number,number] = [240, 235, 228];
+const C_SIGNED:    [number,number,number] = [138, 117, 96 ];
+const C_SIGNED_BG: [number,number,number] = [240, 235, 228];
+const C_PENDING:   [number,number,number] = [133, 100, 4  ];
+const C_PENDING_BG:[number,number,number] = [255, 243, 205];
 
 const W        = 210;
 const MARGIN   = 14;
@@ -41,14 +42,6 @@ const CW       = W - MARGIN * 2;
 const HEADER_H = 52;
 const FOOTER_Y = 285;
 const SAFE_MAX = FOOTER_Y - 2;
-
-function lighten(c: [number,number,number], pct: number): [number,number,number] {
-  return [
-    Math.round(c[0] + (255 - c[0]) * pct),
-    Math.round(c[1] + (255 - c[1]) * pct),
-    Math.round(c[2] + (255 - c[2]) * pct),
-  ];
-}
 
 function safe(s: string): string {
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -61,8 +54,26 @@ function getLogoBase64(): string | null {
   } catch { return null; }
 }
 
+const DEFAULT_CONSENTIMENTO_TEXT = `1. Descricao do Procedimento e Consentimento
+Eu, paciente acima identificado(a), declaro que fui devidamente informado(a) sobre o procedimento, seus objetivos, riscos, alternativas e possiveis complicacoes, tendo compreendido todas as informacoes prestadas pelo profissional responsavel. Declaro ainda que as informacoes por mim fornecidas sao verdadeiras, e que nao omiti nenhum dado relevante sobre meu estado de saude, alergias ou medicamentos em uso.
+
+2. Riscos e Complicacoes
+Estou ciente de que qualquer procedimento estetico pode apresentar riscos e complicacoes, incluindo mas nao se limitando a: reacoes alergicas, hematomas, assimetrias temporarias e, em casos raros, complicacoes mais graves. Fui informado(a) sobre todos esses riscos e aceito submeter-me a este procedimento voluntariamente, sem qualquer coercao.
+
+3. Cuidados Pos-Procedimento
+Declaro ter recebido e compreendido as orientacoes de cuidados pos-procedimento, incluindo restricoes de atividade fisica, exposicao solar e uso de produtos. Comprometo-me a seguir as instrucoes do profissional responsavel e a entrar em contato com a clinica em caso de qualquer intercorrencia.
+
+4. Autorizacao de Imagem
+Autorizo, mediante consentimento expresso, o registro fotografico e/ou videografico antes, durante e apos o procedimento, para fins de acompanhamento clinico e documentacao do prontuario, sendo vedada qualquer divulgacao sem minha autorizacao previa e por escrito.
+
+5. Protecao de Dados (LGPD)
+Estou ciente de que meus dados pessoais e de saude serao tratados em conformidade com a Lei Geral de Protecao de Dados (LGPD - Lei 13.709/2018), sendo utilizados exclusivamente para fins de atendimento clinico e gestao do prontuario eletronico, com sigilo garantido pela equipe profissional.`;
+
 async function generateConsentimentoPDF(body: RequestBody): Promise<ArrayBuffer> {
   const { termo } = body;
+  const rawConsentText = body.consentimentoText ?? DEFAULT_CONSENTIMENTO_TEXT;
+  const consentText = safe(rawConsentText);
+
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
   const now = new Date().toLocaleString('pt-BR', {
@@ -140,15 +151,15 @@ async function generateConsentimentoPDF(body: RequestBody): Promise<ArrayBuffer>
   doc.line(MARGIN + 8, y + 12, MARGIN + CW - 8, y + 12);
 
   const dataRows: [string, string][] = [
-    ['Paciente:',      termo.paciente],
-    ['Procedimento:',  termo.procedimento],
-    ['Profissional:',  termo.profissional],
+    ['Paciente:',        termo.paciente],
+    ['Procedimento:',    termo.procedimento],
+    ['Profissional:',    termo.profissional],
     ['Data de Criacao:', termo.dataCriacao],
   ];
 
   const colMid = MARGIN + CW / 2;
   dataRows.forEach((row, i) => {
-    const col = i < 2 ? MARGIN + 8 : colMid;
+    const col  = i < 2 ? MARGIN + 8 : colMid;
     const rowY = i < 2 ? y + 20 + (i * 9) : y + 20 + ((i - 2) * 9);
 
     doc.setFont('helvetica', 'bold');
@@ -164,80 +175,53 @@ async function generateConsentimentoPDF(body: RequestBody): Promise<ArrayBuffer>
 
   y += DATA_CARD_H + 8;
 
-  const sections: { title: string; body: string }[] = [
-    {
-      title: '1. Descricao do Procedimento e Consentimento',
-      body:
-        `Eu, paciente acima identificado(a), declaro que fui devidamente informado(a) sobre o procedimento de ` +
-        `${safe(termo.procedimento)}, seus objetivos, riscos, alternativas e possiveis complicações, tendo ` +
-        `compreendido todas as informacoes prestadas pelo profissional responsavel. ` +
-        `Declaro ainda que as informacoes por mim fornecidas sao verdadeiras, e que nao omiti nenhum dado ` +
-        `relevante sobre meu estado de saude, alergias ou medicamentos em uso.`,
-    },
-    {
-      title: '2. Riscos e Complicações',
-      body:
-        `Estou ciente de que qualquer procedimento estetico pode apresentar riscos e complicações, incluindo ` +
-        `mas nao se limitando a: reacoes alergicas, hematomas, assimetrias temporarias e, em casos raros, ` +
-        `Complicações mais graves. Fui informado(a) sobre todos esses riscos e aceito submeter-me a este ` +
-        `procedimento voluntariamente, sem qualquer coercao.`,
-    },
-    {
-      title: '3. Cuidados Pos-Procedimento',
-      body:
-        `Declaro ter recebido e compreendido as orientacoes de cuidados pos-procedimento, incluindo restricoes ` +
-        `de atividade fisica, exposicao solar e uso de produtos. Comprometo-me a seguir as instrucoes do ` +
-        `profissional responsavel e a entrar em contato com a clinica em caso de qualquer intercorrencia.`,
-    },
-    {
-      title: '4. Autorizacao de Imagem',
-      body:
-        `Autorizo, mediante consentimento expresso, o registro fotografico e/ou videogrfico antes, durante e ` +
-        `apos o procedimento, para fins de acompanhamento clinico e documentacao do prontuario, sendo vedada ` +
-        `qualquer divulgacao sem minha autorizacao previa e por escrito.`,
-    },
-    {
-      title: '5. Protecao de Dados (LGPD)',
-      body:
-        `Estou ciente de que meus dados pessoais e de saude serao tratados em conformidade com a Lei Geral de ` +
-        `Protecao de Dados (LGPD - Lei 13.709/2018), sendo utilizados exclusivamente para fins de atendimento ` +
-        `clinico e gestao do prontuario eletronico, com sigilo garantido pela equipe profissional.`,
-    },
-  ];
+  const paragraphs = consentText.split('\n');
 
-  sections.forEach(sec => {
-    const bodyLines = doc.splitTextToSize(sec.body, CW - 18) as string[];
-    const secH = 10 + bodyLines.length * 5.5 + 6;
+  need(16);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.setTextColor(...C_PRIMARY);
+  doc.text('Texto do Consentimento', MARGIN, y + 7);
 
-    need(secH);
+  doc.setDrawColor(...C_BORDER);
+  doc.setLineWidth(0.3);
+  doc.line(MARGIN, y + 10, MARGIN + CW, y + 10);
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9.5);
-    doc.setTextColor(...C_PRIMARY);
-    doc.text(sec.title, MARGIN, y + 7);
+  y += 16;
 
-    doc.setDrawColor(...C_BORDER);
-    doc.setLineWidth(0.3);
-    doc.line(MARGIN, y + 10, MARGIN + CW, y + 10);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(80, 80, 80);
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(80, 80, 80);
-    bodyLines.forEach((line, li) => {
-      doc.text(line, MARGIN, y + 17 + li * 5.5);
+  for (const paragraph of paragraphs) {
+    if (paragraph.trim() === '') {
+      need(4);
+      y += 4;
+      continue;
+    }
+
+    const lines = doc.splitTextToSize(paragraph, CW) as string[];
+    const blockH = lines.length * 5.5;
+
+    need(blockH + 2);
+
+    lines.forEach((line, li) => {
+      doc.text(line, MARGIN, y + li * 5.5);
     });
 
-    y += secH + 4;
-  });
+    y += blockH + 3;
+  }
 
-  const signH = termo.status === 'assinado' ? 52 : 32;
+  y += 6;
+
+  const signH    = termo.status === 'assinado' ? 52 : 32;
   need(signH + 8);
 
   y += 4;
 
-  const isSigned = termo.status === 'assinado';
-  const signBg   = isSigned ? C_SIGNED_BG : C_PENDING_BG;
-  const signColor= isSigned ? C_SIGNED    : C_PENDING;
+  const isSigned  = termo.status === 'assinado';
+  const signBg    = isSigned ? C_SIGNED_BG : C_PENDING_BG;
+  const signColor = isSigned ? C_SIGNED    : C_PENDING;
 
   doc.setFillColor(...signBg);
   doc.setDrawColor(...signColor);
@@ -254,9 +238,9 @@ async function generateConsentimentoPDF(body: RequestBody): Promise<ArrayBuffer>
   );
 
   if (isSigned) {
-    const circleR  = 6;
-    const circleX  = MARGIN + CW - 10 - circleR;
-    const circleY  = y + 12;
+    const circleR = 6;
+    const circleX = MARGIN + CW - 10 - circleR;
+    const circleY = y + 12;
 
     doc.setFillColor(...signColor);
     doc.circle(circleX, circleY, circleR, 'F');
@@ -268,10 +252,10 @@ async function generateConsentimentoPDF(body: RequestBody): Promise<ArrayBuffer>
     doc.text('OK', circleX - okW / 2, circleY + 1.3);
 
     const signRows: [string, string][] = [
-      ['Paciente:',   termo.paciente],
-      ['Data/Hora:',  termo.assinadoEm ?? '—'],
-      ['IP:',         termo.ip ?? '—'],
-      ['Validade:',   termo.dataValidade],
+      ['Paciente:',  termo.paciente],
+      ['Data/Hora:', termo.assinadoEm ?? '—'],
+      ['IP:',        termo.ip ?? '—'],
+      ['Validade:',  termo.dataValidade],
     ];
 
     const half = Math.ceil(signRows.length / 2);

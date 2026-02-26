@@ -7,14 +7,18 @@ export const Container = styled.div`
   min-height: 100vh;
   background: #f5f5f5;
   box-sizing: border-box;
+  overflow-x: hidden;
 
   @media (max-width: 1024px) {
-    width: 100%;
-    padding: 24px 20px;
+    padding: 72px 20px 24px;
   }
 
   @media (max-width: 768px) {
-    padding: 20px 16px;
+    padding: 72px 14px 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 68px 12px 20px;
   }
 `;
 
@@ -23,8 +27,23 @@ export const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 28px;
-  flex-wrap: wrap;
   gap: 16px;
+
+  @media (max-width: 768px) {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    column-gap: 12px;
+    row-gap: 10px;
+    margin-bottom: 16px;
+    align-items: center;
+    & > button:last-of-type,
+    & > a:last-of-type {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      width: 100%;
+    }
+  }
 `;
 
 export const Title = styled.h1`
@@ -33,13 +52,26 @@ export const Title = styled.h1`
   color: #BBA188;
   margin: 0;
   font-weight: 600;
+
+  @media (max-width: 768px) {
+    font-size: 1.6rem;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.4rem;
+  }
 `;
 
 export const ActionsRow = styled.div`
   display: flex;
   gap: 12px;
   align-items: center;
-  flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    display: contents;
+  }
 `;
 
 export const ToggleGroup = styled.div`
@@ -48,6 +80,14 @@ export const ToggleGroup = styled.div`
   border-radius: 50px;
   border: 1.5px solid #e8e8e8;
   overflow: hidden;
+  flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    justify-self: end;
+  }
 `;
 
 export const ToggleBtn = styled.button<{ $active: boolean }>`
@@ -60,7 +100,13 @@ export const ToggleBtn = styled.button<{ $active: boolean }>`
   transition: all 0.2s;
   background: ${({ $active }) => ($active ? '#BBA188' : 'transparent')};
   color: ${({ $active }) => ($active ? 'white' : '#666')};
+
+  @media (max-width: 480px) {
+    padding: 8px 14px;
+    font-size: 0.82rem;
+  }
 `;
+
 
 export const CalendarNav = styled.div`
   display: flex;
@@ -81,11 +127,17 @@ export const CalendarNav = styled.div`
     justify-content: center;
     color: #666;
     transition: all 0.2s;
+    flex-shrink: 0;
 
     &:hover {
       border-color: #BBA188;
       color: #BBA188;
     }
+  }
+
+  @media (max-width: 768px) {
+    gap: 8px;
+    margin-bottom: 10px;
   }
 `;
 
@@ -96,6 +148,16 @@ export const CalendarTitle = styled.span`
   color: #1a1a1a;
   min-width: 240px;
   text-align: center;
+
+  @media (max-width: 768px) {
+    min-width: 0;
+    flex: 1;
+    font-size: 0.88rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.8rem;
+  }
 `;
 
 export const Legend = styled.div`
@@ -103,6 +165,11 @@ export const Legend = styled.div`
   gap: 16px;
   flex-wrap: wrap;
   margin-bottom: 16px;
+
+  @media (max-width: 480px) {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
 `;
 
 export const LegendItem = styled.div`
@@ -112,6 +179,10 @@ export const LegendItem = styled.div`
   font-size: 0.78rem;
   color: #666;
   font-family: var(--font-metropolis-regular), 'Metropolis', sans-serif;
+
+  @media (max-width: 480px) {
+    font-size: 0.7rem;
+  }
 `;
 
 export const LegendDot = styled.div<{ $color: string }>`
@@ -119,6 +190,11 @@ export const LegendDot = styled.div<{ $color: string }>`
   height: 10px;
   border-radius: 50%;
   background: ${({ $color }) => $color};
+
+  @media (max-width: 480px) {
+    width: 8px;
+    height: 8px;
+  }
 `;
 
 export const CalendarGrid = styled.div`
@@ -136,6 +212,12 @@ export const DayHeader = styled.div`
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 1px solid #f0f0f0;
+
+  @media (max-width: 480px) {
+    padding: 8px 2px;
+    font-size: 0.6rem;
+    letter-spacing: 0;
+  }
 `;
 
 export const DayCell = styled.div<{ $isToday?: boolean; $isEmpty?: boolean }>`
@@ -148,6 +230,16 @@ export const DayCell = styled.div<{ $isToday?: boolean; $isEmpty?: boolean }>`
 
   &:hover:not(:empty) {
     background: #fdf9f5;
+  }
+
+  @media (max-width: 768px) {
+    min-height: 72px;
+    padding: 4px;
+  }
+
+  @media (max-width: 480px) {
+    min-height: 52px;
+    padding: 3px 2px;
   }
 `;
 
@@ -163,6 +255,12 @@ export const DayNumber = styled.div<{ $isToday?: boolean }>`
   align-items: center;
   justify-content: center;
   font-family: var(--font-roboto-medium), 'Roboto', sans-serif;
+
+  @media (max-width: 480px) {
+    width: 20px;
+    height: 20px;
+    font-size: 0.68rem;
+  }
 `;
 
 export const EventsWrap = styled.div`
@@ -170,6 +268,11 @@ export const EventsWrap = styled.div`
   flex-direction: column;
   gap: 3px;
   margin-top: 4px;
+
+  @media (max-width: 480px) {
+    gap: 2px;
+    margin-top: 2px;
+  }
 `;
 
 export const EventChip = styled.div<{ $color: string }>`
@@ -183,12 +286,23 @@ export const EventChip = styled.div<{ $color: string }>`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  @media (max-width: 480px) {
+    font-size: 0.55rem;
+    padding: 1px 3px;
+    border-radius: 3px;
+  }
 `;
 
 export const WeekView = styled.div`
   border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  width: 100%;
+
+  @media (max-width: 768px) {
+    border-radius: 10px;
+  }
 `;
 
 export const SlotRow = styled.div`
@@ -198,6 +312,10 @@ export const SlotRow = styled.div`
 
   &:last-child {
     border-bottom: none;
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 36px repeat(7, 1fr);
   }
 `;
 
@@ -210,6 +328,11 @@ export const TimeLabel = styled.div`
   align-items: flex-start;
   justify-content: flex-end;
   border-right: 1px solid #f5f5f5;
+
+  @media (max-width: 768px) {
+    font-size: 0.55rem;
+    padding: 6px 2px;
+  }
 `;
 
 export const TimeSlot = styled.div`
@@ -224,6 +347,11 @@ export const TimeSlot = styled.div`
 
   &:hover {
     background: #fdf9f5;
+  }
+
+  @media (max-width: 768px) {
+    min-height: 44px;
+    padding: 2px;
   }
 `;
 
@@ -253,6 +381,26 @@ export const EventBlock = styled.div<{ $color: string }>`
     font-size: 0.65rem;
     color: #888;
     font-family: var(--font-inter-variable-regular), 'Inter', sans-serif;
+  }
+
+  @media (max-width: 768px) {
+    padding: 2px 3px;
+    border-left-width: 2px;
+    strong { font-size: 0.6rem; }
+    span   { display: none; }
+  }
+`;
+
+export const WeekHeader = styled.div`
+  display: grid;
+  grid-template-columns: 60px repeat(7, 1fr);
+  background: #BBA188;
+  border-radius: 14px 14px 0 0;
+  overflow: hidden;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 36px repeat(7, 1fr);
+    border-radius: 10px 10px 0 0;
   }
 `;
 

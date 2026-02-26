@@ -1,4 +1,3 @@
-import React from 'react';
 import styled, { keyframes } from 'styled-components';
 
 const fadeIn = keyframes`from { opacity: 0; } to { opacity: 1; }`;
@@ -68,4 +67,13 @@ export const ModalFooter = styled.div`
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+
+  @media (max-width: 768px) {
+    justify-content: center;
+
+    & > div {
+      width: 100%;
+      justify-content: center;
+    }
+  }
 `;

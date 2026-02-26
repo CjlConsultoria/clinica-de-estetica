@@ -12,11 +12,15 @@ import { usePermissions } from '@/components/ui/hooks/usePermissions';
 import { useCurrentUser } from '@/components/ui/hooks/useCurrentUser';
 import PermissionGuard from '@/components/ui/PermissionGuard';
 import MockLoginScreen from '@/components/auth/MockLoginScreen';
+<<<<<<< HEAD
 import {
   listarUsuarios, criarUsuario, atualizarUsuario, inativarUsuario,
   mapBackendCargo, mapFrontendCargo,
   type UsuarioResponse,
 } from '@/services/usuariosApi';
+=======
+import { ROLE_PERMISSIONS, Permission } from '@/types/auth';
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 import {
   Container, Header, Title, StatsGrid, Controls,
   SearchBarWrapper, SearchIconWrap, SearchInputStyled,
@@ -145,11 +149,114 @@ const ALL_CARGO_CONFIG: Record<string, CargoConfig> = {
   ...CARGO_ADMIN_CONFIG,
 };
 
+const CARGO_TO_ROLE: Record<string, 'tecnico' | 'recepcionista' | 'gerente' | 'financeiro'> = {
+  esteticista:    'tecnico',
+  biomedico:      'tecnico',
+  enfermeiro:     'tecnico',
+  dermatologista: 'tecnico',
+  fisioterapeuta: 'tecnico',
+  recepcionista:  'recepcionista',
+  gerente:        'gerente',
+  financeiro:     'financeiro',
+};
+
+const PERMISSION_GROUPS: { label: string; perms: Permission[] }[] = [
+  { label: 'Dashboard',       perms: ['dashboard.read'] },
+  { label: 'Profissionais',   perms: ['profissionais.read', 'profissionais.create', 'profissionais.edit', 'profissionais.delete'] },
+  { label: 'Agenda',          perms: ['agenda.read', 'agenda.read_own', 'agenda.create', 'agenda.edit', 'agenda.delete'] },
+  { label: 'Pacientes',       perms: ['pacientes.read', 'pacientes.read_own', 'pacientes.create', 'pacientes.edit', 'pacientes.delete'] },
+  { label: 'Prontuário',      perms: ['prontuario.read', 'prontuario.read_own', 'prontuario.create', 'prontuario.edit'] },
+  { label: 'Histórico',       perms: ['historico.read', 'historico.read_own'] },
+  { label: 'Fotos',           perms: ['fotos.read', 'fotos.read_own', 'fotos.create'] },
+  { label: 'Reaplicações',    perms: ['reaplicacoes.read', 'reaplicacoes.read_own', 'reaplicacoes.create'] },
+  { label: 'Procedimentos',   perms: ['procedimentos.read', 'procedimentos.create', 'procedimentos.edit'] },
+  { label: 'Consentimento',   perms: ['consentimento.read', 'consentimento.read_own', 'consentimento.create'] },
+  { label: 'Financeiro',      perms: ['financeiro.read', 'financeiro.create', 'financeiro.edit', 'financeiro.delete'] },
+  { label: 'Comissões',       perms: ['comissoes.read', 'comissoes.read_own', 'comissoes.edit'] },
+  { label: 'Estoque',         perms: ['estoque.read', 'estoque.create', 'estoque.edit'] },
+  { label: 'Lotes',           perms: ['lotes.read', 'lotes.create', 'lotes.edit'] },
+  { label: 'Relatórios',      perms: ['relatorios.operacional', 'relatorios.financeiro', 'relatorios.completo'] },
+  { label: 'Configurações',   perms: ['configuracoes.read', 'configuracoes.edit'] },
+];
+
+const PERM_LABEL: Record<string, string> = {
+  'dashboard.read':          'Ver dashboard',
+  'profissionais.read':      'Ver profissionais',
+  'profissionais.create':    'Cadastrar',
+  'profissionais.edit':      'Editar',
+  'profissionais.delete':    'Excluir',
+  'agenda.read':             'Ver agenda',
+  'agenda.read_own':         'Ver própria agenda',
+  'agenda.create':           'Criar agendamentos',
+  'agenda.edit':             'Editar agendamentos',
+  'agenda.delete':           'Excluir agendamentos',
+  'pacientes.read':          'Ver todos pacientes',
+  'pacientes.read_own':      'Ver próprios pacientes',
+  'pacientes.create':        'Cadastrar pacientes',
+  'pacientes.edit':          'Editar pacientes',
+  'pacientes.delete':        'Excluir pacientes',
+  'prontuario.read':         'Ver prontuários',
+  'prontuario.read_own':     'Ver próprio prontuário',
+  'prontuario.create':       'Criar prontuários',
+  'prontuario.edit':         'Editar prontuários',
+  'historico.read':          'Ver histórico geral',
+  'historico.read_own':      'Ver próprio histórico',
+  'fotos.read':              'Ver fotos',
+  'fotos.read_own':          'Ver próprias fotos',
+  'fotos.create':            'Adicionar fotos',
+  'reaplicacoes.read':       'Ver reaplicações',
+  'reaplicacoes.read_own':   'Ver próprias reaplicações',
+  'reaplicacoes.create':     'Criar reaplicações',
+  'procedimentos.read':      'Ver procedimentos',
+  'procedimentos.create':    'Criar procedimentos',
+  'procedimentos.edit':      'Editar procedimentos',
+  'consentimento.read':      'Ver consentimentos',
+  'consentimento.read_own':  'Ver próprios consentimentos',
+  'consentimento.create':    'Criar consentimentos',
+  'financeiro.read':         'Ver financeiro',
+  'financeiro.create':       'Lançar entradas',
+  'financeiro.edit':         'Editar lançamentos',
+  'financeiro.delete':       'Excluir lançamentos',
+  'comissoes.read':          'Ver comissões',
+  'comissoes.read_own':      'Ver próprias comissões',
+  'comissoes.edit':          'Editar comissões',
+  'estoque.read':            'Ver estoque',
+  'estoque.create':          'Adicionar ao estoque',
+  'estoque.edit':            'Editar estoque',
+  'lotes.read':              'Ver lotes',
+  'lotes.create':            'Criar lotes',
+  'lotes.edit':              'Editar lotes',
+  'relatorios.operacional':  'Relatório operacional',
+  'relatorios.financeiro':   'Relatório financeiro',
+  'relatorios.completo':     'Relatório completo',
+  'configuracoes.read':      'Ver configurações',
+  'configuracoes.edit':      'Editar configurações',
+};
+
 const statusOptions = [{ value: 'ativo', label: 'Ativo' }, { value: 'inativo', label: 'Inativo' }];
 const filterStatus  = ['Todos', 'Ativo', 'Inativo'];
 const filterAreas   = ['Todos', 'Técnica', 'Administrativa'];
-const STEP_LABELS   = ['Dados Básicos', 'Área', 'Cargo', 'Acesso'];
+// 5 steps agora
+const STEP_LABELS   = ['Dados Básicos', 'Área', 'Cargo', 'Acesso', 'Permissões'];
 
+<<<<<<< HEAD
+=======
+const INITIAL_PROFISSIONAIS = [
+  { id: 1,  name: 'Ana Beatriz Lima',   email: 'ana.lima@clinica.com',       phone: '(11) 98765-4321', registro: 'CREFITO-3 112233-F', area: 'tecnica',        cargo: 'esteticista',    especialidade: 'estetica-facial',         status: 'ativo',   atendimentos: 142, ultimoAcesso: '20/02/2025', observacoes: '', customPermissions: null as Permission[] | null },
+  { id: 2,  name: 'Dra. Clara Andrade', email: 'clara.andrade@clinica.com',  phone: '(11) 97654-3210', registro: 'CRM/SP 654321',      area: 'tecnica',        cargo: 'dermatologista', especialidade: 'dermatologia-clinica',     status: 'ativo',   atendimentos: 98,  ultimoAcesso: '19/02/2025', observacoes: '', customPermissions: null as Permission[] | null },
+  { id: 3,  name: 'Juliana Ferreira',   email: 'juliana.f@clinica.com',      phone: '(31) 94321-0987', registro: 'COREN/SP 901234',    area: 'tecnica',        cargo: 'enfermeiro',     especialidade: 'enfermagem-estetica',      status: 'ativo',   atendimentos: 55,  ultimoAcesso: '17/02/2025', observacoes: '', customPermissions: null as Permission[] | null },
+  { id: 4,  name: 'Rafael Costa',       email: 'rafael.costa@clinica.com',   phone: '(21) 95432-1098', registro: '',                   area: 'administrativa', cargo: 'recepcionista',  especialidade: '',                         status: 'inativo', atendimentos: 0,   ultimoAcesso: '10/01/2025', observacoes: '', customPermissions: null as Permission[] | null },
+  { id: 5,  name: 'Mariana Souza',      email: 'mariana.s@clinica.com',      phone: '(21) 94321-9876', registro: 'CRBim-5 445566',     area: 'tecnica',        cargo: 'biomedico',      especialidade: 'biomedicina-estetica',     status: 'ativo',   atendimentos: 76,  ultimoAcesso: '18/02/2025', observacoes: '', customPermissions: null as Permission[] | null },
+  { id: 6,  name: 'Patricia Gomes',     email: 'patricia.g@clinica.com',     phone: '(11) 93210-8765', registro: '',                   area: 'administrativa', cargo: 'gerente',        especialidade: '',                         status: 'ativo',   atendimentos: 0,   ultimoAcesso: '20/02/2025', observacoes: '', customPermissions: null as Permission[] | null },
+  { id: 7,  name: 'Fernanda Oliveira',  email: 'fernanda.o@clinica.com',     phone: '(11) 91234-5678', registro: 'CREFITO-3 778899-F', area: 'tecnica',        cargo: 'fisioterapeuta', especialidade: 'dermato-funcional',        status: 'ativo',   atendimentos: 63,  ultimoAcesso: '15/02/2025', observacoes: '', customPermissions: null as Permission[] | null },
+  { id: 8,  name: 'Dr. Lucas Mendes',   email: 'lucas.mendes@clinica.com',   phone: '(11) 99876-5432', registro: 'CRM/SP 789012',      area: 'tecnica',        cargo: 'dermatologista', especialidade: 'dermatologia-estetica',    status: 'ativo',   atendimentos: 110, ultimoAcesso: '20/02/2025', observacoes: '', customPermissions: null as Permission[] | null },
+  { id: 9,  name: 'Camila Rocha',       email: 'camila.rocha@clinica.com',   phone: '(21) 98765-1234', registro: '',                   area: 'administrativa', cargo: 'financeiro',     especialidade: '',                         status: 'ativo',   atendimentos: 0,   ultimoAcesso: '19/02/2025', observacoes: '', customPermissions: null as Permission[] | null },
+  { id: 10, name: 'Beatriz Santos',     email: 'beatriz.santos@clinica.com', phone: '(31) 97654-3210', registro: 'COREN/SP 345678',    area: 'tecnica',        cargo: 'enfermeiro',     especialidade: 'procedimentos-injetaveis', status: 'ativo',   atendimentos: 41,  ultimoAcesso: '16/02/2025', observacoes: '', customPermissions: null as Permission[] | null },
+  { id: 11, name: 'Thiago Almeida',     email: 'thiago.a@clinica.com',       phone: '(11) 96543-2109', registro: '',                   area: 'administrativa', cargo: 'recepcionista',  especialidade: '',                         status: 'ativo',   atendimentos: 0,   ultimoAcesso: '18/02/2025', observacoes: '', customPermissions: null as Permission[] | null },
+  { id: 12, name: 'Larissa Duarte',     email: 'larissa.d@clinica.com',      phone: '(11) 95432-1098', registro: 'CRBim-5 667788',     area: 'tecnica',        cargo: 'biomedico',      especialidade: 'laser-terapia',            status: 'inativo', atendimentos: 29,  ultimoAcesso: '05/01/2025', observacoes: '', customPermissions: null as Permission[] | null },
+];
+
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 const avatarColors = ['#BBA188', '#8a7560', '#a8906f', '#c9a882', '#917255', '#d4b896'];
 
 const statusColors: Record<string, { bg: string; color: string }> = {
@@ -173,12 +280,16 @@ interface ProfissionalForm {
   area: AreaType; cargo: Cargo;
   especialidade: string; registro: string; status: string; observacoes: string;
   senha: string; confirmarSenha: string;
+  useCustomPermissions: boolean;
+  customPermissions: Permission[];
 }
 
 const FORM_INITIAL: ProfissionalForm = {
   nome: '', email: '', telefone: '',
   area: '', cargo: '', especialidade: '', registro: '', status: 'ativo', observacoes: '',
   senha: '', confirmarSenha: '',
+  useCustomPermissions: false,
+  customPermissions: [],
 };
 
 type Step1Field = 'nome' | 'email' | 'telefone';
@@ -190,8 +301,10 @@ type Profissional = {
   id: number; name: string; email: string; phone: string;
   registro: string; area: string; cargo: string; especialidade: string;
   status: string; atendimentos: number; ultimoAcesso: string; observacoes: string;
+  customPermissions: Permission[] | null;
 };
 
+<<<<<<< HEAD
 function mapUsuario(u: UsuarioResponse): Profissional {
   const area = u.areaProfissional === 'TECNICA' ? 'tecnica'
              : u.areaProfissional === 'ADMINISTRATIVA' ? 'administrativa'
@@ -212,6 +325,8 @@ function mapUsuario(u: UsuarioResponse): Profissional {
   };
 }
 
+=======
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 function getEspecialidadeLabel(cargo: string, value: string): string {
   if (!value) return '—';
   const config = ALL_CARGO_CONFIG[cargo];
@@ -226,10 +341,8 @@ function getInitials(name: string) {
 function CargoCard({ children, $active, onClick }: { children: React.ReactNode; $active: boolean; onClick: () => void }) {
   return (
     <div onClick={onClick} style={{
-      display: 'flex', flexDirection: 'column', gap: 5,
-      padding: '12px 14px',
-      border: `1.5px solid ${$active ? '#BBA188' : '#e8e8e8'}`,
-      borderRadius: 12,
+      display: 'flex', flexDirection: 'column', gap: 5, padding: '12px 14px',
+      border: `1.5px solid ${$active ? '#BBA188' : '#e8e8e8'}`, borderRadius: 12,
       background: $active ? 'rgba(187,161,136,0.07)' : 'white',
       cursor: 'pointer', transition: 'all 0.18s',
       boxShadow: $active ? '0 0 0 3px rgba(187,161,136,0.15)' : 'none',
@@ -283,10 +396,14 @@ export default function Profissionais() {
   const canEdit   = can('profissionais.edit');
   const canRead   = can('profissionais.read');
 
+<<<<<<< HEAD
   const [profissionais,        setProfissionais]        = useState<Profissional[]>([]);
   const [loading,              setLoading]              = useState(true);
   const [errorMsg,             setErrorMsg]             = useState('');
   const [isErrorOpen,          setIsErrorOpen]          = useState(false);
+=======
+  const [profissionais,        setProfissionais]        = useState<Profissional[]>(INITIAL_PROFISSIONAIS);
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   const [search,               setSearch]               = useState('');
   const [filterStat,           setFilterStat]           = useState('Todos');
   const [filterArea,           setFilterArea]           = useState('Todos');
@@ -301,6 +418,10 @@ export default function Profissionais() {
   const [isEditing,            setIsEditing]            = useState(false);
   const [currentPage,          setCurrentPage]          = useState(1);
 
+<<<<<<< HEAD
+=======
+  
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   const step1Validation = useSequentialValidation<Step1Field>([
     { key: 'nome',     validate: (v) => !v.trim() ? 'Nome completo é obrigatório' : null },
     { key: 'email',    validate: (v) => { const err = validateEmail(v); return err ? err.message : null; } },
@@ -340,6 +461,7 @@ export default function Profissionais() {
     }},
   ]);
 
+<<<<<<< HEAD
   function showError(err: unknown, context: string) {
     setErrorMsg(getApiErrorMessage(err, context));
     setIsErrorOpen(true);
@@ -352,6 +474,8 @@ export default function Profissionais() {
       .finally(() => setLoading(false));
   }, []);
 
+=======
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   const cargoConfig  = form.cargo ? ALL_CARGO_CONFIG[form.cargo] : null;
   const cargoOptions =
     form.area === 'tecnica'
@@ -359,6 +483,25 @@ export default function Profissionais() {
       : form.area === 'administrativa'
         ? Object.entries(CARGO_ADMIN_CONFIG).map(([v, c]) => ({ value: v, label: c.label }))
         : [];
+
+  const defaultPermsForCargo: Permission[] = form.cargo
+    ? (ROLE_PERMISSIONS[CARGO_TO_ROLE[form.cargo]] ?? [])
+    : [];
+
+  function toggleCustomPerm(perm: Permission) {
+    setForm(prev => {
+      const has = prev.customPermissions.includes(perm);
+      return { ...prev, customPermissions: has ? prev.customPermissions.filter(p => p !== perm) : [...prev.customPermissions, perm] };
+    });
+  }
+
+  function activateCustomPermissions() {
+    setForm(prev => ({ ...prev, useCustomPermissions: true, customPermissions: [...defaultPermsForCargo] }));
+  }
+
+  function resetToDefault() {
+    setForm(prev => ({ ...prev, useCustomPermissions: false, customPermissions: [] }));
+  }
 
   const filtered = profissionais.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.email.includes(search);
@@ -386,8 +529,8 @@ export default function Profissionais() {
   function handleChange(field: keyof ProfissionalForm, value: string) {
     setForm(prev => {
       const next = { ...prev, [field]: value };
-      if (field === 'area')  { next.cargo = ''; next.especialidade = ''; next.registro = ''; }
-      if (field === 'cargo') { next.especialidade = ''; next.registro = ''; }
+      if (field === 'area')  { next.cargo = ''; next.especialidade = ''; next.registro = ''; next.useCustomPermissions = false; next.customPermissions = []; }
+      if (field === 'cargo') { next.especialidade = ''; next.registro = ''; next.useCustomPermissions = false; next.customPermissions = []; }
       return next;
     });
     if (field === 'nome' || field === 'email' || field === 'telefone')          step1Validation.clearError(field as Step1Field);
@@ -401,10 +544,17 @@ export default function Profissionais() {
     if (s === 2) return step2Validation.validate({ area: form.area });
     if (s === 3) return step3Validation.validate({ cargo: form.cargo, registro: form.registro, especialidade: form.especialidade });
     if (s === 4) return step4Validation.validate({ senha: form.senha, confirmarSenha: form.confirmarSenha });
+<<<<<<< HEAD
     return true;
   }
 
   function nextStep() { if (!validateStep(step)) return; setStep(s => Math.min(s + 1, 4)); }
+=======
+    return true; 
+  }
+
+  function nextStep() { if (!validateStep(step)) return; setStep(s => Math.min(s + 1, 5)); }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   function prevStep() {
     step1Validation.clearAll(); step2Validation.clearAll();
     step3Validation.clearAll(); step4Validation.clearAll();
@@ -431,6 +581,8 @@ export default function Profissionais() {
       especialidade: p.especialidade, registro: p.registro,
       status: p.status, observacoes: p.observacoes || '',
       senha: '', confirmarSenha: '',
+      useCustomPermissions: p.customPermissions !== null,
+      customPermissions: p.customPermissions ?? [],
     });
     clearAllErrors(); setStep(1); setIsDetailOpen(false); setIsModalOpen(true);
   }
@@ -443,6 +595,7 @@ export default function Profissionais() {
     setShowSenha(false); setShowConfirm(false); setIsEditing(false);
   }
 
+<<<<<<< HEAD
   async function handleSave() {
     if (!validateStep(4)) return;
     if (form.senha && form.senha !== form.confirmarSenha) { step4Validation.clearAll(); return; }
@@ -482,6 +635,32 @@ export default function Profissionais() {
     }
   }
 
+=======
+  function handleSave() {
+    if (step === 4 && !validateStep(4)) return;
+    if (form.senha && form.senha !== form.confirmarSenha) { step4Validation.clearAll(); return; }
+    const today = new Date().toLocaleDateString('pt-BR');
+    const savedCustomPerms = form.useCustomPermissions ? form.customPermissions : null;
+    if (isEditing && selectedProfissional) {
+      setProfissionais(prev =>
+        prev.map(p => p.id === selectedProfissional.id
+          ? { ...p, name: form.nome, email: form.email, phone: form.telefone, area: form.area, cargo: form.cargo, especialidade: form.especialidade, registro: form.registro, status: form.status, observacoes: form.observacoes, customPermissions: savedCustomPerms }
+          : p
+        )
+      );
+    } else {
+      setProfissionais(prev => [...prev, {
+        id: Date.now(), name: form.nome, email: form.email, phone: form.telefone,
+        registro: form.registro, area: form.area, cargo: form.cargo,
+        especialidade: form.especialidade, status: 'ativo',
+        atendimentos: 0, ultimoAcesso: today, observacoes: form.observacoes,
+        customPermissions: savedCustomPerms,
+      }]);
+    }
+    handleClose();
+  }
+
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   const errors1 = step1Validation.errors;
   const errors2 = step2Validation.errors;
   const errors3 = step3Validation.errors;
@@ -506,6 +685,7 @@ export default function Profissionais() {
             </FormGrid>
           </StepSection>
         );
+
       case 2:
         return (
           <StepSection>
@@ -525,6 +705,7 @@ export default function Profissionais() {
             </AreaGrid>
           </StepSection>
         );
+
       case 3:
         return (
           <StepSection>
@@ -575,6 +756,7 @@ export default function Profissionais() {
             </FormGrid>
           </StepSection>
         );
+
       case 4:
         return (
           <StepSection>
@@ -597,6 +779,7 @@ export default function Profissionais() {
                 </EyeBtn>
               </div>
               {isEditing && <PasswordHint style={{ gridColumn: 'span 2' }}>Deixe os campos em branco para manter a senha atual.</PasswordHint>}
+
               <div style={{ gridColumn: 'span 2', background: '#fdf9f5', borderRadius: 12, padding: 16, border: '1px solid #f0ebe4' }}>
                 <p style={{ fontSize: '0.77rem', fontWeight: 600, color: '#BBA188', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 10px' }}>Resumo do Cadastro</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px' }}>
@@ -620,6 +803,137 @@ export default function Profissionais() {
             </FormGrid>
           </StepSection>
         );
+
+      case 5:
+        return (
+          <StepSection>
+            <SectionLabel>Permissões de Acesso</SectionLabel>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{
+                  fontSize: '0.7rem',
+                  background: form.useCustomPermissions ? '#fdf0e8' : '#f0ebe4',
+                  color: form.useCustomPermissions ? '#c97a3a' : '#8a7560',
+                  padding: '3px 10px', borderRadius: 20, fontWeight: 700,
+                }}>
+                  {form.useCustomPermissions ? '✎ Personalizado' : '● Padrão do cargo'}
+                </span>
+                {form.useCustomPermissions && (() => {
+                  const added   = form.customPermissions.filter(p => !defaultPermsForCargo.includes(p));
+                  const removed = defaultPermsForCargo.filter(p => !form.customPermissions.includes(p));
+                  const total = added.length + removed.length;
+                  if (total === 0) return null;
+                  return (
+                    <span style={{ fontSize: '0.68rem', color: '#999' }}>
+                      {added.length > 0 && <span style={{ color: '#3a9c3a' }}>+{added.length} </span>}
+                      {removed.length > 0 && <span style={{ color: '#c93a3a' }}>−{removed.length} </span>}
+                      alteração(ões)
+                    </span>
+                  );
+                })()}
+              </div>
+              {form.useCustomPermissions ? (
+                <button onClick={resetToDefault} style={{ fontSize: '0.72rem', color: '#e74c3c', background: 'none', border: '1px solid #e74c3c', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontWeight: 600 }}>
+                  ↩ Restaurar padrão
+                </button>
+              ) : (
+                <button onClick={activateCustomPermissions} style={{ fontSize: '0.72rem', color: '#BBA188', background: 'none', border: '1px solid #BBA188', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontWeight: 600 }}>
+                  ✎ Personalizar
+                </button>
+              )}
+            </div>
+
+            {!form.useCustomPermissions && (
+              <div style={{ padding: '10px 14px', borderRadius: 10, background: '#fdf9f5', border: '1px solid #f0ebe4', fontSize: '0.78rem', color: '#999', marginBottom: 14 }}>
+                Exibindo permissões padrão do cargo <strong style={{ color: '#8a7560' }}>{cargoConfig?.label}</strong>. Clique em <strong style={{ color: '#BBA188' }}>Personalizar</strong> para ajustar acessos individualmente.
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {PERMISSION_GROUPS.map(group => {
+                const groupHasDefault = group.perms.some(p => defaultPermsForCargo.includes(p));
+                if (!form.useCustomPermissions && !groupHasDefault) return null;
+
+                return (
+                  <div key={group.label} style={{ border: '1px solid #f0ebe4', borderRadius: 10, overflow: 'hidden' }}>
+                    <div style={{ background: '#fdf9f5', padding: '5px 12px', fontSize: '0.7rem', fontWeight: 700, color: '#BBA188', textTransform: 'uppercase', letterSpacing: '0.4px', borderBottom: '1px solid #f0ebe4' }}>
+                      {group.label}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 0 }}>
+                      {group.perms.map(perm => {
+                        const isDefault   = defaultPermsForCargo.includes(perm);
+                        const isActive    = form.useCustomPermissions ? form.customPermissions.includes(perm) : isDefault;
+                        const isCustomOn  = form.useCustomPermissions && isActive && !isDefault;
+                        const isCustomOff = form.useCustomPermissions && !isActive && isDefault;
+
+                        return (
+                          <div
+                            key={perm}
+                            onClick={() => form.useCustomPermissions && toggleCustomPerm(perm)}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 8,
+                              padding: '7px 12px',
+                              cursor: form.useCustomPermissions ? 'pointer' : 'default',
+                              borderBottom: '1px solid #f9f5f0',
+                              background: isCustomOn ? 'rgba(106,191,105,0.06)' : isCustomOff ? 'rgba(220,80,80,0.04)' : 'white',
+                              transition: 'background 0.15s',
+                            }}
+                          >
+                            <div style={{
+                              width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                              border: `1.5px solid ${isActive ? (isCustomOn ? '#6abf69' : '#BBA188') : (isCustomOff ? '#e74c3c' : '#ddd')}`,
+                              background: isActive ? (isCustomOn ? '#6abf69' : '#BBA188') : 'white',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              transition: 'all 0.15s',
+                            }}>
+                              {isActive && (
+                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5">
+                                  <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                              )}
+                            </div>
+                            <span style={{ fontSize: '0.75rem', color: isActive ? '#444' : '#bbb', flex: 1, textDecoration: isCustomOff ? 'line-through' : 'none' }}>
+                              {PERM_LABEL[perm] ?? perm}
+                            </span>
+                            {isCustomOn  && <span style={{ fontSize: '0.6rem', background: '#e8fde8', color: '#3a9c3a', borderRadius: 4, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>+EXTRA</span>}
+                            {isCustomOff && <span style={{ fontSize: '0.6rem', background: '#fde8e8', color: '#c93a3a', borderRadius: 4, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>REMOVIDO</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {form.useCustomPermissions && (() => {
+              const added   = form.customPermissions.filter(p => !defaultPermsForCargo.includes(p));
+              const removed = defaultPermsForCargo.filter(p => !form.customPermissions.includes(p));
+              if (added.length === 0 && removed.length === 0) return (
+                <div style={{ marginTop: 12, padding: '8px 14px', background: '#f5fdf5', borderRadius: 8, border: '1px solid #d4edda', fontSize: '0.75rem', color: '#3a9c3a', textAlign: 'center' }}>
+                  ✓ Igual ao padrão — nenhuma alteração
+                </div>
+              );
+              return (
+                <div style={{ marginTop: 12, padding: '10px 14px', background: '#fdf9f5', borderRadius: 10, border: '1px solid #f0ebe4', fontSize: '0.75rem' }}>
+                  {added.length > 0 && (
+                    <div style={{ marginBottom: removed.length > 0 ? 6 : 0 }}>
+                      <span style={{ color: '#3a9c3a', fontWeight: 700 }}>+{added.length} acesso(s) extra: </span>
+                      <span style={{ color: '#666' }}>{added.map(p => PERM_LABEL[p] ?? p).join(', ')}</span>
+                    </div>
+                  )}
+                  {removed.length > 0 && (
+                    <div>
+                      <span style={{ color: '#c93a3a', fontWeight: 700 }}>−{removed.length} acesso(s) removido(s): </span>
+                      <span style={{ color: '#666' }}>{removed.map(p => PERM_LABEL[p] ?? p).join(', ')}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </StepSection>
+        );
+
       default: return null;
     }
   }
@@ -630,7 +944,7 @@ export default function Profissionais() {
         ? <Button variant="outline" onClick={prevStep}>← Voltar</Button>
         : <Button variant="outline" onClick={handleClose}>Cancelar</Button>
       }
-      {step < 4
+      {step < 5
         ? <Button variant="primary" onClick={nextStep}>Continuar →</Button>
         : <Button variant="primary" onClick={handleSave}>{isEditing ? 'Salvar Alterações' : 'Cadastrar Profissional'}</Button>
       }
@@ -675,8 +989,12 @@ export default function Profissionais() {
       <Header>
         <Title>Profissionais</Title>
         <PermissionGuard permission="profissionais.create">
+<<<<<<< HEAD
           <Button
             variant="primary"
+=======
+          <Button variant="primary"
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
             icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>}
             onClick={openNew}
           >
@@ -686,6 +1004,7 @@ export default function Profissionais() {
       </Header>
 
       <StatsGrid>
+<<<<<<< HEAD
         <StatCard label="Total de Profissionais" value={loading ? '...' : totalProfissionais} color="#BBA188"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
         />
@@ -698,6 +1017,16 @@ export default function Profissionais() {
         <StatCard label="Atendimentos Total" value={loading ? '...' : totalAtend} color="#a8906f"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3h6"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M21 9v6"/><path d="M21 15v4a2 2 0 0 1-2 2h-4"/><path d="M15 21H9"/><path d="M9 21H5a2 2 0 0 1-2-2v-4"/><path d="M3 15V9"/></svg>}
         />
+=======
+        <StatCard label="Total de Profissionais" value={totalProfissionais} color="#BBA188"
+          icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>} />
+        <StatCard label="Ativos" value={ativos} color="#8a7560"
+          icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>} />
+        <StatCard label="Inativos" value={inativos} color="#EBD5B0"
+          icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>} />
+        <StatCard label="Atendimentos Total" value={totalAtend} color="#a8906f"
+          icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3h6"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M21 9v6"/><path d="M21 15v4a2 2 0 0 1-2 2h-4"/><path d="M15 21H9"/><path d="M9 21H5a2 2 0 0 1-2-2v-4"/><path d="M3 15V9"/></svg>} />
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
       </StatsGrid>
 
       <Controls>
@@ -720,9 +1049,7 @@ export default function Profissionais() {
             </DropdownBtn>
             {openDrop === 'status' && (
               <DropdownList>
-                {filterStatus.map(s => (
-                  <DropdownItem key={s} $active={filterStat === s} onClick={() => handleFilterStatChange(s)}>{s}</DropdownItem>
-                ))}
+                {filterStatus.map(s => <DropdownItem key={s} $active={filterStat === s} onClick={() => handleFilterStatChange(s)}>{s}</DropdownItem>)}
               </DropdownList>
             )}
           </DropdownWrapper>
@@ -733,9 +1060,7 @@ export default function Profissionais() {
             </DropdownBtn>
             {openDrop === 'area' && (
               <DropdownList>
-                {filterAreas.map(a => (
-                  <DropdownItem key={a} $active={filterArea === a} onClick={() => handleFilterAreaChange(a)}>{a}</DropdownItem>
-                ))}
+                {filterAreas.map(a => <DropdownItem key={a} $active={filterArea === a} onClick={() => handleFilterAreaChange(a)}>{a}</DropdownItem>)}
               </DropdownList>
             )}
           </DropdownWrapper>
@@ -788,7 +1113,12 @@ export default function Profissionais() {
                         {getInitials(p.name)}
                       </Avatar>
                       <ProfissionalInfo>
-                        <ProfissionalName>{p.name}</ProfissionalName>
+                        <ProfissionalName>
+                          {p.name}
+                          {p.customPermissions !== null && (
+                            <span title="Permissões personalizadas" style={{ marginLeft: 5, fontSize: '0.6rem', background: '#fdf0e8', color: '#c97a3a', borderRadius: 4, padding: '1px 4px', fontWeight: 700, verticalAlign: 'middle' }}>✎</span>
+                          )}
+                        </ProfissionalName>
                         <ProfissionalEmail>{p.email}</ProfissionalEmail>
                       </ProfissionalInfo>
                     </div>
@@ -821,6 +1151,7 @@ export default function Profissionais() {
                   <Td>
                     <ActionGroup>
                       <IconBtn title="Ver detalhes" onClick={() => openDetail(p)}>
+<<<<<<< HEAD
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <circle cx="12" cy="12" r="10"/>
                           <line x1="12" y1="8" x2="12" y2="12"/>
@@ -833,6 +1164,13 @@ export default function Profissionais() {
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                           </svg>
+=======
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      </IconBtn>
+                      {canEdit && (
+                        <IconBtn title="Editar" onClick={() => openEdit(p)}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
                         </IconBtn>
                       )}
                     </ActionGroup>
@@ -842,22 +1180,13 @@ export default function Profissionais() {
             </Tbody>
           </Table>
         </TableWrapper>
-        <Pagination
-          currentPage={safePage}
-          totalItems={totalFiltered}
-          itemsPerPage={ITEMS_PER_PAGE}
-          onPageChange={setCurrentPage}
-        />
+        <Pagination currentPage={safePage} totalItems={totalFiltered} itemsPerPage={ITEMS_PER_PAGE} onPageChange={setCurrentPage} />
       </div>
 
-      <Modal
-        isOpen={isDetailOpen}
-        onClose={() => setIsDetailOpen(false)}
-        closeOnOverlayClick={false}
-        title="Ficha do Profissional"
-        size="lg"
+      <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} closeOnOverlayClick={false} title="Ficha do Profissional" size="lg"
         footer={
           <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'space-between' }}>
+<<<<<<< HEAD
             <div style={{ display: 'flex', gap: 12 }}>
               <PermissionGuard permission="profissionais.edit">
                 <Button
@@ -874,6 +1203,14 @@ export default function Profissionais() {
                 </Button>
               )}
             </div>
+=======
+            <PermissionGuard permission="profissionais.edit">
+              <Button variant="outline"
+                icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
+                onClick={() => selectedProfissional && openEdit(selectedProfissional)}
+              >Editar Ficha</Button>
+            </PermissionGuard>
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
             <Button variant="outline" onClick={() => setIsDetailOpen(false)}>Fechar</Button>
           </div>
         }
@@ -896,20 +1233,15 @@ export default function Profissionais() {
                 </DetailMeta>
                 <StatsRow style={{ marginTop: 10 }}>
                   <StatPill $color="#BBA188">{selectedProfissional.atendimentos} atendimentos</StatPill>
-                  <StatPill $color={selectedProfissional.status === 'ativo' ? '#8a7560' : '#888'}>
-                    {selectedProfissional.status === 'ativo' ? 'Ativo' : 'Inativo'}
-                  </StatPill>
-                  <StatPill $color={selectedProfissional.area === 'tecnica' ? '#3a7dc9' : '#c9a03a'}>
-                    {selectedProfissional.area === 'tecnica' ? 'Área Técnica' : 'Área Administrativa'}
-                  </StatPill>
+                  <StatPill $color={selectedProfissional.status === 'ativo' ? '#8a7560' : '#888'}>{selectedProfissional.status === 'ativo' ? 'Ativo' : 'Inativo'}</StatPill>
+                  <StatPill $color={selectedProfissional.area === 'tecnica' ? '#3a7dc9' : '#c9a03a'}>{selectedProfissional.area === 'tecnica' ? 'Área Técnica' : 'Área Administrativa'}</StatPill>
+                  {selectedProfissional.customPermissions !== null && <StatPill $color="#c97a3a">✎ Permissões personalizadas</StatPill>}
                 </StatsRow>
               </div>
             </DetailHeader>
 
             {selectedProfissional.observacoes && (
-              <ObsBox>
-                <strong>⚠ Observações: </strong>{selectedProfissional.observacoes}
-              </ObsBox>
+              <ObsBox><strong>⚠ Observações: </strong>{selectedProfissional.observacoes}</ObsBox>
             )}
 
             <DetailSection>
@@ -937,9 +1269,7 @@ export default function Profissionais() {
                   <InfoItem>
                     <InfoLabel>Registro Profissional</InfoLabel>
                     <InfoValue>
-                      <code style={{ fontSize: '0.83rem', color: '#888', background: '#f5f5f5', padding: '3px 8px', borderRadius: 5 }}>
-                        {selectedProfissional.registro}
-                      </code>
+                      <code style={{ fontSize: '0.83rem', color: '#888', background: '#f5f5f5', padding: '3px 8px', borderRadius: 5 }}>{selectedProfissional.registro}</code>
                     </InfoValue>
                   </InfoItem>
                 )}
@@ -949,10 +1279,23 @@ export default function Profissionais() {
                 </InfoItem>
                 <InfoItem>
                   <InfoLabel>Total de Atendimentos</InfoLabel>
-                  <InfoValue style={{ fontWeight: 700, color: '#1a1a1a', fontSize: '1.1rem' }}>
-                    {selectedProfissional.atendimentos}
-                  </InfoValue>
+                  <InfoValue style={{ fontWeight: 700, color: '#1a1a1a', fontSize: '1.1rem' }}>{selectedProfissional.atendimentos}</InfoValue>
                 </InfoItem>
+                {selectedProfissional.customPermissions !== null && (
+                  <InfoItem style={{ gridColumn: 'span 2' }}>
+                    <InfoLabel>Permissões Personalizadas</InfoLabel>
+                    <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                      {selectedProfissional.customPermissions.length === 0
+                        ? <span style={{ fontSize: '0.78rem', color: '#bbb' }}>Nenhuma permissão ativa</span>
+                        : selectedProfissional.customPermissions.map(perm => (
+                          <span key={perm} style={{ fontSize: '0.68rem', background: '#fdf0e8', color: '#c97a3a', borderRadius: 4, padding: '2px 7px', fontWeight: 600 }}>
+                            {PERM_LABEL[perm] ?? perm}
+                          </span>
+                        ))
+                      }
+                    </div>
+                  </InfoItem>
+                )}
               </InfoGrid>
             </DetailSection>
           </DetailModal>
@@ -960,6 +1303,7 @@ export default function Profissionais() {
       </Modal>
 
       <PermissionGuard anyOf={['profissionais.create', 'profissionais.edit']}>
+<<<<<<< HEAD
         <Modal
           isOpen={isModalOpen}
           onClose={handleClose}
@@ -967,6 +1311,10 @@ export default function Profissionais() {
           title={isEditing ? 'Editar Profissional' : 'Cadastrar Profissional'}
           size="lg"
           footer={modalFooter}
+=======
+        <Modal isOpen={isModalOpen} onClose={handleClose} closeOnOverlayClick={false}
+          title={isEditing ? 'Editar Profissional' : 'Cadastrar Profissional'} size="lg" footer={modalFooter}
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
         >
           <form autoComplete="off" onSubmit={e => e.preventDefault()} style={{ display: 'contents' }}>
             <WizardSteps>
@@ -992,12 +1340,17 @@ export default function Profissionais() {
           </form>
         </Modal>
       </PermissionGuard>
+<<<<<<< HEAD
       {showLoginModal && <MockLoginScreen onClose={() => setShowLoginModal(false)} />}
       <ErrorModal
         isOpen={isErrorOpen}
         message={errorMsg}
         onClose={() => setIsErrorOpen(false)}
       />
+=======
+
+      {showLoginModal && <MockLoginScreen onClose={() => setShowLoginModal(false)} />}
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
     </Container>
   );
 }
