@@ -10,6 +10,8 @@ import Pagination from '@/components/ui/pagination';
 import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
+import ErrorModal from '@/components/modals/errorModal';
+import { getApiErrorMessage } from '@/utils/apiError';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import { usePermissions } from '@/components/ui/hooks/usePermissions';
 import AccessDenied from '@/components/ui/AccessDenied';
@@ -116,6 +118,8 @@ export default function Finance() {
   const [showExportConfirmModal, setShowExportConfirmModal] = useState(false);
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [lancForm, setLancForm] = useState<LancamentoForm>(LANCAMENTO_INITIAL);
+  const [errorMsg,    setErrorMsg]    = useState('');
+  const [isErrorOpen, setIsErrorOpen] = useState(false);
 
   const { errors: lancErrors, validate: lancValidate, clearError: lancClearError, clearAll: lancClearAll } =
     useSequentialValidation<LancamentoField>(LANCAMENTO_VALIDATION_FIELDS);
@@ -124,15 +128,20 @@ export default function Finance() {
 
   const canCreate = isSuperAdmin || can('financeiro.create');
 
+  function showError(err: unknown, context: string) {
+    setErrorMsg(getApiErrorMessage(err, context));
+    setIsErrorOpen(true);
+  }
+
   useEffect(() => {
     listarLancamentos(0, 200)
       .then(r => setLancamentos(r.content.map(mapLancamento)))
-      .catch(console.error)
+      .catch(err => showError(err, 'carregar lançamentos'))
       .finally(() => setLoading(false));
 
     listarPacientes(undefined, 0, 500)
       .then(r => setPacientes(r.content))
-      .catch(console.error);
+      .catch(err => showError(err, 'carregar pacientes'));
   }, []);
 
   const pacienteOptions = pacientes.map(p => ({ value: String(p.id), label: p.nome }));
@@ -184,7 +193,7 @@ export default function Finance() {
       lancClearAll();
       setShowSuccessModal(true);
     } catch (err) {
-      alert((err as Error).message);
+      showError(err, 'salvar lançamento');
     }
   }
 
@@ -195,7 +204,7 @@ export default function Finance() {
       const updated = await registrarPagamento(item.id, forma);
       setLancamentos(prev => prev.map(l => l.id === item.id ? mapLancamento(updated) : l));
     } catch (err) {
-      alert((err as Error).message);
+      showError(err, 'registrar pagamento');
     }
   }
 
@@ -205,7 +214,7 @@ export default function Finance() {
       const updated = await cancelarLancamento(id);
       setLancamentos(prev => prev.map(l => l.id === id ? mapLancamento(updated) : l));
     } catch (err) {
-      alert((err as Error).message);
+      showError(err, 'cancelar lançamento');
     }
   }
 
@@ -223,7 +232,7 @@ export default function Finance() {
       a.href = url; a.download = 'relatorio-financeiro.pdf'; a.click();
       URL.revokeObjectURL(url);
       setShowExportSuccessModal(true);
-    } catch (err) { console.error('[Exportar PDF]', err); alert('Erro ao exportar o PDF. Tente novamente.'); } finally { setExporting(false); }
+    } catch (err) { showError(err, 'exportar PDF'); } finally { setExporting(false); }
   };
 
   const statusColor = (status: string): { bg: string; color: string } => {
@@ -351,6 +360,7 @@ export default function Finance() {
       <SucessModal isOpen={showSuccessModal} title="Sucesso!" message="Lançamento registrado com sucesso!" onClose={() => setShowSuccessModal(false)} buttonText="Continuar" />
       <ConfirmModal isOpen={showExportConfirmModal} title="Exportar PDF?" message="Deseja exportar o relatório financeiro em PDF?" confirmText="Exportar" cancelText="Cancelar" onConfirm={handleConfirmExport} onCancel={() => setShowExportConfirmModal(false)} />
       <SucessModal isOpen={showExportSuccessModal} title="PDF exportado!" message="Relatório financeiro exportado com sucesso!" onClose={() => setShowExportSuccessModal(false)} buttonText="Continuar" />
+      <ErrorModal isOpen={isErrorOpen} message={errorMsg} onClose={() => setIsErrorOpen(false)} />
     </Container>
   );
 }

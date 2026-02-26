@@ -10,6 +10,8 @@ import Pagination from '@/components/ui/pagination';
 import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
+import ErrorModal from '@/components/modals/errorModal';
+import { getApiErrorMessage } from '@/utils/apiError';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import { usePermissions } from '@/components/ui/hooks/usePermissions';
 import AccessDenied from '@/components/ui/AccessDenied';
@@ -65,21 +67,26 @@ function mapAssinatura(a: AssinaturaResponse): TermoItem {
 
 // ─── Form types ───────────────────────────────────────────────────────────────
 
-type TermoField = 'pacienteId' | 'termoId' | 'assinatura';
+type TermoField = 'pacienteId' | 'termoId' | 'cpf' | 'nascimento' | 'dataProcedimento' | 'profissional' | 'email';
 
 interface TermoForm {
-  pacienteId: string;
-  termoId:    string;
-  assinatura: string;
+  pacienteId:       string;
+  termoId:          string;
+  cpf:              string;
+  nascimento:       string;
+  dataProcedimento: string;
+  profissional:     string;
+  email:            string;
 }
 
 const FORM_INITIAL: TermoForm = {
-  pacienteId: '', termoId: '', assinatura: '',
+  pacienteId: '', termoId: '', cpf: '', nascimento: '',
+  dataProcedimento: '', profissional: '', email: '',
 };
 
 const VALIDATION_FIELDS = [
-  { key: 'pacienteId' as TermoField, validate: (v: string) => !v ? 'Selecione o paciente' : null },
-  { key: 'termoId'    as TermoField, validate: (v: string) => !v ? 'Selecione o termo'     : null },
+  { key: 'pacienteId' as TermoField, validate: (v: string) => !v ? 'Selecione o paciente'     : null },
+  { key: 'termoId'    as TermoField, validate: (v: string) => !v ? 'Selecione o procedimento' : null },
 ];
 
 const filterStatus = ['Todos', 'Assinado'];
@@ -94,7 +101,11 @@ const ITEMS_PER_PAGE   = 10;
 const TABLE_MIN_HEIGHT = 540;
 
 function isFormDirty(form: TermoForm): boolean {
-  return form.pacienteId !== '' || form.termoId !== '' || form.assinatura.trim() !== '';
+  return (
+    form.pacienteId !== '' || form.termoId !== '' || form.cpf.trim() !== '' ||
+    form.nascimento !== '' || form.dataProcedimento !== '' ||
+    form.profissional.trim() !== '' || form.email.trim() !== ''
+  );
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -120,6 +131,8 @@ export default function Consentimento() {
   const [showCancelModal,  setShowCancelModal]  = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [errorMsg,         setErrorMsg]         = useState('');
+  const [isErrorOpen,      setIsErrorOpen]      = useState(false);
 
   const { errors, validate, clearError, clearAll } =
     useSequentialValidation<TermoField>(VALIDATION_FIELDS);
@@ -127,14 +140,14 @@ export default function Consentimento() {
   useEffect(() => {
     listarAssinaturas()
       .then(list => setAssinaturas(list.map(mapAssinatura)))
-      .catch(console.error)
+      .catch(err => showError(err, 'carregar assinaturas'))
       .finally(() => setLoading(false));
     listarTermos(true)
       .then(setTermos)
-      .catch(console.error);
+      .catch(err => showError(err, 'carregar termos'));
     listarPacientes(undefined, 0, 500)
       .then(r => setPacientes(r.content))
-      .catch(console.error);
+      .catch(err => showError(err, 'carregar pacientes'));
   }, []);
 
   if (!isSuperAdmin && !can('consentimento.read')) return <AccessDenied />;
@@ -157,13 +170,18 @@ export default function Consentimento() {
   const pendentes:   number = 0;
   const expirados:   number = 0;
 
+  function showError(err: unknown, context: string) {
+    setErrorMsg(getApiErrorMessage(err, context));
+    setIsErrorOpen(true);
+  }
+
   function handleSearchChange(value: string) { setSearch(value); setCurrentPage(1); }
   function handleFilterStatChange(value: string) { setFilterStat(value); setCurrentPage(1); setOpenDropStat(false); }
   function handleChange(field: TermoField, value: string) { setForm(prev => ({ ...prev, [field]: value })); clearError(field); }
   function handleCancelClick() { isFormDirty(form) ? setShowCancelModal(true) : forceClose(); }
   function forceClose() { setForm(FORM_INITIAL); clearAll(); setIsNovoOpen(false); setShowCancelModal(false); setShowConfirmModal(false); }
   function handleSaveNovoClick() {
-    const isValid = validate({ pacienteId: form.pacienteId, termoId: form.termoId, assinatura: form.assinatura });
+    const isValid = validate({ pacienteId: form.pacienteId, termoId: form.termoId, cpf: form.cpf, nascimento: form.nascimento, dataProcedimento: form.dataProcedimento, profissional: form.profissional, email: form.email });
     if (!isValid) return;
     setShowConfirmModal(true);
   }
@@ -172,13 +190,12 @@ export default function Consentimento() {
     const payload = {
       pacienteId: Number(form.pacienteId),
       termoId:    Number(form.termoId),
-      assinatura: form.assinatura.trim() || 'digital',
     };
     try {
       const result = await assinarTermo(payload);
       setAssinaturas(prev => [mapAssinatura(result), ...prev]);
       setIsNovoOpen(false); setForm(FORM_INITIAL); clearAll(); setShowSuccessModal(true);
-    } catch (err) { alert((err as Error).message); }
+    } catch (err) { showError(err, 'gerar termo de consentimento'); }
   }
 
   const handleBaixarPDF = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -195,7 +212,7 @@ export default function Consentimento() {
       const link = document.createElement('a');
       link.href = objectUrl; link.download = `consentimento-${name}.pdf`; link.style.display = 'none';
       document.body.appendChild(link); link.click(); document.body.removeChild(link);
-    } catch (err) { console.error('Erro:', err); alert('Não foi possível gerar o PDF. Tente novamente.'); }
+    } catch (err) { showError(err, 'gerar PDF do consentimento'); }
     finally { setExporting(false); if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl!), 1000); }
   };
 
@@ -283,7 +300,7 @@ export default function Consentimento() {
       </div>
 
       {/* ── Novo Termo modal ───────────────────────────────────────────────── */}
-      <Modal isOpen={isNovoOpen} onClose={handleCancelClick} closeOnOverlayClick={false} title="Novo Termo de Consentimento" size="md" footer={<><Button variant="outline" onClick={handleCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveNovoClick}>Gerar Termo</Button></>}>
+      <Modal isOpen={isNovoOpen} onClose={handleCancelClick} closeOnOverlayClick={false} title="Novo Termo de Consentimento" size="lg" footer={<><Button variant="outline" onClick={handleCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveNovoClick}>Gerar Termo</Button></>}>
         <FormGrid>
           <div style={{ gridColumn: 'span 2' }}>
             <Select
@@ -295,24 +312,22 @@ export default function Consentimento() {
               error={errors.pacienteId}
             />
           </div>
+          <Input label="CPF" placeholder="000.000.000-00" value={form.cpf} onChange={e => handleChange('cpf', e.target.value)} />
+          <Input label="Data de Nascimento" type="date" value={form.nascimento} onChange={e => handleChange('nascimento', e.target.value)} />
           <div style={{ gridColumn: 'span 2' }}>
             <Select
-              label="Termo de Consentimento *"
+              label="Procedimento *"
               options={termos.map(t => ({ value: String(t.id), label: `${t.titulo} (${t.versao})` }))}
-              placeholder={termos.length === 0 ? 'Carregando termos...' : 'Selecione o termo...'}
+              placeholder={termos.length === 0 ? 'Carregando procedimentos...' : 'Selecione o procedimento...'}
               value={form.termoId}
               onChange={v => handleChange('termoId', v)}
               error={errors.termoId}
             />
           </div>
+          <Input label="Data do Procedimento" type="date" value={form.dataProcedimento} onChange={e => handleChange('dataProcedimento', e.target.value)} />
+          <Input label="Profissional Responsável" placeholder="Nome do profissional" value={form.profissional} onChange={e => handleChange('profissional', e.target.value)} />
           <div style={{ gridColumn: 'span 2' }}>
-            <Input
-              label="Identificação da Assinatura"
-              placeholder="Nome ou identificador digital do assinante (opcional)..."
-              value={form.assinatura}
-              onChange={e => handleChange('assinatura', e.target.value)}
-              maxLength={200}
-            />
+            <Input label="E-mail" type="email" placeholder="email@exemplo.com" value={form.email} onChange={e => handleChange('email', e.target.value)} />
           </div>
         </FormGrid>
       </Modal>
@@ -384,6 +399,12 @@ export default function Consentimento() {
       <CancelModal isOpen={showCancelModal} title="Deseja cancelar?" message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas." onConfirm={forceClose} onCancel={() => setShowCancelModal(false)} />
       <ConfirmModal isOpen={showConfirmModal} title="Gerar termo?" message={`Tem certeza que deseja gerar o termo de consentimento para ${selectedPaciente?.nome ?? 'este paciente'}?`} confirmText="Confirmar" cancelText="Voltar" onConfirm={handleConfirmSave} onCancel={() => setShowConfirmModal(false)} />
       <SucessModal isOpen={showSuccessModal} title="Sucesso!" message="Termo de consentimento gerado com sucesso!" onClose={() => setShowSuccessModal(false)} buttonText="Continuar" />
+
+      <ErrorModal
+        isOpen={isErrorOpen}
+        message={errorMsg}
+        onClose={() => setIsErrorOpen(false)}
+      />
     </Container>
   );
 }

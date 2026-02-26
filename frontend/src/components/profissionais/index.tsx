@@ -34,6 +34,8 @@ import {
   UserSwitcherBar, UserSwitcherInfo, UserSwitcherName, UserSwitcherBadge, UserSwitcherBtn,
 } from './styles';
 import { validateEmail, validatePassword, ERROR_MESSAGES } from './validation';
+import ErrorModal from '@/components/modals/errorModal';
+import { getApiErrorMessage } from '@/utils/apiError';
 
 type AreaType = 'tecnica' | 'administrativa' | '';
 type CargoTecnico = 'esteticista' | 'biomedico' | 'enfermeiro' | 'dermatologista' | 'fisioterapeuta';
@@ -283,6 +285,8 @@ export default function Profissionais() {
 
   const [profissionais,        setProfissionais]        = useState<Profissional[]>([]);
   const [loading,              setLoading]              = useState(true);
+  const [errorMsg,             setErrorMsg]             = useState('');
+  const [isErrorOpen,          setIsErrorOpen]          = useState(false);
   const [search,               setSearch]               = useState('');
   const [filterStat,           setFilterStat]           = useState('Todos');
   const [filterArea,           setFilterArea]           = useState('Todos');
@@ -336,10 +340,15 @@ export default function Profissionais() {
     }},
   ]);
 
+  function showError(err: unknown, context: string) {
+    setErrorMsg(getApiErrorMessage(err, context));
+    setIsErrorOpen(true);
+  }
+
   useEffect(() => {
     listarUsuarios()
       .then(list => setProfissionais(list.map(mapUsuario)))
-      .catch(console.error)
+      .catch(err => showError(err, 'carregar profissionais'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -459,7 +468,7 @@ export default function Profissionais() {
       }
       handleClose();
     } catch (err) {
-      alert((err as Error).message);
+      showError(err, 'salvar profissional');
     }
   }
 
@@ -469,7 +478,7 @@ export default function Profissionais() {
       await inativarUsuario(p.id);
       setProfissionais(prev => prev.map(x => x.id === p.id ? { ...x, status: 'inativo' } : x));
     } catch (err) {
-      alert((err as Error).message);
+      showError(err, 'inativar profissional');
     }
   }
 
@@ -984,6 +993,11 @@ export default function Profissionais() {
         </Modal>
       </PermissionGuard>
       {showLoginModal && <MockLoginScreen onClose={() => setShowLoginModal(false)} />}
+      <ErrorModal
+        isOpen={isErrorOpen}
+        message={errorMsg}
+        onClose={() => setIsErrorOpen(false)}
+      />
     </Container>
   );
 }

@@ -8,6 +8,8 @@ import Select from '@/components/ui/select';
 import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
+import ErrorModal from '@/components/modals/errorModal';
+import { getApiErrorMessage } from '@/utils/apiError';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import { usePermissions } from '@/components/ui/hooks/usePermissions';
 import AccessDenied from '@/components/ui/AccessDenied';
@@ -123,22 +125,29 @@ export default function Agenda() {
   const [showConfirmModal,  setShowConfirmModal]  = useState(false);
   const [showSuccessModal,  setShowSuccessModal]  = useState(false);
   const [successMessage,    setSuccessMessage]    = useState('');
+  const [errorMsg,          setErrorMsg]          = useState('');
+  const [isErrorOpen,       setIsErrorOpen]       = useState(false);
 
   const { errors, validate, clearError, clearAll } =
     useSequentialValidation<AgendamentoField>(VALIDATION_FIELDS);
 
+  function showError(err: unknown, context: string) {
+    setErrorMsg(getApiErrorMessage(err, context));
+    setIsErrorOpen(true);
+  }
+
   useEffect(() => {
     listarAgendamentos(0, 200)
       .then(r => setEvents(r.content.map(mapAgendamento)))
-      .catch(console.error);
+      .catch(err => showError(err, 'carregar agendamentos'));
 
     listarPacientes(undefined, 0, 500)
       .then(r => setPacientes(r.content))
-      .catch(console.error);
+      .catch(err => showError(err, 'carregar pacientes'));
 
     listarUsuarios()
       .then(users => setProfissionais(users.filter(u => u.areaProfissional === 'TECNICA')))
-      .catch(console.error);
+      .catch(err => showError(err, 'carregar profissionais'));
   }, []);
 
   if (!isSuperAdmin && !can('agenda.read') && !can('agenda.read_own')) return <AccessDenied />;
@@ -209,7 +218,7 @@ export default function Agenda() {
       setSuccessMessage('Agendamento salvo com sucesso!');
       setShowSuccessModal(true);
     } catch (err) {
-      alert((err as Error).message);
+      showError(err, 'salvar agendamento');
     }
   }
 
@@ -336,6 +345,7 @@ export default function Agenda() {
         onCancel={() => setShowConfirmModal(false)}
       />
       <SucessModal isOpen={showSuccessModal} title="Sucesso!" message={successMessage} onClose={handleSuccessClose} buttonText="Continuar" />
+      <ErrorModal isOpen={isErrorOpen} message={errorMsg} onClose={() => setIsErrorOpen(false)} />
     </Container>
   );
 }

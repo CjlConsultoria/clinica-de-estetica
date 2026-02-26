@@ -9,6 +9,7 @@ import React, {
 } from 'react';
 import { CurrentUser, Role, MOCK_USERS as PERMISSION_USERS } from '@/types/auth';
 import { loginApi, AuthApiResponse } from '@/services/authApi';
+import { getApiErrorMessage } from '@/utils/apiError';
 
 // ─── Mapeamento Backend → Frontend ──────────────────────────────────────────
 
@@ -121,9 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return { success: true };
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Erro ao conectar com o servidor.';
-      return { success: false, error: message };
+      return { success: false, error: getApiErrorMessage(err, 'login') };
     }
   }, []);
 

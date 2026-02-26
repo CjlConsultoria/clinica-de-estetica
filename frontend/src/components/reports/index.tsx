@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import Button from '@/components/ui/button';
 import StatCard from '@/components/ui/statcard';
+import ErrorModal from '@/components/modals/errorModal';
+import { getApiErrorMessage } from '@/utils/apiError';
 import {
   Container, Header, Title, StatsGrid,
   ReportsGrid, ReportCard, ReportIcon, ReportInfo, ReportTitle, ReportDesc, ReportAction,
@@ -46,6 +48,13 @@ export default function Reports() {
   const [period,       setPeriod]       = useState('Este mês');
   const [openDropdown, setOpenDropdown] = useState(false);
   const [exporting,    setExporting]    = useState(false);
+  const [errorMsg,     setErrorMsg]     = useState('');
+  const [isErrorOpen,  setIsErrorOpen]  = useState(false);
+
+  function showError(err: unknown, context: string) {
+    setErrorMsg(getApiErrorMessage(err, context));
+    setIsErrorOpen(true);
+  }
 
   let cumulative = 0;
   const pieGradient = pieData.map(d => {
@@ -95,8 +104,7 @@ export default function Reports() {
       link.click();
       document.body.removeChild(link);
     } catch (err) {
-      console.error('Erro ao exportar:', err);
-      alert('Não foi possível gerar o relatório. Tente novamente.');
+      showError(err, 'exportar relatório PDF');
     } finally {
       setExporting(false);
       if (objectUrl) {
@@ -274,6 +282,11 @@ export default function Reports() {
           </TableWrapper>
         </div>
       </div>
+      <ErrorModal
+        isOpen={isErrorOpen}
+        message={errorMsg}
+        onClose={() => setIsErrorOpen(false)}
+      />
     </Container>
   );
 }

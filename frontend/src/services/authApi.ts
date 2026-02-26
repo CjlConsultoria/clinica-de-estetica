@@ -1,3 +1,5 @@
+import { ApiError } from './api';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
 export interface LoginPayload {
@@ -27,7 +29,7 @@ export async function loginApi(payload: LoginPayload): Promise<AuthApiResponse> 
     const body = await res.json().catch(() => ({}));
     const message: string =
       body?.mensagem ?? body?.message ?? 'E-mail ou senha incorretos.';
-    throw new Error(message);
+    throw new ApiError(res.status, message);
   }
 
   return res.json() as Promise<AuthApiResponse>;

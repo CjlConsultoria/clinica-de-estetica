@@ -3,6 +3,8 @@ com\clinica\api\dto\response\ProcedimentoResponse$ProcedimentoResponseBuilder.cl
 com\clinica\api\dto\response\ProcedimentoResponse.class
 com\clinica\api\entity\Procedimento$ProcedimentoBuilder.class
 com\clinica\api\dto\request\ProcedimentoRequest.class
+com\clinica\api\exception\ExceptionMessages.class
 com\clinica\api\repository\ProcedimentoRepository.class
 com\clinica\api\service\ProcedimentoService.class
+com\clinica\api\exception\ConflictException.class
 com\clinica\api\controller\ProcedimentoController.class

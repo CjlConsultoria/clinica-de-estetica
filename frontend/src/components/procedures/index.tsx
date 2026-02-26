@@ -9,6 +9,8 @@ import StatCard from '@/components/ui/statcard';
 import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
+import ErrorModal from '@/components/modals/errorModal';
+import { getApiErrorMessage } from '@/utils/apiError';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import {
   listarProcedimentos, criarProcedimento, atualizarProcedimento,
@@ -157,14 +159,21 @@ export default function Procedures() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage,   setSuccessMessage]   = useState('');
+  const [errorMsg,         setErrorMsg]         = useState('');
+  const [isErrorOpen,      setIsErrorOpen]      = useState(false);
 
   const { errors, validate, clearError, clearAll } =
     useSequentialValidation<ProcedimentoField>(VALIDATION_FIELDS);
 
+  function showError(err: unknown, context: string) {
+    setErrorMsg(getApiErrorMessage(err, context));
+    setIsErrorOpen(true);
+  }
+
   useEffect(() => {
     listarProcedimentos()
       .then(list => setProcedures(list.map(mapProcedimento)))
-      .catch(console.error)
+      .catch(err => showError(err, 'carregar procedimentos'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -281,7 +290,7 @@ export default function Procedures() {
       setIsModalOpen(false);
       setShowSuccessModal(true);
     } catch (err) {
-      alert((err as Error).message);
+      showError(err, 'salvar procedimento');
     }
   }
 
@@ -295,7 +304,7 @@ export default function Procedures() {
         setProcedures(prev => prev.map(p => p.id === proc.id ? { ...p, status: 'ativo' } : p));
       }
     } catch (err) {
-      alert((err as Error).message);
+      showError(err, 'alterar status do procedimento');
     }
   }
 
@@ -673,6 +682,11 @@ export default function Procedures() {
         message={successMessage}
         onClose={handleSuccessClose}
         buttonText="Continuar"
+      />
+      <ErrorModal
+        isOpen={isErrorOpen}
+        message={errorMsg}
+        onClose={() => setIsErrorOpen(false)}
       />
     </Container>
   );

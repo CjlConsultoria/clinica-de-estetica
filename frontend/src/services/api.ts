@@ -13,6 +13,17 @@ export interface PageResponse<T> {
   size: number;
 }
 
+export class ApiError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly mensagem: string,
+    public readonly erros?: Record<string, string>
+  ) {
+    super(mensagem);
+    this.name = 'ApiError';
+  }
+}
+
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
   const isFormData = options.body instanceof FormData;
@@ -32,12 +43,13 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
       localStorage.removeItem('clinica_user');
       window.location.href = '/login';
     }
-    throw new Error('Sessão expirada. Faça login novamente.');
+    throw new ApiError(401, 'Sessão expirada. Faça login novamente.');
   }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body?.mensagem ?? body?.message ?? `Erro ${res.status}`);
+    const mensagem = body?.mensagem ?? body?.message ?? `Erro ${res.status}`;
+    throw new ApiError(res.status, mensagem, body?.erros);
   }
 
   if (res.status === 204) return undefined as T;

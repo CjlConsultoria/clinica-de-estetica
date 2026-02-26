@@ -1,0 +1,15 @@
+# Variáveis de ambiente com segredos reais (nunca comitar!)
+.env
+
+# Dependências
+node_modules/
+
+# Build do backend
+backend/target/
+
+# Build do frontend
+frontend/.next/
+frontend/out/
+
+# Upload de arquivos (fotos dos pacientes)
+backend/uploads/

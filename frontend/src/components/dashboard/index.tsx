@@ -7,6 +7,8 @@ import { usePermissions } from '@/components/ui/hooks/usePermissions';
 import { useCurrentUser } from '@/components/ui/hooks/useCurrentUser';
 import { obterDashboard, DashboardResponse } from '@/services/dashboardApi';
 import { listarAgendamentos, AgendamentoResponse } from '@/services/agendamentosApi';
+import ErrorModal from '@/components/modals/errorModal';
+import { getApiErrorMessage } from '@/utils/apiError';
 import {
   Container, DashHeader, DashTitle, DateText,
   ContentGrid, BigCard, CardHeader, CardTitle, CardBody,
@@ -50,14 +52,21 @@ export default function Dashboard() {
 
   const [stats,        setStats]        = useState<DashboardResponse | null>(null);
   const [agendamentos, setAgendamentos] = useState<AgendamentoResponse[]>([]);
+  const [errorMsg,     setErrorMsg]     = useState('');
+  const [isErrorOpen,  setIsErrorOpen]  = useState(false);
+
+  function showError(err: unknown, context: string) {
+    setErrorMsg(getApiErrorMessage(err, context));
+    setIsErrorOpen(true);
+  }
 
   useEffect(() => {
-    obterDashboard().then(setStats).catch(console.error);
+    obterDashboard().then(setStats).catch(err => showError(err, 'carregar dados do dashboard'));
     listarAgendamentos(0, 50).then(r => {
       const today = new Date().toDateString();
       const todayAppts = r.content.filter(a => new Date(a.dataHora).toDateString() === today);
       setAgendamentos(todayAppts);
-    }).catch(console.error);
+    }).catch(err => showError(err, 'carregar agendamentos'));
   }, []);
 
   const today = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
@@ -248,6 +257,11 @@ export default function Dashboard() {
           </CardBody>
         </BigCard>
       </ContentGrid>
+      <ErrorModal
+        isOpen={isErrorOpen}
+        message={errorMsg}
+        onClose={() => setIsErrorOpen(false)}
+      />
     </Container>
   );
 }

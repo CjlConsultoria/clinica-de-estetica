@@ -1,6 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { listarPacientes, criarPaciente, atualizarPaciente, PacienteResponse, PacienteRequest } from '@/services/pacientesApi';
+import { listarMedicos } from '@/services/usuariosApi';
+import { listarProntuariosPorPaciente, criarProntuario, ProntuarioResponse } from '@/services/prontuariosApi';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -10,6 +13,8 @@ import Pagination from '@/components/ui/pagination';
 import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
+import ErrorModal from '@/components/modals/errorModal';
+import { getApiErrorMessage } from '@/utils/apiError';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import {
   Container, Header, Title, Controls,
@@ -77,11 +82,6 @@ const procedureOptions = [
   { value: 'Outro',                label: 'Outro'                },
 ];
 
-const professionalOptions = [
-  { value: 'Maria Oliveira', label: 'Maria Oliveira' },
-  { value: 'Clara Andrade',  label: 'Clara Andrade'  },
-  { value: 'Beatriz Santos', label: 'Beatriz Santos' },
-];
 
 type HistoryItem = {
   id: number; date: string; procedure: string; units: string;
@@ -90,78 +90,12 @@ type HistoryItem = {
 
 type Patient = {
   id: number; name: string; phone: string; email: string;
-  birthdate: string; since: string; status: string;
+  cpf: string; birthdate: string; since: string; status: string;
   totalSpent: number; totalSessions: number;
   lastVisit: string; nextVisit: string | null;
   observations: string; history: HistoryItem[];
 };
 
-const INITIAL_PATIENTS: Patient[] = [
-  {
-    id: 1, name: 'Ana Beatriz Costa', phone: '(11) 99872-3141', email: 'ana@email.com',
-    birthdate: '1990-03-14', since: 'Mar 2023', status: 'ativo',
-    totalSpent: 8400, totalSessions: 12, lastVisit: '18/02/2025', nextVisit: '18/05/2025',
-    observations: 'Paciente VIP. Alergia a lidocaína em pomada. Prefere horários matinais.',
-    history: [
-      { id: 1, date: '18/02/2025', procedure: 'Botox Facial',         units: '40U',      value: 980,  professional: 'Maria Oliveira', lote: 'BTX-2025-003', status: 'realizado' },
-      { id: 2, date: '18/11/2024', procedure: 'Botox Facial',         units: '40U',      value: 980,  professional: 'Maria Oliveira', lote: 'BTX-2024-087', status: 'realizado' },
-      { id: 3, date: '15/08/2024', procedure: 'Preenchimento Labial', units: '1ml',      value: 1200, professional: 'Clara Andrade',  lote: 'PRE-2024-042', status: 'realizado' },
-      { id: 4, date: '10/05/2024', procedure: 'Bioestimulador',       units: '1 frasco', value: 1800, professional: 'Maria Oliveira', lote: 'BIO-2024-011', status: 'realizado' },
-      { id: 5, date: '20/02/2024', procedure: 'Botox Facial',         units: '40U',      value: 980,  professional: 'Maria Oliveira', lote: 'BTX-2024-015', status: 'realizado' },
-    ],
-  },
-  {
-    id: 2, name: 'Carla Mendonça', phone: '(11) 97654-2211', email: 'carla@email.com',
-    birthdate: '1985-07-22', since: 'Jun 2023', status: 'ativo',
-    totalSpent: 4500, totalSessions: 6, lastVisit: '15/02/2025', nextVisit: '15/05/2025',
-    observations: 'Tende a apresentar hematomas. Usar técnica retrógrada.',
-    history: [
-      { id: 1, date: '15/02/2025', procedure: 'Preenchimento Labial', units: '1ml', value: 1200, professional: 'Maria Oliveira', lote: 'PRE-2025-007', status: 'realizado' },
-      { id: 2, date: '20/09/2024', procedure: 'Botox Facial',         units: '30U', value: 750,  professional: 'Beatriz Santos', lote: 'BTX-2024-062', status: 'realizado' },
-      { id: 3, date: '10/04/2024', procedure: 'Preenchimento Labial', units: '1ml', value: 1200, professional: 'Maria Oliveira', lote: 'PRE-2024-029', status: 'realizado' },
-    ],
-  },
-  {
-    id: 3, name: 'Fernanda Lima', phone: '(11) 98877-5544', email: 'fernanda@email.com',
-    birthdate: '1992-11-08', since: 'Jan 2024', status: 'ativo',
-    totalSpent: 3600, totalSessions: 4, lastVisit: '10/02/2025', nextVisit: null,
-    observations: '',
-    history: [
-      { id: 1, date: '10/02/2025', procedure: 'Bioestimulador', units: '1 frasco', value: 1800, professional: 'Clara Andrade', lote: 'BIO-2025-003', status: 'realizado' },
-      { id: 2, date: '10/08/2024', procedure: 'Bioestimulador', units: '1 frasco', value: 1800, professional: 'Clara Andrade', lote: 'BIO-2024-049', status: 'realizado' },
-    ],
-  },
-  {
-    id: 4, name: 'Marina Souza', phone: '(21) 99123-7788', email: 'marina@email.com',
-    birthdate: '1988-04-30', since: 'Set 2022', status: 'ativo',
-    totalSpent: 12800, totalSessions: 18, lastVisit: '05/01/2025', nextVisit: '05/04/2025',
-    observations: 'Paciente antiga. Protocolo personalizado de manutenção trimestral.',
-    history: [
-      { id: 1, date: '05/01/2025', procedure: 'Fio de PDO',           units: '10 fios', value: 2500, professional: 'Beatriz Santos', lote: 'FIO-2025-001', status: 'realizado' },
-      { id: 2, date: '05/10/2024', procedure: 'Botox Facial',         units: '50U',     value: 1200, professional: 'Maria Oliveira', lote: 'BTX-2024-081', status: 'realizado' },
-      { id: 3, date: '05/07/2024', procedure: 'Preenchimento Labial', units: '2ml',     value: 2400, professional: 'Clara Andrade',  lote: 'PRE-2024-055', status: 'realizado' },
-    ],
-  },
-  {
-    id: 5, name: 'Juliana Rocha', phone: '(11) 91234-5678', email: 'juliana@email.com',
-    birthdate: '1995-09-15', since: 'Nov 2024', status: 'ativo',
-    totalSpent: 980, totalSessions: 1, lastVisit: '10/01/2025', nextVisit: '10/04/2025',
-    observations: 'Primeira sessão. Orientada sobre protocolo inicial.',
-    history: [
-      { id: 1, date: '10/01/2025', procedure: 'Toxina Botulínica', units: '20U', value: 980, professional: 'Maria Oliveira', lote: 'BTX-2025-001', status: 'realizado' },
-    ],
-  },
-  {
-    id: 6, name: 'Patrícia Alves', phone: '(11) 97788-1122', email: 'patricia@email.com',
-    birthdate: '1978-12-01', since: 'Dez 2022', status: 'inativo',
-    totalSpent: 5600, totalSessions: 7, lastVisit: '20/12/2024', nextVisit: null,
-    observations: 'Última sessão foi de microagulhamento. Sem retorno agendado.',
-    history: [
-      { id: 1, date: '20/12/2024', procedure: 'Microagulhamento', units: '1 sessão', value: 800, professional: 'Beatriz Santos', lote: 'MIC-2024-019', status: 'realizado' },
-      { id: 2, date: '20/09/2024', procedure: 'Microagulhamento', units: '1 sessão', value: 800, professional: 'Beatriz Santos', lote: 'MIC-2024-010', status: 'realizado' },
-    ],
-  },
-];
 
 const procedureColors: Record<string, string> = {
   'Botox Facial':         '#BBA188',
@@ -225,8 +159,48 @@ function isAtendimentoFormDirty(form: AtendimentoForm): boolean {
     form.professional.trim() !== '' || form.lote.trim() !== '';
 }
 
+type ObsExtra = { units?: string; value?: string; lote?: string; nextVisit?: string; notes?: string; serviceDate?: string };
+
+function mapProntuarioToHistoryItem(p: ProntuarioResponse): HistoryItem {
+  let extra: ObsExtra = {};
+  try { extra = JSON.parse(p.observacoes ?? '{}'); } catch { /* ignore */ }
+  return {
+    id: p.id,
+    date: extra.serviceDate ? formatDate(extra.serviceDate) : formatDate(p.criadoEm.slice(0, 10)),
+    procedure: p.anamnese,
+    units: extra.units ?? '1',
+    value: Number(extra.value ?? 0),
+    professional: p.medicoNome,
+    lote: extra.lote ?? '—',
+    status: 'concluído',
+  };
+}
+
+function mapPacienteToPatient(p: PacienteResponse, history: HistoryItem[]): Patient {
+  const totalSpent = history.reduce((s, h) => s + h.value, 0);
+  const sorted = [...history].sort((a, b) => b.date.localeCompare(a.date));
+  return {
+    id: p.id,
+    name: p.nome,
+    cpf: p.cpf ?? '',
+    phone: p.telefone ?? p.celular ?? '',
+    email: p.email ?? '',
+    birthdate: p.dataNascimento ?? '',
+    since: new Date(p.criadoEm).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }),
+    status: p.ativo ? 'ativo' : 'inativo',
+    totalSpent,
+    totalSessions: history.length,
+    lastVisit: sorted[0]?.date ?? '—',
+    nextVisit: null,
+    observations: p.observacoes ?? '',
+    history,
+  };
+}
+
 export default function HistoricoPaciente() {
-  const [patients,     setPatients]     = useState<Patient[]>(INITIAL_PATIENTS);
+  const [patients,     setPatients]     = useState<Patient[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [professionalOptions, setProfessionalOptions] = useState<{ value: string; label: string }[]>([]);
   const [search,       setSearch]       = useState('');
   const [filter,       setFilter]       = useState('Todos');
   const [openDropdown, setOpenDropdown] = useState(false);
@@ -251,6 +225,8 @@ export default function HistoricoPaciente() {
   const [showConfirmEditModal, setShowConfirmEditModal] = useState(false);
   const [showSuccessModal,     setShowSuccessModal]     = useState(false);
   const [successMessage,       setSuccessMessage]       = useState('');
+  const [errorMsg,             setErrorMsg]             = useState('');
+  const [isErrorOpen,          setIsErrorOpen]          = useState(false);
 
   const {
     errors: pacienteErrors, validate: validatePaciente,
@@ -261,6 +237,31 @@ export default function HistoricoPaciente() {
     errors: atendErrors, validate: validateAtend,
     clearError: clearAtendError, clearAll: clearAtendAll,
   } = useSequentialValidation<AtendimentoField>(ATENDIMENTO_VALIDATION);
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      try {
+        const [pacientesPage, medicos] = await Promise.all([
+          listarPacientes(undefined, 0, 200),
+          listarMedicos(),
+        ]);
+        setProfessionalOptions(medicos.map(u => ({ value: String(u.id), label: u.nome })));
+        const pacientes = pacientesPage.content;
+        const historicos = await Promise.all(
+          pacientes.map(p =>
+            listarProntuariosPorPaciente(p.id)
+              .then(r => r.content.map(mapProntuarioToHistoryItem))
+              .catch(() => [] as HistoryItem[])
+          )
+        );
+        setPatients(pacientes.map((p, i) => mapPacienteToPatient(p, historicos[i])));
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
 
   const filtered = patients.filter(p => {
     const matchSearch =
@@ -284,6 +285,11 @@ export default function HistoricoPaciente() {
   const ativos         = patients.filter(p => p.status === 'ativo').length;
   const totalSessoes   = patients.reduce((a, p) => a + p.totalSessions, 0);
   const totalReceita   = patients.reduce((a, p) => a + p.totalSpent, 0);
+
+  function showError(err: unknown, context: string) {
+    setErrorMsg(getApiErrorMessage(err, context));
+    setIsErrorOpen(true);
+  }
 
   function handleSearchChange(v: string) { setSearch(v);  setCurrentPage(1); }
   function handleFilterChange(v: string) { setFilter(v);  setCurrentPage(1); setOpenDropdown(false); }
@@ -329,23 +335,23 @@ export default function HistoricoPaciente() {
     setShowConfirmNewModal(true);
   }
 
-  function handleConfirmNew() {
-    const newPatient: Patient = {
-      id:            Date.now(),
-      name:          form.nome,
-      phone:         form.telefone,
-      email:         form.email,
-      birthdate:     form.nascimento,
-      since:         new Date().toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }),
-      status:        'ativo',
-      totalSpent:    0,
-      totalSessions: 0,
-      lastVisit:     '—',
-      nextVisit:     null,
-      observations:  form.observacoes,
-      history:       [],
-    };
-    setPatients(prev => [newPatient, ...prev]);
+  async function handleConfirmNew() {
+    try {
+      const req: PacienteRequest = {
+        nome: form.nome,
+        cpf: form.cpf,
+        dataNascimento: form.nascimento || undefined,
+        telefone: form.telefone || undefined,
+        email: form.email || undefined,
+        observacoes: form.observacoes || undefined,
+      };
+      const created = await criarPaciente(req);
+      const newPatient = mapPacienteToPatient(created, []);
+      setPatients(prev => [newPatient, ...prev]);
+    } catch (err) {
+      showError(err, 'cadastrar paciente');
+      return;
+    }
     setShowConfirmNewModal(false);
     setIsNewOpen(false);
     setSuccessMessage('Paciente cadastrado com sucesso!');
@@ -376,7 +382,7 @@ export default function HistoricoPaciente() {
   }
 
   function openEdit(p: Patient) {
-    setEditForm({ nome: p.name, cpf: '', nascimento: toInputDate(p.birthdate), telefone: p.phone, email: p.email, observacoes: p.observations });
+    setEditForm({ nome: p.name, cpf: p.cpf ?? '', nascimento: toInputDate(p.birthdate), telefone: p.phone, email: p.email, observacoes: p.observations });
     setEditErrors({});
     setIsDetailOpen(false);
     setIsEditOpen(true);
@@ -397,17 +403,24 @@ export default function HistoricoPaciente() {
     setShowConfirmEditModal(true);
   }
 
-  function handleConfirmEdit() {
+  async function handleConfirmEdit() {
     if (!selected) return;
-    const updated: Patient = {
-      ...selected,
-      name:         editForm.nome,
-      phone:        editForm.telefone,
-      email:        editForm.email,
-      birthdate:    editForm.nascimento,
-      observations: editForm.observacoes,
-    };
-    syncSelected(updated);
+    try {
+      const req: PacienteRequest = {
+        nome: editForm.nome,
+        cpf: editForm.cpf,
+        dataNascimento: editForm.nascimento || undefined,
+        telefone: editForm.telefone || undefined,
+        email: editForm.email || undefined,
+        observacoes: editForm.observacoes || undefined,
+      };
+      const updated = await atualizarPaciente(selected.id, req);
+      const updatedPatient = mapPacienteToPatient(updated, selected.history);
+      syncSelected(updatedPatient);
+    } catch (err) {
+      showError(err, 'salvar alterações do paciente');
+      return;
+    }
     setShowConfirmEditModal(false);
     setIsEditOpen(false);
     setSuccessMessage('Alterações salvas com sucesso!');
@@ -450,37 +463,47 @@ export default function HistoricoPaciente() {
     setShowConfirmAtend(true);
   }
 
-  function handleConfirmAtend() {
+  async function handleConfirmAtend() {
     if (!selected) return;
 
+    const medicoId = Number(atendimentoForm.professional);
     const valor = parseMoeda(atendimentoForm.value);
+    const extraJson = JSON.stringify({
+      units: atendimentoForm.units,
+      value: valor,
+      lote: atendimentoForm.lote,
+      nextVisit: atendimentoForm.nextVisit || '',
+      notes: atendimentoForm.observacoes,
+      serviceDate: atendimentoForm.date,
+    });
 
-    const newItem: HistoryItem = {
-      id:           Date.now(),
-      date:         formatDate(atendimentoForm.date),
-      procedure:    atendimentoForm.procedure,
-      units:        atendimentoForm.units,
-      value:        valor,
-      professional: atendimentoForm.professional,
-      lote:         atendimentoForm.lote,
-      status:       'realizado',
-    };
+    try {
+      const prontuario = await criarProntuario({
+        pacienteId: selected.id,
+        medicoId,
+        anamnese: atendimentoForm.procedure,
+        observacoes: extraJson,
+      });
+      const newItem = mapProntuarioToHistoryItem(prontuario);
+      const nextVisit = atendimentoForm.nextVisit
+        ? formatDate(atendimentoForm.nextVisit)
+        : selected.nextVisit;
+      const newHistory = [newItem, ...selected.history];
+      const updated: Patient = {
+        ...selected,
+        history:       newHistory,
+        totalSessions: newHistory.length,
+        totalSpent:    newHistory.reduce((s, h) => s + h.value, 0),
+        lastVisit:     newItem.date,
+        nextVisit,
+        status:        'ativo',
+      };
+      syncSelected(updated);
+    } catch (err) {
+      showError(err, 'registrar atendimento');
+      return;
+    }
 
-    const nextVisit = atendimentoForm.nextVisit
-      ? formatDate(atendimentoForm.nextVisit)
-      : selected.nextVisit;
-
-    const updated: Patient = {
-      ...selected,
-      history:       [newItem, ...selected.history],
-      totalSessions: selected.totalSessions + 1,
-      totalSpent:    selected.totalSpent + valor,
-      lastVisit:     formatDate(atendimentoForm.date),
-      nextVisit,
-      status:        'ativo',
-    };
-
-    syncSelected(updated);
     setShowConfirmAtend(false);
     setIsAtendimentoOpen(false);
     clearAtendAll();
@@ -515,8 +538,7 @@ export default function HistoricoPaciente() {
       link.click();
       document.body.removeChild(link);
     } catch (err) {
-      console.error('Erro ao exportar ficha:', err);
-      alert('Não foi possível gerar a ficha. Tente novamente.');
+      showError(err, 'exportar ficha do paciente');
     } finally {
       setExporting(false);
       if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl!), 1000);
@@ -608,7 +630,11 @@ export default function HistoricoPaciente() {
 
       <CardsContainer>
         <CardsWrapper>
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div style={{ padding: '3rem', textAlign: 'center', color: '#aaa', fontSize: '0.95rem' }}>
+              Carregando pacientes...
+            </div>
+          ) : filtered.length === 0 ? (
             <EmptyState>
               <h3>Nenhum paciente encontrado</h3>
               <p>Tente ajustar os filtros ou a busca.</p>
@@ -1064,6 +1090,12 @@ export default function HistoricoPaciente() {
         message={successMessage}
         onClose={handleSuccessClose}
         buttonText="Continuar"
+      />
+
+      <ErrorModal
+        isOpen={isErrorOpen}
+        message={errorMsg}
+        onClose={() => setIsErrorOpen(false)}
       />
     </Container>
   );

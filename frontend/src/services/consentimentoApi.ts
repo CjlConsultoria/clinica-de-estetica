@@ -31,7 +31,7 @@ export interface TermoRequest {
 export interface AssinarTermoRequest {
   pacienteId: number;
   termoId: number;
-  assinatura: string;
+  assinatura?: string;
 }
 
 export const listarTermos = (apenasAtivos = true) =>

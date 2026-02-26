@@ -10,6 +10,8 @@ import Pagination from '@/components/ui/pagination';
 import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
+import ErrorModal from '@/components/modals/errorModal';
+import { getApiErrorMessage } from '@/utils/apiError';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import { usePermissions } from '@/components/ui/hooks/usePermissions';
 import AccessDenied from '@/components/ui/AccessDenied';
@@ -181,15 +183,22 @@ export default function Estoque() {
   const [showMovCancelModal,   setShowMovCancelModal]   = useState(false);
   const [showMovConfirmModal,  setShowMovConfirmModal]  = useState(false);
   const [showMovSuccessModal,  setShowMovSuccessModal]  = useState(false);
+  const [errorMsg,             setErrorMsg]             = useState('');
+  const [isErrorOpen,          setIsErrorOpen]          = useState(false);
   const [itemForm, setItemForm] = useState<ItemForm>(ITEM_INITIAL);
   const { errors: itemErrors, validate: itemValidate, clearError: itemClearError, clearAll: itemClearAll } = useSequentialValidation<ItemField>(ITEM_VALIDATION_FIELDS);
   const [movForm, setMovForm] = useState<MovForm>(MOV_INITIAL);
   const { errors: movErrors, validate: movValidate, clearError: movClearError, clearAll: movClearAll } = useSequentialValidation<MovField>(MOV_VALIDATION_FIELDS);
 
+  function showError(err: unknown, context: string) {
+    setErrorMsg(getApiErrorMessage(err, context));
+    setIsErrorOpen(true);
+  }
+
   useEffect(() => {
     listarProdutos()
       .then(list => setEstoque(list.map(mapProduto)))
-      .catch(console.error)
+      .catch(err => showError(err, 'carregar estoque'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -252,7 +261,7 @@ export default function Estoque() {
         setEstoque(prev => [mapProduto(created), ...prev]);
       }
       setIsModalOpen(false); setItemForm(ITEM_INITIAL); itemClearAll(); setSelected(null); setShowItemSuccessModal(true);
-    } catch (err) { alert((err as Error).message); }
+    } catch (err) { showError(err, selected ? 'atualizar item do estoque' : 'criar item no estoque'); }
   }
 
   function handleMovChange(field: MovField, value: string) {
@@ -460,6 +469,7 @@ export default function Estoque() {
       <CancelModal isOpen={showMovCancelModal} title="Deseja cancelar?" message="Você preencheu alguns campos. Se continuar, a movimentação será descartada." onConfirm={forceCloseMovModal} onCancel={() => setShowMovCancelModal(false)} />
       <ConfirmModal isOpen={showMovConfirmModal} title="Confirmar movimentação?" message={`Deseja registrar a movimentação de "${selected?.name ?? 'item'}"?`} confirmText="Confirmar" cancelText="Voltar" onConfirm={handleConfirmSaveMov} onCancel={() => setShowMovConfirmModal(false)} />
       <SucessModal isOpen={showMovSuccessModal} title="Sucesso!" message="Movimentação registrada com sucesso!" onClose={() => setShowMovSuccessModal(false)} buttonText="Continuar" />
+      <ErrorModal isOpen={isErrorOpen} message={errorMsg} onClose={() => setIsErrorOpen(false)} />
     </Container>
   );
 }

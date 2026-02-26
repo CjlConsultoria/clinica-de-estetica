@@ -7,6 +7,8 @@ import Pagination from '@/components/ui/pagination';
 import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
+import ErrorModal from '@/components/modals/errorModal';
+import { getApiErrorMessage } from '@/utils/apiError';
 import { usePermissions } from '@/components/ui/hooks/usePermissions';
 import { useCurrentUser } from '@/components/ui/hooks/useCurrentUser';
 import AccessDenied from '@/components/ui/AccessDenied';
@@ -113,6 +115,8 @@ export default function Comissoes() {
   const [showCancelModal,  setShowCancelModal]  = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [errorMsg,         setErrorMsg]         = useState('');
+  const [isErrorOpen,      setIsErrorOpen]      = useState(false);
 
   const hasAccess = isSuperAdmin || can('comissoes.read') || can('comissoes.read_own');
   if (!hasAccess) return <AccessDenied />;
@@ -120,10 +124,15 @@ export default function Comissoes() {
   const isOwnOnly = !isSuperAdmin && can('comissoes.read_own') && !can('comissoes.read');
   const ownName   = currentUser?.name ?? '';
 
+  function showError(err: unknown, context: string) {
+    setErrorMsg(getApiErrorMessage(err, context));
+    setIsErrorOpen(true);
+  }
+
   useEffect(() => {
     listarComissoes()
       .then(list => setComissoes(list.map(mapComissao)))
-      .catch(console.error)
+      .catch(err => showError(err, 'carregar comissões'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -169,7 +178,7 @@ export default function Comissoes() {
       const a    = document.createElement('a');
       a.href = objectUrl; a.download = 'relatorio-comissoes.pdf'; a.click();
       setShowSuccessModal(true);
-    } catch (err) { console.error('Erro ao exportar:', err); alert('Não foi possível gerar o relatório. Tente novamente.'); }
+    } catch (err) { showError(err, 'exportar relatório de comissões'); }
     finally { setExporting(false); if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl!), 1000); }
   };
 
@@ -179,7 +188,7 @@ export default function Comissoes() {
       await pagarComissao(id);
       setComissoes(prev => prev.map(c => c.id === id ? { ...c, status: 'PAGO' } : c));
     } catch (err) {
-      alert((err as Error).message);
+      showError(err, 'pagar comissão');
     }
   }
 
@@ -307,6 +316,7 @@ export default function Comissoes() {
       <CancelModal isOpen={showCancelModal} title="Cancelar exportação?" message="Tem certeza que deseja cancelar a exportação do relatório?" onConfirm={handleCancelExport} onCancel={() => setShowCancelModal(false)} />
       <ConfirmModal isOpen={showConfirmModal} title="Exportar relatório?" message={`Deseja exportar o relatório de comissões${filterProf !== 'Todos' ? ` de ${filterProf}` : ''}?`} confirmText="Exportar" cancelText="Cancelar" onConfirm={handleConfirmExport} onCancel={() => setShowConfirmModal(false)} />
       <SucessModal isOpen={showSuccessModal} title="Sucesso!" message="Relatório de comissões exportado com sucesso!" onClose={handleSuccessClose} buttonText="Continuar" />
+      <ErrorModal isOpen={isErrorOpen} message={errorMsg} onClose={() => setIsErrorOpen(false)} />
     </Container>
   );
 }

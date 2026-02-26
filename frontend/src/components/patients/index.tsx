@@ -10,6 +10,8 @@ import Pagination from '@/components/ui/pagination';
 import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
+import ErrorModal from '@/components/modals/errorModal';
+import { getApiErrorMessage } from '@/utils/apiError';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import {
   Container, Header, Title, StatsGrid, Controls,
@@ -159,14 +161,21 @@ export default function Patients() {
   const [showCancelModal,  setShowCancelModal]  = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [errorMsg,         setErrorMsg]         = useState('');
+  const [isErrorOpen,      setIsErrorOpen]      = useState(false);
 
   const { errors, validate, clearError, clearAll } = useSequentialValidation<PacienteField>(VALIDATION_FIELDS);
+
+  function showError(err: unknown, context: string) {
+    setErrorMsg(getApiErrorMessage(err, context));
+    setIsErrorOpen(true);
+  }
 
   const fetchPatients = () => {
     setLoading(true);
     listarPacientes()
       .then(r => setPatients(r.content.map(mapPaciente)))
-      .catch(console.error)
+      .catch(err => showError(err, 'carregar pacientes'))
       .finally(() => setLoading(false));
   };
 
@@ -288,7 +297,7 @@ export default function Patients() {
       setIsModalOpen(false);
       setShowSuccessModal(true);
     } catch (err) {
-      alert((err as Error).message);
+      showError(err, 'salvar paciente');
     }
   }
 
@@ -662,6 +671,11 @@ export default function Patients() {
         message={isEditing ? 'Alterações salvas com sucesso!' : 'Paciente cadastrado com sucesso!'}
         onClose={handleSuccessClose}
         buttonText="Continuar"
+      />
+      <ErrorModal
+        isOpen={isErrorOpen}
+        message={errorMsg}
+        onClose={() => setIsErrorOpen(false)}
       />
     </Container>
   );
