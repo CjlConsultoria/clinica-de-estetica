@@ -113,12 +113,9 @@ function calcAge(dateStr: string): string {
 
 function isFormDirty(form: PacienteForm): boolean {
   return (
-    form.nome.trim() !== '' ||
-    form.email.trim() !== '' ||
-    form.telefone.trim() !== '' ||
-    form.nascimento !== '' ||
-    form.cpf.trim() !== '' ||
-    form.indicacao.trim() !== '' ||
+    form.nome.trim() !== '' || form.email.trim() !== '' ||
+    form.telefone.trim() !== '' || form.nascimento !== '' ||
+    form.cpf.trim() !== '' || form.indicacao.trim() !== '' ||
     form.observacoes.trim() !== ''
   );
 }
@@ -135,7 +132,6 @@ export default function Patients() {
   const [isEditing,       setIsEditing]       = useState(false);
   const [form,            setForm]            = useState<PacienteForm>(FORM_INITIAL);
   const [currentPage,     setCurrentPage]     = useState(1);
-
   const [showCancelModal,  setShowCancelModal]  = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -177,62 +173,30 @@ export default function Patients() {
   }
 
   function openNew() {
-    setIsEditing(false);
-    setSelectedPatient(null);
-    setForm(FORM_INITIAL);
-    clearAll();
-    setIsModalOpen(true);
+    setIsEditing(false); setSelectedPatient(null);
+    setForm(FORM_INITIAL); clearAll(); setIsModalOpen(true);
   }
 
   function openEdit(p: Patient) {
-    setIsEditing(true);
-    setSelectedPatient(p);
-    setForm({
-      nome:        p.name,
-      email:       p.email,
-      telefone:    p.phone,
-      nascimento:  toInputDate(p.birthdate),
-      cpf:         p.cpf,
-      status:      p.status,
-      indicacao:   p.indicacao,
-      observacoes: p.observacoes,
-    });
-    clearAll();
-    setIsDetailOpen(false);
-    setIsModalOpen(true);
+    setIsEditing(true); setSelectedPatient(p);
+    setForm({ nome: p.name, email: p.email, telefone: p.phone, nascimento: toInputDate(p.birthdate), cpf: p.cpf, status: p.status, indicacao: p.indicacao, observacoes: p.observacoes });
+    clearAll(); setIsDetailOpen(false); setIsModalOpen(true);
   }
 
-  function openDetail(p: Patient) {
-    setSelectedPatient(p);
-    setIsDetailOpen(true);
-  }
+  function openDetail(p: Patient) { setSelectedPatient(p); setIsDetailOpen(true); }
 
   function handleCancelClick() {
-    if (isFormDirty(form)) {
-      setShowCancelModal(true);
-    } else {
-      forceClose();
-    }
+    if (isFormDirty(form)) { setShowCancelModal(true); } else { forceClose(); }
   }
 
   function forceClose() {
-    setForm(FORM_INITIAL);
-    clearAll();
-    setIsModalOpen(false);
-    setSelectedPatient(null);
-    setIsEditing(false);
-    setShowCancelModal(false);
-    setShowConfirmModal(false);
+    setForm(FORM_INITIAL); clearAll(); setIsModalOpen(false);
+    setSelectedPatient(null); setIsEditing(false);
+    setShowCancelModal(false); setShowConfirmModal(false);
   }
 
   function handleSaveClick() {
-    const isValid = validate({
-      nome:       form.nome,
-      email:      form.email,
-      telefone:   form.telefone,
-      nascimento: form.nascimento,
-      cpf:        form.cpf,
-    });
+    const isValid = validate({ nome: form.nome, email: form.email, telefone: form.telefone, nascimento: form.nascimento, cpf: form.cpf });
     if (!isValid) return;
     setShowConfirmModal(true);
   }
@@ -246,21 +210,14 @@ export default function Patients() {
       ));
     } else {
       const today = new Date().toLocaleDateString('pt-BR');
-      setPatients(prev => [...prev, {
-        id: Date.now(), name: form.nome, email: form.email, phone: form.telefone,
-        birthdate: form.nascimento, cpf: form.cpf, lastVisit: today, procedure: '—',
-        status: 'ativo', visits: 0, indicacao: form.indicacao, observacoes: form.observacoes,
-      }]);
+      setPatients(prev => [...prev, { id: Date.now(), name: form.nome, email: form.email, phone: form.telefone, birthdate: form.nascimento, cpf: form.cpf, lastVisit: today, procedure: '—', status: 'ativo', visits: 0, indicacao: form.indicacao, observacoes: form.observacoes }]);
     }
-    setIsModalOpen(false);
-    setShowSuccessModal(true);
+    setIsModalOpen(false); setShowSuccessModal(true);
   }
+
   function handleSuccessClose() {
-    setShowSuccessModal(false);
-    setForm(FORM_INITIAL);
-    clearAll();
-    setSelectedPatient(null);
-    setIsEditing(false);
+    setShowSuccessModal(false); setForm(FORM_INITIAL);
+    clearAll(); setSelectedPatient(null); setIsEditing(false);
   }
 
   return (
@@ -408,21 +365,13 @@ export default function Patients() {
         />
       </div>
 
-      <Modal
-        isOpen={isDetailOpen}
-        onClose={() => setIsDetailOpen(false)}
-        closeOnOverlayClick={false}
-        title="Ficha do Paciente"
-        size="lg"
+      <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} closeOnOverlayClick={false} title="Ficha do Paciente" size="lg"
         footer={
           <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'space-between' }}>
-            <Button
-              variant="outline"
+            <Button variant="outline"
               icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
               onClick={() => selectedPatient && openEdit(selectedPatient)}
-            >
-              Editar Ficha
-            </Button>
+            >Editar Ficha</Button>
             <Button variant="outline" onClick={() => setIsDetailOpen(false)}>Fechar</Button>
           </div>
         }
@@ -431,7 +380,7 @@ export default function Patients() {
           <DetailModal>
             <DetailHeader>
               <DetailAvatar $color="#BBA188">{getInitials(selectedPatient.name)}</DetailAvatar>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <DetailName>{selectedPatient.name}</DetailName>
                 <DetailMeta>
                   <DetailMetaItem>
@@ -445,208 +394,74 @@ export default function Patients() {
                 </DetailMeta>
                 <StatsRow style={{ marginTop: 10 }}>
                   <StatPill $color="#BBA188">{selectedPatient.visits} visitas</StatPill>
-                  <StatPill $color={selectedPatient.status === 'ativo' ? '#8a7560' : '#888'}>
-                    {selectedPatient.status === 'ativo' ? 'Ativo' : 'Inativo'}
-                  </StatPill>
+                  <StatPill $color={selectedPatient.status === 'ativo' ? '#8a7560' : '#888'}>{selectedPatient.status === 'ativo' ? 'Ativo' : 'Inativo'}</StatPill>
                   <StatPill $color="#a8906f">{selectedPatient.procedure}</StatPill>
                 </StatsRow>
               </div>
             </DetailHeader>
 
             {selectedPatient.observacoes && (
-              <ObsBox>
-                <strong>⚠ Observações / Alergias: </strong>{selectedPatient.observacoes}
-              </ObsBox>
+              <ObsBox><strong>⚠ Observações / Alergias: </strong>{selectedPatient.observacoes}</ObsBox>
             )}
 
             <DetailSection>
               <DetailSectionTitle>Dados do Paciente</DetailSectionTitle>
               <InfoGrid>
-                <InfoItem>
-                  <InfoLabel>Data de Nascimento</InfoLabel>
-                  <InfoValue>{formatDate(selectedPatient.birthdate)}</InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>Idade</InfoLabel>
-                  <InfoValue>{calcAge(selectedPatient.birthdate)}</InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>CPF</InfoLabel>
-                  <InfoValue>
-                    <code style={{ fontSize: '0.83rem', color: '#888', background: '#f5f5f5', padding: '3px 8px', borderRadius: 5 }}>
-                      {selectedPatient.cpf}
-                    </code>
-                  </InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>Como nos conheceu</InfoLabel>
-                  <InfoValue>{selectedPatient.indicacao || '—'}</InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>Último Procedimento</InfoLabel>
-                  <InfoValue>{selectedPatient.procedure}</InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>Última Visita</InfoLabel>
-                  <InfoValue>{selectedPatient.lastVisit}</InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>Total de Visitas</InfoLabel>
-                  <InfoValue style={{ fontWeight: 700, color: '#1a1a1a', fontSize: '1.1rem' }}>
-                    {selectedPatient.visits}
-                  </InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>Status</InfoLabel>
-                  <InfoValue>
-                    <Badge $bg={statusColors[selectedPatient.status].bg} $color={statusColors[selectedPatient.status].color}>
-                      {selectedPatient.status === 'ativo' ? 'Ativo' : 'Inativo'}
-                    </Badge>
-                  </InfoValue>
-                </InfoItem>
+                <InfoItem><InfoLabel>Data de Nascimento</InfoLabel><InfoValue>{formatDate(selectedPatient.birthdate)}</InfoValue></InfoItem>
+                <InfoItem><InfoLabel>Idade</InfoLabel><InfoValue>{calcAge(selectedPatient.birthdate)}</InfoValue></InfoItem>
+                <InfoItem><InfoLabel>CPF</InfoLabel><InfoValue><code style={{ fontSize: '0.83rem', color: '#888', background: '#f5f5f5', padding: '3px 8px', borderRadius: 5 }}>{selectedPatient.cpf}</code></InfoValue></InfoItem>
+                <InfoItem><InfoLabel>Como nos conheceu</InfoLabel><InfoValue>{selectedPatient.indicacao || '—'}</InfoValue></InfoItem>
+                <InfoItem><InfoLabel>Último Procedimento</InfoLabel><InfoValue>{selectedPatient.procedure}</InfoValue></InfoItem>
+                <InfoItem><InfoLabel>Última Visita</InfoLabel><InfoValue>{selectedPatient.lastVisit}</InfoValue></InfoItem>
+                <InfoItem><InfoLabel>Total de Visitas</InfoLabel><InfoValue style={{ fontWeight: 700, color: '#1a1a1a', fontSize: '1.1rem' }}>{selectedPatient.visits}</InfoValue></InfoItem>
+                <InfoItem><InfoLabel>Status</InfoLabel><InfoValue><Badge $bg={statusColors[selectedPatient.status].bg} $color={statusColors[selectedPatient.status].color}>{selectedPatient.status === 'ativo' ? 'Ativo' : 'Inativo'}</Badge></InfoValue></InfoItem>
               </InfoGrid>
             </DetailSection>
           </DetailModal>
         )}
       </Modal>
 
-      <Modal
-        isOpen={isModalOpen}
-        onClose={handleCancelClick}
-        closeOnOverlayClick={false}
-        title={isEditing ? 'Editar Paciente' : 'Novo Paciente'}
-        size="lg"
+      <Modal isOpen={isModalOpen} onClose={handleCancelClick} closeOnOverlayClick={false} title={isEditing ? 'Editar Paciente' : 'Novo Paciente'} size="lg"
         footer={
           <WizardNav>
             <Button variant="outline" onClick={handleCancelClick}>Cancelar</Button>
-            <Button variant="primary" onClick={handleSaveClick}>
-              {isEditing ? 'Salvar Alterações' : 'Cadastrar Paciente'}
-            </Button>
+            <Button variant="primary" onClick={handleSaveClick}>{isEditing ? 'Salvar Alterações' : 'Cadastrar Paciente'}</Button>
           </WizardNav>
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24, overflowY: 'auto', maxHeight: '65vh', paddingRight: 4 }}>
-
           <div>
             <SectionLabel style={{ marginBottom: 12 }}>Dados Pessoais</SectionLabel>
             <FormGrid>
               <div style={{ gridColumn: 'span 2' }}>
-                <Input
-                  label="Nome Completo *"
-                  placeholder="Digite o nome completo"
-                  value={form.nome}
-                  onChange={e => handleChange('nome', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))}
-                  maxLength={80}
-                  error={errors.nome}
-                />
+                <Input label="Nome Completo *" placeholder="Digite o nome completo" value={form.nome} onChange={e => handleChange('nome', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))} maxLength={80} error={errors.nome} />
               </div>
-              <Input
-                label="E-mail *"
-                type="email"
-                placeholder="Digite o e-mail"
-                value={form.email}
-                onChange={e => handleChange('email', e.target.value)}
-                error={errors.email}
-              />
-              <Input
-                label="Telefone *"
-                mask="telefone"
-                placeholder="Digite o telefone"
-                value={form.telefone}
-                inputMode="numeric"
-                maxLength={15}
-                onValueChange={v => handleChange('telefone', v)}
-                error={errors.telefone}
-              />
-              <Input
-                label="Data de Nascimento *"
-                type="date"
-                value={form.nascimento}
-                onChange={e => handleDateChange(e.target.value)}
-                error={errors.nascimento}
-              />
-              <Input
-                label="CPF *"
-                mask="cpf"
-                placeholder="Digite o CPF"
-                value={form.cpf}
-                inputMode="numeric"
-                maxLength={14}
-                onValueChange={v => handleChange('cpf', v)}
-                error={errors.cpf}
-              />
+              <Input label="E-mail *" type="email" placeholder="Digite o e-mail" value={form.email} onChange={e => handleChange('email', e.target.value)} error={errors.email} />
+              <Input label="Telefone *" mask="telefone" placeholder="Digite o telefone" value={form.telefone} inputMode="numeric" maxLength={15} onValueChange={v => handleChange('telefone', v)} error={errors.telefone} />
+              <Input label="Data de Nascimento *" type="date" value={form.nascimento} onChange={e => handleDateChange(e.target.value)} error={errors.nascimento} />
+              <Input label="CPF *" mask="cpf" placeholder="Digite o CPF" value={form.cpf} inputMode="numeric" maxLength={14} onValueChange={v => handleChange('cpf', v)} error={errors.cpf} />
             </FormGrid>
           </div>
-
           <div>
             <SectionLabel style={{ marginBottom: 12 }}>Informações Adicionais</SectionLabel>
             <FormGrid>
               {isEditing && (
-                <Select
-                  key={`status-${selectedPatient?.id}`}
-                  label="Status"
-                  options={statusOptions}
-                  placeholder="Selecione o status"
-                  value={form.status}
-                  onChange={v => handleChange('status', v)}
-                />
+                <Select key={`status-${selectedPatient?.id}`} label="Status" options={statusOptions} placeholder="Selecione o status" value={form.status} onChange={v => handleChange('status', v)} />
               )}
               <div style={{ gridColumn: isEditing ? 'auto' : 'span 2' }}>
-                <Input
-                  label="Como nos conheceu?"
-                  placeholder="Ex: Instagram, indicação, Google..."
-                  value={form.indicacao}
-                  onChange={e => handleChange('indicacao', e.target.value)}
-                />
+                <Input label="Como nos conheceu?" placeholder="Ex: Instagram, indicação, Google..." value={form.indicacao} onChange={e => handleChange('indicacao', e.target.value)} />
               </div>
               <div style={{ gridColumn: 'span 2' }}>
-                <Input
-                  label="Observações / Alergias"
-                  placeholder="Digite observações de saúde relevantes ou alergias"
-                  maxLength={300}
-                  value={form.observacoes}
-                  onChange={e => handleChange('observacoes', e.target.value)}
-                />
+                <Input label="Observações / Alergias" placeholder="Digite observações de saúde relevantes ou alergias" maxLength={300} value={form.observacoes} onChange={e => handleChange('observacoes', e.target.value)} />
               </div>
             </FormGrid>
           </div>
-
         </div>
       </Modal>
 
-      <CancelModal
-        isOpen={showCancelModal}
-        title="Deseja cancelar?"
-        message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas."
-        onConfirm={forceClose}
-        onCancel={() => setShowCancelModal(false)}
-      />
-
-      <ConfirmModal
-        isOpen={showConfirmModal}
-        title={isEditing ? 'Salvar alterações?' : 'Cadastrar paciente?'}
-        message={
-          isEditing
-            ? 'Tem certeza que deseja salvar as alterações feitas na ficha deste paciente?'
-            : `Tem certeza que deseja cadastrar ${form.nome || 'este paciente'}?`
-        }
-        confirmText="Confirmar"
-        cancelText="Voltar"
-        onConfirm={handleConfirmSave}
-        onCancel={() => setShowConfirmModal(false)}
-      />
-
-      <SucessModal
-        isOpen={showSuccessModal}
-        title="Sucesso!"
-        message={
-          isEditing
-            ? 'Alterações salvas com sucesso!'
-            : 'Paciente cadastrado com sucesso!'
-        }
-        onClose={handleSuccessClose}
-        buttonText="Continuar"
-      />
+      <CancelModal isOpen={showCancelModal} title="Deseja cancelar?" message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas." onConfirm={forceClose} onCancel={() => setShowCancelModal(false)} />
+      <ConfirmModal isOpen={showConfirmModal} title={isEditing ? 'Salvar alterações?' : 'Cadastrar paciente?'} message={isEditing ? 'Tem certeza que deseja salvar as alterações feitas na ficha deste paciente?' : `Tem certeza que deseja cadastrar ${form.nome || 'este paciente'}?`} confirmText="Confirmar" cancelText="Voltar" onConfirm={handleConfirmSave} onCancel={() => setShowConfirmModal(false)} />
+      <SucessModal isOpen={showSuccessModal} title="Sucesso!" message={isEditing ? 'Alterações salvas com sucesso!' : 'Paciente cadastrado com sucesso!'} onClose={handleSuccessClose} buttonText="Continuar" />
     </Container>
   );
 }

@@ -9,12 +9,15 @@ export const Container = styled.div`
   box-sizing: border-box;
 
   @media (max-width: 1024px) {
-    width: 100%;
-    padding: 24px 20px;
+    padding: 72px 20px 24px;
   }
 
   @media (max-width: 768px) {
-    padding: 20px 16px;
+    padding: 72px 14px 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 68px 12px 20px;
   }
 `;
 
@@ -25,6 +28,35 @@ export const Header = styled.div`
   margin-bottom: 28px;
   flex-wrap: wrap;
   gap: 16px;
+
+  @media (max-width: 768px) {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 20px;
+
+    & > div {
+      width: 100%;
+      display: flex;
+      gap: 10px;
+    }
+
+    & > div > button {
+      flex: 1;
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 480px) {
+    & > div {
+      flex-direction: column;
+    }
+
+    & > div > button {
+      width: 100%;
+    }
+  }
 `;
 
 export const Title = styled.h1`
@@ -33,6 +65,15 @@ export const Title = styled.h1`
   color: #BBA188;
   margin: 0;
   font-weight: 600;
+  order: -1;
+
+  @media (max-width: 768px) {
+    font-size: 1.6rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.4rem;
+  }
 `;
 
 export const StatsGrid = styled.div`
@@ -40,6 +81,18 @@ export const StatsGrid = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 18px;
   margin-bottom: 28px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
 `;
 
 export const ChartSection = styled.div`
@@ -48,6 +101,10 @@ export const ChartSection = styled.div`
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
   margin-bottom: 28px;
+
+  @media (max-width: 480px) {
+    padding: 16px;
+  }
 `;
 
 export const ChartTitle = styled.h3`
@@ -62,7 +119,10 @@ export const BarChart = styled.div`
   display: flex;
   gap: 16px;
   align-items: flex-end;
-  @media (max-width: 600px) { gap: 8px; }
+
+  @media (max-width: 600px) {
+    gap: 8px;
+  }
 `;
 
 export const BarItem = styled.div`
@@ -101,13 +161,24 @@ export const Controls = styled.div`
   margin-bottom: 20px;
   flex-wrap: wrap;
   align-items: center;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
 `;
 
 export const SearchBarWrapper = styled.div`
   position: relative;
   flex: 1;
   max-width: 380px;
-  @media (max-width: 768px) { max-width: 100%; }
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    width: 100%;
+  }
 `;
 
 export const SearchIconWrap = styled.div`
@@ -140,10 +211,18 @@ export const FilterRow = styled.div`
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 export const DropdownWrapper = styled.div`
   position: relative;
+
+  @media (max-width: 768px) {
+    flex: 1;
+  }
 `;
 
 export const DropdownBtn = styled.button`
@@ -162,6 +241,7 @@ export const DropdownBtn = styled.button`
   min-width: 140px;
   justify-content: space-between;
   transition: all 0.2s;
+  width: 100%;
   &:hover { border-color: #BBA188; }
 `;
 
@@ -209,12 +289,14 @@ export const ClearFilterBtn = styled.button`
   font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
   &:hover { background: #e74c3c; color: white; }
 `;
 
 export const TableWrapper = styled.div`
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 `;
 
 export const Table = styled.table`
@@ -321,12 +403,30 @@ export const FormGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  @media (max-width: 560px) { grid-template-columns: 1fr; }
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+
+    & > * {
+      grid-column: 1 !important;
+    }
+  }
 `;
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   Novos componentes — Seção Fatura (view empresa)
-───────────────────────────────────────────────────────────────────────────── */
+export const WizardNav = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+
+  @media (max-width: 480px) {
+    & > button {
+      flex: 1;
+      justify-content: center;
+    }
+  }
+`;
 
 export const FaturaSection = styled.div`
   background: white;
@@ -335,6 +435,22 @@ export const FaturaSection = styled.div`
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
   margin-bottom: 28px;
   border-left: 4px solid #BBA188;
+  overflow: hidden;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+`;
+
+export const FaturaGridInner = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
 `;
 
 export const FaturaCard = styled.div<{ $highlight?: boolean }>`
@@ -344,9 +460,11 @@ export const FaturaCard = styled.div<{ $highlight?: boolean }>`
   padding: 20px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  box-sizing: border-box;
 
   @media (max-width: 768px) {
-    grid-column: span 2;
+    padding: 16px;
   }
 `;
 
@@ -412,4 +530,8 @@ export const FaturaActions = styled.div`
   display: flex;
   gap: 10px;
   margin-top: auto;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
 `;

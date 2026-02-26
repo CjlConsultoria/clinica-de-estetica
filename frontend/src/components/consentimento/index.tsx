@@ -210,7 +210,6 @@ export default function Consentimento() {
     if (el && tRef) setTimeout(() => updateConsentThumb(el, tRef), 50);
   }, [isEditingConsent, consentimentoText]);
 
-  // ── Edit / Save / Cancel do consentimento ───────────────────────────────
   function startConsentEdit() {
     setBackupConsentimento(consentimentoText);
     setIsEditingConsent(true);
@@ -235,7 +234,6 @@ export default function Consentimento() {
     setConsentConfirmModalOpen(false);
     setIsSavingConsent(true);
 
-    /* TODO: chamar API aqui para persistir consentimentoText */
     await new Promise(r => setTimeout(r, 600));
 
     const now = new Date();
@@ -247,7 +245,6 @@ export default function Consentimento() {
     setConsentSucessModalOpen(true);
   }
 
-  // ── Filtros / paginação ─────────────────────────────────────────────────
   const filtered = mockTermos.filter(t => {
     const matchSearch = t.paciente.toLowerCase().includes(search.toLowerCase()) || t.procedimento.toLowerCase().includes(search.toLowerCase());
     const matchStat   = filterStat === 'Todos' || t.status === filterStat.toLowerCase();
@@ -329,9 +326,6 @@ export default function Consentimento() {
         <StatCard label="Expirados"      value={expirados}   color="#95a5a6" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>} />
       </StatsGrid>
 
-      {/* ─────────────────────────────────────────────────────────────────
-          ABAS: Termos de Consentimento | Texto do Consentimento
-      ───────────────────────────────────────────────────────────────── */}
       <ConsentimentoTabsRow>
         <ConsentimentoTabButton
           $active={activeTab === 'termos'}
@@ -347,9 +341,6 @@ export default function Consentimento() {
         </ConsentimentoTabButton>
       </ConsentimentoTabsRow>
 
-      {/* ─────────────────────────────────────────────────────────────────
-          ABA 1: TABELA DE TERMOS
-      ───────────────────────────────────────────────────────────────── */}
       {activeTab === 'termos' && (
         <ConsentimentoCard $activeFirst>
           <Controls style={{ marginBottom: 20 }}>
@@ -406,9 +397,6 @@ export default function Consentimento() {
         </ConsentimentoCard>
       )}
 
-      {/* ─────────────────────────────────────────────────────────────────
-          ABA 2: TEXTO DO CONSENTIMENTO
-      ───────────────────────────────────────────────────────────────── */}
       {activeTab === 'consentimento' && (
         <ConsentimentoCard $activeFirst>
           <ConsentimentoContentArea>
@@ -491,7 +479,6 @@ export default function Consentimento() {
         </ConsentimentoCard>
       )}
 
-      {/* ── Modais da aba de consentimento ──────────────────────────────── */}
       <CancelModal
         isOpen={consentCancelModalOpen}
         title="Cancelar edição?"
@@ -519,7 +506,6 @@ export default function Consentimento() {
         onClose={() => setConsentErrorModalOpen(false)}
       />
 
-      {/* ── Modal: Novo Termo ─────────────────────────────────────────────── */}
       <Modal isOpen={isNovoOpen} onClose={handleCancelClick} closeOnOverlayClick={false} title="Novo Termo de Consentimento" size="md" footer={<><Button variant="outline" onClick={handleCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveNovoClick}>Gerar Termo</Button></>}>
         <FormGrid>
           <div style={{ gridColumn: 'span 2' }}><Input label="Nome do Paciente *" placeholder="Nome completo do paciente..." value={form.paciente} onChange={e => handleChange('paciente', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))} maxLength={80} error={errors.paciente} /></div>
@@ -532,7 +518,6 @@ export default function Consentimento() {
         </FormGrid>
       </Modal>
 
-      {/* ── Modal: Visualizar Termo ──────────────────────────────────────── */}
       <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title="Termo de Consentimento" size="lg"
         footer={
           <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'space-between' }}>
@@ -566,7 +551,6 @@ export default function Consentimento() {
         )}
       </Modal>
 
-      {/* ── Modal: Assinar ───────────────────────────────────────────────── */}
       <Modal isOpen={isSignOpen} onClose={() => setIsSignOpen(false)} title={`Assinatura Digital — ${selectedTermo?.paciente}`} size="md" footer={<><Button variant="outline" onClick={() => setIsSignOpen(false)}>Cancelar</Button><Button variant="primary" onClick={() => setSigned(true)} disabled={signed}>{signed ? '✓ Assinatura Coletada' : 'Confirmar Assinatura'}</Button></>}>
         <div style={{ marginBottom: 20, fontSize: '0.88rem', color: '#666', lineHeight: 1.6 }}>O paciente <strong style={{ color: '#1a1a1a' }}>{selectedTermo?.paciente}</strong> deve assinar abaixo para confirmar o procedimento de <strong style={{ color: '#BBA188' }}>{selectedTermo?.procedimento}</strong>.</div>
         <SignatureBox>
@@ -578,7 +562,6 @@ export default function Consentimento() {
         <div style={{ marginTop: 16, padding: 12, background: '#fdf9f5', borderRadius: 10, border: '1px solid #f0ebe4', fontSize: '0.78rem', color: '#888' }}><strong>Registro automático:</strong> IP, data, hora e dispositivo serão salvos para fins legais (LGPD).</div>
       </Modal>
 
-      {/* ── Modais da tabela ─────────────────────────────────────────────── */}
       <CancelModal isOpen={showCancelModal} title="Deseja cancelar?" message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas." onConfirm={forceClose} onCancel={() => setShowCancelModal(false)} />
       <ConfirmModal isOpen={showConfirmModal} title="Gerar termo?" message={`Tem certeza que deseja gerar o termo de consentimento para ${form.paciente || 'este paciente'}?`} confirmText="Confirmar" cancelText="Voltar" onConfirm={handleConfirmSave} onCancel={() => setShowConfirmModal(false)} />
       <SucessModal isOpen={showSuccessModal} title="Sucesso!" message="Termo de consentimento gerado com sucesso!" onClose={() => setShowSuccessModal(false)} buttonText="Continuar" />

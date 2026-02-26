@@ -15,7 +15,7 @@ import {
   Container, Header, Title, ActionsRow,
   CalendarNav, CalendarTitle, CalendarGrid, DayHeader,
   DayCell, DayNumber, EventChip, EventsWrap,
-  WeekView, TimeSlot, TimeLabel, SlotRow, EventBlock,
+  WeekView, WeekHeader, TimeSlot, TimeLabel, SlotRow, EventBlock,
   ToggleGroup, ToggleBtn, Legend, LegendItem, LegendDot, FormGrid,
 } from './styles';
 
@@ -237,15 +237,15 @@ export default function Agenda() {
         </div>
       ) : (
         <WeekView>
-          <div style={{ display: 'grid', gridTemplateColumns: '60px repeat(7, 1fr)', background: '#BBA188', borderRadius: '14px 14px 0 0', overflow: 'hidden' }}>
+          <WeekHeader>
             <div style={{ padding: '12px 0' }} />
             {weekDays.map((d, i) => (
-              <div key={i} style={{ padding: '12px 8px', textAlign: 'center' }}>
+              <div key={i} style={{ padding: '12px 4px', textAlign: 'center' }}>
                 <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{DAYS[i]}</div>
                 <div style={{ fontSize: '1.1rem', fontWeight: 700, color: d.toDateString() === today.toDateString() ? '#fff' : 'rgba(255,255,255,0.9)', background: d.toDateString() === today.toDateString() ? 'rgba(255,255,255,0.25)' : 'transparent', borderRadius: 8, padding: '2px 0', marginTop: 2 }}>{d.getDate()}</div>
               </div>
             ))}
-          </div>
+          </WeekHeader>
           <div style={{ background: 'white', borderRadius: '0 0 14px 14px', boxShadow: '0 4px 16px rgba(0,0,0,0.07)' }}>
             {HOURS.map((hour, hi) => (
               <SlotRow key={hi}>

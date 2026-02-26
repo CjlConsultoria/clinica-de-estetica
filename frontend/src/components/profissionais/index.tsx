@@ -375,7 +375,6 @@ export default function Profissionais() {
   const [isEditing,            setIsEditing]            = useState(false);
   const [currentPage,          setCurrentPage]          = useState(1);
 
-  // ─── Expõe o array de profissionais na window para o DebugPanel ──────────────
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.__profissionais__ = profissionais.map(p => ({
@@ -493,7 +492,7 @@ export default function Profissionais() {
     if (s === 2) return step2Validation.validate({ area: form.area });
     if (s === 3) return step3Validation.validate({ cargo: form.cargo, registro: form.registro, especialidade: form.especialidade });
     if (s === 4) return step4Validation.validate({ senha: form.senha, confirmarSenha: form.confirmarSenha });
-    return true; // step 5 não tem validação obrigatória
+    return true; 
   }
 
   function nextStep() { if (!validateStep(step)) return; setStep(s => Math.min(s + 1, 5)); }
@@ -538,7 +537,6 @@ export default function Profissionais() {
   }
 
   function handleSave() {
-    // Salvar pode ser chamado do step 4 ou 5
     if (step === 4 && !validateStep(4)) return;
     if (form.senha && form.senha !== form.confirmarSenha) { step4Validation.clearAll(); return; }
     const today = new Date().toLocaleDateString('pt-BR');
@@ -709,8 +707,6 @@ export default function Profissionais() {
         return (
           <StepSection>
             <SectionLabel>Permissões de Acesso</SectionLabel>
-
-            {/* ── Cabeçalho com modo e botão ──────────────────────── */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{
@@ -746,14 +742,12 @@ export default function Profissionais() {
               )}
             </div>
 
-            {/* ── Aviso modo padrão ──────────────────────────────── */}
             {!form.useCustomPermissions && (
               <div style={{ padding: '10px 14px', borderRadius: 10, background: '#fdf9f5', border: '1px solid #f0ebe4', fontSize: '0.78rem', color: '#999', marginBottom: 14 }}>
                 Exibindo permissões padrão do cargo <strong style={{ color: '#8a7560' }}>{cargoConfig?.label}</strong>. Clique em <strong style={{ color: '#BBA188' }}>Personalizar</strong> para ajustar acessos individualmente.
               </div>
             )}
 
-            {/* ── Grade de permissões ─────────────────────────────── */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {PERMISSION_GROUPS.map(group => {
                 const groupHasDefault = group.perms.some(p => defaultPermsForCargo.includes(p));
@@ -811,7 +805,6 @@ export default function Profissionais() {
               })}
             </div>
 
-            {/* ── Resumo de mudanças ──────────────────────────────── */}
             {form.useCustomPermissions && (() => {
               const added   = form.customPermissions.filter(p => !defaultPermsForCargo.includes(p));
               const removed = defaultPermsForCargo.filter(p => !form.customPermissions.includes(p));
@@ -1048,7 +1041,6 @@ export default function Profissionais() {
         <Pagination currentPage={safePage} totalItems={totalFiltered} itemsPerPage={ITEMS_PER_PAGE} onPageChange={setCurrentPage} />
       </div>
 
-      {/* Modal de detalhes */}
       <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} closeOnOverlayClick={false} title="Ficha do Profissional" size="lg"
         footer={
           <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'space-between' }}>
@@ -1149,7 +1141,6 @@ export default function Profissionais() {
         )}
       </Modal>
 
-      {/* Modal de cadastro/edição */}
       <PermissionGuard anyOf={['profissionais.create', 'profissionais.edit']}>
         <Modal isOpen={isModalOpen} onClose={handleClose} closeOnOverlayClick={false}
           title={isEditing ? 'Editar Profissional' : 'Cadastrar Profissional'} size="lg" footer={modalFooter}

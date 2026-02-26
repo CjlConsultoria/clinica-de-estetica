@@ -6,8 +6,19 @@ export const Container = styled.div`
   min-height: 100vh;
   background: #f5f5f5;
   box-sizing: border-box;
-  @media (max-width: 1024px) { padding: 24px 20px; }
-  @media (max-width: 768px)  { padding: 20px 16px; }
+  overflow-x: hidden;
+
+  @media (max-width: 1024px) {
+    padding: 72px 20px 24px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 72px 14px 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 68px 12px 20px;
+  }
 `;
 
 export const Header = styled.div`
@@ -15,8 +26,24 @@ export const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 28px;
-  flex-wrap: wrap;
   gap: 16px;
+
+  @media (max-width: 768px) {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto;
+    column-gap: 12px;
+    row-gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
+
+    & > button {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      width: 100%;
+      justify-content: center;
+    }
+  }
 `;
 
 export const Title = styled.h1`
@@ -25,6 +52,16 @@ export const Title = styled.h1`
   color: #BBA188;
   margin: 0;
   font-weight: 600;
+
+  @media (max-width: 768px) {
+    font-size: 1.6rem;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.4rem;
+  }
 `;
 
 export const AlertBanner = styled.div`
@@ -36,6 +73,13 @@ export const AlertBanner = styled.div`
   border-radius: 12px;
   padding: 14px 18px;
   margin-bottom: 24px;
+
+  @media (max-width: 480px) {
+    padding: 12px 14px;
+    gap: 10px;
+    margin-bottom: 16px;
+    border-radius: 10px;
+  }
 `;
 
 export const AlertBannerIcon = styled.div`
@@ -50,6 +94,10 @@ export const AlertBannerText = styled.p`
   color: #533f03;
   line-height: 1.5;
   strong { font-weight: 700; }
+
+  @media (max-width: 480px) {
+    font-size: 0.82rem;
+  }
 `;
 
 export const StatsGrid = styled.div`
@@ -57,6 +105,18 @@ export const StatsGrid = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 18px;
   margin-bottom: 28px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
 `;
 
 export const Controls = styled.div`
@@ -65,13 +125,24 @@ export const Controls = styled.div`
   margin-bottom: 20px;
   flex-wrap: wrap;
   align-items: center;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
 `;
 
 export const SearchBarWrapper = styled.div`
   position: relative;
   flex: 1;
   max-width: 380px;
-  @media (max-width: 768px) { max-width: 100%; }
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    width: 100%;
+  }
 `;
 
 export const SearchIconWrap = styled.div`
@@ -94,8 +165,18 @@ export const SearchInputStyled = styled.input`
   color: #333;
   transition: all 0.25s;
   box-sizing: border-box;
-  &:focus { outline: none; border-color: #BBA188; box-shadow: 0 0 0 3px rgba(187,161,136,0.15); }
+
+  &:focus {
+    outline: none;
+    border-color: #BBA188;
+    box-shadow: 0 0 0 3px rgba(187,161,136,0.15);
+  }
   &::placeholder { color: #bbb; }
+
+  @media (max-width: 480px) {
+    font-size: 0.85rem;
+    padding: 10px 14px 10px 40px;
+  }
 `;
 
 export const FilterRow = styled.div`
@@ -103,10 +184,18 @@ export const FilterRow = styled.div`
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 export const DropdownWrapper = styled.div`
   position: relative;
+
+  @media (max-width: 768px) {
+    flex: 1;
+  }
 `;
 
 export const DropdownBtn = styled.button`
@@ -124,7 +213,15 @@ export const DropdownBtn = styled.button`
   min-width: 150px;
   justify-content: space-between;
   transition: all 0.2s;
+  width: 100%;
+
   &:hover { border-color: #BBA188; }
+
+  @media (max-width: 480px) {
+    font-size: 0.84rem;
+    padding: 9px 14px;
+    min-width: unset;
+  }
 `;
 
 export const DropdownList = styled.div`
@@ -148,6 +245,7 @@ export const DropdownItem = styled.div<{ $active?: boolean }>`
   font-weight: ${({ $active }) => ($active ? '600' : '400')};
   cursor: pointer;
   border-bottom: 1px solid #f5f5f5;
+
   &:last-child { border-bottom: none; }
   &:hover { background: rgba(187,161,136,0.08); color: #BBA188; }
 `;
@@ -164,18 +262,32 @@ export const ClearFilterBtn = styled.button`
   font-size: 0.84rem;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+
   &:hover { background: #e74c3c; color: white; }
+
+  @media (max-width: 480px) {
+    font-size: 0.78rem;
+    padding: 8px 12px;
+  }
 `;
 
 export const TableWrapper = styled.div`
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 `;
 
 export const Table = styled.table`
   width: 100%;
   min-width: 850px;
   border-collapse: collapse;
+
+  @media (max-width: 768px) {
+    table-layout: auto;
+    min-width: 640px;
+  }
 `;
 
 export const Thead = styled.thead`
@@ -191,6 +303,8 @@ export const Th = styled.th<{ $width?: string }>`
   text-transform: uppercase;
   letter-spacing: 0.4px;
   width: ${({ $width }) => $width || 'auto'};
+  white-space: nowrap;
+  overflow: hidden;
 `;
 
 export const Tbody = styled.tbody``;
@@ -198,6 +312,7 @@ export const Tbody = styled.tbody``;
 export const Tr = styled.tr`
   border-bottom: 1px solid #f5f5f5;
   transition: background 0.15s;
+
   &:hover { background: #fdf9f5; }
   &:last-child { border-bottom: none; }
 `;
@@ -207,6 +322,9 @@ export const Td = styled.td`
   font-size: 0.78rem;
   color: #444;
   vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 export const Badge = styled.span<{ $bg?: string; $color?: string }>`
@@ -238,6 +356,7 @@ export const IconBtn = styled.button`
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
+
   &:hover { background: #BBA188; border-color: #BBA188; color: white; }
 `;
 
@@ -245,7 +364,14 @@ export const FormGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  @media (max-width: 560px) { grid-template-columns: 1fr; }
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+
+    & > * {
+      grid-column: 1 !important;
+    }
+  }
 `;
 
 export const TermoViewer = styled.div`
@@ -260,10 +386,15 @@ export const TermoTitle = styled.h2`
   color: #1a1a1a;
   text-align: center;
   margin: 0 0 8px;
+
+  @media (max-width: 480px) {
+    font-size: 0.95rem;
+  }
 `;
 
 export const TermoSection = styled.div`
   margin-bottom: 20px;
+
   h4 {
     font-size: 0.9rem;
     color: #BBA188;
@@ -273,6 +404,13 @@ export const TermoSection = styled.div`
     padding-bottom: 6px;
   }
   p { margin: 4px 0; font-size: 0.88rem; color: #444; }
+
+  @media (max-width: 480px) {
+    margin-bottom: 16px;
+
+    h4 { font-size: 0.84rem; }
+    p  { font-size: 0.82rem; }
+  }
 `;
 
 export const TermoBody = styled.p`
@@ -281,6 +419,10 @@ export const TermoBody = styled.p`
   line-height: 1.7;
   margin: 0 0 10px;
   text-align: justify;
+
+  @media (max-width: 480px) {
+    font-size: 0.8rem;
+  }
 `;
 
 export const TermoText = styled.p`
@@ -311,12 +453,14 @@ export const SignatureCanvas = styled.div`
   justify-content: center;
   cursor: crosshair;
   transition: all 0.2s;
-  &:hover { border-color: #BBA188; background: #fdf5ef; }
-`;
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   ESTILOS — Abas e Texto do Consentimento
-───────────────────────────────────────────────────────────────────────────── */
+  &:hover { border-color: #BBA188; background: #fdf5ef; }
+
+  @media (max-width: 480px) {
+    height: 110px;
+    border-radius: 10px;
+  }
+`;
 
 export const ConsentimentoTabsRow = styled.div`
   display: flex;
@@ -325,6 +469,10 @@ export const ConsentimentoTabsRow = styled.div`
   position: relative;
   z-index: 2;
   margin-top: 8px;
+
+  @media (max-width: 600px) {
+    margin-top: 4px;
+  }
 `;
 
 export const ConsentimentoTabButton = styled.button<{ $active?: boolean }>`
@@ -342,20 +490,28 @@ export const ConsentimentoTabButton = styled.button<{ $active?: boolean }>`
   z-index: ${({ $active }) => ($active ? 3 : 1)};
   outline: none;
   transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-
   background: ${({ $active }) => ($active ? '#ffffff' : '#e8e3dd')};
   color: ${({ $active }) => ($active ? '#BBA188' : '#a8906f')};
   box-shadow: ${({ $active }) => ($active
     ? '0 -3px 10px rgba(187,161,136,0.15), 2px -2px 6px rgba(0,0,0,0.06)'
     : 'none')};
+
+  @media (max-width: 600px) {
+    font-size: 0.82rem;
+    padding: 11px 18px;
+  }
+
+  @media (max-width: 400px) {
+    font-size: 0.76rem;
+    padding: 10px 14px;
+  }
 `;
 
 export const ConsentimentoCard = styled.div<{ $activeFirst?: boolean }>`
   width: 100%;
   background: #ffffff;
-  border-radius: ${({ $activeFirst }) =>
-    $activeFirst ? '0 16px 16px 16px' : '16px'};
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.09);
+  border-radius: ${({ $activeFirst }) => $activeFirst ? '0 16px 16px 16px' : '16px'};
+  box-shadow: 0 2px 12px rgba(0,0,0,0.09);
   padding: 28px 42px 24px 28px;
   box-sizing: border-box;
   display: flex;
@@ -365,6 +521,18 @@ export const ConsentimentoCard = styled.div<{ $activeFirst?: boolean }>`
   z-index: 1;
   height: 725px;
   margin-bottom: 28px;
+
+  @media (max-width: 768px) {
+    height: auto;
+    padding: 20px 20px 20px 20px;
+    border-radius: ${({ $activeFirst }) => $activeFirst ? '0 12px 12px 12px' : '12px'};
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 16px 14px;
+    border-radius: ${({ $activeFirst }) => $activeFirst ? '0 10px 10px 10px' : '10px'};
+  }
 `;
 
 export const ConsentimentoContentArea = styled.div`
@@ -380,6 +548,14 @@ export const ConsentimentoScrollWrapper = styled.div`
   position: relative;
   display: flex;
   align-items: stretch;
+
+  @media (max-width: 768px) {
+    height: 420px;
+  }
+
+  @media (max-width: 480px) {
+    height: 320px;
+  }
 `;
 
 export const ConsentimentoTextDisplay = styled.div`
@@ -405,6 +581,22 @@ export const ConsentimentoTextDisplay = styled.div`
   &::-webkit-scrollbar { display: none; }
   scrollbar-width: none;
   -ms-overflow-style: none;
+
+  @media (max-width: 768px) {
+    height: 420px;
+    min-height: 420px;
+    max-height: 420px;
+    font-size: 0.88rem;
+  }
+
+  @media (max-width: 480px) {
+    height: 320px;
+    min-height: 320px;
+    max-height: 320px;
+    font-size: 0.82rem;
+    padding: 12px 12px;
+    border-radius: 10px;
+  }
 `;
 
 export const ConsentimentoEditableTextarea = styled.textarea`
@@ -430,13 +622,29 @@ export const ConsentimentoEditableTextarea = styled.textarea`
 
   &:focus {
     border-color: #BBA188;
-    box-shadow: 0 0 0 3px rgba(187, 161, 136, 0.15);
+    box-shadow: 0 0 0 3px rgba(187,161,136,0.15);
     outline: none;
   }
 
   &::-webkit-scrollbar { display: none; }
   scrollbar-width: none;
   -ms-overflow-style: none;
+
+  @media (max-width: 768px) {
+    height: 420px;
+    min-height: 420px;
+    max-height: 420px;
+    font-size: 0.88rem;
+  }
+
+  @media (max-width: 480px) {
+    height: 320px;
+    min-height: 320px;
+    max-height: 320px;
+    font-size: 0.82rem;
+    padding: 12px 12px;
+    border-radius: 10px;
+  }
 `;
 
 export const ConsentimentoCustomScrollbar = styled.div`
@@ -448,6 +656,11 @@ export const ConsentimentoCustomScrollbar = styled.div`
   background: #f0ebe4;
   border-radius: 4px;
   z-index: 10;
+
+  @media (max-width: 768px) {
+    right: -10px;
+    width: 4px;
+  }
 `;
 
 export const ConsentimentoScrollThumb = styled.div`
@@ -472,6 +685,14 @@ export const ConsentimentoEmptyState = styled.div`
   height: 600px;
   gap: 14px;
   color: #bbb;
+
+  @media (max-width: 768px) {
+    height: 420px;
+  }
+
+  @media (max-width: 480px) {
+    height: 320px;
+  }
 `;
 
 export const ConsentimentoEmptyIconWrap = styled.div`
@@ -501,6 +722,18 @@ export const ConsentimentoFooterRow = styled.div`
   margin-top: 20px;
   padding-top: 16px;
   border-top: 1px solid #f0ebe4;
+
+  @media (max-width: 480px) {
+    gap: 10px;
+    margin-top: 14px;
+    padding-top: 12px;
+    flex-wrap: wrap;
+
+    & > button {
+      flex: 1;
+      justify-content: center;
+    }
+  }
 `;
 
 export const ConsentimentoLastUpdateWrap = styled.div`
@@ -508,6 +741,12 @@ export const ConsentimentoLastUpdateWrap = styled.div`
   align-items: center;
   gap: 6px;
   margin-right: auto;
+
+  @media (max-width: 480px) {
+    width: 100%;
+    margin-right: 0;
+    flex-basis: 100%;
+  }
 `;
 
 export const ConsentimentoLastUpdateLabel = styled.span`
@@ -516,6 +755,10 @@ export const ConsentimentoLastUpdateLabel = styled.span`
   font-size: 0.8rem;
   color: #888;
   white-space: nowrap;
+
+  @media (max-width: 480px) {
+    font-size: 0.74rem;
+  }
 `;
 
 export const ConsentimentoLastUpdateDate = styled.span`
@@ -523,4 +766,8 @@ export const ConsentimentoLastUpdateDate = styled.span`
   font-size: 0.8rem;
   color: #aaa;
   white-space: nowrap;
+
+  @media (max-width: 480px) {
+    font-size: 0.74rem;
+  }
 `;

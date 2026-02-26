@@ -3,11 +3,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { MOCK_COMPANIES, CompanyPaymentStatus } from '@/types/auth';
 
-/**
- * Retorna o status de pagamento da empresa do usuário logado.
- * - Super Admin e usuários sem empresa: sempre 'ativo' (não bloqueados).
- * - Usuários de empresa: verifica MOCK_COMPANIES.
- */
 export function usePaymentStatus(): {
   paymentStatus: CompanyPaymentStatus;
   isBlocked: boolean;
@@ -15,7 +10,6 @@ export function usePaymentStatus(): {
 } {
   const { currentUser } = useAuth();
 
-  // Super admin e sem empresa nunca são bloqueados
   if (!currentUser || !currentUser.companyId || currentUser.role === 'super_admin') {
     return { paymentStatus: 'ativo', isBlocked: false, companyName: null };
   }

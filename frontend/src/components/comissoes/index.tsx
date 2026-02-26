@@ -103,12 +103,7 @@ export default function Comissoes() {
 
   const toggle = (name: string) => setOpenDropdown(prev => prev === name ? null : name);
 
-  const handleExportClick   = () => setShowConfirmModal(true);
-  const handleSuccessClose  = () => setShowSuccessModal(false);
-  const handleCancelExport  = () => setShowCancelModal(false);
-
-  const handleConfirmExport = async () => {
-    setShowConfirmModal(false);
+  const handleExportClick  = async () => {
     let objectUrl: string | null = null;
     try {
       setExporting(true);
@@ -118,10 +113,13 @@ export default function Comissoes() {
       objectUrl  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
       a.href = objectUrl; a.download = 'relatorio-comissoes.pdf'; a.click();
-      setShowSuccessModal(true);
     } catch (err) { console.error('Erro ao exportar:', err); alert('Não foi possível gerar o relatório. Tente novamente.'); }
     finally { setExporting(false); if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl!), 1000); }
   };
+
+  const handleSuccessClose  = () => setShowSuccessModal(false);
+  const handleCancelExport  = () => setShowCancelModal(false);
+  const handleConfirmExport = () => setShowConfirmModal(false);
 
   return (
     <Container>

@@ -9,6 +9,8 @@ export const Card = styled.div`
   gap: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.07);
   transition: all 0.3s ease;
+  min-width: 0;         
+  box-sizing: border-box; 
   &:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
 `;
 

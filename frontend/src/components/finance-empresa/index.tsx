@@ -21,8 +21,8 @@ import {
   FilterRow, DropdownWrapper, DropdownBtn, DropdownList, DropdownItem, ClearFilterBtn,
   StatsGrid, TableWrapper, Table, Thead, Th, Tbody, Tr, Td, Badge, ActionGroup, IconBtn,
   FormGrid, TypeBadge, ChartSection, ChartTitle, BarChart, BarItem, BarFill, BarLabel,
-  FaturaSection, FaturaCard, FaturaHeader, FaturaStatus, FaturaInfo, FaturaRow,
-  FaturaLabel, FaturaValue, FaturaActions,
+  FaturaSection, FaturaCard, FaturaHeader, FaturaStatus, FaturaInfo,
+  FaturaRow, FaturaLabel, FaturaValue, FaturaActions,
 } from '@/components/finance/styles';
 
 const typeOptions      = [{value:'receita',label:'Receita'},{value:'despesa',label:'Despesa'}];
@@ -243,58 +243,73 @@ export default function FinanceEmpresa() {
         )}
 
         {showFaturaSection&&(
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
-            <FaturaCard $highlight>
-              <FaturaHeader>
-                <div>
-                  <div style={{fontSize:'0.7rem',color:'#999',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:4}}>Fatura Atual</div>
-                  <div style={{fontSize:'1rem',fontWeight:700,color:'#1a1a1a'}}>{fatura.competencia}</div>
+          <>
+            {/* CSS injetado para o grid responsivo — só afeta mobile */}
+            <style>{`
+              .fe-fatura-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+                width: 100%;
+                box-sizing: border-box;
+              }
+              @media (max-width: 768px) {
+                .fe-fatura-grid { grid-template-columns: 1fr; }
+              }
+            `}</style>
+            <div className="fe-fatura-grid">
+              <FaturaCard $highlight>
+                <FaturaHeader>
+                  <div>
+                    <div style={{fontSize:'0.7rem',color:'#999',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:4}}>Fatura Atual</div>
+                    <div style={{fontSize:'1rem',fontWeight:700,color:'#1a1a1a'}}>{fatura.competencia}</div>
+                  </div>
+                  <FaturaStatus $status={faturaStatus}>{statusCfg.label}</FaturaStatus>
+                </FaturaHeader>
+                <div style={{marginBottom:20}}>
+                  <div style={{fontSize:'2rem',fontWeight:800,color:'#BBA188',letterSpacing:'-0.5px'}}>R$ {fmt(fatura.valor)}</div>
+                  <div style={{fontSize:'0.75rem',color:'#999',marginTop:2}}>Plano {fatura.plano}</div>
                 </div>
-                <FaturaStatus $status={faturaStatus}>{statusCfg.label}</FaturaStatus>
-              </FaturaHeader>
-              <div style={{marginBottom:20}}>
-                <div style={{fontSize:'2rem',fontWeight:800,color:'#BBA188',letterSpacing:'-0.5px'}}>R$ {fmt(fatura.valor)}</div>
-                <div style={{fontSize:'0.75rem',color:'#999',marginTop:2}}>Plano {fatura.plano}</div>
-              </div>
-              <FaturaInfo>
-                <FaturaRow><FaturaLabel>Vencimento</FaturaLabel><FaturaValue $alert={faturaStatus==='vencido'}>{fatura.vencimento}</FaturaValue></FaturaRow>
-                <FaturaRow><FaturaLabel>Plano</FaturaLabel><FaturaValue>{fatura.plano}</FaturaValue></FaturaRow>
-                <FaturaRow><FaturaLabel>Usuários inclusos</FaturaLabel><FaturaValue>Ilimitados</FaturaValue></FaturaRow>
-                <FaturaRow><FaturaLabel>Suporte</FaturaLabel><FaturaValue>Prioritário</FaturaValue></FaturaRow>
-              </FaturaInfo>
-              <FaturaActions>
-                {faturaStatus!=='pago'&&(
-                  <Button variant="primary" fullWidth icon={IcoCard} onClick={()=>setShowPaymentModal(true)}>
-                    Pagar Agora
+                <FaturaInfo>
+                  <FaturaRow><FaturaLabel>Vencimento</FaturaLabel><FaturaValue $alert={faturaStatus==='vencido'}>{fatura.vencimento}</FaturaValue></FaturaRow>
+                  <FaturaRow><FaturaLabel>Plano</FaturaLabel><FaturaValue>{fatura.plano}</FaturaValue></FaturaRow>
+                  <FaturaRow><FaturaLabel>Usuários inclusos</FaturaLabel><FaturaValue>Ilimitados</FaturaValue></FaturaRow>
+                  <FaturaRow><FaturaLabel>Suporte</FaturaLabel><FaturaValue>Prioritário</FaturaValue></FaturaRow>
+                </FaturaInfo>
+                <FaturaActions>
+                  {faturaStatus!=='pago'&&(
+                    <Button variant="primary" fullWidth icon={IcoCard} onClick={()=>setShowPaymentModal(true)}>
+                      Pagar Agora
+                    </Button>
+                  )}
+                  <Button variant="outline" fullWidth={faturaStatus==='pago'} icon={IcoDown} onClick={()=>setShowPaymentModal(true)}>
+                    {faturaStatus==='pago'?'Baixar Comprovante':'Baixar Boleto'}
                   </Button>
-                )}
-                <Button variant="outline" fullWidth={faturaStatus==='pago'} icon={IcoDown} onClick={()=>setShowPaymentModal(true)}>
-                  {faturaStatus==='pago'?'Baixar Comprovante':'Baixar Boleto'}
-                </Button>
-              </FaturaActions>
-            </FaturaCard>
+                </FaturaActions>
+              </FaturaCard>
 
-            <FaturaCard>
-              <div style={{fontSize:'0.85rem',fontWeight:700,color:'#1a1a1a',marginBottom:14}}>Histórico de Pagamentos</div>
-              <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                {fatura.historico.map((h,i)=>{
-                  const cfg=statusConfig[h.status];
-                  return (
-                    <div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 12px',background:'#fafafa',borderRadius:10,border:'1px solid #f0f0f0'}}>
-                      <div>
-                        <div style={{fontSize:'0.8rem',fontWeight:600,color:'#1a1a1a'}}>{h.mes}</div>
-                        <div style={{fontSize:'0.7rem',color:'#aaa',marginTop:1}}>Venc. {h.vencimento}{h.status==='pago'?` · Pago em ${h.pago}`:''}</div>
+              <FaturaCard>
+                <div style={{fontSize:'0.85rem',fontWeight:700,color:'#1a1a1a',marginBottom:14}}>Histórico de Pagamentos</div>
+                <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                  {fatura.historico.map((h,i)=>{
+                    const cfg=statusConfig[h.status];
+                    return (
+                      <div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 12px',background:'#fafafa',borderRadius:10,border:'1px solid #f0f0f0'}}>
+                        <div>
+                          <div style={{fontSize:'0.8rem',fontWeight:600,color:'#1a1a1a'}}>{h.mes}</div>
+                          <div style={{fontSize:'0.7rem',color:'#aaa',marginTop:1}}>Venc. {h.vencimento}{h.status==='pago'?` · Pago em ${h.pago}`:''}</div>
+                        </div>
+                        <div style={{display:'flex',alignItems:'center',gap:10}}>
+                          <span style={{fontSize:'0.82rem',fontWeight:700,color:'#555'}}>R$ {fmt(h.valor)}</span>
+                          <span style={{fontSize:'0.68rem',fontWeight:700,padding:'3px 8px',borderRadius:20,background:cfg.bg,color:cfg.color}}>{cfg.label}</span>
+                        </div>
                       </div>
-                      <div style={{display:'flex',alignItems:'center',gap:10}}>
-                        <span style={{fontSize:'0.82rem',fontWeight:700,color:'#555'}}>R$ {fmt(h.valor)}</span>
-                        <span style={{fontSize:'0.68rem',fontWeight:700,padding:'3px 8px',borderRadius:20,background:cfg.bg,color:cfg.color}}>{cfg.label}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </FaturaCard>
-          </div>
+                    );
+                  })}
+                </div>
+              </FaturaCard>
+            </div>
+          </>
         )}
       </FaturaSection>
 

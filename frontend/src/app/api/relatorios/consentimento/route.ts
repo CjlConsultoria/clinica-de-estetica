@@ -18,7 +18,6 @@ interface TermoData {
 
 interface RequestBody {
   termo: TermoData;
-  // Texto customizado do consentimento — enviado pelo frontend
   consentimentoText?: string;
 }
 
@@ -55,7 +54,6 @@ function getLogoBase64(): string | null {
   } catch { return null; }
 }
 
-// Texto padrão caso o frontend não envie nenhum
 const DEFAULT_CONSENTIMENTO_TEXT = `1. Descricao do Procedimento e Consentimento
 Eu, paciente acima identificado(a), declaro que fui devidamente informado(a) sobre o procedimento, seus objetivos, riscos, alternativas e possiveis complicacoes, tendo compreendido todas as informacoes prestadas pelo profissional responsavel. Declaro ainda que as informacoes por mim fornecidas sao verdadeiras, e que nao omiti nenhum dado relevante sobre meu estado de saude, alergias ou medicamentos em uso.
 
@@ -73,10 +71,7 @@ Estou ciente de que meus dados pessoais e de saude serao tratados em conformidad
 
 async function generateConsentimentoPDF(body: RequestBody): Promise<ArrayBuffer> {
   const { termo } = body;
-
-  // Usa o texto enviado pelo frontend; se não vier, usa o padrão
   const rawConsentText = body.consentimentoText ?? DEFAULT_CONSENTIMENTO_TEXT;
-  // Remove acentos para compatibilidade com jsPDF (helvetica)
   const consentText = safe(rawConsentText);
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -103,7 +98,6 @@ async function generateConsentimentoPDF(body: RequestBody): Promise<ArrayBuffer>
 
   fillBg();
 
-  // ── Header ──────────────────────────────────────────────────────────────
   doc.setFillColor(...C_BLACK);
   doc.rect(0, 0, W, HEADER_H, 'F');
 
@@ -136,7 +130,6 @@ async function generateConsentimentoPDF(body: RequestBody): Promise<ArrayBuffer>
 
   y = HEADER_H + 10;
 
-  // ── Card de dados do paciente ────────────────────────────────────────────
   const DATA_CARD_H = 42;
   need(DATA_CARD_H);
 
@@ -182,11 +175,8 @@ async function generateConsentimentoPDF(body: RequestBody): Promise<ArrayBuffer>
 
   y += DATA_CARD_H + 8;
 
-  // ── Corpo do consentimento — usa o texto dinâmico enviado pelo frontend ──
-  // Divide o texto em parágrafos para renderização correta
   const paragraphs = consentText.split('\n');
 
-  // Título da seção
   need(16);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9.5);
@@ -199,14 +189,12 @@ async function generateConsentimentoPDF(body: RequestBody): Promise<ArrayBuffer>
 
   y += 16;
 
-  // Renderiza cada parágrafo
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(80, 80, 80);
 
   for (const paragraph of paragraphs) {
     if (paragraph.trim() === '') {
-      // Linha em branco — pula um espaço pequeno
       need(4);
       y += 4;
       continue;
@@ -226,7 +214,6 @@ async function generateConsentimentoPDF(body: RequestBody): Promise<ArrayBuffer>
 
   y += 6;
 
-  // ── Bloco de assinatura ──────────────────────────────────────────────────
   const signH    = termo.status === 'assinado' ? 52 : 32;
   need(signH + 8);
 
@@ -299,7 +286,6 @@ async function generateConsentimentoPDF(body: RequestBody): Promise<ArrayBuffer>
 
   y += signH + 8;
 
-  // ── Footer em todas as páginas ───────────────────────────────────────────
   const totalPages = (doc as any).getNumberOfPages() as number;
   for (let p = 1; p <= totalPages; p++) {
     doc.setPage(p);

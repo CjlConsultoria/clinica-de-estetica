@@ -8,12 +8,15 @@ export const Container = styled.div`
   box-sizing: border-box;
 
   @media (max-width: 1024px) {
-    width: 100%;
-    padding: 24px 20px;
+    padding: 72px 20px 24px;
   }
 
   @media (max-width: 768px) {
-    padding: 20px 16px;
+    padding: 72px 14px 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 68px 12px 20px;
   }
 `;
 
@@ -24,6 +27,23 @@ export const Header = styled.div`
   margin-bottom: 20px;
   flex-wrap: wrap;
   gap: 16px;
+
+  @media (max-width: 768px) {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto;
+    column-gap: 12px;
+    row-gap: 10px;
+    margin-bottom: 16px;
+    align-items: center;
+
+    & > button {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      width: 100%;
+      justify-content: center;
+    }
+  }
 `;
 
 export const Title = styled.h1`
@@ -32,6 +52,16 @@ export const Title = styled.h1`
   color: #BBA188;
   margin: 0;
   font-weight: 600;
+
+  @media (max-width: 768px) {
+    font-size: 1.6rem;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.4rem;
+  }
 `;
 
 export const AlertBanner = styled.div`
@@ -68,6 +98,18 @@ export const StatsGrid = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 18px;
   margin-bottom: 28px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
 `;
 
 export const Controls = styled.div`
@@ -76,6 +118,13 @@ export const Controls = styled.div`
   margin-bottom: 24px;
   flex-wrap: wrap;
   align-items: center;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
 `;
 
 export const SearchBarWrapper = styled.div`
@@ -85,6 +134,7 @@ export const SearchBarWrapper = styled.div`
 
   @media (max-width: 768px) {
     max-width: 100%;
+    width: 100%;
   }
 `;
 
@@ -126,10 +176,18 @@ export const FilterRow = styled.div`
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 export const DropdownWrapper = styled.div`
   position: relative;
+
+  @media (max-width: 768px) {
+    flex: 1;
+  }
 `;
 
 export const DropdownBtn = styled.button`
@@ -148,6 +206,7 @@ export const DropdownBtn = styled.button`
   min-width: 140px;
   justify-content: space-between;
   transition: all 0.2s;
+  width: 100%;
 
   &:hover {
     border-color: #BBA188;
@@ -207,6 +266,7 @@ export const ClearFilterBtn = styled.button`
   font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 
   &:hover {
     background: #e74c3c;
@@ -221,6 +281,11 @@ export const ToggleGroup = styled.div`
   border: 1.5px solid #e8e8e8;
   overflow: hidden;
   margin-left: auto;
+
+  @media (max-width: 768px) {
+    margin-left: 0;
+    align-self: flex-end;
+  }
 `;
 
 export const ToggleBtn = styled.button<{ $active: boolean }>`
@@ -243,6 +308,7 @@ export const SectionDivider = styled.div`
 export const TableWrapper = styled.div`
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 `;
 
 export const Table = styled.table`
@@ -446,6 +512,10 @@ export const FormGrid = styled.div`
 
   @media (max-width: 560px) {
     grid-template-columns: 1fr;
+
+    & > * {
+      grid-column: 1 !important;
+    }
   }
 `;
 
@@ -469,5 +539,20 @@ export const EmptyState = styled.div`
     font-size: 0.88rem;
     color: #999;
     margin: 0;
+  }
+`;
+
+export const WizardNav = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+
+  @media (max-width: 480px) {
+    & > button {
+      flex: 1;
+      justify-content: center;
+    }
   }
 `;

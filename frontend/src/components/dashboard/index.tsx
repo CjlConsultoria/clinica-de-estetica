@@ -14,6 +14,25 @@ import {
   AlertsList, AlertItem, AlertIcon, AlertText, AlertTime,
   RecentPatientRow, PatientAvatar, PatientName, PatientSub,
 } from './styles';
+import styled from 'styled-components';
+
+const StatsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 480px) {
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+`;
 
 const allStats = [
   { key: 'agenda',    label: 'Agendamentos Hoje', value: 12, icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>, color: '#BBA188', trend: { value: '+3 vs ontem', positive: true } },
@@ -71,7 +90,7 @@ export default function Dashboard() {
     if (s.key === 'financeiro') return can('financeiro.read');
     if (s.key === 'estoque')    return can('estoque.read');
     if (s.key === 'agenda')     return can('agenda.read') || can('agenda.read_own');
-    return true; 
+    return true;
   });
 
   const visibleQuickActions = allQuickActions.filter(qa => {
@@ -79,7 +98,7 @@ export default function Dashboard() {
     if (qa.key === 'agenda')     return can('agenda.create');
     if (qa.key === 'financeiro') return can('financeiro.create');
     if (qa.key === 'reports')    return can('relatorios.operacional');
-    return true; 
+    return true;
   });
 
   const statusMap: Record<string, { label: string; color: string }> = {
@@ -107,9 +126,11 @@ export default function Dashboard() {
         </div>
       </DashHeader>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px,1fr))', gap: 20, marginBottom: 32 }}>
-        {visibleStats.map((s, i) => <StatCard key={i} label={s.label} value={s.value} icon={s.icon} color={s.color} trend={s.trend} />)}
-      </div>
+      <StatsGrid>
+        {visibleStats.map((s, i) => (
+          <StatCard key={i} label={s.label} value={s.value} icon={s.icon} color={s.color} trend={s.trend} />
+        ))}
+      </StatsGrid>
 
       {visibleQuickActions.length > 0 && (
         <QuickActions>
@@ -187,7 +208,7 @@ export default function Dashboard() {
             {recentPatients.map((p, i) => (
               <RecentPatientRow key={i}>
                 <PatientAvatar $color={p.color}>{p.initials}</PatientAvatar>
-                <div>
+                <div style={{ minWidth: 0, overflow: 'hidden' }}>
                   <PatientName>{p.name}</PatientName>
                   <PatientSub>{p.sub}</PatientSub>
                 </div>

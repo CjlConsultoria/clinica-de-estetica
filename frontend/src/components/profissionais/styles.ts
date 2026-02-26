@@ -6,8 +6,19 @@ export const Container = styled.div`
   min-height: 100vh;
   background: #f5f5f5;
   box-sizing: border-box;
-  @media (max-width: 1024px) { padding: 24px 20px; }
-  @media (max-width: 768px)  { padding: 20px 16px; }
+  overflow-x: hidden;
+
+  @media (max-width: 1024px) {
+    padding: 72px 20px 24px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 72px 14px 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 68px 12px 20px;
+  }
 `;
 
 export const Header = styled.div`
@@ -15,8 +26,25 @@ export const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 28px;
-  flex-wrap: wrap;
   gap: 16px;
+
+  @media (max-width: 768px) {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto;
+    column-gap: 12px;
+    row-gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
+
+    & > button,
+    & > div > button {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      width: 100%;
+      justify-content: center;
+    }
+  }
 `;
 
 export const Title = styled.h1`
@@ -25,6 +53,16 @@ export const Title = styled.h1`
   color: #BBA188;
   margin: 0;
   font-weight: 600;
+
+  @media (max-width: 768px) {
+    font-size: 1.6rem;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.4rem;
+  }
 `;
 
 export const StatsGrid = styled.div`
@@ -32,6 +70,18 @@ export const StatsGrid = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 18px;
   margin-bottom: 28px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
 `;
 
 export const Controls = styled.div`
@@ -40,13 +90,24 @@ export const Controls = styled.div`
   margin-bottom: 20px;
   flex-wrap: wrap;
   align-items: center;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
 `;
 
 export const SearchBarWrapper = styled.div`
   position: relative;
   flex: 1;
   max-width: 380px;
-  @media (max-width: 768px) { max-width: 100%; }
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    width: 100%;
+  }
 `;
 
 export const SearchIconWrap = styled.div`
@@ -69,7 +130,12 @@ export const SearchInputStyled = styled.input`
   color: #333;
   transition: all 0.25s;
   box-sizing: border-box;
-  &:focus { outline: none; border-color: #BBA188; box-shadow: 0 0 0 3px rgba(187,161,136,0.15); }
+
+  &:focus {
+    outline: none;
+    border-color: #BBA188;
+    box-shadow: 0 0 0 3px rgba(187,161,136,0.15);
+  }
   &::placeholder { color: #bbb; }
 
   &:-webkit-autofill,
@@ -80,6 +146,11 @@ export const SearchInputStyled = styled.input`
     -webkit-text-fill-color: #333 !important;
     transition: background-color 5000s ease-in-out 0s;
   }
+
+  @media (max-width: 480px) {
+    font-size: 0.85rem;
+    padding: 10px 14px 10px 40px;
+  }
 `;
 
 export const FilterRow = styled.div`
@@ -87,10 +158,18 @@ export const FilterRow = styled.div`
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 export const DropdownWrapper = styled.div`
   position: relative;
+
+  @media (max-width: 768px) {
+    flex: 1;
+  }
 `;
 
 export const DropdownBtn = styled.button`
@@ -108,7 +187,15 @@ export const DropdownBtn = styled.button`
   min-width: 130px;
   justify-content: space-between;
   transition: all 0.2s;
+  width: 100%;
+
   &:hover { border-color: #BBA188; }
+
+  @media (max-width: 480px) {
+    font-size: 0.84rem;
+    padding: 9px 14px;
+    min-width: unset;
+  }
 `;
 
 export const DropdownList = styled.div`
@@ -132,6 +219,7 @@ export const DropdownItem = styled.div<{ $active?: boolean }>`
   font-weight: ${({ $active }) => ($active ? '600' : '400')};
   cursor: pointer;
   border-bottom: 1px solid #f5f5f5;
+
   &:last-child { border-bottom: none; }
   &:hover { background: rgba(187,161,136,0.08); color: #BBA188; }
 `;
@@ -148,18 +236,32 @@ export const ClearFilterBtn = styled.button`
   font-size: 0.84rem;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+
   &:hover { background: #e74c3c; color: white; }
+
+  @media (max-width: 480px) {
+    font-size: 0.78rem;
+    padding: 8px 12px;
+  }
 `;
 
 export const TableWrapper = styled.div`
   width: 100%;
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 `;
 
 export const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
+
+  @media (max-width: 768px) {
+    table-layout: auto;
+    min-width: 700px;
+  }
 `;
 
 export const Thead = styled.thead`
@@ -185,6 +287,7 @@ export const Tbody = styled.tbody``;
 export const Tr = styled.tr`
   border-bottom: 1px solid #f5f5f5;
   transition: background 0.15s;
+
   &:hover { background: #fdf9f5; }
   &:last-child { border-bottom: none; }
 `;
@@ -241,6 +344,7 @@ export const IconBtn = styled.button`
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
+
   &:hover { background: #BBA188; border-color: #BBA188; color: white; }
 `;
 
@@ -288,16 +392,25 @@ export const EmptyState = styled.div`
   padding: 50px 20px;
   text-align: center;
   color: #bbb;
+
   svg { margin-bottom: 14px; opacity: 0.35; }
-  h3 { font-size: 1rem; color: #555; margin: 0 0 5px; }
-  p  { font-size: 0.85rem; color: #999; margin: 0; }
+  h3  { font-size: 1rem; color: #555; margin: 0 0 5px; }
+  p   { font-size: 0.85rem; color: #999; margin: 0; }
 `;
+
+/* ─────────────── Modal / Formulário ─────────────── */
 
 export const FormGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  @media (max-width: 560px) { grid-template-columns: 1fr; }
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+    & > * {
+      grid-column: 1 !important;
+    }
+  }
 `;
 
 export const SectionLabel = styled.div`
@@ -310,6 +423,10 @@ export const SectionLabel = styled.div`
   border-bottom: 1px solid #f0ebe4;
   padding-bottom: 6px;
   margin-bottom: 4px;
+
+  @media (max-width: 560px) {
+    grid-column: 1;
+  }
 `;
 
 export const PasswordHint = styled.p`
@@ -318,6 +435,8 @@ export const PasswordHint = styled.p`
   margin: 4px 0 0;
 `;
 
+/* ─────────────── Wizard ─────────────── */
+
 export const WizardSteps = styled.div`
   display: flex;
   align-items: flex-start;
@@ -325,6 +444,12 @@ export const WizardSteps = styled.div`
   margin-bottom: 28px;
   padding-bottom: 20px;
   border-bottom: 1px solid #f0ebe4;
+
+  @media (max-width: 600px) {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    gap: 0;
+  }
 `;
 
 export const WizardStep = styled.div`
@@ -334,6 +459,10 @@ export const WizardStep = styled.div`
   position: relative;
   flex: 1;
   max-width: 120px;
+
+  @media (max-width: 600px) {
+    max-width: 64px;
+  }
 `;
 
 export const WizardStepLine = styled.div<{ $done?: boolean }>`
@@ -363,6 +492,12 @@ export const WizardStepCircle = styled.div<{ $done?: boolean; $current?: boolean
   color: ${({ $done, $current }) => $done ? 'white' : $current ? '#BBA188' : '#ccc'};
   border: 2px solid ${({ $done, $current }) => ($done || $current) ? '#BBA188' : '#e8e8e8'};
   box-shadow: ${({ $current }) => $current ? '0 0 0 4px rgba(187,161,136,0.15)' : 'none'};
+
+  @media (max-width: 600px) {
+    width: 24px;
+    height: 24px;
+    font-size: 0.68rem;
+  }
 `;
 
 export const WizardStepLabel = styled.span<{ $current?: boolean }>`
@@ -373,6 +508,15 @@ export const WizardStepLabel = styled.span<{ $current?: boolean }>`
   font-weight: ${({ $current }) => $current ? '600' : '400'};
   line-height: 1.3;
   transition: color 0.2s;
+
+  @media (max-width: 600px) {
+    font-size: 0.58rem;
+    margin-top: 4px;
+  }
+
+  @media (max-width: 400px) {
+    display: none;
+  }
 `;
 
 export const AreaGrid = styled.div`
@@ -380,7 +524,10 @@ export const AreaGrid = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: 16px;
   margin-top: 8px;
-  @media (max-width: 480px) { grid-template-columns: 1fr; }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 export const AreaCard = styled.div<{ $active?: boolean }>`
@@ -396,7 +543,14 @@ export const AreaCard = styled.div<{ $active?: boolean }>`
   cursor: pointer;
   transition: all 0.2s;
   box-shadow: ${({ $active }) => $active ? '0 0 0 4px rgba(187,161,136,0.12)' : 'none'};
+
   &:hover { border-color: #BBA188; background: rgba(187,161,136,0.04); }
+
+  @media (max-width: 480px) {
+    padding: 20px 16px;
+    gap: 8px;
+    border-radius: 12px;
+  }
 `;
 
 export const AreaIcon = styled.div`
@@ -408,12 +562,20 @@ export const AreaTitle = styled.div`
   font-size: 1rem;
   font-weight: 700;
   color: #1a1a1a;
+
+  @media (max-width: 480px) {
+    font-size: 0.9rem;
+  }
 `;
 
 export const AreaDesc = styled.div`
   font-size: 0.78rem;
   color: #aaa;
   line-height: 1.5;
+
+  @media (max-width: 480px) {
+    font-size: 0.72rem;
+  }
 `;
 
 export const WizardNav = styled.div`
@@ -421,6 +583,15 @@ export const WizardNav = styled.div`
   justify-content: space-between;
   align-items: center;
   width: 100%;
+
+  @media (max-width: 480px) {
+    gap: 10px;
+
+    & > button {
+      flex: 1;
+      justify-content: center;
+    }
+  }
 `;
 
 export const StepSection = styled.div`
@@ -428,6 +599,10 @@ export const StepSection = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
+
+  @media (max-width: 480px) {
+    min-height: 200px;
+  }
 `;
 
 export const DetailModal = styled.div`
@@ -443,6 +618,13 @@ export const DetailHeader = styled.div`
   margin-bottom: 20px;
   padding-bottom: 20px;
   border-bottom: 1px solid #f0ebe4;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+  }
 `;
 
 export const DetailAvatar = styled.div<{ $color: string }>`
@@ -466,12 +648,20 @@ export const DetailName = styled.h2`
   font-family: var(--font-cabourg-bold), 'Cabourg', serif;
   color: #1a1a1a;
   margin: 0 0 8px;
+
+  @media (max-width: 480px) {
+    font-size: 1.05rem;
+  }
 `;
 
 export const DetailMeta = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
+
+  @media (max-width: 480px) {
+    align-items: center;
+  }
 `;
 
 export const DetailMetaItem = styled.div`
@@ -480,6 +670,7 @@ export const DetailMetaItem = styled.div`
   gap: 6px;
   font-size: 0.83rem;
   color: #666;
+
   svg { color: #BBA188; flex-shrink: 0; }
 `;
 
@@ -500,6 +691,10 @@ export const StatsRow = styled.div`
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+
+  @media (max-width: 480px) {
+    justify-content: center;
+  }
 `;
 
 export const StatPill = styled.span<{ $color: string }>`
@@ -520,7 +715,12 @@ export const InfoGrid = styled.div`
   border-radius: 14px;
   padding: 20px;
   border: 1px solid #f0ebe4;
-  @media (max-width: 520px) { grid-template-columns: 1fr; }
+
+  @media (max-width: 520px) {
+    grid-template-columns: 1fr;
+    padding: 14px;
+    gap: 12px;
+  }
 `;
 
 export const InfoItem = styled.div`
@@ -552,10 +752,11 @@ export const ObsBox = styled.div`
   color: #666;
   margin-bottom: 20px;
   line-height: 1.6;
+
   strong { color: #BBA188; }
 `;
 
-// ─── User Switcher (barra de perfil no topo — modo dev) ───────────────────────
+/* ─────────────── User Switcher ─────────────── */
 
 export const UserSwitcherBar = styled.div`
   display: flex;
@@ -568,6 +769,13 @@ export const UserSwitcherBar = styled.div`
   margin-bottom: 20px;
   gap: 12px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+
+  @media (max-width: 480px) {
+    padding: 8px 12px;
+    border-radius: 10px;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
 `;
 
 export const UserSwitcherInfo = styled.div`
@@ -578,6 +786,11 @@ export const UserSwitcherInfo = styled.div`
   min-width: 0;
   color: #BBA188;
   font-size: 0.82rem;
+
+  @media (max-width: 480px) {
+    gap: 6px;
+    font-size: 0.76rem;
+  }
 `;
 
 export const UserSwitcherName = styled.span`
@@ -591,6 +804,10 @@ export const UserSwitcherName = styled.span`
     color: #1a1a1a;
     font-weight: 600;
   }
+
+  @media (max-width: 480px) {
+    font-size: 0.74rem;
+  }
 `;
 
 export const UserSwitcherBadge = styled.span<{ $bg: string; $color: string }>`
@@ -603,6 +820,10 @@ export const UserSwitcherBadge = styled.span<{ $bg: string; $color: string }>`
   color: ${({ $color }) => $color};
   white-space: nowrap;
   flex-shrink: 0;
+
+  @media (max-width: 480px) {
+    display: none;
+  }
 `;
 
 export const UserSwitcherBtn = styled.button`
@@ -621,5 +842,11 @@ export const UserSwitcherBtn = styled.button`
   &:hover {
     background: #BBA188;
     color: white;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.7rem;
+    padding: 5px 10px;
+    border-radius: 6px;
   }
 `;

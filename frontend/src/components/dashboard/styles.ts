@@ -13,14 +13,18 @@ export const Container = styled.div`
   background: #f5f5f5;
   box-sizing: border-box;
   animation: ${fadeUp} 0.35s ease;
+  overflow-x: hidden;
 
   @media (max-width: 1024px) {
-    width: 100%;
-    padding: 24px 20px;
+    padding: 72px 20px 24px;
   }
 
   @media (max-width: 768px) {
-    padding: 20px 16px;
+    padding: 72px 14px 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 68px 12px 20px;
   }
 `;
 
@@ -31,6 +35,14 @@ export const DashHeader = styled.div`
   margin-bottom: 32px;
   flex-wrap: wrap;
   gap: 16px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 480px) {
+    margin-bottom: 16px;
+  }
 `;
 
 export const DashTitle = styled.h1`
@@ -39,6 +51,14 @@ export const DashTitle = styled.h1`
   color: #BBA188;
   margin: 0;
   font-weight: 700;
+
+  @media (max-width: 768px) {
+    font-size: 1.6rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.4rem;
+  }
 `;
 
 export const DateText = styled.p`
@@ -46,6 +66,10 @@ export const DateText = styled.p`
   color: #999;
   margin: 4px 0 0;
   font-family: var(--font-inter-variable-regular), 'Inter', sans-serif;
+
+  @media (max-width: 480px) {
+    font-size: 0.78rem;
+  }
 `;
 
 export const QuickActions = styled.div`
@@ -56,11 +80,14 @@ export const QuickActions = styled.div`
 
   @media (max-width: 900px) {
     grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
   }
 
   @media (max-width: 480px) {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 10px;
+    margin-bottom: 18px;
   }
 `;
 
@@ -77,11 +104,25 @@ export const QuickAction = styled('a')<{ $color: string }>`
   transition: all 0.25s;
   border: 1.5px solid transparent;
   cursor: pointer;
+  min-width: 0;
+  overflow: hidden;
 
   &:hover {
     border-color: ${({ $color }) => $color};
     box-shadow: 0 8px 24px ${({ $color }) => $color}22;
     transform: translateY(-3px);
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px 10px;
+    gap: 8px;
+    border-radius: 12px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 14px 8px;
+    gap: 6px;
+    border-radius: 10px;
   }
 `;
 
@@ -93,9 +134,23 @@ export const QuickActionIcon = styled.div<{ $color: string }>`
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 
   svg {
     color: ${({ $color }) => $color};
+  }
+
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    svg { width: 18px; height: 18px; }
+  }
+
+  @media (max-width: 480px) {
+    width: 36px;
+    height: 36px;
+    svg { width: 16px; height: 16px; }
   }
 `;
 
@@ -105,6 +160,16 @@ export const QuickActionLabel = styled.span`
   font-weight: 600;
   color: #333;
   text-align: center;
+  word-break: break-word;
+  hyphens: auto;
+
+  @media (max-width: 768px) {
+    font-size: 0.75rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.7rem;
+  }
 `;
 
 export const ContentGrid = styled.div`
@@ -117,7 +182,16 @@ export const ContentGrid = styled.div`
   }
 
   @media (max-width: 768px) {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+    gap: 14px;
+
+    & > * {
+      grid-column: 1 / -1 !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    gap: 12px;
   }
 `;
 
@@ -126,11 +200,22 @@ export const BigCard = styled.div`
   border-radius: 18px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
   overflow: hidden;
+  min-width: 0;
+  width: 100%;
+
+  &[style*="span 2"] {
+    grid-column: span 2;
+  }
 
   @media (max-width: 1200px) {
     &[style*="span 2"] {
       grid-column: span 1;
     }
+  }
+
+  @media (max-width: 768px) {
+    border-radius: 14px;
+    grid-column: 1 / -1 !important;
   }
 `;
 
@@ -140,6 +225,14 @@ export const CardHeader = styled.div`
   justify-content: space-between;
   padding: 20px 24px 16px;
   border-bottom: 1px solid #f5f5f5;
+
+  @media (max-width: 768px) {
+    padding: 14px 16px 12px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px 14px 10px;
+  }
 `;
 
 export const CardTitle = styled.h3`
@@ -148,6 +241,10 @@ export const CardTitle = styled.h3`
   color: #1a1a1a;
   margin: 0;
   font-weight: 700;
+
+  @media (max-width: 480px) {
+    font-size: 0.92rem;
+  }
 `;
 
 export const CardBody = styled.div`
@@ -157,9 +254,10 @@ export const CardBody = styled.div`
 export const AppointmentItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   padding: 12px 24px;
   border-bottom: 1px solid #f8f8f8;
+  min-width: 0;
 
   &:last-child {
     border-bottom: none;
@@ -169,9 +267,15 @@ export const AppointmentItem = styled.div`
     background: #fdf9f5;
   }
 
-  @media (max-width: 600px) {
-    flex-wrap: wrap;
+  @media (max-width: 768px) {
+    padding: 10px 16px;
+    gap: 10px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 10px 12px;
     gap: 8px;
+    flex-wrap: wrap;
   }
 `;
 
@@ -180,11 +284,19 @@ export const AppointmentTime = styled.span`
   font-family: var(--font-roboto-medium), 'Roboto', sans-serif;
   color: #BBA188;
   font-weight: 700;
-  min-width: 48px;
+  min-width: 44px;
+  flex-shrink: 0;
+
+  @media (max-width: 480px) {
+    font-size: 0.78rem;
+    min-width: 38px;
+  }
 `;
 
 export const AppointmentInfo = styled.div`
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
 `;
 
 export const AppointmentName = styled.div`
@@ -192,6 +304,14 @@ export const AppointmentName = styled.div`
   font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
   color: #1a1a1a;
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: 480px) {
+    font-size: 0.82rem;
+    white-space: normal;
+  }
 `;
 
 export const AppointmentProcedure = styled.div`
@@ -199,23 +319,36 @@ export const AppointmentProcedure = styled.div`
   font-family: var(--font-inter-variable-regular), 'Inter', sans-serif;
   color: #999;
   margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: 480px) {
+    font-size: 0.7rem;
+  }
 `;
 
 export const AppointmentStatus = styled.div`
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.78rem;
+  gap: 5px;
+  font-size: 0.75rem;
   font-family: var(--font-metropolis-regular), 'Metropolis', sans-serif;
   color: #666;
   white-space: nowrap;
+  flex-shrink: 0;
+
+  @media (max-width: 480px) {
+    font-size: 0.68rem;
+  }
 `;
 
 export const StatusDot = styled.div<{ $color: string }>`
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: ${({ $color }) => $color};
+  flex-shrink: 0;
 `;
 
 export const AlertsList = styled.div`
@@ -225,12 +358,19 @@ export const AlertsList = styled.div`
 export const AlertItem = styled.div<{ $color: string }>`
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 14px 24px;
+  gap: 10px;
+  padding: 12px 16px;
   border-left: 3px solid ${({ $color }) => $color};
-  margin: 6px 16px;
+  margin: 5px 12px;
   border-radius: 8px;
   background: ${({ $color }) => $color}08;
+  min-width: 0;
+
+  @media (max-width: 480px) {
+    padding: 10px 12px;
+    margin: 4px 10px;
+    gap: 8px;
+  }
 `;
 
 export const AlertIcon = styled.div<{ $color: string }>`
@@ -247,6 +387,12 @@ export const AlertText = styled.div`
   font-family: var(--font-inter-variable-regular), 'Inter', sans-serif;
   color: #444;
   line-height: 1.4;
+  min-width: 0;
+  word-break: break-word;
+
+  @media (max-width: 480px) {
+    font-size: 0.76rem;
+  }
 `;
 
 export const AlertTime = styled.div`
@@ -260,27 +406,49 @@ export const ChartBars = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
+
+  @media (max-width: 768px) {
+    padding: 8px 16px 14px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 6px 12px 12px;
+    gap: 8px;
+  }
 `;
 
 export const ChartRow = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 `;
 
 export const ChartLabelText = styled.span`
   font-size: 0.78rem;
   font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
   color: #999;
-  min-width: 30px;
+  min-width: 28px;
+  flex-shrink: 0;
+
+  @media (max-width: 480px) {
+    font-size: 0.7rem;
+    min-width: 24px;
+  }
 `;
 
 export const ChartBar = styled.div`
-  height: 26px;
+  height: 24px;
   background: linear-gradient(90deg, #BBA188, #a8906f);
   border-radius: 6px;
   transition: width 0.8s ease;
   min-width: 4px;
+  flex: 1 1 auto;
+  max-width: calc(100% - 60px);
+
+  @media (max-width: 480px) {
+    height: 20px;
+  }
 `;
 
 export const ChartLabel = styled.div``;
@@ -289,7 +457,12 @@ export const ChartValue = styled.span`
   font-size: 0.78rem;
   font-weight: 700;
   color: #BBA188;
-  min-width: 20px;
+  min-width: 18px;
+  flex-shrink: 0;
+
+  @media (max-width: 480px) {
+    font-size: 0.7rem;
+  }
 `;
 
 export const RecentPatientRow = styled.div`
@@ -298,6 +471,7 @@ export const RecentPatientRow = styled.div`
   gap: 14px;
   padding: 12px 24px;
   border-bottom: 1px solid #f8f8f8;
+  min-width: 0;
 
   &:last-child {
     border-bottom: none;
@@ -305,6 +479,16 @@ export const RecentPatientRow = styled.div`
 
   &:hover {
     background: #fdf9f5;
+  }
+
+  @media (max-width: 768px) {
+    padding: 10px 16px;
+    gap: 10px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 10px 12px;
+    gap: 8px;
   }
 `;
 
@@ -321,6 +505,13 @@ export const PatientAvatar = styled.div<{ $color: string }>`
   font-weight: 700;
   font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
   flex-shrink: 0;
+
+  @media (max-width: 480px) {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    font-size: 0.76rem;
+  }
 `;
 
 export const PatientName = styled.div`
@@ -328,6 +519,13 @@ export const PatientName = styled.div`
   font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
   color: #1a1a1a;
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: 480px) {
+    font-size: 0.8rem;
+  }
 `;
 
 export const PatientSub = styled.div`
@@ -335,4 +533,11 @@ export const PatientSub = styled.div`
   font-family: var(--font-inter-variable-regular), 'Inter', sans-serif;
   color: #999;
   margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: 480px) {
+    font-size: 0.68rem;
+  }
 `;
