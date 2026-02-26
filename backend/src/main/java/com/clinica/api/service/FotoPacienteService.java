@@ -8,11 +8,14 @@ import com.clinica.api.entity.FotoPaciente;
 import com.clinica.api.entity.Paciente;
 import com.clinica.api.enums.TipoFoto;
 import com.clinica.api.exception.BusinessException;
+import com.clinica.api.exception.ExceptionMessages;
 import com.clinica.api.exception.ResourceNotFoundException;
 import com.clinica.api.repository.AgendamentoRepository;
 import com.clinica.api.repository.FotoPacienteRepository;
 import com.clinica.api.repository.PacienteRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,6 +31,8 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class FotoPacienteService {
+
+    private static final Logger log = LoggerFactory.getLogger(FotoPacienteService.class);
 
     private final FotoPacienteRepository fotoRepository;
     private final PacienteRepository pacienteRepository;
@@ -82,7 +87,7 @@ public class FotoPacienteService {
         try {
             Files.copy(arquivo.getInputStream(), destino, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            throw new BusinessException("Falha ao salvar arquivo: " + e.getMessage());
+            throw new BusinessException(String.format(ExceptionMessages.FALHA_SALVAR_ARQUIVO, e.getMessage()));
         }
 
         FotoPaciente foto = FotoPaciente.builder()
@@ -111,6 +116,7 @@ public class FotoPacienteService {
         try {
             Files.deleteIfExists(Path.of(foto.getCaminhoArquivo()));
         } catch (IOException e) {
+            log.warn("Não foi possível excluir arquivo físico da foto id {}: {}", fotoId, e.getMessage());
         }
         fotoRepository.delete(foto);
     }

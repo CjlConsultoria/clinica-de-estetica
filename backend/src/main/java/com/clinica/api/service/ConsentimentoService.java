@@ -8,6 +8,7 @@ import com.clinica.api.entity.AssinaturaConsentimento;
 import com.clinica.api.entity.Paciente;
 import com.clinica.api.entity.TermoConsentimento;
 import com.clinica.api.exception.BusinessException;
+import com.clinica.api.exception.ExceptionMessages;
 import com.clinica.api.exception.ResourceNotFoundException;
 import com.clinica.api.repository.AssinaturaConsentimentoRepository;
 import com.clinica.api.repository.PacienteRepository;
@@ -78,11 +79,11 @@ public class ConsentimentoService {
         TermoConsentimento termo = findTermoById(request.getTermoId());
 
         if (!termo.isAtivo()) {
-            throw new BusinessException("Este termo não está mais ativo");
+            throw new BusinessException(ExceptionMessages.TERMO_INATIVO);
         }
 
         if (assinaturaRepository.existsByPacienteIdAndTermoId(paciente.getId(), termo.getId())) {
-            throw new BusinessException("Paciente já assinou este termo");
+            throw new BusinessException(ExceptionMessages.PACIENTE_JA_ASSINOU);
         }
 
         LocalDateTime agora = LocalDateTime.now();

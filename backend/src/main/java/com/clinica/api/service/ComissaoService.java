@@ -10,6 +10,7 @@ import com.clinica.api.entity.Lancamento;
 import com.clinica.api.entity.Usuario;
 import com.clinica.api.enums.StatusComissao;
 import com.clinica.api.exception.BusinessException;
+import com.clinica.api.exception.ExceptionMessages;
 import com.clinica.api.exception.ResourceNotFoundException;
 import com.clinica.api.repository.ComissaoConfigRepository;
 import com.clinica.api.repository.ComissaoRepository;
@@ -74,7 +75,7 @@ public class ComissaoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Comissão", comissaoId));
 
         if (comissao.getStatus() != StatusComissao.PENDENTE) {
-            throw new BusinessException("Comissão não está pendente: " + comissao.getStatus());
+            throw new BusinessException(String.format(ExceptionMessages.COMISSAO_NAO_PENDENTE, comissao.getStatus()));
         }
 
         comissao.setStatus(StatusComissao.PAGO);

@@ -9,6 +9,7 @@ import com.clinica.api.entity.Paciente;
 import com.clinica.api.entity.Usuario;
 import com.clinica.api.enums.StatusAgendamento;
 import com.clinica.api.exception.BusinessException;
+import com.clinica.api.exception.ExceptionMessages;
 import com.clinica.api.exception.ResourceNotFoundException;
 import com.clinica.api.repository.AgendamentoRepository;
 import com.clinica.api.repository.PacienteRepository;
@@ -82,7 +83,7 @@ public class AgendamentoService {
         Agendamento agendamento = findById(id);
 
         if (agendamento.getStatus() == StatusAgendamento.CANCELADO) {
-            throw new BusinessException("Agendamento já está cancelado");
+            throw new BusinessException(ExceptionMessages.AGENDAMENTO_JA_CANCELADO);
         }
 
         agendamento.setStatus(request.getStatus());
@@ -126,7 +127,7 @@ public class AgendamentoService {
         }
 
         if (!conflitos.isEmpty()) {
-            throw new BusinessException("Médico já possui agendamento neste horário");
+            throw new BusinessException(ExceptionMessages.MEDICO_HORARIO_OCUPADO);
         }
     }
 

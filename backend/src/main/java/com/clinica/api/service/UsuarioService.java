@@ -7,6 +7,7 @@ import com.clinica.api.enums.AreaProfissional;
 import com.clinica.api.enums.Cargo;
 import com.clinica.api.enums.Role;
 import com.clinica.api.exception.BusinessException;
+import com.clinica.api.exception.ExceptionMessages;
 import com.clinica.api.exception.ResourceNotFoundException;
 import com.clinica.api.repository.AgendamentoRepository;
 import com.clinica.api.repository.UsuarioRepository;
@@ -71,10 +72,10 @@ public class UsuarioService {
     @Transactional
     public UsuarioResponse criar(UsuarioRequest request) {
         if (request.getSenha() == null || request.getSenha().isBlank()) {
-            throw new BusinessException("Senha é obrigatória");
+            throw new BusinessException(ExceptionMessages.SENHA_OBRIGATORIA);
         }
         if (usuarioRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessException("Email já está em uso");
+            throw new BusinessException(ExceptionMessages.EMAIL_JA_EM_USO);
         }
 
         Role role = resolverRole(request);
@@ -102,7 +103,7 @@ public class UsuarioService {
 
         if (!usuario.getEmail().equals(request.getEmail()) &&
                 usuarioRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessException("Email já está em uso");
+            throw new BusinessException(ExceptionMessages.EMAIL_JA_EM_USO);
         }
 
         Role role = resolverRole(request);
@@ -142,11 +143,10 @@ public class UsuarioService {
                 case GERENTE    -> Role.GERENTE;
                 case FINANCEIRO -> Role.FINANCEIRO;
                 case RECEPCIONISTA -> Role.RECEPCIONISTA;
-                // Área técnica: todos os profissionais clínicos
                 default         -> Role.TECNICO;
             };
         }
-        throw new BusinessException("Informe o cargo do profissional ou a role de acesso");
+        throw new BusinessException(ExceptionMessages.CARGO_OU_ROLE_OBRIGATORIO);
     }
 
     private Usuario findById(Long id) {

@@ -5,6 +5,7 @@ import com.clinica.api.dto.request.UsuarioRequest;
 import com.clinica.api.dto.response.AuthResponse;
 import com.clinica.api.entity.Usuario;
 import com.clinica.api.exception.BusinessException;
+import com.clinica.api.exception.ExceptionMessages;
 import com.clinica.api.repository.UsuarioRepository;
 import com.clinica.api.security.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +47,7 @@ public class AuthService {
 
     public AuthResponse registrar(UsuarioRequest request) {
         if (usuarioRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessException("Email já está em uso");
+            throw new BusinessException(ExceptionMessages.EMAIL_JA_EM_USO);
         }
 
         Usuario usuario = Usuario.builder()

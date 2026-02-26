@@ -5,6 +5,7 @@ import com.clinica.api.dto.response.PageResponse;
 import com.clinica.api.dto.response.PacienteResponse;
 import com.clinica.api.entity.Paciente;
 import com.clinica.api.exception.BusinessException;
+import com.clinica.api.exception.ExceptionMessages;
 import com.clinica.api.exception.ResourceNotFoundException;
 import com.clinica.api.repository.PacienteRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,11 +37,11 @@ public class PacienteService {
     @Transactional
     public PacienteResponse criar(PacienteRequest request) {
         if (pacienteRepository.existsByCpf(request.getCpf())) {
-            throw new BusinessException("CPF já cadastrado");
+            throw new BusinessException(ExceptionMessages.CPF_JA_CADASTRADO);
         }
         if (request.getEmail() != null && !request.getEmail().isBlank() &&
                 pacienteRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessException("Email já cadastrado");
+            throw new BusinessException(ExceptionMessages.EMAIL_JA_CADASTRADO);
         }
 
         Paciente paciente = toEntity(request);
@@ -53,7 +54,7 @@ public class PacienteService {
 
         if (!paciente.getCpf().equals(request.getCpf()) &&
                 pacienteRepository.existsByCpf(request.getCpf())) {
-            throw new BusinessException("CPF já cadastrado");
+            throw new BusinessException(ExceptionMessages.CPF_JA_CADASTRADO);
         }
 
         atualizarEntidade(paciente, request);

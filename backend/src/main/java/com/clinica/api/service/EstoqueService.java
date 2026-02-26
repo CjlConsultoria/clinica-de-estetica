@@ -9,6 +9,7 @@ import com.clinica.api.entity.Produto;
 import com.clinica.api.enums.StatusLote;
 import com.clinica.api.enums.TipoAlertaEstoque;
 import com.clinica.api.exception.BusinessException;
+import com.clinica.api.exception.ExceptionMessages;
 import com.clinica.api.exception.ResourceNotFoundException;
 import com.clinica.api.repository.AlertaEstoqueRepository;
 import com.clinica.api.repository.LoteProdutoRepository;
@@ -49,7 +50,7 @@ public class EstoqueService {
                 .orElseThrow(() -> new ResourceNotFoundException("Produto", request.getProdutoId()));
 
         if (request.getDataValidade().isBefore(LocalDate.now())) {
-            throw new BusinessException("Data de validade não pode ser no passado");
+            throw new BusinessException(ExceptionMessages.VALIDADE_PASSADA);
         }
 
         LoteProduto lote = LoteProduto.builder()
@@ -72,10 +73,10 @@ public class EstoqueService {
         LoteProduto lote = findLoteById(loteId);
 
         if (lote.getStatus() != StatusLote.ATIVO) {
-            throw new BusinessException("Lote não está ativo: " + lote.getStatus());
+            throw new BusinessException(String.format(ExceptionMessages.LOTE_INATIVO, lote.getStatus()));
         }
         if (lote.getQuantidadeAtual() < quantidade) {
-            throw new BusinessException("Estoque insuficiente. Disponível: " + lote.getQuantidadeAtual());
+            throw new BusinessException(String.format(ExceptionMessages.ESTOQUE_INSUFICIENTE, lote.getQuantidadeAtual()));
         }
 
         lote.setQuantidadeAtual(lote.getQuantidadeAtual() - quantidade);

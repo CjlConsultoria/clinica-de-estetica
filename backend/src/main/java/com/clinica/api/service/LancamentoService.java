@@ -9,6 +9,7 @@ import com.clinica.api.entity.Lancamento;
 import com.clinica.api.entity.Paciente;
 import com.clinica.api.enums.StatusPagamento;
 import com.clinica.api.exception.BusinessException;
+import com.clinica.api.exception.ExceptionMessages;
 import com.clinica.api.exception.ResourceNotFoundException;
 import com.clinica.api.repository.AgendamentoRepository;
 import com.clinica.api.repository.LancamentoRepository;
@@ -87,10 +88,10 @@ public class LancamentoService {
         Lancamento lancamento = findById(id);
 
         if (lancamento.getStatus() == StatusPagamento.PAGO) {
-            throw new BusinessException("Lançamento já está pago");
+            throw new BusinessException(ExceptionMessages.LANCAMENTO_JA_PAGO);
         }
         if (lancamento.getStatus() == StatusPagamento.CANCELADO) {
-            throw new BusinessException("Lançamento está cancelado");
+            throw new BusinessException(ExceptionMessages.LANCAMENTO_CANCELADO);
         }
 
         lancamento.setStatus(StatusPagamento.PAGO);
@@ -113,7 +114,7 @@ public class LancamentoService {
         Lancamento lancamento = findById(id);
 
         if (lancamento.getStatus() == StatusPagamento.PAGO) {
-            throw new BusinessException("Não é possível cancelar um lançamento pago. Use estorno.");
+            throw new BusinessException(ExceptionMessages.LANCAMENTO_NAO_CANCELAVEL);
         }
 
         lancamento.setStatus(StatusPagamento.CANCELADO);
