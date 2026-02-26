@@ -375,16 +375,7 @@ export default function Profissionais() {
   const [isEditing,            setIsEditing]            = useState(false);
   const [currentPage,          setCurrentPage]          = useState(1);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.__profissionais__ = profissionais.map(p => ({
-        email: p.email,
-        cargo: p.cargo,
-        customPermissions: p.customPermissions,
-      }));
-    }
-  }, [profissionais]);
-
+  
   const step1Validation = useSequentialValidation<Step1Field>([
     { key: 'nome',     validate: (v) => !v.trim() ? 'Nome completo é obrigatório' : null },
     { key: 'email',    validate: (v) => { const err = validateEmail(v); return err ? err.message : null; } },

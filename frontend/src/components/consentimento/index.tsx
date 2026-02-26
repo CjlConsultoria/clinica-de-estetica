@@ -116,16 +116,13 @@ function isFormDirty(form: TermoForm): boolean {
   );
 }
 
-// Tipo para controlar qual aba está ativa
 type ActiveTab = 'termos' | 'consentimento';
 
 export default function Consentimento() {
   const { can, isSuperAdmin } = usePermissions();
 
-  // ── Aba ativa ───────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<ActiveTab>('termos');
 
-  // ── Estados da tabela ───────────────────────────────────────────────────
   const [search,        setSearch]        = useState('');
   const [filterStat,    setFilterStat]    = useState('Todos');
   const [openDropStat,  setOpenDropStat]  = useState(false);
@@ -140,8 +137,6 @@ export default function Consentimento() {
   const [showCancelModal,  setShowCancelModal]  = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-
-  // ── Estados da aba de edição do texto do consentimento ──────────────────
   const [consentimentoText,    setConsentimentoText]    = useState(DEFAULT_CONSENTIMENTO_TEXT);
   const [backupConsentimento,  setBackupConsentimento]  = useState('');
   const [isEditingConsent,     setIsEditingConsent]     = useState(false);
@@ -155,7 +150,6 @@ export default function Consentimento() {
   const [consentErrorModalOpen,   setConsentErrorModalOpen]   = useState(false);
   const [consentErrorMessage,     setConsentErrorMessage]     = useState('');
 
-  // ── Scroll refs ─────────────────────────────────────────────────────────
   const consentTextareaRef  = useRef<HTMLTextAreaElement>(null);
   const consentDisplayRef   = useRef<HTMLDivElement>(null);
   const consentThumbRef     = useRef<HTMLDivElement>(null);
@@ -164,11 +158,8 @@ export default function Consentimento() {
   const { errors, validate, clearError, clearAll } =
     useSequentialValidation<TermoField>(VALIDATION_FIELDS);
 
-  if (!isSuperAdmin && !can('consentimento.read')) return <AccessDenied />;
-
   const canCreate = isSuperAdmin || can('consentimento.create');
 
-  // ── Scroll helpers ──────────────────────────────────────────────────────
   function updateConsentThumb(el: HTMLElement, thumb: HTMLElement) {
     const ratio = el.clientHeight / el.scrollHeight;
     const h     = Math.max(30, ratio * el.clientHeight);
@@ -209,6 +200,8 @@ export default function Consentimento() {
     const tRef = isEditingConsent ? consentThumbRefEdit.current : consentThumbRef.current;
     if (el && tRef) setTimeout(() => updateConsentThumb(el, tRef), 50);
   }, [isEditingConsent, consentimentoText]);
+
+  if (!isSuperAdmin && !can('consentimento.read')) return <AccessDenied />;
 
   function startConsentEdit() {
     setBackupConsentimento(consentimentoText);

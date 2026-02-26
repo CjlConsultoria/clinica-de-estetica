@@ -3,7 +3,6 @@ import localFont from 'next/font/local';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { StyledComponentsRegistry } from '@/components/StyledComponentsRegistry';
 import LayoutWrapper from '@/components/LayoutWrapper';
-import DebugPanelWrapper from '@/components/ui/DebugPanelWrapper';
 import PaymentGuard from '@/components/ui/PaymentGuard';
 import './globals.css';
 
@@ -36,7 +35,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </PaymentGuard>
             </LayoutWrapper>
 
-            <DebugPanelWrapper />
           </AuthProvider>
         </StyledComponentsRegistry>
       </body>
