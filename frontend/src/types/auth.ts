@@ -1,9 +1,6 @@
 export type Role =
   | 'super_admin'
-<<<<<<< HEAD
-=======
   | 'company_admin'
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   | 'gerente'
   | 'tecnico'
   | 'recepcionista'
@@ -29,13 +26,9 @@ export type Permission =
   | '*';
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-<<<<<<< HEAD
-  super_admin: ['*'],
-=======
   super_admin:   ['*'],
   company_admin: ['*'],
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   gerente: [
     'dashboard.read',
     'profissionais.read', 'profissionais.create', 'profissionais.edit',
@@ -100,10 +93,7 @@ export const CARGO_ROLE_MAP: Record<string, Role> = {
 
 export const ROLE_LABELS: Record<Role, string> = {
   super_admin:   'Super Admin',
-<<<<<<< HEAD
-=======
   company_admin: 'Admin',
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   gerente:       'Gerente',
   tecnico:       'Técnico',
   recepcionista: 'Recepcionista',
@@ -112,18 +102,13 @@ export const ROLE_LABELS: Record<Role, string> = {
 
 export const ROLE_COLORS: Record<Role, { bg: string; color: string }> = {
   super_admin:   { bg: '#1b1b1b', color: '#EBD5B0' },
-<<<<<<< HEAD
-=======
   company_admin: { bg: '#1a2b1a', color: '#7ecb7e' },
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   gerente:       { bg: '#e8f0fd', color: '#3a6bc9' },
   tecnico:       { bg: '#f0e8fd', color: '#7a3ac9' },
   recepcionista: { bg: '#fdf8e8', color: '#c9b03a' },
   financeiro:    { bg: '#e8fdf8', color: '#3ac9a8' },
 };
 
-<<<<<<< HEAD
-=======
 export interface Company {
   id: string;
   name: string;
@@ -140,7 +125,6 @@ export const MOCK_COMPANIES: CompanyWithPayment[] = [
   { id: 'empresa_b', name: 'Clínica Estética B', paymentStatus: 'vencido' },
 ];
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 export interface CurrentUser {
   id: number;
   name: string;
@@ -148,7 +132,6 @@ export interface CurrentUser {
   role: Role;
   cargo: string;
   area: 'tecnica' | 'administrativa' | 'sistema';
-<<<<<<< HEAD
 }
 
 export const MOCK_USERS: CurrentUser[] = [
@@ -157,22 +140,4 @@ export const MOCK_USERS: CurrentUser[] = [
   { id: 1, name: 'Ana Beatriz',    email: 'ana.lima@clinica.com',     role: 'tecnico',       cargo: 'esteticista',   area: 'tecnica'        },
   { id: 4, name: 'Rafael Costa',   email: 'rafael.costa@clinica.com', role: 'recepcionista', cargo: 'recepcionista', area: 'administrativa' },
   { id: 9, name: 'Camila Rocha',   email: 'camila.rocha@clinica.com', role: 'financeiro',    cargo: 'financeiro',    area: 'administrativa' },
-=======
-  companyId: string | null;
-}
-
-export const MOCK_USERS: CurrentUser[] = [
-  { id: 0,  name: 'Super Admin',     email: 'admin@sistema.com',           role: 'super_admin',   cargo: 'super_admin',   area: 'sistema',        companyId: null        },
-
-  { id: 10, name: 'Admin Empresa A', email: 'admin@empresa-a.com',         role: 'company_admin', cargo: 'company_admin', area: 'administrativa', companyId: 'empresa_a' },
-  { id: 11, name: 'Admin Empresa B', email: 'admin@empresa-b.com',         role: 'company_admin', cargo: 'company_admin', area: 'administrativa', companyId: 'empresa_b' },
-
-  { id: 6,  name: 'Patricia Gomes',  email: 'patricia.g@clinica.com',      role: 'gerente',       cargo: 'gerente',       area: 'administrativa', companyId: 'empresa_a' },
-  { id: 1,  name: 'Ana Beatriz',     email: 'ana.lima@clinica.com',        role: 'tecnico',       cargo: 'esteticista',   area: 'tecnica',        companyId: 'empresa_a' },
-  { id: 4,  name: 'Rafael Costa',    email: 'rafael.costa@clinica.com',    role: 'recepcionista', cargo: 'recepcionista', area: 'administrativa', companyId: 'empresa_a' },
-  { id: 9,  name: 'Camila Rocha',    email: 'camila.rocha@clinica.com',    role: 'financeiro',    cargo: 'financeiro',    area: 'administrativa', companyId: 'empresa_a' },
-
-  { id: 20, name: 'João Silva',      email: 'joao.silva@empresa-b.com',    role: 'gerente',       cargo: 'gerente',       area: 'administrativa', companyId: 'empresa_b' },
-  { id: 21, name: 'Lucia Ferreira',  email: 'lucia.f@empresa-b.com',      role: 'tecnico',       cargo: 'biomedico',     area: 'tecnica',        companyId: 'empresa_b' },
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 ];

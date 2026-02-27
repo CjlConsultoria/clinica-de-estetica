@@ -267,7 +267,6 @@ export const Badge = styled.span<{ $bg?: string; $color?: string }>`
   }
 `;
 
-
 export const PatientsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -275,10 +274,6 @@ export const PatientsGrid = styled.div`
   gap: 20px;
   height: 720px;
   align-items: stretch;
-<<<<<<< HEAD
-  @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); height: auto; }
-  @media (max-width: 640px) { grid-template-columns: 1fr; height: auto; }
-=======
 
   @media (max-width: 1024px) {
     grid-template-columns: repeat(2, 1fr);
@@ -297,7 +292,6 @@ export const PatientsGrid = styled.div`
     height: auto;
     gap: 12px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PatientFotoCard = styled.div`
@@ -309,9 +303,6 @@ export const PatientFotoCard = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
-<<<<<<< HEAD
-  &:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
-=======
 
   &:hover {
     transform: translateY(-2px);
@@ -321,7 +312,6 @@ export const PatientFotoCard = styled.div`
   @media (max-width: 768px) {
     border-radius: 12px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PatientCardHeader = styled.div`
@@ -331,14 +321,11 @@ export const PatientCardHeader = styled.div`
   padding: 18px 20px 14px;
   border-bottom: 1px solid #f5f5f5;
   flex-shrink: 0;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     padding: 14px 16px 12px;
     gap: 10px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PatientAvatar = styled.div<{ $color: string }>`
@@ -389,11 +376,6 @@ export const PatientCardBody = styled.div`
   overflow-x: hidden;
   scrollbar-width: thin;
   scrollbar-color: #e0d4c8 transparent;
-<<<<<<< HEAD
-  &::-webkit-scrollbar { width: 4px; }
-  &::-webkit-scrollbar-track { background: transparent; }
-  &::-webkit-scrollbar-thumb { background: #e0d4c8; border-radius: 4px; }
-=======
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -411,7 +393,6 @@ export const PatientCardBody = styled.div`
   @media (max-width: 480px) {
     padding: 10px 12px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PatientCardFooter = styled.div`
@@ -422,14 +403,11 @@ export const PatientCardFooter = styled.div`
   border-top: 1px solid #f5f5f5;
   flex-shrink: 0;
   background: white;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     padding: 8px 12px;
     gap: 6px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const FotoGrid = styled.div`
@@ -437,13 +415,10 @@ export const FotoGrid = styled.div`
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   width: 100%;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     gap: 8px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const FotoItem = styled.div`
@@ -513,8 +488,6 @@ export const WizardNav = styled.div`
   justify-content: space-between;
   align-items: center;
   width: 100%;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     gap: 10px;
@@ -523,24 +496,17 @@ export const WizardNav = styled.div`
       flex: 1;
     }
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const FormGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-<<<<<<< HEAD
-  @media (max-width: 560px) { grid-template-columns: 1fr; }
-`;
-
-=======
 
   @media (max-width: 560px) {
     grid-template-columns: 1fr;
   }
 `;
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 
 export const UploadZone = styled.div`
   border: 2px dashed #e0d4c8;
@@ -556,9 +522,6 @@ export const UploadZone = styled.div`
   align-items: center;
   justify-content: center;
   overflow: hidden;
-<<<<<<< HEAD
-  &:hover { border-color: #BBA188; background: #fdf5ef; }
-=======
 
   &:hover {
     border-color: #BBA188;
@@ -570,7 +533,6 @@ export const UploadZone = styled.div`
     min-height: 120px;
     border-radius: 10px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const UploadPreview = styled.img`
@@ -578,21 +540,16 @@ export const UploadPreview = styled.img`
   max-width: 100%;
   object-fit: contain;
   border-radius: 8px;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     max-height: 160px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const UploadIcon = styled.div`
   color: #BBA188;
   margin-bottom: 12px;
   opacity: 0.7;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     margin-bottom: 8px;
@@ -602,33 +559,26 @@ export const UploadIcon = styled.div`
       height: 32px;
     }
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const UploadText = styled.div`
   font-size: 0.9rem;
   color: #666;
   font-weight: 500;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     font-size: 0.82rem;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const UploadHint = styled.div`
   font-size: 0.78rem;
   color: #bbb;
   margin-top: 4px;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     font-size: 0.72rem;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 /* ─── Comparar ─── */
@@ -688,9 +638,6 @@ export const CompareImg = styled.div<{ $color: string; $hasImage?: boolean }>`
   cursor: pointer;
   transition: all 0.2s;
   overflow: hidden;
-<<<<<<< HEAD
-  &:hover { opacity: 1; background: ${({ $color, $hasImage }) => $hasImage ? 'transparent' : `${$color}18`}; }
-=======
 
   &:hover {
     opacity: 1;
@@ -707,7 +654,6 @@ export const CompareImg = styled.div<{ $color: string; $hasImage?: boolean }>`
       height: 36px;
     }
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const SavedBanner = styled.div`
@@ -723,21 +669,13 @@ export const SavedBanner = styled.div`
   font-weight: 600;
   margin-bottom: 16px;
   animation: fadeIn 0.3s ease;
-<<<<<<< HEAD
-=======
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-6px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 `;
 
-<<<<<<< HEAD
-/* ─────────────── Paginação ─────────────── */
-
-=======
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 export const PaginationWrapper = styled.div`
   display: flex;
   align-items: center;
@@ -745,11 +683,6 @@ export const PaginationWrapper = styled.div`
   gap: 16px;
   padding: 14px 20px;
   border-top: 1px solid #f0ebe4;
-<<<<<<< HEAD
-  /* sempre visível mesmo com 1 página */
-  min-height: 56px;
-  flex-shrink: 0;
-=======
   min-height: 56px;
   flex-shrink: 0;
 
@@ -758,7 +691,6 @@ export const PaginationWrapper = styled.div`
     padding: 12px 14px;
     justify-content: space-between;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PaginationInfo = styled.span`
@@ -766,26 +698,20 @@ export const PaginationInfo = styled.span`
   color: #999;
   font-weight: 400;
   white-space: nowrap;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     font-size: 0.72rem;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PaginationControls = styled.div`
   display: flex;
   align-items: center;
   gap: 4px;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     gap: 2px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PageButton = styled.button<{ $active?: boolean }>`
@@ -807,15 +733,12 @@ export const PageButton = styled.button<{ $active?: boolean }>`
     background: ${({ $active }) => ($active ? '#BBA188' : 'rgba(187,161,136,0.12)')};
     color: ${({ $active }) => ($active ? '#ffffff' : '#BBA188')};
   }
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     width: 28px;
     height: 28px;
     font-size: 0.74rem;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PageEllipsis = styled.span`
@@ -827,15 +750,12 @@ export const PageEllipsis = styled.span`
   font-size: 0.85rem;
   color: #bbb;
   user-select: none;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     width: 24px;
     height: 28px;
     font-size: 0.75rem;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PaginationArrow = styled.button`
@@ -859,12 +779,9 @@ export const PaginationArrow = styled.button`
     color: #ddd;
     cursor: not-allowed;
   }
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     width: 28px;
     height: 28px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;

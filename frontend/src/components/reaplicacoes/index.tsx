@@ -1,14 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
 import StatCard from '@/components/ui/statcard';
-import { listarAplicacoesVencendo, AplicacaoVencendoResponse } from '@/services/reaplicacoesApi';
-import ErrorModal from '@/components/modals/errorModal';
-import { getApiErrorMessage } from '@/utils/apiError';
 import {
   Container, Header, Title, StatsGrid, Controls,
   SearchBarWrapper, SearchIconWrap, SearchInputStyled,
@@ -19,39 +16,11 @@ import {
   EmptyState,
   CardsGrid, ReapCard, ReapCardHeader, ReapAvatar, ReapPatientName, ReapPatientSub,
   ReapCardBody, ReapRow, ReapLabel, ReapValue, ReapDaysTag, ReapCardFooter,
-<<<<<<< HEAD
-=======
   ProgressBarOuter, ProgressBarInner,
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   CardsContainer, TableContainer,
   PaginationWrapper, PaginationInfo, PaginationControls,
   PageButton, PageEllipsis, PaginationArrow,
 } from './styles';
-
-interface Reap {
-  id: number;
-  paciente: string;
-  initials: string;
-  procedimento: string;
-  ultimaData: string;
-  proximaData: string | null;
-  profissional: string;
-}
-
-function mapAplicacao(a: AplicacaoVencendoResponse): Reap {
-  const words = a.pacienteNome.trim().split(' ');
-  const initials = ((words[0]?.[0] ?? '') + (words[1]?.[0] ?? '')).toUpperCase();
-  const [y, m, d] = a.dataAplicacao.split('-');
-  return {
-    id: a.id,
-    paciente: a.pacienteNome,
-    initials,
-    procedimento: a.produtoNome,
-    ultimaData: `${d}/${m}/${y}`,
-    proximaData: a.dataProximaAplicacao,
-    profissional: '—',
-  };
-}
 
 const procedureOptions = [
   { value: 'botox',            label: 'Botox Facial'         },
@@ -62,12 +31,11 @@ const procedureOptions = [
   { value: 'toxina',           label: 'Toxina Botulínica'     },
 ];
 
-const filterStatus     = ['Todos', 'Urgente', 'Esta semana', 'Este mês'];
+const filterStatus     = ['Todos', 'Urgente', 'Esta semana', 'Este mês', 'Agendado'];
 const filterProcedures = ['Todos', 'Botox', 'Preenchimento', 'Bioestimulador', 'Fio PDO', 'Microagulhamento'];
 const avatarColors     = ['#BBA188', '#a8906f', '#1b1b1b', '#8a7560', '#EBD5B0'];
 
-function diasRestantes(data: string | null): number {
-  if (!data) return 9999;
+function diasRestantes(data: string): number {
   return Math.ceil((new Date(data).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 }
 
@@ -79,10 +47,6 @@ function getUrgencia(dias: number): { label: string; color: string; bg: string }
   return                 { label: 'Programado',  color: '#666',    bg: '#f5f5f5' };
 }
 
-<<<<<<< HEAD
-const CARDS_PER_PAGE = 6;
-const TABLE_PER_PAGE = 10;
-=======
 const mockReaplicacoes = [
   { id: 1, paciente: 'Ana Beatriz Costa',  initials: 'AB', procedimento: 'Botox Facial',        ultimaData: '18/10/2024', proximaData: '2025-02-25', intervaloDias: 120, profissional: 'Maria Oliveira',  telefone: '(11) 98765-4321', email: 'ana.costa@email.com',    agendado: false },
   { id: 2, paciente: 'Carla Mendonça',     initials: 'CM', procedimento: 'Preenchimento Labial', ultimaData: '15/11/2024', proximaData: '2025-03-15', intervaloDias: 120, profissional: 'Maria Oliveira',  telefone: '(11) 97654-3210', email: 'carla.m@email.com',      agendado: true  },
@@ -91,23 +55,8 @@ const mockReaplicacoes = [
   { id: 5, paciente: 'Juliana Rocha',      initials: 'JR', procedimento: 'Botox Facial',         ultimaData: '05/11/2024', proximaData: '2025-03-05', intervaloDias: 120, profissional: 'Maria Oliveira',  telefone: '(21) 94321-0987', email: 'juliana.r@email.com',    agendado: true  },
   { id: 6, paciente: 'Patrícia Alves',     initials: 'PA', procedimento: 'Microagulhamento',     ultimaData: '20/01/2025', proximaData: '2025-04-20', intervaloDias: 90,  profissional: 'Beatriz Santos',  telefone: '(31) 93210-9876', email: 'patricia.a@email.com',   agendado: false },
 ];
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 
-function getVisiblePages(currentPage: number, totalPages: number): (number | '...')[] {
-  if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
-  const pages: (number | '...')[] = [];
-  const half = 2;
-  let start = Math.max(2, currentPage - half);
-  let end   = Math.min(totalPages - 1, currentPage + half);
-  if (currentPage <= half + 1) end   = Math.min(totalPages - 1, 4);
-  if (currentPage >= totalPages - half) start = Math.max(2, totalPages - 3);
-  pages.push(1);
-  if (start > 2) pages.push('...');
-  for (let i = start; i <= end; i++) pages.push(i);
-  if (end < totalPages - 1) pages.push('...');
-  if (totalPages > 1) pages.push(totalPages);
-  return pages;
-}
+type Reap = typeof mockReaplicacoes[0];
 
 const CARDS_PER_PAGE = 6;
 const TABLE_PER_PAGE = 10;
@@ -129,13 +78,6 @@ function getVisiblePages(currentPage: number, totalPages: number): (number | '..
 }
 
 export default function Reaplicacoes() {
-<<<<<<< HEAD
-  const [reaplicacoes, setReaplicacoes] = useState<Reap[]>([]);
-  const [loading,      setLoading]      = useState(true);
-  const [errorMsg,     setErrorMsg]     = useState('');
-  const [isErrorOpen,  setIsErrorOpen]  = useState(false);
-=======
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   const [search,       setSearch]       = useState('');
   const [filterStat,   setFilterStat]   = useState('Todos');
   const [filterProc,   setFilterProc]   = useState('Todos');
@@ -146,31 +88,15 @@ export default function Reaplicacoes() {
   const [selected,     setSelected]     = useState<Reap | null>(null);
   const [currentPage,  setCurrentPage]  = useState(1);
 
-  function showError(err: unknown, context: string) {
-    setErrorMsg(getApiErrorMessage(err, context));
-    setIsErrorOpen(true);
-  }
-
-  useEffect(() => {
-    listarAplicacoesVencendo(60)
-      .then(list => setReaplicacoes(list.map(mapAplicacao)))
-      .catch(err => showError(err, 'carregar reaplicações'))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const filtered = reaplicacoes.filter(r => {
+  const filtered = mockReaplicacoes.filter(r => {
     const matchSearch = r.paciente.toLowerCase().includes(search.toLowerCase()) || r.procedimento.toLowerCase().includes(search.toLowerCase());
     const dias        = diasRestantes(r.proximaData);
     const matchStat   =
       filterStat === 'Todos'        ||
       (filterStat === 'Urgente'     && dias <= 7)               ||
       (filterStat === 'Esta semana' && dias > 7  && dias <= 14) ||
-<<<<<<< HEAD
-      (filterStat === 'Este mês'    && dias > 14 && dias <= 30);
-=======
       (filterStat === 'Este mês'    && dias > 14 && dias <= 30) ||
       (filterStat === 'Agendado'    && r.agendado);
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
     const matchProc = filterProc === 'Todos' || r.procedimento.toLowerCase().includes(filterProc.toLowerCase());
     return matchSearch && matchStat && matchProc;
   });
@@ -180,10 +106,7 @@ export default function Reaplicacoes() {
   const safePageCards     = Math.min(currentPage, totalPagesCards);
   const startIdxCards     = (safePageCards - 1) * CARDS_PER_PAGE;
   const paginatedCards    = filtered.slice(startIdxCards, startIdxCards + CARDS_PER_PAGE);
-<<<<<<< HEAD
-=======
   const startItemCards    = filtered.length === 0 ? 0 : startIdxCards + 1;
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   const visiblePagesCards = getVisiblePages(safePageCards, totalPagesCards);
 
   /* paginação tabela */
@@ -191,18 +114,6 @@ export default function Reaplicacoes() {
   const safePageTable     = Math.min(currentPage, totalPagesTable);
   const startIdxTable     = (safePageTable - 1) * TABLE_PER_PAGE;
   const paginatedTable    = filtered.slice(startIdxTable, startIdxTable + TABLE_PER_PAGE);
-<<<<<<< HEAD
-  const visiblePagesTable = getVisiblePages(safePageTable, totalPagesTable);
-
-  const urgentes   = reaplicacoes.filter(r => diasRestantes(r.proximaData) <= 7).length;
-  const estaSemana = reaplicacoes.filter(r => { const d = diasRestantes(r.proximaData); return d > 7  && d <= 14; }).length;
-  const esteMes    = reaplicacoes.filter(r => { const d = diasRestantes(r.proximaData); return d > 14 && d <= 30; }).length;
-
-  function handleSearchChange(v: string) { setSearch(v);      setCurrentPage(1); }
-  function handleFilterStat(v: string)   { setFilterStat(v);  setCurrentPage(1); setOpenDropStat(false); }
-  function handleFilterProc(v: string)   { setFilterProc(v);  setCurrentPage(1); setOpenDropProc(false); }
-  function handleClearFilters()          { setFilterStat('Todos'); setFilterProc('Todos'); setCurrentPage(1); }
-=======
   const startItemTable    = filtered.length === 0 ? 0 : startIdxTable + 1;
   const visiblePagesTable = getVisiblePages(safePageTable, totalPagesTable);
 
@@ -210,7 +121,6 @@ export default function Reaplicacoes() {
   const estaSemana = mockReaplicacoes.filter(r => { const d = diasRestantes(r.proximaData); return d > 7  && d <= 14; }).length;
   const esteMes    = mockReaplicacoes.filter(r => { const d = diasRestantes(r.proximaData); return d > 14 && d <= 30; }).length;
   const agendados  = mockReaplicacoes.filter(r => r.agendado).length;
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 
   function handleSearchChange(v: string) { setSearch(v);      setCurrentPage(1); }
   function handleFilterStat(v: string)   { setFilterStat(v);  setCurrentPage(1); setOpenDropStat(false); }
@@ -235,16 +145,16 @@ export default function Reaplicacoes() {
       )}
 
       <StatsGrid>
-        <StatCard label="Urgentes (≤ 7 dias)" value={loading ? 0 : urgentes} color="#e74c3c" trend={{ value: 'Contatar hoje!', positive: false }}
+        <StatCard label="Urgentes (≤ 7 dias)" value={urgentes} color="#e74c3c" trend={{ value: 'Contatar hoje!', positive: false }}
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>}
         />
-        <StatCard label="Esta semana (8–14d)" value={loading ? 0 : estaSemana} color="#d4a84b"
+        <StatCard label="Esta semana (8–14d)" value={estaSemana} color="#d4a84b"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>}
         />
-        <StatCard label="Este mês (15–30d)" value={loading ? 0 : esteMes} color="#BBA188"
+        <StatCard label="Este mês (15–30d)" value={esteMes} color="#BBA188"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>}
         />
-        <StatCard label="Total Pendentes" value={loading ? 0 : reaplicacoes.length} color="#8a7560"
+        <StatCard label="Já Agendados" value={agendados} color="#8a7560"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>}
         />
       </StatsGrid>
@@ -307,13 +217,7 @@ export default function Reaplicacoes() {
       {view === 'cards' ? (
         <CardsContainer>
           <div style={{ padding: 20, flex: 1, overflow: 'hidden' }}>
-<<<<<<< HEAD
-            {loading ? (
-              <EmptyState><h3>Carregando reaplicações...</h3></EmptyState>
-            ) : filtered.length === 0 ? (
-=======
             {filtered.length === 0 ? (
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
               <EmptyState>
                 <h3>Nenhuma reaplicação encontrada</h3>
                 <p>Tente ajustar os filtros ou a busca.</p>
@@ -321,14 +225,9 @@ export default function Reaplicacoes() {
             ) : (
               <CardsGrid>
                 {paginatedCards.map((r, i) => {
-<<<<<<< HEAD
-                  const dias = diasRestantes(r.proximaData);
-                  const urg  = getUrgencia(dias);
-=======
                   const dias    = diasRestantes(r.proximaData);
                   const urg     = getUrgencia(dias);
                   const progPct = Math.max(0, Math.min(100, 100 - (dias / r.intervaloDias) * 100));
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
                   return (
                     <ReapCard key={r.id} $urgente={dias <= 7}>
                       <ReapCardHeader>
@@ -338,17 +237,6 @@ export default function Reaplicacoes() {
                           <ReapPatientSub>{r.procedimento}</ReapPatientSub>
                         </div>
                         <ReapDaysTag $color={urg.color} $bg={urg.bg}>
-<<<<<<< HEAD
-                          {r.proximaData === null ? '—' : dias < 0 ? `${Math.abs(dias)}d atrasado` : `${dias}d`}
-                        </ReapDaysTag>
-                      </ReapCardHeader>
-                      <ReapCardBody>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#bbb', marginBottom: 12 }}>
-                          <span>Última: {r.ultimaData}</span>
-                          <span>Próxima: {r.proximaData ? r.proximaData.split('-').reverse().join('/') : '—'}</span>
-                        </div>
-                        <ReapRow><ReapLabel>Profissional</ReapLabel><ReapValue>{r.profissional}</ReapValue></ReapRow>
-=======
                           {dias < 0 ? `${Math.abs(dias)}d atrasado` : `${dias}d`}
                         </ReapDaysTag>
                       </ReapCardHeader>
@@ -362,16 +250,10 @@ export default function Reaplicacoes() {
                         </div>
                         <ReapRow><ReapLabel>Profissional</ReapLabel><ReapValue>{r.profissional}</ReapValue></ReapRow>
                         <ReapRow><ReapLabel>Intervalo</ReapLabel><ReapValue>{r.intervaloDias} dias</ReapValue></ReapRow>
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
                         <ReapRow>
                           <ReapLabel>Status</ReapLabel>
                           <ReapValue><Badge $bg={urg.bg} $color={urg.color}>{urg.label}</Badge></ReapValue>
                         </ReapRow>
-<<<<<<< HEAD
-                      </ReapCardBody>
-                      <ReapCardFooter>
-                        <Button variant="outline" size="sm" onClick={() => { setSelected(r); setIsModalOpen(true); }}>Agendar</Button>
-=======
                         {r.agendado && (
                           <ReapRow>
                             <ReapLabel />
@@ -384,7 +266,6 @@ export default function Reaplicacoes() {
                         <a href={`tel:${r.telefone}`} style={{ textDecoration: 'none' }}>
                           <Button variant="ghost" size="sm" icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 9.79 19.79 19.79 0 0 1 1.69 1.11a2 2 0 0 1 2-2.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>}>Ligar</Button>
                         </a>
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
                       </ReapCardFooter>
                     </ReapCard>
                   );
@@ -401,24 +282,17 @@ export default function Reaplicacoes() {
               }
             </PaginationInfo>
             <PaginationControls>
-<<<<<<< HEAD
-              <PaginationArrow onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={safePageCards <= 1} aria-label="Página anterior">
-=======
               <PaginationArrow
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={safePageCards <= 1}
                 aria-label="Página anterior"
               >
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
               </PaginationArrow>
               {visiblePagesCards.map((page, idx) =>
                 page === '...' ? (
                   <PageEllipsis key={`ellipsis-${idx}`}>…</PageEllipsis>
                 ) : (
-<<<<<<< HEAD
-                  <PageButton key={page} $active={page === safePageCards} onClick={() => setCurrentPage(page as number)} aria-label={`Página ${page}`}>
-=======
                   <PageButton
                     key={page}
                     $active={page === safePageCards}
@@ -426,20 +300,15 @@ export default function Reaplicacoes() {
                     aria-label={`Página ${page}`}
                     aria-current={page === safePageCards ? 'page' : undefined}
                   >
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
                     {page}
                   </PageButton>
                 )
               )}
-<<<<<<< HEAD
-              <PaginationArrow onClick={() => setCurrentPage(p => Math.min(totalPagesCards, p + 1))} disabled={safePageCards >= totalPagesCards} aria-label="Próxima página">
-=======
               <PaginationArrow
                 onClick={() => setCurrentPage(p => Math.min(totalPagesCards, p + 1))}
                 disabled={safePageCards >= totalPagesCards}
                 aria-label="Próxima página"
               >
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
               </PaginationArrow>
             </PaginationControls>
@@ -451,22 +320,6 @@ export default function Reaplicacoes() {
             <Table>
               <Thead>
                 <tr>
-<<<<<<< HEAD
-                  <Th $width="22%">Paciente</Th>
-                  <Th $width="20%">Procedimento</Th>
-                  <Th $width="13%">Última Sessão</Th>
-                  <Th $width="13%">Próxima Data</Th>
-                  <Th $width="8%">Dias Rest.</Th>
-                  <Th $width="14%">Profissional</Th>
-                  <Th $width="10%">Status</Th>
-                </tr>
-              </Thead>
-              <Tbody>
-                {loading ? (
-                  <tr><Td colSpan={7} style={{ textAlign: 'center', padding: '48px 0', color: '#bbb' }}>Carregando reaplicações...</Td></tr>
-                ) : filtered.length === 0 ? (
-                  <tr><Td colSpan={7} style={{ textAlign: 'center', padding: '48px 0', color: '#bbb' }}>Nenhuma reaplicação encontrada.</Td></tr>
-=======
                   <Th $width="20%">Paciente</Th>
                   <Th $width="18%">Procedimento</Th>
                   <Th $width="12%">Última Sessão</Th>
@@ -484,7 +337,6 @@ export default function Reaplicacoes() {
                       Nenhuma reaplicação encontrada.
                     </Td>
                   </tr>
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
                 ) : paginatedTable.map(r => {
                   const dias = diasRestantes(r.proximaData);
                   const urg  = getUrgencia(dias);
@@ -493,12 +345,6 @@ export default function Reaplicacoes() {
                       <Td style={{ fontWeight: 600, color: '#1a1a1a' }}>{r.paciente}</Td>
                       <Td><Badge $bg="rgba(187,161,136,0.15)" $color="#BBA188">{r.procedimento}</Badge></Td>
                       <Td style={{ color: '#888' }}>{r.ultimaData}</Td>
-<<<<<<< HEAD
-                      <Td style={{ fontWeight: 600, color: dias <= 7 ? '#c0392b' : '#1a1a1a' }}>{r.proximaData ? r.proximaData.split('-').reverse().join('/') : '—'}</Td>
-                      <Td><span style={{ fontWeight: 700, color: urg.color }}>{r.proximaData === null ? '—' : dias < 0 ? `${Math.abs(dias)}d atrás` : `${dias}d`}</span></Td>
-                      <Td>{r.profissional}</Td>
-                      <Td><Badge $bg={urg.bg} $color={urg.color}>{urg.label}</Badge></Td>
-=======
                       <Td style={{ fontWeight: 600, color: dias <= 7 ? '#c0392b' : '#1a1a1a' }}>{r.proximaData.split('-').reverse().join('/')}</Td>
                       <Td><span style={{ fontWeight: 700, color: urg.color }}>{dias < 0 ? `${Math.abs(dias)}d atrás` : `${dias}d`}</span></Td>
                       <Td>{r.profissional}</Td>
@@ -515,7 +361,6 @@ export default function Reaplicacoes() {
                           </IconBtn>
                         </ActionGroup>
                       </Td>
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
                     </Tr>
                   );
                 })}
@@ -531,24 +376,17 @@ export default function Reaplicacoes() {
               }
             </PaginationInfo>
             <PaginationControls>
-<<<<<<< HEAD
-              <PaginationArrow onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={safePageTable <= 1} aria-label="Página anterior">
-=======
               <PaginationArrow
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={safePageTable <= 1}
                 aria-label="Página anterior"
               >
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
               </PaginationArrow>
               {visiblePagesTable.map((page, idx) =>
                 page === '...' ? (
                   <PageEllipsis key={`ellipsis-${idx}`}>…</PageEllipsis>
                 ) : (
-<<<<<<< HEAD
-                  <PageButton key={page} $active={page === safePageTable} onClick={() => setCurrentPage(page as number)} aria-label={`Página ${page}`}>
-=======
                   <PageButton
                     key={page}
                     $active={page === safePageTable}
@@ -556,20 +394,15 @@ export default function Reaplicacoes() {
                     aria-label={`Página ${page}`}
                     aria-current={page === safePageTable ? 'page' : undefined}
                   >
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
                     {page}
                   </PageButton>
                 )
               )}
-<<<<<<< HEAD
-              <PaginationArrow onClick={() => setCurrentPage(p => Math.min(totalPagesTable, p + 1))} disabled={safePageTable >= totalPagesTable} aria-label="Próxima página">
-=======
               <PaginationArrow
                 onClick={() => setCurrentPage(p => Math.min(totalPagesTable, p + 1))}
                 disabled={safePageTable >= totalPagesTable}
                 aria-label="Próxima página"
               >
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
               </PaginationArrow>
             </PaginationControls>
@@ -585,18 +418,14 @@ export default function Reaplicacoes() {
         footer={
           <>
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-<<<<<<< HEAD
-            <Button variant="primary" onClick={() => setIsModalOpen(false)}>Confirmar</Button>
-=======
             <Button variant="primary">Confirmar</Button>
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
           </>
         }
       >
         <FormGrid>
           <div style={{ gridColumn: 'span 2', padding: '12px 16px', background: '#fdf9f5', borderRadius: 10, border: '1px solid #f0ebe4', fontSize: '0.88rem', color: '#666' }}>
             <strong style={{ color: '#1a1a1a' }}>{selected?.paciente}</strong> — {selected?.procedimento}<br />
-            Última aplicação: <strong>{selected?.ultimaData}</strong>
+            Última: <strong>{selected?.ultimaData}</strong> · Intervalo: <strong>{selected?.intervaloDias} dias</strong>
           </div>
           <Input label="Data da Reaplicação" type="date" />
           <Input label="Horário" type="time" />
@@ -607,11 +436,6 @@ export default function Reaplicacoes() {
           </div>
         </FormGrid>
       </Modal>
-      <ErrorModal
-        isOpen={isErrorOpen}
-        message={errorMsg}
-        onClose={() => setIsErrorOpen(false)}
-      />
     </Container>
   );
 }

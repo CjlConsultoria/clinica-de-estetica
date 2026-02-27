@@ -6,15 +6,10 @@ export const Container = styled.div`
   min-height: 100vh;
   background: #f5f5f5;
   box-sizing: border-box;
-<<<<<<< HEAD
-  @media (max-width: 1024px) { padding: 24px 20px; }
-  @media (max-width: 768px)  { padding: 20px 16px; }
-=======
 
   @media (max-width: 1024px) { padding: 72px 20px 24px; }
   @media (max-width: 768px)  { padding: 72px 14px 20px; }
   @media (max-width: 480px)  { padding: 68px 12px 20px; }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const Header = styled.div`
@@ -111,10 +106,7 @@ export const SearchInputStyled = styled.input`
   color: #333;
   transition: all 0.25s;
   box-sizing: border-box;
-<<<<<<< HEAD
-=======
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   &:focus { outline: none; border-color: #BBA188; box-shadow: 0 0 0 3px rgba(187,161,136,0.15); }
   &::placeholder { color: #bbb; }
 
@@ -215,24 +207,18 @@ export const CardsContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: 780px;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 1024px) { height: auto; min-height: 600px; }
   @media (max-width: 768px)  { height: auto; min-height: 0;     border-radius: 12px; }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const CardsWrapper = styled.div`
   flex: 1;
   padding: 20px;
   min-height: 0;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 768px) { padding: 14px; }
   @media (max-width: 480px) { padding: 12px; }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PaginationContainer = styled.div`
@@ -246,14 +232,10 @@ export const PatientGrid = styled.div`
   gap: 20px;
   height: 100%;
   align-content: start;
-<<<<<<< HEAD
-  @media (max-width: 840px) { grid-template-columns: 1fr; }
-=======
 
   @media (max-width: 1024px) { gap: 16px; }
   @media (max-width: 840px)  { grid-template-columns: 1fr; }
   @media (max-width: 480px)  { gap: 12px; }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PatientCard = styled.div`
@@ -266,9 +248,6 @@ export const PatientCard = styled.div`
   display: flex;
   flex-direction: column;
   height: 330px;
-<<<<<<< HEAD
-  &:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(187,161,136,0.18); }
-=======
 
   &:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(187,161,136,0.18); }
 
@@ -276,7 +255,6 @@ export const PatientCard = styled.div`
     height: auto;
     min-height: 0;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PatientCardHeader = styled.div`
@@ -286,11 +264,8 @@ export const PatientCardHeader = styled.div`
   padding: 16px 18px 14px;
   border-bottom: 1px solid #f5f5f5;
   flex-shrink: 0;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) { padding: 12px 14px 12px; gap: 10px; }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PatientAvatar = styled.div<{ $color: string }>`
@@ -333,11 +308,8 @@ export const PatientSub = styled.div`
   font-size: 0.76rem;
   color: #999;
   margin-bottom: 6px;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) { font-size: 0.7rem; }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const StatsRow = styled.div`
@@ -362,11 +334,8 @@ export const PatientCardBody = styled.div`
   padding: 12px 18px;
   flex: 1;
   overflow: hidden;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) { padding: 10px 14px; }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const TimelineWrap = styled.div`
@@ -381,6 +350,7 @@ export const TimelineItem = styled.div`
   gap: 10px;
   padding: 6px 0;
   border-bottom: 1px solid #f8f8f8;
+
   &:last-child { border-bottom: none; }
 `;
 
@@ -439,8 +409,6 @@ export const PatientCardFooter = styled.div`
   border-top: 1px solid #f5f5f5;
   background: #fdf9f5;
   flex-shrink: 0;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     padding: 8px 14px;
@@ -448,9 +416,7 @@ export const PatientCardFooter = styled.div`
     align-items: flex-start;
     gap: 4px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
-
 
 export const DetailModal = styled.div`
   max-height: 65vh;
@@ -542,6 +508,7 @@ export const FullTimeline = styled.div`
   flex-direction: column;
   gap: 0;
   position: relative;
+
   &::before {
     content: '';
     position: absolute;
@@ -558,6 +525,7 @@ export const FullTimelineItem = styled.div`
   gap: 16px;
   padding-bottom: 20px;
   position: relative;
+
   &:last-child { padding-bottom: 0; }
 
   @media (max-width: 480px) { gap: 12px; padding-bottom: 14px; }
@@ -646,10 +614,6 @@ export const EmptyState = styled.div`
   height: 100%;
   text-align: center;
   color: #bbb;
-<<<<<<< HEAD
-  h3 { font-size: 1.1rem; font-family: var(--font-cabourg-bold), 'Cabourg', serif; color: #555; margin: 0 0 6px; }
-  p  { font-size: 0.88rem; color: #999; margin: 0; }
-=======
   padding: 40px 20px;
 
   h3 { font-size: 1.1rem; font-family: var(--font-cabourg-bold), 'Cabourg', serif; color: #555; margin: 0 0 6px; }
@@ -660,5 +624,4 @@ export const EmptyState = styled.div`
     h3 { font-size: 0.95rem; }
     p  { font-size: 0.8rem; }
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;

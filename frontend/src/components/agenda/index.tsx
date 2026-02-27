@@ -1,10 +1,6 @@
 'use client';
 
-<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
-=======
-import React, { useState } from 'react';
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -12,9 +8,6 @@ import Select from '@/components/ui/select';
 import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
-<<<<<<< HEAD
-import ErrorModal from '@/components/modals/errorModal';
-import { getApiErrorMessage } from '@/utils/apiError';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import { usePermissions } from '@/components/ui/hooks/usePermissions';
 import AccessDenied from '@/components/ui/AccessDenied';
@@ -24,22 +17,16 @@ import {
 } from '@/services/agendamentosApi';
 import { listarPacientes, type PacienteResponse } from '@/services/pacientesApi';
 import { listarUsuarios, type UsuarioResponse } from '@/services/usuariosApi';
-=======
-import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
-import { usePermissions } from '@/components/ui/hooks/usePermissions';
-import AccessDenied from '@/components/ui/AccessDenied';
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 import {
   Container, Header, Title, ActionsRow,
   CalendarNav, CalendarTitle, CalendarGrid, DayHeader,
   DayCell, DayNumber, EventChip, EventsWrap,
-  WeekView, WeekHeader, TimeSlot, TimeLabel, SlotRow, EventBlock,
+  WeekView, TimeSlot, TimeLabel, SlotRow, EventBlock,
   ToggleGroup, ToggleBtn, Legend, LegendItem, LegendDot, FormGrid,
 } from './styles';
 
 const NAV_MIN = { year: 2025, month: 0  };
 const NAV_MAX = { year: 2026, month: 11 };
-<<<<<<< HEAD
 
 const procedureOptions = [
   { value: 'botox',            label: 'Botox Facial'        },
@@ -48,22 +35,6 @@ const procedureOptions = [
   { value: 'fio-pdo',          label: 'Fio de PDO'           },
   { value: 'microagulhamento', label: 'Microagulhamento'     },
   { value: 'toxina',           label: 'Toxina Botulínica'    },
-=======
-
-const procedureOptions = [
-  { value: 'botox',            label: 'Botox Facial'        },
-  { value: 'preenchimento',    label: 'Preenchimento Labial' },
-  { value: 'bioestimulador',   label: 'Bioestimulador'       },
-  { value: 'fio-pdo',          label: 'Fio de PDO'           },
-  { value: 'microagulhamento', label: 'Microagulhamento'     },
-  { value: 'toxina',           label: 'Toxina Botulínica'    },
-];
-
-const statusOptions = [
-  { value: 'confirmado', label: 'Confirmado' },
-  { value: 'aguardando', label: 'Aguardando' },
-  { value: 'cancelado',  label: 'Cancelado'  },
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 ];
 
 const PROCEDURE_COLOR: Record<string, string> = {
@@ -81,7 +52,6 @@ interface CalEvent {
   name: string; procedure: string; color: string;
 }
 
-<<<<<<< HEAD
 type AgendamentoField = 'pacienteId' | 'medicoId' | 'data' | 'horario' | 'procedimento';
 
 interface AgendamentoForm {
@@ -91,13 +61,6 @@ interface AgendamentoForm {
   horario: string;
   procedimento: string;
   observacoes: string;
-=======
-type AgendamentoField = 'nome' | 'telefone' | 'data' | 'horario' | 'procedimento' | 'status' | 'valor';
-
-interface AgendamentoForm {
-  nome: string; telefone: string; data: string; horario: string;
-  procedimento: string; status: string; valor: string; observacoes: string;
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 }
 
 const DAYS  = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -107,7 +70,6 @@ const FORM_INITIAL: AgendamentoForm = {
 };
 
 const VALIDATION_FIELDS = [
-<<<<<<< HEAD
   { key: 'pacienteId'   as AgendamentoField, validate: (v: string) => !v ? 'Selecione um paciente'         : null },
   { key: 'medicoId'     as AgendamentoField, validate: (v: string) => !v ? 'Selecione um profissional'     : null },
   { key: 'data'         as AgendamentoField, validate: (v: string) => !v ? 'Data é obrigatória'            : null },
@@ -131,22 +93,6 @@ function mapAgendamento(a: AgendamentoResponse): CalEvent {
     color:     PROCEDURE_COLOR[tipoConsulta] ?? '#BBA188',
   };
 }
-=======
-  { key: 'nome'         as AgendamentoField, validate: (v: string) => !v.trim() ? 'Nome do paciente é obrigatório'    : null },
-  { key: 'telefone'     as AgendamentoField, validate: (v: string) => !v.trim() ? 'Telefone é obrigatório'            : null },
-  { key: 'data'         as AgendamentoField, validate: (v: string) => !v        ? 'Data é obrigatória'                : null },
-  { key: 'horario'      as AgendamentoField, validate: (v: string) => !v        ? 'Horário é obrigatório'             : null },
-  { key: 'procedimento' as AgendamentoField, validate: (v: string) => !v        ? 'Selecione um procedimento'         : null },
-  { key: 'status'       as AgendamentoField, validate: (v: string) => !v        ? 'Selecione um status'               : null },
-  { key: 'valor'        as AgendamentoField, validate: (v: string) => !v.trim() || v === 'R$ 0,00' ? 'Informe o valor do procedimento' : null },
-];
-
-function parseHour(h: string)       { return parseInt(h.split(':')[0], 10); }
-function parseDayOfMonth(d: string) { return parseInt(d.split('-')[2], 10); }
-function parseDayOfWeek(d: string)  { return new Date(`${d}T12:00:00`).getDay(); }
-function parseYear(d: string)       { return parseInt(d.split('-')[0], 10); }
-function parseMonth(d: string)      { return parseInt(d.split('-')[1], 10) - 1; }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 
 function getWeekDaysForMonth(year: number, month: number): Date[] {
   const anchor = new Date(year, month, 1);
@@ -156,21 +102,14 @@ function getWeekDaysForMonth(year: number, month: number): Date[] {
 }
 
 function isFormDirty(form: AgendamentoForm): boolean {
-<<<<<<< HEAD
   return form.pacienteId !== '' || form.medicoId !== '' || form.data !== '' ||
     form.horario !== '' || form.procedimento !== '' || form.observacoes.trim() !== '';
-=======
-  return form.nome.trim() !== '' || form.telefone.trim() !== '' || form.data !== '' ||
-    form.horario !== '' || form.procedimento !== '' || form.status !== '' ||
-    form.valor.trim() !== '' || form.observacoes.trim() !== '';
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 }
 
 export default function Agenda() {
   const { can, isSuperAdmin } = usePermissions();
   const today = new Date();
 
-<<<<<<< HEAD
   const [view,              setView]              = useState<'semana' | 'mes'>('semana');
   const [isModalOpen,       setIsModalOpen]       = useState(false);
   const [form,              setForm]              = useState<AgendamentoForm>(FORM_INITIAL);
@@ -184,58 +123,31 @@ export default function Agenda() {
   const [showConfirmModal,  setShowConfirmModal]  = useState(false);
   const [showSuccessModal,  setShowSuccessModal]  = useState(false);
   const [successMessage,    setSuccessMessage]    = useState('');
-  const [errorMsg,          setErrorMsg]          = useState('');
-  const [isErrorOpen,       setIsErrorOpen]       = useState(false);
-=======
-  const [view,        setView]        = useState<'semana' | 'mes'>('semana');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [form,        setForm]        = useState<AgendamentoForm>(FORM_INITIAL);
-  const [events,      setEvents]      = useState<CalEvent[]>(INITIAL_EVENTS);
-  const [nextId,      setNextId]      = useState(100);
-  const [navYear,     setNavYear]     = useState(today.getFullYear());
-  const [navMonth,    setNavMonth]    = useState(today.getMonth());
-  const [weekOffset,  setWeekOffset]  = useState(0);
-  const [showCancelModal,  setShowCancelModal]  = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [successMessage,   setSuccessMessage]   = useState('');
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 
   const { errors, validate, clearError, clearAll } =
     useSequentialValidation<AgendamentoField>(VALIDATION_FIELDS);
 
-<<<<<<< HEAD
-  function showError(err: unknown, context: string) {
-    setErrorMsg(getApiErrorMessage(err, context));
-    setIsErrorOpen(true);
-  }
-
   useEffect(() => {
     listarAgendamentos(0, 200)
       .then(r => setEvents(r.content.map(mapAgendamento)))
-      .catch(err => showError(err, 'carregar agendamentos'));
+      .catch(console.error);
 
     listarPacientes(undefined, 0, 500)
       .then(r => setPacientes(r.content))
-      .catch(err => showError(err, 'carregar pacientes'));
+      .catch(console.error);
 
     listarUsuarios()
       .then(users => setProfissionais(users.filter(u => u.areaProfissional === 'TECNICA')))
-      .catch(err => showError(err, 'carregar profissionais'));
+      .catch(console.error);
   }, []);
 
-=======
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   if (!isSuperAdmin && !can('agenda.read') && !can('agenda.read_own')) return <AccessDenied />;
 
   const canCreate = isSuperAdmin || can('agenda.create');
 
-<<<<<<< HEAD
   const pacienteOptions = pacientes.map(p => ({ value: String(p.id), label: p.nome }));
   const profissionalOptions = profissionais.map(u => ({ value: String(u.id), label: u.nome }));
 
-=======
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   const isAtMin = navYear === NAV_MIN.year && navMonth === NAV_MIN.month;
   const isAtMax = navYear === NAV_MAX.year && navMonth === NAV_MAX.month;
 
@@ -266,10 +178,6 @@ export default function Agenda() {
   const weekTitle = `${weekDays[0].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} – ${weekDays[6].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}`;
 
   function handleChange(field: keyof AgendamentoForm, value: string) { setForm(prev => ({ ...prev, [field]: value })); clearError(field as AgendamentoField); }
-<<<<<<< HEAD
-=======
-  function handleMaskedChange(field: keyof AgendamentoForm, value: string) { setForm(prev => ({ ...prev, [field]: value })); clearError(field as AgendamentoField); }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   function handleDataChange(raw: string) {
     if (!raw) { handleChange('data', ''); return; }
     const [yearStr, month, day] = raw.split('-');
@@ -278,29 +186,10 @@ export default function Agenda() {
   function handleCancelClick() { isFormDirty(form) ? setShowCancelModal(true) : forceClose(); }
   function forceClose() { setForm(FORM_INITIAL); clearAll(); setIsModalOpen(false); setShowCancelModal(false); setShowConfirmModal(false); }
   function handleSaveClick() {
-<<<<<<< HEAD
     const isValid = validate({ pacienteId: form.pacienteId, medicoId: form.medicoId, data: form.data, horario: form.horario, procedimento: form.procedimento });
-=======
-    const isValid = validate({ nome: form.nome, telefone: form.telefone, data: form.data, horario: form.horario, procedimento: form.procedimento, status: form.status, valor: form.valor });
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
     if (!isValid) return;
     setShowConfirmModal(true);
   }
-  function handleConfirmSave() {
-    const procedureLabel = procedureOptions.find(p => p.value === form.procedimento)?.label ?? form.procedimento;
-    const novoEvento: CalEvent = {
-      id: nextId, weekDay: parseDayOfWeek(form.data), hour: parseHour(form.horario),
-      year: parseYear(form.data), month: parseMonth(form.data), monthDay: parseDayOfMonth(form.data),
-      name: form.nome, procedure: procedureLabel, color: PROCEDURE_COLOR[form.procedimento] ?? '#BBA188',
-    };
-    setEvents(prev => [...prev, novoEvento]);
-    setNextId(n => n + 1);
-    setShowConfirmModal(false);
-    setIsModalOpen(false);
-    setSuccessMessage('Agendamento salvo com sucesso!');
-    setShowSuccessModal(true);
-  }
-  function handleSuccessClose() { setShowSuccessModal(false); setSuccessMessage(''); setForm(FORM_INITIAL); clearAll(); }
 
   async function handleConfirmSave() {
     setShowConfirmModal(false);
@@ -320,7 +209,7 @@ export default function Agenda() {
       setSuccessMessage('Agendamento salvo com sucesso!');
       setShowSuccessModal(true);
     } catch (err) {
-      showError(err, 'salvar agendamento');
+      alert((err as Error).message);
     }
   }
 
@@ -378,19 +267,15 @@ export default function Agenda() {
         </div>
       ) : (
         <WeekView>
-          <WeekHeader>
+          <div style={{ display: 'grid', gridTemplateColumns: '60px repeat(7, 1fr)', background: '#BBA188', borderRadius: '14px 14px 0 0', overflow: 'hidden' }}>
             <div style={{ padding: '12px 0' }} />
             {weekDays.map((d, i) => (
-<<<<<<< HEAD
               <div key={i} style={{ padding: '12px 8px', textAlign: 'center' }}>
-=======
-              <div key={i} style={{ padding: '12px 4px', textAlign: 'center' }}>
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
                 <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{DAYS[i]}</div>
                 <div style={{ fontSize: '1.1rem', fontWeight: 700, color: d.toDateString() === today.toDateString() ? '#fff' : 'rgba(255,255,255,0.9)', background: d.toDateString() === today.toDateString() ? 'rgba(255,255,255,0.25)' : 'transparent', borderRadius: 8, padding: '2px 0', marginTop: 2 }}>{d.getDate()}</div>
               </div>
             ))}
-          </WeekHeader>
+          </div>
           <div style={{ background: 'white', borderRadius: '0 0 14px 14px', boxShadow: '0 4px 16px rgba(0,0,0,0.07)' }}>
             {HOURS.map((hour, hi) => (
               <SlotRow key={hi}>
@@ -409,7 +294,6 @@ export default function Agenda() {
         footer={<><Button variant="outline" onClick={handleCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveClick}>Salvar Agendamento</Button></>}
       >
         <FormGrid>
-<<<<<<< HEAD
           <div style={{ gridColumn: 'span 2' }}>
             <Select
               label="Paciente *"
@@ -438,21 +322,10 @@ export default function Agenda() {
           <div style={{ gridColumn: 'span 2' }}>
             <Input label="Observações" placeholder="Informações adicionais..." maxLength={300} value={form.observacoes} onChange={e => handleChange('observacoes', e.target.value)} />
           </div>
-=======
-          <Input label="Nome do Paciente *" placeholder="Digite o nome..." value={form.nome} onChange={e => handleChange('nome', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))} maxLength={80} error={errors.nome} />
-          <Input label="Telefone *" mask="telefone" value={form.telefone} inputMode="numeric" maxLength={15} onValueChange={v => handleMaskedChange('telefone', v)} error={errors.telefone} />
-          <Input label="Data *" type="date" value={form.data} onChange={e => handleDataChange(e.target.value)} error={errors.data} />
-          <Input label="Horário *" type="time" value={form.horario} onChange={e => handleChange('horario', e.target.value)} error={errors.horario} />
-          <div style={{ gridColumn: 'span 2' }}><Select label="Procedimento *" placeholder="Selecione..." options={procedureOptions} value={form.procedimento} onChange={v => handleChange('procedimento', v)} error={errors.procedimento} /></div>
-          <Select label="Status *" placeholder="Selecione..." options={statusOptions} value={form.status} onChange={v => handleChange('status', v)} error={errors.status} />
-          <Input label="Valor (R$) *" mask="moeda" value={form.valor} inputMode="numeric" maxLength={14} onValueChange={v => handleMaskedChange('valor', v)} error={errors.valor} />
-          <div style={{ gridColumn: 'span 2' }}><Input label="Observações" placeholder="Informações adicionais..." maxLength={300} value={form.observacoes} onChange={e => handleChange('observacoes', e.target.value)} /></div>
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
         </FormGrid>
       </Modal>
 
       <CancelModal isOpen={showCancelModal} title="Deseja cancelar?" message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas." onConfirm={forceClose} onCancel={() => setShowCancelModal(false)} />
-<<<<<<< HEAD
       <ConfirmModal
         isOpen={showConfirmModal}
         title="Salvar agendamento?"
@@ -463,11 +336,6 @@ export default function Agenda() {
         onCancel={() => setShowConfirmModal(false)}
       />
       <SucessModal isOpen={showSuccessModal} title="Sucesso!" message={successMessage} onClose={handleSuccessClose} buttonText="Continuar" />
-      <ErrorModal isOpen={isErrorOpen} message={errorMsg} onClose={() => setIsErrorOpen(false)} />
-=======
-      <ConfirmModal isOpen={showConfirmModal} title="Salvar agendamento?" message={`Tem certeza que deseja agendar ${form.nome || 'este paciente'}?`} confirmText="Confirmar" cancelText="Voltar" onConfirm={handleConfirmSave} onCancel={() => setShowConfirmModal(false)} />
-      <SucessModal isOpen={showSuccessModal} title="Sucesso!" message={successMessage} onClose={handleSuccessClose} buttonText="Continuar" />
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
     </Container>
   );
 }

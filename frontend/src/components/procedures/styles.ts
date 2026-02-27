@@ -7,10 +7,6 @@ export const Container = styled.div`
   min-height: 100vh;
   background: #f5f5f5;
   box-sizing: border-box;
-<<<<<<< HEAD
-  @media (max-width: 1024px) { width: 100%; padding: 24px 20px; }
-  @media (max-width: 768px)  { padding: 20px 16px; }
-=======
   overflow-x: hidden;
 
   @media (max-width: 1024px) {
@@ -24,7 +20,6 @@ export const Container = styled.div`
   @media (max-width: 480px) {
     padding: 68px 12px 20px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const Header = styled.div`
@@ -108,15 +103,11 @@ export const SearchBarWrapper = styled.div`
   position: relative;
   flex: 1;
   max-width: 380px;
-<<<<<<< HEAD
-  @media (max-width: 768px) { max-width: 100%; }
-=======
 
   @media (max-width: 768px) {
     max-width: 100%;
     width: 100%;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const SearchIconWrap = styled.div`
@@ -139,10 +130,6 @@ export const SearchInputStyled = styled.input`
   color: #333;
   transition: all 0.25s;
   box-sizing: border-box;
-<<<<<<< HEAD
-  &:focus { outline: none; border-color: #BBA188; box-shadow: 0 0 0 3px rgba(187,161,136,0.15); }
-  &::placeholder { color: #bbb; }
-=======
 
   &:focus {
     outline: none;
@@ -155,7 +142,6 @@ export const SearchInputStyled = styled.input`
     font-size: 0.85rem;
     padding: 10px 14px 10px 40px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const FilterRow = styled.div`
@@ -192,9 +178,6 @@ export const DropdownBtn = styled.button`
   min-width: 160px;
   justify-content: space-between;
   transition: all 0.2s;
-<<<<<<< HEAD
-  &:hover { border-color: #BBA188; }
-=======
   width: 100%;
 
   &:hover { border-color: #BBA188; }
@@ -204,7 +187,6 @@ export const DropdownBtn = styled.button`
     padding: 9px 14px;
     min-width: unset;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const DropdownList = styled.div`
@@ -219,6 +201,7 @@ export const DropdownList = styled.div`
   z-index: 100;
   overflow: hidden;
   animation: dropIn 0.18s ease;
+
   @keyframes dropIn {
     from { opacity: 0; transform: translateY(-8px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -234,10 +217,7 @@ export const DropdownItem = styled.div<{ $active?: boolean }>`
   cursor: pointer;
   transition: all 0.15s;
   border-bottom: 1px solid #f5f5f5;
-<<<<<<< HEAD
-=======
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   &:last-child { border-bottom: none; }
   &:hover { background: rgba(187,161,136,0.08); color: #BBA188; }
 `;
@@ -254,9 +234,6 @@ export const ClearFilterBtn = styled.button`
   font-size: 0.84rem;
   cursor: pointer;
   transition: all 0.2s;
-<<<<<<< HEAD
-  &:hover { background: #e74c3c; color: white; }
-=======
   white-space: nowrap;
   flex-shrink: 0;
 
@@ -266,7 +243,6 @@ export const ClearFilterBtn = styled.button`
     font-size: 0.78rem;
     padding: 8px 12px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const ToggleGroup = styled.div`
@@ -303,14 +279,11 @@ export const TableContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: 596px;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 768px) {
     height: auto;
     border-radius: 12px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const TableWrapper = styled.div`
@@ -318,29 +291,23 @@ export const TableWrapper = styled.div`
   overflow-x: auto;
   overflow-y: hidden;
   min-height: 540px;
-<<<<<<< HEAD
-=======
   -webkit-overflow-scrolling: touch;
 
   @media (max-width: 768px) {
     min-height: unset;
     overflow-y: auto;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const Table = styled.table`
   width: 100%;
   min-width: 700px;
   border-collapse: collapse;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 768px) {
     table-layout: auto;
     min-width: 580px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const Thead = styled.thead`
@@ -356,11 +323,8 @@ export const Th = styled.th<{ $width?: string }>`
   text-transform: uppercase;
   letter-spacing: 0.4px;
   width: ${({ $width }) => $width || 'auto'};
-<<<<<<< HEAD
-=======
   white-space: nowrap;
   overflow: hidden;
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const Tbody = styled.tbody``;
@@ -368,10 +332,7 @@ export const Tbody = styled.tbody``;
 export const Tr = styled.tr`
   border-bottom: 1px solid #f5f5f5;
   transition: background 0.15s;
-<<<<<<< HEAD
-=======
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   &:hover { background: #fdf9f5; }
   &:last-child { border-bottom: none; }
 `;
@@ -381,12 +342,9 @@ export const Td = styled.td<{ colSpan?: number }>`
   font-size: 0.78rem;
   color: #444;
   vertical-align: middle;
-<<<<<<< HEAD
-=======
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const ActionGroup = styled.div`
@@ -407,10 +365,7 @@ export const IconBtn = styled.button`
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
-<<<<<<< HEAD
-=======
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   &:hover { background: #BBA188; border-color: #BBA188; color: white; }
 `;
 
@@ -433,24 +388,17 @@ export const CardsContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: 640px;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 768px) {
     height: auto;
     border-radius: 12px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const CardsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-<<<<<<< HEAD
-  @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); }
-  @media (max-width: 600px) { grid-template-columns: 1fr; }
-=======
 
   @media (max-width: 1024px) {
     grid-template-columns: repeat(2, 1fr);
@@ -461,7 +409,6 @@ export const CardsGrid = styled.div`
     grid-template-columns: 1fr;
     gap: 12px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const ProcCard = styled.div`
@@ -470,16 +417,12 @@ export const ProcCard = styled.div`
   box-shadow: 0 2px 8px rgba(0,0,0,0.07);
   overflow: hidden;
   transition: all 0.25s;
-<<<<<<< HEAD
-  &:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
-=======
 
   &:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
 
   @media (max-width: 768px) {
     border-radius: 12px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const ProcCardHeader = styled.div<{ $color: string }>`
@@ -535,26 +478,20 @@ export const DetailRow = styled.div`
 export const DetailLabel = styled.span`
   font-size: 0.82rem;
   color: #888;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     font-size: 0.76rem;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const DetailValue = styled.span<{ $highlight?: boolean }>`
   font-size: ${({ $highlight }) => ($highlight ? '1rem' : '0.88rem')};
   font-weight: ${({ $highlight }) => ($highlight ? '700' : '600')};
   color: ${({ $highlight }) => ($highlight ? '#1a1a1a' : '#444')};
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     font-size: ${({ $highlight }) => ($highlight ? '0.92rem' : '0.82rem')};
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const ProcActions = styled.div`
@@ -564,14 +501,11 @@ export const ProcActions = styled.div`
   justify-content: space-between;
   align-items: center;
 
-<<<<<<< HEAD
-=======
   @media (max-width: 480px) {
     padding: 10px 14px;
   }
 `;
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 export const EmptyState = styled.div`
   display: flex;
   flex-direction: column;
@@ -579,10 +513,7 @@ export const EmptyState = styled.div`
   padding: 60px 20px;
   text-align: center;
   color: #bbb;
-<<<<<<< HEAD
-=======
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   h3 { font-size: 1.1rem; font-family: var(--font-cabourg-bold), 'Cabourg', serif; color: #555; margin: 0 0 6px; }
   p  { font-size: 0.88rem; color: #999; margin: 0; }
 `;
@@ -591,11 +522,7 @@ export const FormGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  @media (max-width: 560px) { grid-template-columns: 1fr; }
-`;
 
-<<<<<<< HEAD
-=======
   @media (max-width: 560px) {
     grid-template-columns: 1fr;
 
@@ -605,7 +532,6 @@ export const FormGrid = styled.div`
   }
 `;
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 /* ─────────────── Paginação ─────────────── */
 
 export const PaginationWrapper = styled.div`
@@ -617,15 +543,12 @@ export const PaginationWrapper = styled.div`
   border-top: 1px solid #f0ebe4;
   min-height: 56px;
   flex-shrink: 0;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     gap: 8px;
     padding: 12px 14px;
     justify-content: space-between;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PaginationInfo = styled.span`
@@ -633,26 +556,20 @@ export const PaginationInfo = styled.span`
   color: #999;
   font-weight: 400;
   white-space: nowrap;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     font-size: 0.72rem;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PaginationControls = styled.div`
   display: flex;
   align-items: center;
   gap: 4px;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     gap: 2px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PageButton = styled.button<{ $active?: boolean }>`
@@ -669,11 +586,6 @@ export const PageButton = styled.button<{ $active?: boolean }>`
   transition: all 0.2s ease;
   background: ${({ $active }) => ($active ? '#BBA188' : 'transparent')};
   color: ${({ $active }) => ($active ? '#ffffff' : '#888')};
-<<<<<<< HEAD
-  &:hover:not(:disabled) {
-    background: ${({ $active }) => ($active ? '#BBA188' : 'rgba(187,161,136,0.12)')};
-    color: ${({ $active }) => ($active ? '#ffffff' : '#BBA188')};
-=======
 
   &:hover:not(:disabled) {
     background: ${({ $active }) => ($active ? '#BBA188' : 'rgba(187,161,136,0.12)')};
@@ -723,33 +635,5 @@ export const PaginationArrow = styled.button`
   @media (max-width: 480px) {
     width: 28px;
     height: 28px;
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   }
-`;
-
-export const PageEllipsis = styled.span`
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-  color: #bbb;
-  user-select: none;
-`;
-
-export const PaginationArrow = styled.button`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: #BBA188;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  &:hover:not(:disabled) { background: rgba(187,161,136,0.12); }
-  &:disabled { color: #ddd; cursor: not-allowed; }
 `;

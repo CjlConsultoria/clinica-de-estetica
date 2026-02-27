@@ -1,9 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { listarPacientes, criarPaciente, atualizarPaciente, PacienteResponse, PacienteRequest } from '@/services/pacientesApi';
-import { listarMedicos } from '@/services/usuariosApi';
-import { listarProntuariosPorPaciente, criarProntuario, ProntuarioResponse } from '@/services/prontuariosApi';
+import { useState } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -13,11 +10,6 @@ import Pagination from '@/components/ui/pagination';
 import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
-<<<<<<< HEAD
-import ErrorModal from '@/components/modals/errorModal';
-import { getApiErrorMessage } from '@/utils/apiError';
-=======
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import {
   Container, Header, Title, Controls,
@@ -83,8 +75,6 @@ const procedureOptions = [
   { value: 'Microagulhamento',     label: 'Microagulhamento'     },
   { value: 'Toxina Botulínica',    label: 'Toxina Botulínica'    },
   { value: 'Outro',                label: 'Outro'                },
-<<<<<<< HEAD
-=======
 ];
 
 const professionalOptions = [
@@ -171,23 +161,7 @@ const INITIAL_PATIENTS: Patient[] = [
       { id: 2, date: '20/09/2024', procedure: 'Microagulhamento', units: '1 sessão', value: 800, professional: 'Beatriz Santos', lote: 'MIC-2024-010', status: 'realizado' },
     ],
   },
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 ];
-
-
-type HistoryItem = {
-  id: number; date: string; procedure: string; units: string;
-  value: number; professional: string; lote: string; status: string;
-};
-
-type Patient = {
-  id: number; name: string; phone: string; email: string;
-  cpf: string; birthdate: string; since: string; status: string;
-  totalSpent: number; totalSessions: number;
-  lastVisit: string; nextVisit: string | null;
-  observations: string; history: HistoryItem[];
-};
-
 
 const procedureColors: Record<string, string> = {
   'Botox Facial':         '#BBA188',
@@ -250,55 +224,9 @@ function isAtendimentoFormDirty(form: AtendimentoForm): boolean {
   return form.procedure.trim() !== '' || form.units.trim() !== '' || form.value.trim() !== '' ||
     form.professional.trim() !== '' || form.lote.trim() !== '';
 }
-<<<<<<< HEAD
-
-type ObsExtra = { units?: string; value?: string; lote?: string; nextVisit?: string; notes?: string; serviceDate?: string };
-
-function mapProntuarioToHistoryItem(p: ProntuarioResponse): HistoryItem {
-  let extra: ObsExtra = {};
-  try { extra = JSON.parse(p.observacoes ?? '{}'); } catch { /* ignore */ }
-  return {
-    id: p.id,
-    date: extra.serviceDate ? formatDate(extra.serviceDate) : formatDate(p.criadoEm.slice(0, 10)),
-    procedure: p.anamnese,
-    units: extra.units ?? '1',
-    value: Number(extra.value ?? 0),
-    professional: p.medicoNome,
-    lote: extra.lote ?? '—',
-    status: 'concluído',
-  };
-}
-
-function mapPacienteToPatient(p: PacienteResponse, history: HistoryItem[]): Patient {
-  const totalSpent = history.reduce((s, h) => s + h.value, 0);
-  const sorted = [...history].sort((a, b) => b.date.localeCompare(a.date));
-  return {
-    id: p.id,
-    name: p.nome,
-    cpf: p.cpf ?? '',
-    phone: p.telefone ?? p.celular ?? '',
-    email: p.email ?? '',
-    birthdate: p.dataNascimento ?? '',
-    since: new Date(p.criadoEm).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }),
-    status: p.ativo ? 'ativo' : 'inativo',
-    totalSpent,
-    totalSessions: history.length,
-    lastVisit: sorted[0]?.date ?? '—',
-    nextVisit: null,
-    observations: p.observacoes ?? '',
-    history,
-  };
-}
-
-export default function HistoricoPaciente() {
-  const [patients,     setPatients]     = useState<Patient[]>([]);
-  const [loading,      setLoading]      = useState(true);
-  const [professionalOptions, setProfessionalOptions] = useState<{ value: string; label: string }[]>([]);
-=======
 
 export default function HistoricoPaciente() {
   const [patients,     setPatients]     = useState<Patient[]>(INITIAL_PATIENTS);
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   const [search,       setSearch]       = useState('');
   const [filter,       setFilter]       = useState('Todos');
   const [openDropdown, setOpenDropdown] = useState(false);
@@ -323,11 +251,6 @@ export default function HistoricoPaciente() {
   const [showConfirmEditModal, setShowConfirmEditModal] = useState(false);
   const [showSuccessModal,     setShowSuccessModal]     = useState(false);
   const [successMessage,       setSuccessMessage]       = useState('');
-<<<<<<< HEAD
-  const [errorMsg,             setErrorMsg]             = useState('');
-  const [isErrorOpen,          setIsErrorOpen]          = useState(false);
-=======
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 
   const {
     errors: pacienteErrors, validate: validatePaciente,
@@ -339,34 +262,6 @@ export default function HistoricoPaciente() {
     clearError: clearAtendError, clearAll: clearAtendAll,
   } = useSequentialValidation<AtendimentoField>(ATENDIMENTO_VALIDATION);
 
-<<<<<<< HEAD
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const [pacientesPage, medicos] = await Promise.all([
-          listarPacientes(undefined, 0, 200),
-          listarMedicos(),
-        ]);
-        setProfessionalOptions(medicos.map(u => ({ value: String(u.id), label: u.nome })));
-        const pacientes = pacientesPage.content;
-        const historicos = await Promise.all(
-          pacientes.map(p =>
-            listarProntuariosPorPaciente(p.id)
-              .then(r => r.content.map(mapProntuarioToHistoryItem))
-              .catch(() => [] as HistoryItem[])
-          )
-        );
-        setPatients(pacientes.map((p, i) => mapPacienteToPatient(p, historicos[i])));
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
-
-=======
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   const filtered = patients.filter(p => {
     const matchSearch =
       p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -390,14 +285,6 @@ export default function HistoricoPaciente() {
   const totalSessoes   = patients.reduce((a, p) => a + p.totalSessions, 0);
   const totalReceita   = patients.reduce((a, p) => a + p.totalSpent, 0);
 
-<<<<<<< HEAD
-  function showError(err: unknown, context: string) {
-    setErrorMsg(getApiErrorMessage(err, context));
-    setIsErrorOpen(true);
-  }
-
-=======
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   function handleSearchChange(v: string) { setSearch(v);  setCurrentPage(1); }
   function handleFilterChange(v: string) { setFilter(v);  setCurrentPage(1); setOpenDropdown(false); }
   function handleClearFilter()           { setFilter('Todos'); setCurrentPage(1); }
@@ -408,10 +295,7 @@ export default function HistoricoPaciente() {
     setSelected(updated);
     setPatients(prev => prev.map(p => p.id === updated.id ? updated : p));
   }
-<<<<<<< HEAD
 
-=======
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 
   function handleChange(field: keyof NovoPacienteForm, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -445,25 +329,6 @@ export default function HistoricoPaciente() {
     setShowConfirmNewModal(true);
   }
 
-<<<<<<< HEAD
-  async function handleConfirmNew() {
-    try {
-      const req: PacienteRequest = {
-        nome: form.nome,
-        cpf: form.cpf,
-        dataNascimento: form.nascimento || undefined,
-        telefone: form.telefone || undefined,
-        email: form.email || undefined,
-        observacoes: form.observacoes || undefined,
-      };
-      const created = await criarPaciente(req);
-      const newPatient = mapPacienteToPatient(created, []);
-      setPatients(prev => [newPatient, ...prev]);
-    } catch (err) {
-      showError(err, 'cadastrar paciente');
-      return;
-    }
-=======
   function handleConfirmNew() {
     const newPatient: Patient = {
       id:            Date.now(),
@@ -481,17 +346,13 @@ export default function HistoricoPaciente() {
       history:       [],
     };
     setPatients(prev => [newPatient, ...prev]);
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
     setShowConfirmNewModal(false);
     setIsNewOpen(false);
     setSuccessMessage('Paciente cadastrado com sucesso!');
     setShowSuccessModal(true);
   }
 
-<<<<<<< HEAD
 
-=======
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   function handleEditChange(field: keyof NovoPacienteForm, value: string) {
     setEditForm(prev => ({ ...prev, [field]: value }));
     setEditErrors(prev => ({ ...prev, [field]: undefined }));
@@ -515,11 +376,7 @@ export default function HistoricoPaciente() {
   }
 
   function openEdit(p: Patient) {
-<<<<<<< HEAD
-    setEditForm({ nome: p.name, cpf: p.cpf ?? '', nascimento: toInputDate(p.birthdate), telefone: p.phone, email: p.email, observacoes: p.observations });
-=======
     setEditForm({ nome: p.name, cpf: '', nascimento: toInputDate(p.birthdate), telefone: p.phone, email: p.email, observacoes: p.observations });
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
     setEditErrors({});
     setIsDetailOpen(false);
     setIsEditOpen(true);
@@ -540,26 +397,6 @@ export default function HistoricoPaciente() {
     setShowConfirmEditModal(true);
   }
 
-<<<<<<< HEAD
-  async function handleConfirmEdit() {
-    if (!selected) return;
-    try {
-      const req: PacienteRequest = {
-        nome: editForm.nome,
-        cpf: editForm.cpf,
-        dataNascimento: editForm.nascimento || undefined,
-        telefone: editForm.telefone || undefined,
-        email: editForm.email || undefined,
-        observacoes: editForm.observacoes || undefined,
-      };
-      const updated = await atualizarPaciente(selected.id, req);
-      const updatedPatient = mapPacienteToPatient(updated, selected.history);
-      syncSelected(updatedPatient);
-    } catch (err) {
-      showError(err, 'salvar alterações do paciente');
-      return;
-    }
-=======
   function handleConfirmEdit() {
     if (!selected) return;
     const updated: Patient = {
@@ -571,7 +408,6 @@ export default function HistoricoPaciente() {
       observations: editForm.observacoes,
     };
     syncSelected(updated);
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
     setShowConfirmEditModal(false);
     setIsEditOpen(false);
     setSuccessMessage('Alterações salvas com sucesso!');
@@ -614,49 +450,6 @@ export default function HistoricoPaciente() {
     setShowConfirmAtend(true);
   }
 
-<<<<<<< HEAD
-  async function handleConfirmAtend() {
-    if (!selected) return;
-
-    const medicoId = Number(atendimentoForm.professional);
-    const valor = parseMoeda(atendimentoForm.value);
-    const extraJson = JSON.stringify({
-      units: atendimentoForm.units,
-      value: valor,
-      lote: atendimentoForm.lote,
-      nextVisit: atendimentoForm.nextVisit || '',
-      notes: atendimentoForm.observacoes,
-      serviceDate: atendimentoForm.date,
-    });
-
-    try {
-      const prontuario = await criarProntuario({
-        pacienteId: selected.id,
-        medicoId,
-        anamnese: atendimentoForm.procedure,
-        observacoes: extraJson,
-      });
-      const newItem = mapProntuarioToHistoryItem(prontuario);
-      const nextVisit = atendimentoForm.nextVisit
-        ? formatDate(atendimentoForm.nextVisit)
-        : selected.nextVisit;
-      const newHistory = [newItem, ...selected.history];
-      const updated: Patient = {
-        ...selected,
-        history:       newHistory,
-        totalSessions: newHistory.length,
-        totalSpent:    newHistory.reduce((s, h) => s + h.value, 0),
-        lastVisit:     newItem.date,
-        nextVisit,
-        status:        'ativo',
-      };
-      syncSelected(updated);
-    } catch (err) {
-      showError(err, 'registrar atendimento');
-      return;
-    }
-
-=======
   function handleConfirmAtend() {
     if (!selected) return;
 
@@ -688,7 +481,6 @@ export default function HistoricoPaciente() {
     };
 
     syncSelected(updated);
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
     setShowConfirmAtend(false);
     setIsAtendimentoOpen(false);
     clearAtendAll();
@@ -723,7 +515,8 @@ export default function HistoricoPaciente() {
       link.click();
       document.body.removeChild(link);
     } catch (err) {
-      showError(err, 'exportar ficha do paciente');
+      console.error('Erro ao exportar ficha:', err);
+      alert('Não foi possível gerar a ficha. Tente novamente.');
     } finally {
       setExporting(false);
       if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl!), 1000);
@@ -815,15 +608,7 @@ export default function HistoricoPaciente() {
 
       <CardsContainer>
         <CardsWrapper>
-<<<<<<< HEAD
-          {loading ? (
-            <div style={{ padding: '3rem', textAlign: 'center', color: '#aaa', fontSize: '0.95rem' }}>
-              Carregando pacientes...
-            </div>
-          ) : filtered.length === 0 ? (
-=======
           {filtered.length === 0 ? (
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
             <EmptyState>
               <h3>Nenhum paciente encontrado</h3>
               <p>Tente ajustar os filtros ou a busca.</p>
@@ -905,7 +690,6 @@ export default function HistoricoPaciente() {
         title="Ficha do Paciente"
         size="lg"
         footer={
-<<<<<<< HEAD
           <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', gap: 10 }}>
               <Button
@@ -935,37 +719,6 @@ export default function HistoricoPaciente() {
               </Button>
             </div>
             <Button type="button" variant="outline" onClick={() => setIsDetailOpen(false)}>Fechar</Button>
-=======
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, width: '100%' }}>
-            <Button
-              type="button"
-              variant="primary"
-              fullWidth
-              icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>}
-              onClick={openAtendimento}
-            >
-              Novo Atendimento
-            </Button>
-            <Button type="button" variant="outline" fullWidth
-              icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
-              onClick={() => selected && openEdit(selected)}
-            >
-              Editar Ficha
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              fullWidth
-              onClick={handleExportFicha}
-              disabled={exporting}
-              icon={exporting
-                ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>}
-            >
-              {exporting ? 'Gerando...' : 'Exportar PDF'}
-            </Button>
-            <Button type="button" variant="outline" fullWidth onClick={() => setIsDetailOpen(false)}>Fechar</Button>
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
           </div>
         }
       >
@@ -1312,15 +1065,6 @@ export default function HistoricoPaciente() {
         onClose={handleSuccessClose}
         buttonText="Continuar"
       />
-<<<<<<< HEAD
-
-      <ErrorModal
-        isOpen={isErrorOpen}
-        message={errorMsg}
-        onClose={() => setIsErrorOpen(false)}
-      />
-=======
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
     </Container>
   );
 }

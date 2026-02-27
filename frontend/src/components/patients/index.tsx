@@ -10,11 +10,6 @@ import Pagination from '@/components/ui/pagination';
 import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
-<<<<<<< HEAD
-import ErrorModal from '@/components/modals/errorModal';
-import { getApiErrorMessage } from '@/utils/apiError';
-=======
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import {
   Container, Header, Title, StatsGrid, Controls,
@@ -27,13 +22,10 @@ import {
   DetailSection, DetailSectionTitle, StatsRow, StatPill,
   InfoGrid, InfoItem, InfoLabel, InfoValue, ObsBox,
 } from './styles';
-<<<<<<< HEAD
 import {
   listarPacientes, criarPaciente, atualizarPaciente,
   PacienteResponse,
 } from '@/services/pacientesApi';
-=======
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 
 interface PacienteForm {
   nome: string;
@@ -72,7 +64,6 @@ const statusColors: Record<string, { bg: string; color: string }> = {
 
 const avatarColors = ['#BBA188', '#8a7560', '#a8906f', '#c9a882', '#917255', '#d4b896'];
 
-<<<<<<< HEAD
 interface Patient {
   id: number;
   name: string;
@@ -104,24 +95,6 @@ function mapPaciente(p: PacienteResponse): Patient {
     observacoes: p.observacoes ?? '',
   };
 }
-=======
-const INITIAL_PATIENTS = [
-  { id: 1,  name: 'Ana Beatriz Costa',  email: 'ana.costa@email.com',     phone: '(11) 98765-4321', birthdate: '1988-03-15', cpf: '123.456.789-00', lastVisit: '18/02/2025', procedure: 'Botox',            status: 'ativo',   visits: 8,  indicacao: 'Instagram',          observacoes: 'Alergia a látex' },
-  { id: 2,  name: 'Carla Mendonça',     email: 'carla.m@email.com',       phone: '(11) 97654-3210', birthdate: '1992-07-22', cpf: '234.567.890-11', lastVisit: '15/02/2025', procedure: 'Preenchimento',    status: 'ativo',   visits: 5,  indicacao: 'Indicação de amiga', observacoes: '' },
-  { id: 3,  name: 'Fernanda Lima',      email: 'fernanda.lima@email.com', phone: '(11) 96543-2109', birthdate: '1985-11-05', cpf: '345.678.901-22', lastVisit: '10/02/2025', procedure: 'Bioestimulador',   status: 'ativo',   visits: 3,  indicacao: 'Google',             observacoes: 'Gestante, verificar procedimentos' },
-  { id: 4,  name: 'Marina Souza',       email: 'marina.s@email.com',      phone: '(21) 95432-1098', birthdate: '1990-04-30', cpf: '456.789.012-33', lastVisit: '08/01/2025', procedure: 'Fio PDO',          status: 'ativo',   visits: 6,  indicacao: 'Instagram',          observacoes: '' },
-  { id: 5,  name: 'Juliana Rocha',      email: 'juliana.r@email.com',     phone: '(21) 94321-0987', birthdate: '1995-09-14', cpf: '567.890.123-44', lastVisit: '05/01/2025', procedure: 'Botox',            status: 'ativo',   visits: 2,  indicacao: 'Indicação médico',   observacoes: '' },
-  { id: 6,  name: 'Patrícia Alves',     email: 'patricia.a@email.com',    phone: '(31) 93210-9876', birthdate: '1982-12-19', cpf: '678.901.234-55', lastVisit: '20/12/2024', procedure: 'Microagulhamento', status: 'inativo', visits: 12, indicacao: 'Google',             observacoes: 'Histórico de queloides' },
-  { id: 7,  name: 'Roberta Gomes',      email: 'roberta.g@email.com',     phone: '(31) 92109-8765', birthdate: '1998-06-08', cpf: '789.012.345-66', lastVisit: '15/12/2024', procedure: 'Preenchimento',    status: 'ativo',   visits: 1,  indicacao: 'TikTok',             observacoes: '' },
-  { id: 8,  name: 'Sandra Oliveira',    email: 'sandra.o@email.com',      phone: '(41) 91098-7654', birthdate: '1978-02-25', cpf: '890.123.456-77', lastVisit: '10/11/2024', procedure: 'Bioestimulador',   status: 'inativo', visits: 7,  indicacao: 'Indicação de amiga', observacoes: '' },
-  { id: 9,  name: 'Luciana Ferreira',   email: 'luciana.f@email.com',     phone: '(11) 90987-6543', birthdate: '1991-01-10', cpf: '901.234.567-88', lastVisit: '12/02/2025', procedure: 'Botox',            status: 'ativo',   visits: 4,  indicacao: 'Instagram',          observacoes: '' },
-  { id: 10, name: 'Renata Cardoso',     email: 'renata.c@email.com',      phone: '(21) 99876-5432', birthdate: '1987-08-03', cpf: '012.345.678-99', lastVisit: '20/01/2025', procedure: 'Fio PDO',          status: 'ativo',   visits: 9,  indicacao: 'Google',             observacoes: 'Diabética tipo 2' },
-  { id: 11, name: 'Camila Torres',      email: 'camila.t@email.com',      phone: '(31) 98765-0123', birthdate: '1994-05-17', cpf: '111.222.333-44', lastVisit: '05/02/2025', procedure: 'Preenchimento',    status: 'ativo',   visits: 2,  indicacao: 'Indicação de amiga', observacoes: '' },
-  { id: 12, name: 'Beatriz Nunes',      email: 'beatriz.n@email.com',     phone: '(41) 97654-9012', birthdate: '2000-11-28', cpf: '222.333.444-55', lastVisit: '01/01/2025', procedure: 'Microagulhamento', status: 'ativo',   visits: 1,  indicacao: 'Instagram',          observacoes: '' },
-];
-
-type Patient = typeof INITIAL_PATIENTS[0];
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 
 const ITEMS_PER_PAGE = 10;
 
@@ -159,29 +132,19 @@ function calcAge(dateStr: string): string {
 
 function isFormDirty(form: PacienteForm): boolean {
   return (
-<<<<<<< HEAD
     form.nome.trim() !== '' ||
     form.email.trim() !== '' ||
     form.telefone.trim() !== '' ||
     form.nascimento !== '' ||
     form.cpf.trim() !== '' ||
     form.indicacao.trim() !== '' ||
-=======
-    form.nome.trim() !== '' || form.email.trim() !== '' ||
-    form.telefone.trim() !== '' || form.nascimento !== '' ||
-    form.cpf.trim() !== '' || form.indicacao.trim() !== '' ||
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
     form.observacoes.trim() !== ''
   );
 }
 
 export default function Patients() {
-<<<<<<< HEAD
   const [patients,        setPatients]        = useState<Patient[]>([]);
   const [loading,         setLoading]         = useState(true);
-=======
-  const [patients,        setPatients]        = useState<Patient[]>(INITIAL_PATIENTS);
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   const [search,          setSearch]          = useState('');
   const [filterSt,        setFilterSt]        = useState('Todos');
   const [filterProc,      setFilterProc]      = useState('Todos');
@@ -192,38 +155,23 @@ export default function Patients() {
   const [isEditing,       setIsEditing]       = useState(false);
   const [form,            setForm]            = useState<PacienteForm>(FORM_INITIAL);
   const [currentPage,     setCurrentPage]     = useState(1);
-  const [showCancelModal,  setShowCancelModal]  = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-<<<<<<< HEAD
   const [showCancelModal,  setShowCancelModal]  = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [errorMsg,         setErrorMsg]         = useState('');
-  const [isErrorOpen,      setIsErrorOpen]      = useState(false);
 
   const { errors, validate, clearError, clearAll } = useSequentialValidation<PacienteField>(VALIDATION_FIELDS);
-
-  function showError(err: unknown, context: string) {
-    setErrorMsg(getApiErrorMessage(err, context));
-    setIsErrorOpen(true);
-  }
 
   const fetchPatients = () => {
     setLoading(true);
     listarPacientes()
       .then(r => setPatients(r.content.map(mapPaciente)))
-      .catch(err => showError(err, 'carregar pacientes'))
+      .catch(console.error)
       .finally(() => setLoading(false));
   };
 
   useEffect(() => { fetchPatients(); }, []);
 
-=======
-  const { errors, validate, clearError, clearAll } = useSequentialValidation<PacienteField>(VALIDATION_FIELDS);
-
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   const filtered = patients.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.email.includes(search);
     const matchStatus = filterSt   === 'Todos' || p.status    === filterSt.toLowerCase();
@@ -259,7 +207,6 @@ export default function Patients() {
   }
 
   function openNew() {
-<<<<<<< HEAD
     setIsEditing(false);
     setSelectedPatient(null);
     setForm(FORM_INITIAL);
@@ -316,37 +263,10 @@ export default function Patients() {
       nascimento: form.nascimento,
       cpf:        form.cpf,
     });
-=======
-    setIsEditing(false); setSelectedPatient(null);
-    setForm(FORM_INITIAL); clearAll(); setIsModalOpen(true);
-  }
-
-  function openEdit(p: Patient) {
-    setIsEditing(true); setSelectedPatient(p);
-    setForm({ nome: p.name, email: p.email, telefone: p.phone, nascimento: toInputDate(p.birthdate), cpf: p.cpf, status: p.status, indicacao: p.indicacao, observacoes: p.observacoes });
-    clearAll(); setIsDetailOpen(false); setIsModalOpen(true);
-  }
-
-  function openDetail(p: Patient) { setSelectedPatient(p); setIsDetailOpen(true); }
-
-  function handleCancelClick() {
-    if (isFormDirty(form)) { setShowCancelModal(true); } else { forceClose(); }
-  }
-
-  function forceClose() {
-    setForm(FORM_INITIAL); clearAll(); setIsModalOpen(false);
-    setSelectedPatient(null); setIsEditing(false);
-    setShowCancelModal(false); setShowConfirmModal(false);
-  }
-
-  function handleSaveClick() {
-    const isValid = validate({ nome: form.nome, email: form.email, telefone: form.telefone, nascimento: form.nascimento, cpf: form.cpf });
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
     if (!isValid) return;
     setShowConfirmModal(true);
   }
 
-<<<<<<< HEAD
   async function handleConfirmSave() {
     setShowConfirmModal(false);
     const payload = {
@@ -368,7 +288,7 @@ export default function Patients() {
       setIsModalOpen(false);
       setShowSuccessModal(true);
     } catch (err) {
-      showError(err, 'salvar paciente');
+      alert((err as Error).message);
     }
   }
 
@@ -378,25 +298,6 @@ export default function Patients() {
     clearAll();
     setSelectedPatient(null);
     setIsEditing(false);
-=======
-  function handleConfirmSave() {
-    setShowConfirmModal(false);
-    if (isEditing && selectedPatient) {
-      setPatients(prev => prev.map(p => p.id === selectedPatient.id
-        ? { ...p, name: form.nome, email: form.email, phone: form.telefone, birthdate: form.nascimento, cpf: form.cpf, status: form.status, indicacao: form.indicacao, observacoes: form.observacoes }
-        : p
-      ));
-    } else {
-      const today = new Date().toLocaleDateString('pt-BR');
-      setPatients(prev => [...prev, { id: Date.now(), name: form.nome, email: form.email, phone: form.telefone, birthdate: form.nascimento, cpf: form.cpf, lastVisit: today, procedure: '—', status: 'ativo', visits: 0, indicacao: form.indicacao, observacoes: form.observacoes }]);
-    }
-    setIsModalOpen(false); setShowSuccessModal(true);
-  }
-
-  function handleSuccessClose() {
-    setShowSuccessModal(false); setForm(FORM_INITIAL);
-    clearAll(); setSelectedPatient(null); setIsEditing(false);
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   }
 
   return (
@@ -422,11 +323,7 @@ export default function Patients() {
         <StatCard label="Inativos" value={inativos} color="#EBD5B0"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>}
         />
-<<<<<<< HEAD
         <StatCard label="Total Cadastrados" value={patients.length} color="#a8906f"
-=======
-        <StatCard label="Novos este mês" value={3} color="#a8906f"
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>}
         />
       </StatsGrid>
@@ -498,7 +395,6 @@ export default function Patients() {
               </tr>
             </Thead>
             <Tbody>
-<<<<<<< HEAD
               {loading ? (
                 <tr><td colSpan={8}>
                   <EmptyState>
@@ -508,11 +404,6 @@ export default function Patients() {
               ) : paginatedData.length === 0 ? (
                 <tr><td colSpan={8}>
                   <EmptyState>
-=======
-              {paginatedData.length === 0 ? (
-                <tr><td colSpan={8}>
-                  <EmptyState>
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
                     <h3>Nenhum paciente encontrado</h3>
                     <p>Tente ajustar os filtros</p>
@@ -560,7 +451,6 @@ export default function Patients() {
         />
       </div>
 
-<<<<<<< HEAD
       <Modal
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
@@ -576,15 +466,6 @@ export default function Patients() {
             >
               Editar Ficha
             </Button>
-=======
-      <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} closeOnOverlayClick={false} title="Ficha do Paciente" size="lg"
-        footer={
-          <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'space-between' }}>
-            <Button variant="outline"
-              icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
-              onClick={() => selectedPatient && openEdit(selectedPatient)}
-            >Editar Ficha</Button>
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
             <Button variant="outline" onClick={() => setIsDetailOpen(false)}>Fechar</Button>
           </div>
         }
@@ -593,11 +474,7 @@ export default function Patients() {
           <DetailModal>
             <DetailHeader>
               <DetailAvatar $color="#BBA188">{getInitials(selectedPatient.name)}</DetailAvatar>
-<<<<<<< HEAD
               <div style={{ flex: 1 }}>
-=======
-              <div style={{ flex: 1, minWidth: 0 }}>
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
                 <DetailName>{selectedPatient.name}</DetailName>
                 <DetailMeta>
                   <DetailMetaItem>
@@ -610,33 +487,22 @@ export default function Patients() {
                   </DetailMetaItem>
                 </DetailMeta>
                 <StatsRow style={{ marginTop: 10 }}>
-<<<<<<< HEAD
                   <StatPill $color={selectedPatient.status === 'ativo' ? '#8a7560' : '#888'}>
                     {selectedPatient.status === 'ativo' ? 'Ativo' : 'Inativo'}
                   </StatPill>
-=======
-                  <StatPill $color="#BBA188">{selectedPatient.visits} visitas</StatPill>
-                  <StatPill $color={selectedPatient.status === 'ativo' ? '#8a7560' : '#888'}>{selectedPatient.status === 'ativo' ? 'Ativo' : 'Inativo'}</StatPill>
-                  <StatPill $color="#a8906f">{selectedPatient.procedure}</StatPill>
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
                 </StatsRow>
               </div>
             </DetailHeader>
 
             {selectedPatient.observacoes && (
-<<<<<<< HEAD
               <ObsBox>
                 <strong>⚠ Observações / Alergias: </strong>{selectedPatient.observacoes}
               </ObsBox>
-=======
-              <ObsBox><strong>⚠ Observações / Alergias: </strong>{selectedPatient.observacoes}</ObsBox>
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
             )}
 
             <DetailSection>
               <DetailSectionTitle>Dados do Paciente</DetailSectionTitle>
               <InfoGrid>
-<<<<<<< HEAD
                 <InfoItem>
                   <InfoLabel>Data de Nascimento</InfoLabel>
                   <InfoValue>{formatDate(selectedPatient.birthdate)}</InfoValue>
@@ -661,23 +527,12 @@ export default function Patients() {
                     </Badge>
                   </InfoValue>
                 </InfoItem>
-=======
-                <InfoItem><InfoLabel>Data de Nascimento</InfoLabel><InfoValue>{formatDate(selectedPatient.birthdate)}</InfoValue></InfoItem>
-                <InfoItem><InfoLabel>Idade</InfoLabel><InfoValue>{calcAge(selectedPatient.birthdate)}</InfoValue></InfoItem>
-                <InfoItem><InfoLabel>CPF</InfoLabel><InfoValue><code style={{ fontSize: '0.83rem', color: '#888', background: '#f5f5f5', padding: '3px 8px', borderRadius: 5 }}>{selectedPatient.cpf}</code></InfoValue></InfoItem>
-                <InfoItem><InfoLabel>Como nos conheceu</InfoLabel><InfoValue>{selectedPatient.indicacao || '—'}</InfoValue></InfoItem>
-                <InfoItem><InfoLabel>Último Procedimento</InfoLabel><InfoValue>{selectedPatient.procedure}</InfoValue></InfoItem>
-                <InfoItem><InfoLabel>Última Visita</InfoLabel><InfoValue>{selectedPatient.lastVisit}</InfoValue></InfoItem>
-                <InfoItem><InfoLabel>Total de Visitas</InfoLabel><InfoValue style={{ fontWeight: 700, color: '#1a1a1a', fontSize: '1.1rem' }}>{selectedPatient.visits}</InfoValue></InfoItem>
-                <InfoItem><InfoLabel>Status</InfoLabel><InfoValue><Badge $bg={statusColors[selectedPatient.status].bg} $color={statusColors[selectedPatient.status].color}>{selectedPatient.status === 'ativo' ? 'Ativo' : 'Inativo'}</Badge></InfoValue></InfoItem>
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
               </InfoGrid>
             </DetailSection>
           </DetailModal>
         )}
       </Modal>
 
-<<<<<<< HEAD
       <Modal
         isOpen={isModalOpen}
         onClose={handleCancelClick}
@@ -690,13 +545,6 @@ export default function Patients() {
             <Button variant="primary" onClick={handleSaveClick}>
               {isEditing ? 'Salvar Alterações' : 'Cadastrar Paciente'}
             </Button>
-=======
-      <Modal isOpen={isModalOpen} onClose={handleCancelClick} closeOnOverlayClick={false} title={isEditing ? 'Editar Paciente' : 'Novo Paciente'} size="lg"
-        footer={
-          <WizardNav>
-            <Button variant="outline" onClick={handleCancelClick}>Cancelar</Button>
-            <Button variant="primary" onClick={handleSaveClick}>{isEditing ? 'Salvar Alterações' : 'Cadastrar Paciente'}</Button>
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
           </WizardNav>
         }
       >
@@ -705,7 +553,6 @@ export default function Patients() {
             <SectionLabel style={{ marginBottom: 12 }}>Dados Pessoais</SectionLabel>
             <FormGrid>
               <div style={{ gridColumn: 'span 2' }}>
-<<<<<<< HEAD
                 <Input
                   label="Nome Completo *"
                   placeholder="Digite o nome completo"
@@ -750,21 +597,12 @@ export default function Patients() {
                 onValueChange={v => handleChange('cpf', v)}
                 error={errors.cpf}
               />
-=======
-                <Input label="Nome Completo *" placeholder="Digite o nome completo" value={form.nome} onChange={e => handleChange('nome', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))} maxLength={80} error={errors.nome} />
-              </div>
-              <Input label="E-mail *" type="email" placeholder="Digite o e-mail" value={form.email} onChange={e => handleChange('email', e.target.value)} error={errors.email} />
-              <Input label="Telefone *" mask="telefone" placeholder="Digite o telefone" value={form.telefone} inputMode="numeric" maxLength={15} onValueChange={v => handleChange('telefone', v)} error={errors.telefone} />
-              <Input label="Data de Nascimento *" type="date" value={form.nascimento} onChange={e => handleDateChange(e.target.value)} error={errors.nascimento} />
-              <Input label="CPF *" mask="cpf" placeholder="Digite o CPF" value={form.cpf} inputMode="numeric" maxLength={14} onValueChange={v => handleChange('cpf', v)} error={errors.cpf} />
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
             </FormGrid>
           </div>
           <div>
             <SectionLabel style={{ marginBottom: 12 }}>Informações Adicionais</SectionLabel>
             <FormGrid>
               {isEditing && (
-<<<<<<< HEAD
                 <Select
                   key={`status-${selectedPatient?.id}`}
                   label="Status"
@@ -790,22 +628,12 @@ export default function Patients() {
                   value={form.observacoes}
                   onChange={e => handleChange('observacoes', e.target.value)}
                 />
-=======
-                <Select key={`status-${selectedPatient?.id}`} label="Status" options={statusOptions} placeholder="Selecione o status" value={form.status} onChange={v => handleChange('status', v)} />
-              )}
-              <div style={{ gridColumn: isEditing ? 'auto' : 'span 2' }}>
-                <Input label="Como nos conheceu?" placeholder="Ex: Instagram, indicação, Google..." value={form.indicacao} onChange={e => handleChange('indicacao', e.target.value)} />
-              </div>
-              <div style={{ gridColumn: 'span 2' }}>
-                <Input label="Observações / Alergias" placeholder="Digite observações de saúde relevantes ou alergias" maxLength={300} value={form.observacoes} onChange={e => handleChange('observacoes', e.target.value)} />
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
               </div>
             </FormGrid>
           </div>
         </div>
       </Modal>
 
-<<<<<<< HEAD
       <CancelModal
         isOpen={showCancelModal}
         title="Deseja cancelar?"
@@ -835,16 +663,6 @@ export default function Patients() {
         onClose={handleSuccessClose}
         buttonText="Continuar"
       />
-      <ErrorModal
-        isOpen={isErrorOpen}
-        message={errorMsg}
-        onClose={() => setIsErrorOpen(false)}
-      />
-=======
-      <CancelModal isOpen={showCancelModal} title="Deseja cancelar?" message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas." onConfirm={forceClose} onCancel={() => setShowCancelModal(false)} />
-      <ConfirmModal isOpen={showConfirmModal} title={isEditing ? 'Salvar alterações?' : 'Cadastrar paciente?'} message={isEditing ? 'Tem certeza que deseja salvar as alterações feitas na ficha deste paciente?' : `Tem certeza que deseja cadastrar ${form.nome || 'este paciente'}?`} confirmText="Confirmar" cancelText="Voltar" onConfirm={handleConfirmSave} onCancel={() => setShowConfirmModal(false)} />
-      <SucessModal isOpen={showSuccessModal} title="Sucesso!" message={isEditing ? 'Alterações salvas com sucesso!' : 'Paciente cadastrado com sucesso!'} onClose={handleSuccessClose} buttonText="Continuar" />
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
     </Container>
   );
 }

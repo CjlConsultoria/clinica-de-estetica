@@ -2,24 +2,10 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  LayoutDashboard,
-  CalendarDays,
-  Users,
-  Syringe,
-  Package,
-  DollarSign,
-  BadgeDollarSign,
-  BarChart3,
-  Settings,
-  LogOut,
-  Menu,
-  Camera,
-  FileText,
-  FlaskConical,
-  RefreshCcw,
-  ClipboardList,
-  Stethoscope,
-  ScrollText,
+  LayoutDashboard, CalendarDays, Users, Syringe, Package,
+  DollarSign, BadgeDollarSign, BarChart3, Settings, LogOut,
+  Menu, Camera, FileText, FlaskConical, RefreshCcw,
+  ClipboardList, Stethoscope, ScrollText,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
@@ -80,10 +66,7 @@ const navSections = [
       { label: 'Financeiro',     href: '/finance',            icon: DollarSign,      permission: 'financeiro.read'       as Permission, permissionAlt: null },
       { label: 'Comissões',      href: '/comissoes',          icon: BadgeDollarSign, permission: 'comissoes.read'        as Permission, permissionAlt: 'comissoes.read_own'     as Permission },
       { label: 'Relatórios',     href: '/reports',            icon: BarChart3,       permission: 'relatorios.financeiro' as Permission, permissionAlt: null },
-<<<<<<< HEAD
-=======
       { label: 'Termos de Uso',  href: '/termos',             icon: ScrollText,      permission: 'configuracoes.read'    as Permission, permissionAlt: null },
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
       { label: 'Configurações',  href: '/settings',           icon: Settings,        permission: 'configuracoes.read'    as Permission, permissionAlt: null },
     ],
   },
@@ -92,11 +75,7 @@ const navSections = [
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-<<<<<<< HEAD
   const { logout } = useAuth();
-=======
-  const { user, logout } = useAuth();
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   const { can, isSuperAdmin } = usePermissions();
   const { currentUser } = useCurrentUser();
   const [isOpen, setIsOpen] = useState(false);
@@ -111,11 +90,7 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        !collapsed &&
-        navbarRef.current &&
-        !navbarRef.current.contains(event.target as Node)
-      ) {
+      if (!collapsed && navbarRef.current && !navbarRef.current.contains(event.target as Node)) {
         setCollapsed(true);
       }
     };
@@ -179,13 +154,7 @@ export default function Navbar() {
           </TopSection>
 
           <LogoCollapsed $collapsed={collapsed}>
-            <Image
-              src="/logocjl.png"
-              alt="Logo"
-              width={160}
-              height={160}
-              style={{ objectFit: 'contain', display: 'block' }}
-            />
+            <Image src="/logocjl.png" alt="Logo" width={160} height={160} style={{ objectFit: 'contain', display: 'block' }} />
           </LogoCollapsed>
 
           <DividerTop $collapsed={collapsed} />
@@ -203,19 +172,9 @@ export default function Navbar() {
                   const Icon = item.icon;
                   const selected = pathname === item.href;
                   return (
-                    <NavLink
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setIsOpen(false)}
-                      $selected={selected}
-                      $collapsed={collapsed}
-                    >
-                      <NavLinkIcon $selected={selected}>
-                        <Icon size={18} />
-                      </NavLinkIcon>
-                      <NavLinkText $selected={selected} $collapsed={collapsed}>
-                        {item.label}
-                      </NavLinkText>
+                    <NavLink key={item.href} href={item.href} onClick={() => setIsOpen(false)} $selected={selected} $collapsed={collapsed}>
+                      <NavLinkIcon $selected={selected}><Icon size={18} /></NavLinkIcon>
+                      <NavLinkText $selected={selected} $collapsed={collapsed}>{item.label}</NavLinkText>
                       <NavTooltip>{item.label}</NavTooltip>
                     </NavLink>
                   );
@@ -234,25 +193,17 @@ export default function Navbar() {
             <SectionDividerLine $collapsed={collapsed} />
           </SectionDividerWrap>
 
-          <LogoutButton
-            type="button"
-            onClick={() => setShowSwitcher(true)}
-            $collapsed={collapsed}
-          >
+          <LogoutButton type="button" onClick={() => setShowSwitcher(true)} $collapsed={collapsed}>
             <div style={{
-              width: 18, height: 18,
-              borderRadius: 5,
+              width: 18, height: 18, borderRadius: 5,
               background: roleColors?.bg ?? '#2a2a2a',
               color: roleColors?.color ?? '#95A5A6',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '0.55rem', fontWeight: 700, flexShrink: 0,
-              marginLeft: '23px',
+              fontSize: '0.55rem', fontWeight: 700, flexShrink: 0, marginLeft: '23px',
             }}>
               {currentUser?.name?.split(' ').slice(0, 2).map(n => n[0]).join('') ?? '?'}
             </div>
-            <LogoutText $collapsed={collapsed} style={{ color: roleColors?.color ?? '#95A5A6' }}>
-              {roleLabel}
-            </LogoutText>
+            <LogoutText $collapsed={collapsed} style={{ color: roleColors?.color ?? '#95A5A6' }}>{roleLabel}</LogoutText>
             <NavTooltip>Trocar perfil ({roleLabel})</NavTooltip>
           </LogoutButton>
 

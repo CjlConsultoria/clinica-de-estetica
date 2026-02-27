@@ -756,11 +756,7 @@ export const ObsBox = styled.div`
   strong { color: #BBA188; }
 `;
 
-<<<<<<< HEAD
-// ─── User Switcher (barra de perfil no topo — modo dev) ───────────────────────
-=======
 /* ─────────────── User Switcher ─────────────── */
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 
 export const UserSwitcherBar = styled.div`
   display: flex;
@@ -773,8 +769,6 @@ export const UserSwitcherBar = styled.div`
   margin-bottom: 20px;
   gap: 12px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     padding: 8px 12px;
@@ -782,7 +776,6 @@ export const UserSwitcherBar = styled.div`
     gap: 8px;
     margin-bottom: 14px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const UserSwitcherInfo = styled.div`
@@ -793,14 +786,11 @@ export const UserSwitcherInfo = styled.div`
   min-width: 0;
   color: #BBA188;
   font-size: 0.82rem;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     gap: 6px;
     font-size: 0.76rem;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const UserSwitcherName = styled.span`
@@ -814,13 +804,10 @@ export const UserSwitcherName = styled.span`
     color: #1a1a1a;
     font-weight: 600;
   }
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     font-size: 0.74rem;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const UserSwitcherBadge = styled.span<{ $bg: string; $color: string }>`
@@ -833,13 +820,10 @@ export const UserSwitcherBadge = styled.span<{ $bg: string; $color: string }>`
   color: ${({ $color }) => $color};
   white-space: nowrap;
   flex-shrink: 0;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     display: none;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const UserSwitcherBtn = styled.button`
@@ -859,13 +843,10 @@ export const UserSwitcherBtn = styled.button`
     background: #BBA188;
     color: white;
   }
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     font-size: 0.7rem;
     padding: 5px 10px;
     border-radius: 6px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;

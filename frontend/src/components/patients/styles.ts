@@ -6,10 +6,6 @@ export const Container = styled.div`
   min-height: 100vh;
   background: #f5f5f5;
   box-sizing: border-box;
-<<<<<<< HEAD
-  @media (max-width: 1024px) { padding: 24px 20px; }
-  @media (max-width: 768px)  { padding: 20px 16px; }
-=======
   overflow-x: hidden;
 
   @media (max-width: 1024px) {
@@ -23,7 +19,6 @@ export const Container = styled.div`
   @media (max-width: 480px) {
     padding: 68px 12px 20px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const Header = styled.div`
@@ -93,8 +88,6 @@ export const Controls = styled.div`
   gap: 12px;
   margin-bottom: 20px;
   align-items: center;
-<<<<<<< HEAD
-=======
   flex-wrap: wrap;
 
   @media (max-width: 768px) {
@@ -103,22 +96,17 @@ export const Controls = styled.div`
     gap: 10px;
     margin-bottom: 16px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const SearchBarWrapper = styled.div`
   position: relative;
   flex: 1;
   max-width: 380px;
-<<<<<<< HEAD
-  @media (max-width: 768px) { max-width: 100%; }
-=======
 
   @media (max-width: 768px) {
     max-width: 100%;
     width: 100%;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const SearchIconWrap = styled.div`
@@ -141,16 +129,12 @@ export const SearchInputStyled = styled.input`
   color: #333;
   transition: all 0.25s;
   box-sizing: border-box;
-<<<<<<< HEAD
-  &:focus { outline: none; border-color: #BBA188; box-shadow: 0 0 0 3px rgba(187,161,136,0.15); }
-=======
 
   &:focus {
     outline: none;
     border-color: #BBA188;
     box-shadow: 0 0 0 3px rgba(187,161,136,0.15);
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   &::placeholder { color: #bbb; }
   &:-webkit-autofill,
   &:-webkit-autofill:hover,
@@ -196,11 +180,8 @@ export const DropdownBtn = styled.button`
   min-width: 130px;
   justify-content: space-between;
   transition: all 0.2s;
-<<<<<<< HEAD
-=======
   width: 100%;
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   &:hover { border-color: #BBA188; }
 `;
 
@@ -225,10 +206,7 @@ export const DropdownItem = styled.div<{ $active?: boolean }>`
   font-weight: ${({ $active }) => ($active ? '600' : '400')};
   cursor: pointer;
   border-bottom: 1px solid #f5f5f5;
-<<<<<<< HEAD
-=======
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   &:last-child { border-bottom: none; }
   &:hover { background: rgba(187,161,136,0.08); color: #BBA188; }
 `;
@@ -245,31 +223,26 @@ export const ClearFilterBtn = styled.button`
   font-size: 0.84rem;
   cursor: pointer;
   transition: all 0.2s;
-<<<<<<< HEAD
-=======
   white-space: nowrap;
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   &:hover { background: #e74c3c; color: white; }
 `;
 
 export const TableWrapper = styled.div`
   width: 100%;
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 `;
 
 export const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 768px) {
     table-layout: auto;
     min-width: 600px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const Thead = styled.thead`
@@ -294,10 +267,7 @@ export const Tbody = styled.tbody``;
 export const Tr = styled.tr`
   border-bottom: 1px solid #f5f5f5;
   transition: background 0.15s;
-<<<<<<< HEAD
-=======
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   &:hover { background: #fdf9f5; }
   &:last-child { border-bottom: none; }
 `;
@@ -343,15 +313,10 @@ export const IconBtn = styled.button`
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
+
   &:hover { background: #BBA188; border-color: #BBA188; color: white; }
 `;
 
-<<<<<<< HEAD
-=======
-  &:hover { background: #BBA188; border-color: #BBA188; color: white; }
-`;
-
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 export const Avatar = styled.div<{ $color: string }>`
   width: 32px;
   height: 32px;
@@ -406,10 +371,7 @@ export const EmptyState = styled.div`
   padding: 50px 20px;
   text-align: center;
   color: #bbb;
-<<<<<<< HEAD
-=======
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   svg { margin-bottom: 14px; opacity: 0.35; }
   h3  { font-size: 1rem; color: #555; margin: 0 0 5px; }
   p   { font-size: 0.85rem; color: #999; margin: 0; }
@@ -421,17 +383,12 @@ export const FormGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  @media (max-width: 560px) { grid-template-columns: 1fr; }
-`;
 
-<<<<<<< HEAD
-=======
   @media (max-width: 560px) {
     grid-template-columns: 1fr;
   }
 `;
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 export const SectionLabel = styled.div`
   grid-column: span 2;
   font-size: 0.78rem;
@@ -449,8 +406,6 @@ export const WizardNav = styled.div`
   justify-content: space-between;
   align-items: center;
   width: 100%;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     flex-direction: column;
@@ -461,7 +416,6 @@ export const WizardNav = styled.div`
       justify-content: center;
     }
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const DetailModal = styled.div`
@@ -477,8 +431,6 @@ export const DetailHeader = styled.div`
   margin-bottom: 20px;
   padding-bottom: 20px;
   border-bottom: 1px solid #f0ebe4;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     flex-direction: column;
@@ -486,7 +438,6 @@ export const DetailHeader = styled.div`
     text-align: center;
     gap: 12px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const DetailAvatar = styled.div<{ $color: string }>`
@@ -510,26 +461,20 @@ export const DetailName = styled.h2`
   font-family: var(--font-cabourg-bold), 'Cabourg', serif;
   color: #1a1a1a;
   margin: 0 0 8px;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     font-size: 1.05rem;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const DetailMeta = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     align-items: center;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const DetailMetaItem = styled.div`
@@ -538,10 +483,7 @@ export const DetailMetaItem = styled.div`
   gap: 6px;
   font-size: 0.83rem;
   color: #666;
-<<<<<<< HEAD
-=======
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   svg { color: #BBA188; flex-shrink: 0; }
 `;
 
@@ -562,13 +504,10 @@ export const StatsRow = styled.div`
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     justify-content: center;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const StatPill = styled.span<{ $color: string }>`
@@ -589,16 +528,12 @@ export const InfoGrid = styled.div`
   border-radius: 14px;
   padding: 20px;
   border: 1px solid #f0ebe4;
-<<<<<<< HEAD
-  @media (max-width: 520px) { grid-template-columns: 1fr; }
-=======
 
   @media (max-width: 520px) {
     grid-template-columns: 1fr;
     padding: 14px;
     gap: 12px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const InfoItem = styled.div`
@@ -630,9 +565,6 @@ export const ObsBox = styled.div`
   color: #666;
   margin-bottom: 20px;
   line-height: 1.6;
-<<<<<<< HEAD
-=======
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   strong { color: #BBA188; }
 `;

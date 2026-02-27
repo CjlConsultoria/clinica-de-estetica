@@ -6,10 +6,6 @@ export const Container = styled.div`
   min-height: 100vh;
   background: #f5f5f5;
   box-sizing: border-box;
-<<<<<<< HEAD
-  @media (max-width: 1024px) { width: 100%; padding: 24px 20px; }
-  @media (max-width: 768px)  { padding: 20px 16px; }
-=======
   overflow-x: hidden;
 
   @media (max-width: 1024px) {
@@ -23,7 +19,6 @@ export const Container = styled.div`
   @media (max-width: 480px) {
     padding: 68px 12px 20px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const Header = styled.div`
@@ -229,10 +224,7 @@ export const DropdownList = styled.div`
   z-index: 100;
   overflow: hidden;
   animation: dropIn 0.18s ease;
-<<<<<<< HEAD
-=======
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   @keyframes dropIn {
     from { opacity: 0; transform: translateY(-8px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -316,58 +308,17 @@ export const TableContainer = styled.div`
   }
 `;
 
-export const ToggleGroup = styled.div`
-  display: flex;
-  background: white;
-  border-radius: 10px;
-  border: 1.5px solid #e8e8e8;
-  overflow: hidden;
-  margin-left: auto;
-`;
-
-export const ToggleBtn = styled.button<{ $active: boolean }>`
-  padding: 9px 14px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: ${({ $active }) => ($active ? '#BBA188' : 'transparent')};
-  color: ${({ $active }) => ($active ? 'white' : '#888')};
-  display: flex;
-  align-items: center;
-`;
-
-/* ─────────────── Tabela ─────────────── */
-/*
- * TableContainer — altura fixa para exatamente 10 linhas (padrão Estoque).
- *
- * Estoque usa TABLE_MIN_HEIGHT = 540px para a área da tabela (TableWrapper).
- * Paginação: 56px (min-height do PaginationWrapper).
- * Total container: 540 + 56 = 596px.
- */
-export const TableContainer = styled.div`
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  height: 596px;
-`;
-
 export const TableWrapper = styled.div`
   width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   min-height: 540px;
-<<<<<<< HEAD
-=======
   -webkit-overflow-scrolling: touch;
 
   @media (max-width: 768px) {
     min-height: unset;
     overflow-y: auto;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const Table = styled.table`
@@ -385,7 +336,6 @@ export const Thead = styled.thead`
   background: linear-gradient(135deg, #BBA188, #a8906f);
 `;
 
-/* Padrão Estoque: padding 11px 10px, font-size 0.69rem */
 export const Th = styled.th<{ $width?: string }>`
   padding: 11px 10px;
   text-align: left;
@@ -409,10 +359,6 @@ export const Tr = styled.tr`
   &:last-child { border-bottom: none; }
 `;
 
-<<<<<<< HEAD
-/* Padrão Estoque: padding 10px 10px, font-size 0.78rem */
-=======
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 export const Td = styled.td<{ colSpan?: number }>`
   padding: 10px 10px;
   font-size: 0.78rem;
@@ -423,7 +369,6 @@ export const Td = styled.td<{ colSpan?: number }>`
   text-overflow: ellipsis;
 `;
 
-/* Padrão Estoque: padding 3px 7px, font-size 0.68rem */
 export const Badge = styled.span<{ $bg?: string; $color?: string }>`
   display: inline-block;
   padding: 3px 7px;
@@ -440,7 +385,6 @@ export const ActionGroup = styled.div`
   gap: 4px;
 `;
 
-/* Padrão Estoque: 30px × 30px */
 export const IconBtn = styled.button`
   width: 30px;
   height: 30px;
@@ -454,10 +398,7 @@ export const IconBtn = styled.button`
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
-<<<<<<< HEAD
-=======
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   &:hover { background: #BBA188; border-color: #BBA188; color: white; }
 `;
 
@@ -500,35 +441,10 @@ export const CardsContainer = styled.div`
   }
 `;
 
-export const EmptyState = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 60px 20px;
-  text-align: center;
-  color: #bbb;
-  h3 { font-size: 1.1rem; font-family: var(--font-cabourg-bold), 'Cabourg', serif; color: #555; margin: 0 0 6px; }
-  p  { font-size: 0.88rem; color: #999; margin: 0; }
-`;
-
-export const CardsContainer = styled.div`
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  height: 690px;
-`;
-
 export const CardsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
-<<<<<<< HEAD
-  @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); }
-  @media (max-width: 640px) { grid-template-columns: 1fr; }
-=======
 
   @media (max-width: 1024px) {
     grid-template-columns: repeat(2, 1fr);
@@ -539,7 +455,6 @@ export const CardsGrid = styled.div`
     grid-template-columns: 1fr;
     gap: 12px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const ReapCard = styled.div<{ $urgente?: boolean }>`
@@ -683,8 +598,6 @@ export const ReapCardFooter = styled.div`
   display: flex;
   gap: 8px;
   justify-content: flex-end;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     padding: 10px 14px;
@@ -695,7 +608,6 @@ export const ReapCardFooter = styled.div`
       flex: 1;
     }
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 /* ─────────────── Paginação ─────────────── */
@@ -709,15 +621,12 @@ export const PaginationWrapper = styled.div`
   border-top: 1px solid #f0ebe4;
   min-height: 56px;
   flex-shrink: 0;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     gap: 8px;
     padding: 12px 14px;
     justify-content: space-between;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PaginationInfo = styled.span`
@@ -725,26 +634,20 @@ export const PaginationInfo = styled.span`
   color: #999;
   font-weight: 400;
   white-space: nowrap;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     font-size: 0.72rem;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PaginationControls = styled.div`
   display: flex;
   align-items: center;
   gap: 4px;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     gap: 2px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PageButton = styled.button<{ $active?: boolean }>`
@@ -761,23 +664,17 @@ export const PageButton = styled.button<{ $active?: boolean }>`
   transition: all 0.2s ease;
   background: ${({ $active }) => ($active ? '#BBA188' : 'transparent')};
   color: ${({ $active }) => ($active ? '#ffffff' : '#888')};
-<<<<<<< HEAD
-=======
 
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   &:hover:not(:disabled) {
     background: ${({ $active }) => ($active ? '#BBA188' : 'rgba(187,161,136,0.12)')};
     color: ${({ $active }) => ($active ? '#ffffff' : '#BBA188')};
   }
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     width: 28px;
     height: 28px;
     font-size: 0.74rem;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PageEllipsis = styled.span`
@@ -789,15 +686,12 @@ export const PageEllipsis = styled.span`
   font-size: 0.85rem;
   color: #bbb;
   user-select: none;
-<<<<<<< HEAD
-=======
 
   @media (max-width: 480px) {
     width: 24px;
     height: 28px;
     font-size: 0.75rem;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PaginationArrow = styled.button`
@@ -812,10 +706,6 @@ export const PaginationArrow = styled.button`
   color: #BBA188;
   cursor: pointer;
   transition: all 0.2s ease;
-<<<<<<< HEAD
-  &:hover:not(:disabled) { background: rgba(187,161,136,0.12); }
-  &:disabled { color: #ddd; cursor: not-allowed; }
-=======
 
   &:hover:not(:disabled) { background: rgba(187,161,136,0.12); }
   &:disabled { color: #ddd; cursor: not-allowed; }
@@ -824,5 +714,4 @@ export const PaginationArrow = styled.button`
     width: 28px;
     height: 28px;
   }
->>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
