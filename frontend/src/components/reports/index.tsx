@@ -7,7 +7,7 @@ import {
   Container, Header, Title, StatsGrid,
   ReportsGrid, ReportCard, ReportIcon, ReportInfo, ReportTitle, ReportDesc, ReportAction,
   FiltersRow, DropdownWrapper, DropdownBtn, DropdownList, DropdownItem,
-  ChartSection, ChartTitle, PieChart, PieLegend, PieLegendItem, LegendDot,
+  ChartsRow, ChartSection, ChartTitle, PieChart, PieLegend, PieLegendItem, LegendDot,
   TableWrapper, Table, Thead, Th, Tbody, Tr, Td, Badge,
 } from './styles';
 
@@ -219,7 +219,7 @@ export default function Reports() {
         ))}
       </ReportsGrid>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 20, marginTop: 24 }}>
+      <ChartsRow>
         <ChartSection>
           <ChartTitle>Distribuição por Categoria</ChartTitle>
           <PieChart style={{ background: `conic-gradient(${pieGradient})` }} />
@@ -273,7 +273,7 @@ export default function Reports() {
             </Table>
           </TableWrapper>
         </div>
-      </div>
+      </ChartsRow>
     </Container>
   );
 }

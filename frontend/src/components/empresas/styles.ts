@@ -1,5 +1,7 @@
 import styled from 'styled-components';
 
+// ─── Layout base (idêntico ao Pacientes) ──────────────────────────────────────
+
 export const Container = styled.div`
   padding: 40px;
   width: 100%;
@@ -8,17 +10,9 @@ export const Container = styled.div`
   box-sizing: border-box;
   overflow-x: hidden;
 
-  @media (max-width: 1024px) {
-    padding: 72px 20px 24px;
-  }
-
-  @media (max-width: 768px) {
-    padding: 72px 14px 20px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 68px 12px 20px;
-  }
+  @media (max-width: 1024px) { padding: 72px 20px 24px; }
+  @media (max-width: 768px)  { padding: 72px 14px 20px; }
+  @media (max-width: 480px)  { padding: 68px 12px 20px; }
 `;
 
 export const Header = styled.div`
@@ -58,10 +52,7 @@ export const Title = styled.h1`
     grid-column: 1;
     grid-row: 1;
   }
-
-  @media (max-width: 480px) {
-    font-size: 1.4rem;
-  }
+  @media (max-width: 480px) { font-size: 1.4rem; }
 `;
 
 export const StatsGrid = styled.div`
@@ -75,13 +66,14 @@ export const StatsGrid = styled.div`
     gap: 14px;
     margin-bottom: 20px;
   }
-
   @media (max-width: 480px) {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
     margin-bottom: 16px;
   }
 `;
+
+// ─── Controls / Search / Filtros (idêntico ao Pacientes) ─────────────────────
 
 export const Controls = styled.div`
   display: flex;
@@ -136,14 +128,6 @@ export const SearchInputStyled = styled.input`
     box-shadow: 0 0 0 3px rgba(187,161,136,0.15);
   }
   &::placeholder { color: #bbb; }
-  &:-webkit-autofill,
-  &:-webkit-autofill:hover,
-  &:-webkit-autofill:focus,
-  &:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 30px white inset !important;
-    -webkit-text-fill-color: #333 !important;
-    transition: background-color 5000s ease-in-out 0s;
-  }
 `;
 
 export const FilterRow = styled.div`
@@ -152,17 +136,13 @@ export const FilterRow = styled.div`
   align-items: center;
   flex-wrap: wrap;
 
-  @media (max-width: 768px) {
-    width: 100%;
-  }
+  @media (max-width: 768px) { width: 100%; }
 `;
 
 export const DropdownWrapper = styled.div`
   position: relative;
 
-  @media (max-width: 768px) {
-    flex: 1;
-  }
+  @media (max-width: 768px) { flex: 1; }
 `;
 
 export const DropdownBtn = styled.button`
@@ -228,6 +208,8 @@ export const ClearFilterBtn = styled.button`
   &:hover { background: #e74c3c; color: white; }
 `;
 
+// ─── Tabela (header gradient igual ao Pacientes) ──────────────────────────────
+
 export const TableWrapper = styled.div`
   width: 100%;
   overflow-x: auto;
@@ -241,7 +223,7 @@ export const Table = styled.table`
 
   @media (max-width: 768px) {
     table-layout: auto;
-    min-width: 600px;
+    min-width: 680px;
   }
 `;
 
@@ -317,53 +299,6 @@ export const IconBtn = styled.button`
   &:hover { background: #BBA188; border-color: #BBA188; color: white; }
 `;
 
-export const Avatar = styled.div<{ $color: string }>`
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: ${({ $color }) => $color}22;
-  color: ${({ $color }) => $color};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.72rem;
-  font-weight: 700;
-  flex-shrink: 0;
-`;
-
-export const PatientInfo = styled.div`
-  min-width: 0;
-  flex: 1;
-`;
-
-export const PatientName = styled.div`
-  font-weight: 600;
-  color: #1a1a1a;
-  font-size: 0.8rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-export const PatientEmail = styled.div`
-  font-size: 0.7rem;
-  color: #aaa;
-  margin-top: 1px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-export const PhoneText = styled.div`
-  font-size: 0.78rem;
-  color: #777;
-`;
-
-export const DateText = styled.div`
-  font-size: 0.78rem;
-  color: #777;
-`;
-
 export const EmptyState = styled.div`
   display: flex;
   flex-direction: column;
@@ -377,6 +312,47 @@ export const EmptyState = styled.div`
   p   { font-size: 0.85rem; color: #999; margin: 0; }
 `;
 
+// ─── Avatar empresa ───────────────────────────────────────────────────────────
+
+export const AvatarEmpresa = styled.div<{ $color: string }>`
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: ${({ $color }) => $color};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+`;
+
+export const EmpresaInfo = styled.div`
+  min-width: 0;
+  flex: 1;
+`;
+
+export const EmpresaNome = styled.div`
+  font-weight: 600;
+  color: #1a1a1a;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+export const EmpresaEmail = styled.div`
+  font-size: 0.7rem;
+  color: #aaa;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+// ─── Modal forms (idêntico ao Pacientes) ─────────────────────────────────────
+
 export const FormGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -384,14 +360,11 @@ export const FormGrid = styled.div`
 
   @media (max-width: 560px) {
     grid-template-columns: 1fr;
-    & > * {
-      grid-column: 1 !important;
-    }
+    & > * { grid-column: 1 !important; }
   }
 `;
 
-export const SectionLabel = styled.div`
-  grid-column: span 2;
+export const SectionLabel = styled.p`
   font-size: 0.78rem;
   font-weight: 600;
   color: #BBA188;
@@ -399,24 +372,10 @@ export const SectionLabel = styled.div`
   letter-spacing: 0.5px;
   border-bottom: 1px solid #f0ebe4;
   padding-bottom: 6px;
-  margin-bottom: 4px;
+  margin: 0 0 12px;
 `;
 
-export const WizardNav = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-
-  @media (max-width: 480px) {
-    gap: 10px;
-
-    & > button {
-      flex: 1;
-      justify-content: center;
-    }
-  }
-`;
+// ─── Wizard (idêntico ao Pacientes) ──────────────────────────────────────────
 
 export const WizardSteps = styled.div`
   display: flex;
@@ -441,9 +400,7 @@ export const WizardStep = styled.div`
   flex: 1;
   max-width: 140px;
 
-  @media (max-width: 600px) {
-    max-width: 80px;
-  }
+  @media (max-width: 600px) { max-width: 80px; }
 `;
 
 export const WizardStepLine = styled.div<{ $done?: boolean }>`
@@ -490,14 +447,8 @@ export const WizardStepLabel = styled.span<{ $current?: boolean }>`
   line-height: 1.3;
   transition: color 0.2s;
 
-  @media (max-width: 600px) {
-    font-size: 0.58rem;
-    margin-top: 4px;
-  }
-
-  @media (max-width: 400px) {
-    display: none;
-  }
+  @media (max-width: 600px) { font-size: 0.58rem; margin-top: 4px; }
+  @media (max-width: 400px) { display: none; }
 `;
 
 export const StepSection = styled.div`
@@ -506,82 +457,25 @@ export const StepSection = styled.div`
   flex-direction: column;
   gap: 4px;
 
-  @media (max-width: 480px) {
-    min-height: 200px;
-  }
+  @media (max-width: 480px) { min-height: 200px; }
 `;
 
-export const DetailModal = styled.div`
-  max-height: 65vh;
-  overflow-y: auto;
-  padding-right: 4px;
-`;
-
-export const DetailHeader = styled.div`
+export const WizardNav = styled.div`
   display: flex;
-  align-items: flex-start;
-  gap: 18px;
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #f0ebe4;
-
-  @media (max-width: 480px) {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 12px;
-  }
-`;
-
-export const DetailAvatar = styled.div<{ $color: string }>`
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: ${({ $color }) => $color}22;
-  border: 2.5px solid ${({ $color }) => $color}55;
-  display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: ${({ $color }) => $color};
-  flex-shrink: 0;
-  font-family: var(--font-cabourg-bold), 'Cabourg', serif;
-`;
-
-export const DetailName = styled.h2`
-  font-size: 1.2rem;
-  font-family: var(--font-cabourg-bold), 'Cabourg', serif;
-  color: #1a1a1a;
-  margin: 0 0 8px;
+  width: 100%;
 
   @media (max-width: 480px) {
-    font-size: 1.05rem;
+    gap: 10px;
+    & > button { flex: 1; justify-content: center; }
   }
 `;
 
-export const DetailMeta = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-
-  @media (max-width: 480px) {
-    align-items: center;
-  }
-`;
-
-export const DetailMetaItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.83rem;
-  color: #666;
-
-  svg { color: #BBA188; flex-shrink: 0; }
-`;
+// ─── Detail modal (idêntico ao Pacientes) ────────────────────────────────────
 
 export const DetailSection = styled.div`
-  margin-top: 4px;
+  margin-top: 20px;
 `;
 
 export const DetailSectionTitle = styled.h3`
@@ -591,26 +485,6 @@ export const DetailSectionTitle = styled.h3`
   font-weight: 700;
   border-bottom: 1px solid #f0ebe4;
   padding-bottom: 8px;
-`;
-
-export const StatsRow = styled.div`
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-
-  @media (max-width: 480px) {
-    justify-content: center;
-  }
-`;
-
-export const StatPill = styled.span<{ $color: string }>`
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  background: ${({ $color }) => $color}18;
-  color: ${({ $color }) => $color};
 `;
 
 export const InfoGrid = styled.div`
@@ -649,15 +523,85 @@ export const InfoValue = styled.span`
   font-weight: 500;
 `;
 
-export const ObsBox = styled.div`
-  background: #fdf9f5;
+// ─── Tabs ─────────────────────────────────────────────────────────────────────
+
+export const TabRow = styled.div`
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  background: #f5f5f5;
+  border-radius: 10px;
+  padding: 4px;
+  width: fit-content;
+
+  @media (max-width: 480px) {
+    width: 100%;
+    & > button { flex: 1; }
+  }
+`;
+
+export const Tab = styled.button<{ $active?: boolean }>`
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.83rem;
+  font-weight: ${p => p.$active ? 700 : 400};
+  color: ${p => p.$active ? '#1a1a1a' : '#888'};
+  background: ${p => p.$active ? 'white' : 'transparent'};
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: ${p => p.$active ? '0 1px 4px rgba(0,0,0,0.08)' : 'none'};
+  white-space: nowrap;
+
+  @media (max-width: 480px) {
+    padding: 8px 12px;
+    font-size: 0.78rem;
+  }
+`;
+
+// ─── InfoBox (aviso azul no step admin) ──────────────────────────────────────
+
+export const InfoBox = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(59,130,246,0.07);
+  border: 1.5px solid rgba(59,130,246,0.2);
   border-radius: 10px;
   padding: 12px 16px;
-  border: 1px solid #f0ebe4;
-  font-size: 0.85rem;
-  color: #666;
+  font-size: 0.8rem;
+  color: #3b82f6;
   margin-bottom: 20px;
-  line-height: 1.6;
+  line-height: 1.4;
+  svg { flex-shrink: 0; margin-top: 1px; }
+  strong { font-weight: 700; }
+`;
 
-  strong { color: #BBA188; }
+// ─── Checkbox ─────────────────────────────────────────────────────────────────
+
+export const CheckboxRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+`;
+
+export const CheckboxBox = styled.div<{ $checked: boolean }>`
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 2px solid ${p => p.$checked ? '#BBA188' : '#ddd'};
+  background: ${p => p.$checked ? '#BBA188' : 'white'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+`;
+
+export const CheckboxLabel = styled.div`
+  font-size: 0.83rem;
+  color: #444;
+  font-weight: 500;
 `;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -14,56 +14,15 @@ import { useSequentialValidation } from '@/components/ui/hooks/useSequentialVali
 import { usePermissions } from '@/components/ui/hooks/usePermissions';
 import AccessDenied from '@/components/ui/AccessDenied';
 import {
-  listarProdutos, criarProduto, atualizarProduto,
-  ProdutoResponse,
-} from '@/services/produtosApi';
-import {
   Container, Header, Title, Controls, SearchBarWrapper, SearchIconWrap, SearchInputStyled,
   FilterRow, DropdownWrapper, DropdownBtn, DropdownList, DropdownItem, ClearFilterBtn,
   StatsGrid, TableWrapper, Table, Thead, Th, Tbody, Tr, Td, Badge, ActionGroup, IconBtn,
   EmptyState, FormGrid,
   ToggleGroup, ToggleBtn, CardsGrid, StockCard, StockCardTop, StockCardName,
   StockCardCategory, StockCardBody, StockDetailRow, StockDetailLabel, StockDetailValue,
-  StockCardFooter, StockAlertBadge,
+  StockCardFooter, ProgressBarWrapper, ProgressBar, StockAlertBadge,
   AlertBanner, AlertBannerIcon, AlertBannerText,
 } from './styles';
-
-// ─── Local types ──────────────────────────────────────────────────────────────
-
-interface StockItem {
-  id:             number;
-  code:           string;   // registroAnvisa ?? '—'
-  name:           string;   // nome
-  category:       string;   // categoria ?? '—'
-  unit:           string;   // unidade ?? '—'
-  quantity:       number;   // estoqueTotal
-  totalLotes:     number;
-  fabricante:     string;
-  registroAnvisa: string;
-  descricao:      string;
-  ativo:          boolean;
-  status:         string;   // 'normal' | 'esgotado' | 'inativo'
-}
-
-function mapProduto(p: ProdutoResponse): StockItem {
-  const status = !p.ativo ? 'inativo' : p.estoqueTotal === 0 ? 'esgotado' : 'normal';
-  return {
-    id:             p.id,
-    code:           p.registroAnvisa ?? '—',
-    name:           p.nome,
-    category:       p.categoria ?? '—',
-    unit:           p.unidade ?? '—',
-    quantity:       p.estoqueTotal,
-    totalLotes:     p.totalLotes,
-    fabricante:     p.fabricante,
-    registroAnvisa: p.registroAnvisa ?? '',
-    descricao:      p.descricao ?? '',
-    ativo:          p.ativo,
-    status,
-  };
-}
-
-// ─── Options ─────────────────────────────────────────────────────────────────
 
 const categoryOptions = [
   { value: 'toxina',         label: 'Toxina Botulínica' },
@@ -76,7 +35,7 @@ const categoryOptions = [
 ];
 
 const filterCategories = ['Todas', 'Toxina Botulínica', 'Preenchimento', 'Bioestimulador', 'Fio de PDO', 'Skincare/Pele', 'Descartável', 'Equipamento'];
-const filterStatus     = ['Todos', 'Normal', 'Esgotado', 'Inativo'];
+const filterStatus     = ['Todos', 'Normal', 'Baixo', 'Crítico', 'Esgotado'];
 
 const unitOptions = [
   { value: 'unid', label: 'Unidade'  },
@@ -94,6 +53,20 @@ const movTypeOptions = [
   { value: 'descarte', label: 'Descarte / Vencimento'        },
 ];
 
+const mockStock = [
+  { id: 1,  code: 'BTX-ALE-001', name: 'Toxina Botulínica Allergan 100U',  category: 'Toxina Botulínica', quantity: 8,  minStock: 5,  maxStock: 30,  unit: 'fr',  price: 980,  expiryDate: '2025-06-15', supplier: 'Biolab',       status: 'normal'   },
+  { id: 2,  code: 'BTX-MED-002', name: 'Toxina Botulínica Medytoxin 200U', category: 'Toxina Botulínica', quantity: 2,  minStock: 4,  maxStock: 20,  unit: 'fr',  price: 1200, expiryDate: '2025-04-20', supplier: 'MedEsthetics', status: 'critico'  },
+  { id: 3,  code: 'PRE-JUV-001', name: 'Ácido Hialurônico Juvederm 1ml',   category: 'Preenchimento',     quantity: 3,  minStock: 5,  maxStock: 25,  unit: 'ser', price: 450,  expiryDate: '2025-08-10', supplier: 'Allergan',     status: 'baixo'    },
+  { id: 4,  code: 'PRE-RES-002', name: 'Restylane Lyft 1ml',               category: 'Preenchimento',     quantity: 12, minStock: 4,  maxStock: 20,  unit: 'ser', price: 520,  expiryDate: '2025-09-30', supplier: 'Galderma',     status: 'normal'   },
+  { id: 5,  code: 'BIO-SCU-001', name: 'Sculptra 150mg',                   category: 'Bioestimulador',    quantity: 0,  minStock: 2,  maxStock: 10,  unit: 'fr',  price: 1800, expiryDate: '2025-07-22', supplier: 'Galderma',     status: 'esgotado' },
+  { id: 6,  code: 'BIO-RAD-002', name: 'Radiesse 1.5ml',                   category: 'Bioestimulador',    quantity: 6,  minStock: 3,  maxStock: 15,  unit: 'ser', price: 950,  expiryDate: '2025-11-05', supplier: 'Merz',         status: 'normal'   },
+  { id: 7,  code: 'FIO-PDO-001', name: 'Fio PDO Tensor Espiral 19G',       category: 'Fio de PDO',        quantity: 4,  minStock: 5,  maxStock: 30,  unit: 'cx',  price: 320,  expiryDate: '2026-01-10', supplier: 'Aesthetic',    status: 'baixo'    },
+  { id: 8,  code: 'SKN-VIT-001', name: 'Vitamina C 20% Sérum',             category: 'Skincare/Pele',     quantity: 15, minStock: 5,  maxStock: 40,  unit: 'fr',  price: 180,  expiryDate: '2025-12-01', supplier: 'Sesderma',     status: 'normal'   },
+  { id: 9,  code: 'DES-AGU-001', name: 'Agulhas 30G 0.5mm',                category: 'Descartável',       quantity: 1,  minStock: 10, maxStock: 100, unit: 'cx',  price: 45,   expiryDate: '2027-01-01', supplier: 'BD',           status: 'critico'  },
+  { id: 10, code: 'DES-LUV-002', name: 'Luvas Nitrila M',                  category: 'Descartável',       quantity: 22, minStock: 5,  maxStock: 50,  unit: 'cx',  price: 38,   expiryDate: '2027-06-01', supplier: 'Medix',        status: 'normal'   },
+  { id: 11, code: 'DES-LUV-003', name: 'Luvas Nitrila G',                  category: 'Descartável',       quantity: 22, minStock: 5,  maxStock: 50,  unit: 'cx',  price: 38,   expiryDate: '2027-06-01', supplier: 'Medix',        status: 'normal'   },
+];
+
 const catColors: Record<string, string> = {
   'Toxina Botulínica': '#BBA188',
   'Preenchimento':     '#EBD5B0',
@@ -106,17 +79,36 @@ const catColors: Record<string, string> = {
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   normal:   { label: 'Normal',   color: '#8a7560', bg: '#f0ebe4' },
+  baixo:    { label: 'Baixo',    color: '#d68a00', bg: '#fff8e1' },
+  critico:  { label: 'Crítico',  color: '#c0392b', bg: '#fdecea' },
   esgotado: { label: 'Esgotado', color: '#7f8c8d', bg: '#f0f0f0' },
-  inativo:  { label: 'Inativo',  color: '#95a5a6', bg: '#f5f5f5' },
 };
 
-// ─── Form types ───────────────────────────────────────────────────────────────
+function getProgressColor(status: string) {
+  if (status === 'normal')  return '#BBA188';
+  if (status === 'baixo')   return '#f39c12';
+  if (status === 'critico') return '#e74c3c';
+  return '#ccc';
+}
 
-type ItemField = 'nome' | 'fabricante' | 'categoria' | 'unidade' | 'registroAnvisa' | 'descricao';
+function formatDate(dateStr: string) {
+  const [y, m, d] = dateStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function isExpiringSoon(dateStr: string) {
+  const diff = (new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+  return diff <= 30 && diff > 0;
+}
+
+type ItemField =
+  | 'nome' | 'codigo' | 'categoria' | 'unidade'
+  | 'quantidade' | 'minimo' | 'maximo' | 'preco' | 'fornecedor' | 'validade';
 
 interface ItemForm {
-  nome: string; fabricante: string; categoria: string; unidade: string;
-  registroAnvisa: string; descricao: string;
+  nome: string; codigo: string; categoria: string; unidade: string;
+  quantidade: string; minimo: string; maximo: string; preco: string;
+  fornecedor: string; validade: string;
 }
 
 type MovField = 'tipoMov' | 'quantidadeMov' | 'observacaoMov';
@@ -126,7 +118,8 @@ interface MovForm {
 }
 
 const ITEM_INITIAL: ItemForm = {
-  nome: '', fabricante: '', categoria: '', unidade: '', registroAnvisa: '', descricao: '',
+  nome: '', codigo: '', categoria: '', unidade: '',
+  quantidade: '', minimo: '', maximo: '', preco: '', fornecedor: '', validade: '',
 };
 
 const MOV_INITIAL: MovForm = {
@@ -134,8 +127,16 @@ const MOV_INITIAL: MovForm = {
 };
 
 const ITEM_VALIDATION_FIELDS = [
-  { key: 'nome'       as ItemField, validate: (v: string) => !v.trim() ? 'Nome do item é obrigatório' : null },
-  { key: 'fabricante' as ItemField, validate: (v: string) => !v.trim() ? 'Fabricante é obrigatório'   : null },
+  { key: 'nome'       as ItemField, validate: (v: string) => !v.trim()                      ? 'Nome do item é obrigatório'   : null },
+  { key: 'codigo'     as ItemField, validate: (v: string) => !v.trim()                      ? 'Código é obrigatório'         : null },
+  { key: 'categoria'  as ItemField, validate: (v: string) => !v                             ? 'Selecione uma categoria'      : null },
+  { key: 'unidade'    as ItemField, validate: (v: string) => !v                             ? 'Selecione uma unidade'        : null },
+  { key: 'quantidade' as ItemField, validate: (v: string) => !v.trim() || isNaN(Number(v)) ? 'Quantidade é obrigatória'     : null },
+  { key: 'minimo'     as ItemField, validate: (v: string) => !v.trim() || isNaN(Number(v)) ? 'Estoque mínimo é obrigatório' : null },
+  { key: 'maximo'     as ItemField, validate: (v: string) => !v.trim() || isNaN(Number(v)) ? 'Estoque máximo é obrigatório' : null },
+  { key: 'preco'      as ItemField, validate: (v: string) => !v.trim() || isNaN(Number(v)) ? 'Preço unitário é obrigatório' : null },
+  { key: 'fornecedor' as ItemField, validate: (v: string) => !v.trim()                      ? 'Fornecedor é obrigatório'     : null },
+  { key: 'validade'   as ItemField, validate: (v: string) => !v                             ? 'Validade é obrigatória'       : null },
 ];
 
 const MOV_VALIDATION_FIELDS = [
@@ -149,8 +150,10 @@ const TABLE_MIN_HEIGHT = 540;
 
 function isItemFormDirty(form: ItemForm): boolean {
   return (
-    form.nome.trim() !== '' || form.fabricante.trim() !== '' || form.categoria !== '' ||
-    form.unidade !== '' || form.registroAnvisa.trim() !== '' || form.descricao.trim() !== ''
+    form.nome.trim() !== '' || form.codigo.trim() !== '' || form.categoria !== '' ||
+    form.unidade !== '' || form.quantidade.trim() !== '' || form.minimo.trim() !== '' ||
+    form.maximo.trim() !== '' || form.preco.trim() !== '' || form.fornecedor.trim() !== '' ||
+    form.validade !== ''
   );
 }
 
@@ -158,13 +161,10 @@ function isMovFormDirty(form: MovForm): boolean {
   return form.tipoMov !== '' || form.quantidadeMov.trim() !== '' || form.observacaoMov.trim() !== '';
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
 export default function Estoque() {
+
   const { can, isSuperAdmin } = usePermissions();
 
-  const [estoque,          setEstoque]          = useState<StockItem[]>([]);
-  const [loading,          setLoading]          = useState(true);
   const [view,             setView]             = useState<'cards' | 'tabela'>('tabela');
   const [search,           setSearch]           = useState('');
   const [filterCat,        setFilterCat]        = useState('Todas');
@@ -173,7 +173,7 @@ export default function Estoque() {
   const [openDropdownStat, setOpenDropdownStat] = useState(false);
   const [isModalOpen,      setIsModalOpen]      = useState(false);
   const [isMovModal,       setIsMovModal]       = useState(false);
-  const [selected,         setSelected]         = useState<StockItem | null>(null);
+  const [selected,         setSelected]         = useState<typeof mockStock[0] | null>(null);
   const [currentPage,      setCurrentPage]      = useState(1);
   const [showItemCancelModal,  setShowItemCancelModal]  = useState(false);
   const [showItemConfirmModal, setShowItemConfirmModal] = useState(false);
@@ -186,19 +186,12 @@ export default function Estoque() {
   const [movForm, setMovForm] = useState<MovForm>(MOV_INITIAL);
   const { errors: movErrors, validate: movValidate, clearError: movClearError, clearAll: movClearAll } = useSequentialValidation<MovField>(MOV_VALIDATION_FIELDS);
 
-  useEffect(() => {
-    listarProdutos()
-      .then(list => setEstoque(list.map(mapProduto)))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
-
   if (!isSuperAdmin && !can('estoque.read')) return <AccessDenied />;
 
   const canCreate = isSuperAdmin || can('estoque.create');
   const canEdit   = isSuperAdmin || can('estoque.edit');
 
-  const filtered = estoque.filter(item => {
+  const filtered = mockStock.filter(item => {
     const matchSearch = item.name.toLowerCase().includes(search.toLowerCase()) || item.code.toLowerCase().includes(search.toLowerCase());
     const matchCat    = filterCat  === 'Todas' || item.category === filterCat;
     const matchStat   = filterStat === 'Todos' || item.status   === filterStat.toLowerCase();
@@ -211,16 +204,15 @@ export default function Estoque() {
   const startIndex    = (safePage - 1) * ITEMS_PER_PAGE;
   const paginatedData = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  const totalItems    = estoque.length;
-  const esgotados     = estoque.filter(i => i.quantity === 0 && i.ativo).length;
-  const inativos      = estoque.filter(i => !i.ativo).length;
-  const totalLotes    = estoque.reduce((acc, i) => acc + i.totalLotes, 0);
-  const criticalItems = estoque.filter(i => i.status === 'esgotado');
+  const totalItems    = mockStock.length;
+  const lowStock      = mockStock.filter(i => i.status === 'baixo' || i.status === 'critico').length;
+  const outOfStock    = mockStock.filter(i => i.status === 'esgotado').length;
+  const expiringSoon  = mockStock.filter(i => isExpiringSoon(i.expiryDate)).length;
+  const totalValue    = mockStock.reduce((acc, i) => acc + i.price * i.quantity, 0);
+  const criticalItems = mockStock.filter(i => i.status === 'critico' || i.status === 'esgotado');
 
-  function handleItemChange(field: ItemField, value: string) {
-    setItemForm(prev => ({ ...prev, [field]: value }));
-    itemClearError(field);
-  }
+  function handleItemChange(field: ItemField, value: string) { setItemForm(prev => ({ ...prev, [field]: value })); itemClearError(field); }
+  function handleItemDataChange(raw: string) { if (!raw) { handleItemChange('validade', ''); return; } const [yearStr, month, day] = raw.split('-'); const safeYear = yearStr ? yearStr.slice(0, 4) : ''; handleItemChange('validade', `${safeYear}-${month ?? ''}-${day ?? ''}`); }
 
   function handleItemCancelClick() {
     if (isItemFormDirty(itemForm)) { setShowItemCancelModal(true); } else { forceCloseItemModal(); }
@@ -229,36 +221,15 @@ export default function Estoque() {
     setItemForm(ITEM_INITIAL); itemClearAll(); setIsModalOpen(false); setSelected(null); setShowItemCancelModal(false);
   }
   function handleSaveItemClick() {
-    const isValid = itemValidate({ nome: itemForm.nome, fabricante: itemForm.fabricante, categoria: itemForm.categoria, unidade: itemForm.unidade, registroAnvisa: itemForm.registroAnvisa, descricao: itemForm.descricao });
+    const isValid = itemValidate({ nome: itemForm.nome, codigo: itemForm.codigo, categoria: itemForm.categoria, unidade: itemForm.unidade, quantidade: itemForm.quantidade, minimo: itemForm.minimo, maximo: itemForm.maximo, preco: itemForm.preco, fornecedor: itemForm.fornecedor, validade: itemForm.validade });
     if (!isValid) return;
     setShowItemConfirmModal(true);
   }
-  async function handleConfirmSaveItem() {
-    setShowItemConfirmModal(false);
-    const payload = {
-      nome:           itemForm.nome,
-      fabricante:     itemForm.fabricante,
-      categoria:      itemForm.categoria      || undefined,
-      unidade:        itemForm.unidade        || undefined,
-      registroAnvisa: itemForm.registroAnvisa || undefined,
-      descricao:      itemForm.descricao      || undefined,
-    };
-    try {
-      if (selected) {
-        const updated = await atualizarProduto(selected.id, payload);
-        setEstoque(prev => prev.map(i => i.id === selected.id ? mapProduto(updated) : i));
-      } else {
-        const created = await criarProduto(payload);
-        setEstoque(prev => [mapProduto(created), ...prev]);
-      }
-      setIsModalOpen(false); setItemForm(ITEM_INITIAL); itemClearAll(); setSelected(null); setShowItemSuccessModal(true);
-    } catch (err) { alert((err as Error).message); }
+  function handleConfirmSaveItem() {
+    setShowItemConfirmModal(false); setIsModalOpen(false); setItemForm(ITEM_INITIAL); itemClearAll(); setSelected(null); setShowItemSuccessModal(true);
   }
 
-  function handleMovChange(field: MovField, value: string) {
-    setMovForm(prev => ({ ...prev, [field]: value }));
-    movClearError(field);
-  }
+  function handleMovChange(field: MovField, value: string) { setMovForm(prev => ({ ...prev, [field]: value })); movClearError(field); }
   function handleMovCancelClick() {
     if (isMovFormDirty(movForm)) { setShowMovCancelModal(true); } else { forceCloseMovModal(); }
   }
@@ -271,23 +242,15 @@ export default function Estoque() {
     setShowMovConfirmModal(true);
   }
   function handleConfirmSaveMov() {
-    // Backend does not have a stock movement endpoint yet — UX only
     setShowMovConfirmModal(false); setIsMovModal(false); setMovForm(MOV_INITIAL); movClearAll(); setSelected(null); setShowMovSuccessModal(true);
   }
 
-  function openEdit(item: StockItem) {
+  function openEdit(item: typeof mockStock[0]) {
     setSelected(item);
-    setItemForm({
-      nome:           item.name,
-      fabricante:     item.fabricante,
-      categoria:      categoryOptions.find(c => c.label === item.category)?.value ?? '',
-      unidade:        unitOptions.find(u => u.label === item.unit || u.value === item.unit)?.value ?? '',
-      registroAnvisa: item.registroAnvisa,
-      descricao:      item.descricao,
-    });
+    setItemForm({ nome: item.name, codigo: item.code, categoria: categoryOptions.find(c => c.label === item.category)?.value ?? '', unidade: item.unit, quantidade: String(item.quantity), minimo: String(item.minStock), maximo: String(item.maxStock), preco: String(item.price), fornecedor: item.supplier, validade: item.expiryDate });
     setIsModalOpen(true);
   }
-  function openMov(item: StockItem) { setSelected(item); setMovForm(MOV_INITIAL); movClearAll(); setIsMovModal(true); }
+  function openMov(item: typeof mockStock[0]) { setSelected(item); setMovForm(MOV_INITIAL); movClearAll(); setIsMovModal(true); }
 
   return (
     <Container>
@@ -301,15 +264,16 @@ export default function Estoque() {
       {criticalItems.length > 0 && (
         <AlertBanner>
           <AlertBannerIcon><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></AlertBannerIcon>
-          <AlertBannerText><strong>{criticalItems.length} {criticalItems.length === 1 ? 'item' : 'itens'}</strong> com estoque esgotado: {criticalItems.map(i => i.name).join(', ')}</AlertBannerText>
+          <AlertBannerText><strong>{criticalItems.length} {criticalItems.length === 1 ? 'item' : 'itens'}</strong> com estoque crítico ou esgotado: {criticalItems.map(i => i.name).join(', ')}</AlertBannerText>
         </AlertBanner>
       )}
 
       <StatsGrid>
-        <StatCard label="Total de Itens"  value={totalItems}  color="#BBA188" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>} />
-        <StatCard label="Esgotados"       value={esgotados}   color="#e74c3c" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>} trend={{ value: 'Repor urgente', positive: false }} />
-        <StatCard label="Inativos"        value={inativos}    color="#95a5a6" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>} />
-        <StatCard label="Total de Lotes"  value={totalLotes}  color="#a8906f" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>} />
+        <StatCard label="Total de Itens"        value={totalItems}   color="#BBA188" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>} />
+        <StatCard label="Estoque Baixo/Crítico"  value={lowStock}     color="#f39c12" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>} trend={{ value: 'Atenção!', positive: false }} />
+        <StatCard label="Esgotados"              value={outOfStock}   color="#e74c3c" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>} trend={{ value: 'Repor urgente', positive: false }} />
+        <StatCard label="A Vencer (30 dias)"    value={expiringSoon} color="#a8906f" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>} />
+        <StatCard label="Valor em Estoque"      value={`R$ ${totalValue.toLocaleString('pt-BR')}`} color="#8a7560" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>} trend={{ value: '+R$ 4.200 vs mês', positive: true }} />
       </StatsGrid>
 
       <Controls>
@@ -340,28 +304,24 @@ export default function Estoque() {
             <Table>
               <Thead>
                 <tr>
-                  <Th $width="14%">Reg. ANVISA</Th><Th $width="24%">Nome</Th><Th $width="16%">Categoria</Th><Th $width="10%">Qtd Total</Th><Th $width="8%">Lotes</Th><Th $width="16%">Fabricante</Th><Th $width="7%">Status</Th><Th $width="5%">Ações</Th>
+                  <Th $width="10%">Código</Th><Th $width="22%">Nome</Th><Th $width="16%">Categoria</Th><Th $width="10%">Qtd / Un</Th><Th $width="10%">Mín</Th><Th $width="12%">Validade</Th><Th $width="10%">Status</Th><Th $width="10%">Ações</Th>
                 </tr>
               </Thead>
               <Tbody>
-                {loading ? (
-                  <tr><Td colSpan={8} style={{ textAlign: 'center', padding: '48px 0', color: '#bbb' }}>Carregando...</Td></tr>
-                ) : paginatedData.length === 0 ? (
+                {paginatedData.length === 0 ? (
                   <tr><Td colSpan={8} style={{ textAlign: 'center', padding: '48px 0', color: '#bbb' }}>Nenhum item encontrado.</Td></tr>
                 ) : paginatedData.map(item => (
                   <Tr key={item.id}>
                     <Td><code style={{ fontSize: '0.73rem', color: '#888' }}>{item.code}</code></Td>
-                    <Td style={{ fontWeight: 600, color: '#1a1a1a' }}>{item.name}</Td>
-                    <Td>
-                      {item.category !== '—'
-                        ? <Badge $bg={`${catColors[item.category] ?? '#BBA188'}18`} $color={catColors[item.category] ?? '#BBA188'}>{item.category}</Badge>
-                        : <span style={{ color: '#ccc' }}>—</span>
-                      }
+                    <Td style={{ fontWeight: 600, color: '#1a1a1a' }}>
+                      {item.name}
+                      {isExpiringSoon(item.expiryDate) && (<span style={{ marginLeft: 6, fontSize: '0.65rem', background: '#fff3cd', color: '#856404', borderRadius: 6, padding: '2px 6px', fontWeight: 600 }}>Vence em breve</span>)}
                     </Td>
+                    <Td><Badge $bg={`${catColors[item.category]}18`} $color={catColors[item.category]}>{item.category}</Badge></Td>
                     <Td style={{ fontWeight: 700, color: item.quantity === 0 ? '#e74c3c' : '#1a1a1a' }}>{item.quantity} <span style={{ color: '#aaa', fontWeight: 400, fontSize: '0.72rem' }}>{item.unit}</span></Td>
-                    <Td style={{ color: '#888' }}>{item.totalLotes}</Td>
-                    <Td style={{ color: '#555' }}>{item.fabricante}</Td>
-                    <Td><Badge $bg={statusConfig[item.status]?.bg ?? '#f0f0f0'} $color={statusConfig[item.status]?.color ?? '#888'}>{statusConfig[item.status]?.label ?? item.status}</Badge></Td>
+                    <Td style={{ color: '#888' }}>{item.minStock} {item.unit}</Td>
+                    <Td style={{ color: isExpiringSoon(item.expiryDate) ? '#d68a00' : '#555', fontWeight: isExpiringSoon(item.expiryDate) ? 600 : 400 }}>{formatDate(item.expiryDate)}</Td>
+                    <Td><Badge $bg={statusConfig[item.status].bg} $color={statusConfig[item.status].color}>{statusConfig[item.status].label}</Badge></Td>
                     <Td>
                       {canEdit && (
                         <ActionGroup>
@@ -379,9 +339,7 @@ export default function Estoque() {
         </div>
       ) : (
         <CardsGrid>
-          {loading ? (
-            <EmptyState><h3>Carregando...</h3></EmptyState>
-          ) : filtered.length === 0 ? (
+          {filtered.length === 0 ? (
             <EmptyState><h3>Nenhum item encontrado</h3><p>Tente ajustar os filtros de busca.</p></EmptyState>
           ) : filtered.map(item => (
             <StockCard key={item.id}>
@@ -391,29 +349,15 @@ export default function Estoque() {
                   <StockCardName>{item.name}</StockCardName>
                   <code style={{ fontSize: '0.72rem', color: '#999' }}>{item.code}</code>
                 </div>
-                <StockAlertBadge $bg={statusConfig[item.status]?.bg ?? '#f0f0f0'} $color={statusConfig[item.status]?.color ?? '#888'}>
-                  {statusConfig[item.status]?.label ?? item.status}
-                </StockAlertBadge>
+                <StockAlertBadge $bg={statusConfig[item.status].bg} $color={statusConfig[item.status].color}>{statusConfig[item.status].label}</StockAlertBadge>
               </StockCardTop>
               <StockCardBody>
-                <StockDetailRow>
-                  <StockDetailLabel>Qtd Total</StockDetailLabel>
-                  <StockDetailValue $highlight $color={item.quantity === 0 ? '#e74c3c' : '#1a1a1a'}>{item.quantity} {item.unit}</StockDetailValue>
-                </StockDetailRow>
-                <StockDetailRow>
-                  <StockDetailLabel>Total Lotes</StockDetailLabel>
-                  <StockDetailValue>{item.totalLotes}</StockDetailValue>
-                </StockDetailRow>
-                <StockDetailRow>
-                  <StockDetailLabel>Fabricante</StockDetailLabel>
-                  <StockDetailValue>{item.fabricante}</StockDetailValue>
-                </StockDetailRow>
-                {item.descricao && (
-                  <StockDetailRow>
-                    <StockDetailLabel>Descrição</StockDetailLabel>
-                    <StockDetailValue>{item.descricao}</StockDetailValue>
-                  </StockDetailRow>
-                )}
+                <StockDetailRow><StockDetailLabel>Quantidade</StockDetailLabel><StockDetailValue $highlight $color={item.quantity === 0 ? '#e74c3c' : item.quantity <= item.minStock ? '#d68a00' : '#1a1a1a'}>{item.quantity} {item.unit}</StockDetailValue></StockDetailRow>
+                <ProgressBarWrapper><ProgressBar $pct={Math.min((item.quantity / item.maxStock) * 100, 100)} $color={getProgressColor(item.status)} /></ProgressBarWrapper>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#aaa', marginBottom: 12 }}><span>Mín: {item.minStock}</span><span>Máx: {item.maxStock}</span></div>
+                <StockDetailRow><StockDetailLabel>Validade</StockDetailLabel><StockDetailValue $color={isExpiringSoon(item.expiryDate) ? '#d68a00' : '#444'}>{formatDate(item.expiryDate)}{isExpiringSoon(item.expiryDate) && ' ⚠️'}</StockDetailValue></StockDetailRow>
+                <StockDetailRow><StockDetailLabel>Fornecedor</StockDetailLabel><StockDetailValue>{item.supplier}</StockDetailValue></StockDetailRow>
+                <StockDetailRow><StockDetailLabel>Preço Unit.</StockDetailLabel><StockDetailValue $highlight>R$ {item.price.toLocaleString('pt-BR')}</StockDetailValue></StockDetailRow>
               </StockCardBody>
               {canEdit && (
                 <StockCardFooter>
@@ -426,23 +370,21 @@ export default function Estoque() {
         </CardsGrid>
       )}
 
-      {/* ── Item modal ─────────────────────────────────────────────────────── */}
       <Modal isOpen={isModalOpen} onClose={handleItemCancelClick} closeOnOverlayClick={false} title={selected ? 'Editar Item' : 'Novo Item de Estoque'} size="md" footer={<><Button variant="outline" onClick={handleItemCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveItemClick}>Salvar</Button></>}>
         <FormGrid>
-          <div style={{ gridColumn: 'span 2' }}>
-            <Input label="Nome do Item *" placeholder="Ex: Toxina Botulínica Allergan..." value={itemForm.nome} onChange={e => handleItemChange('nome', e.target.value)} maxLength={120} error={itemErrors.nome} />
-          </div>
-          <Input label="Fabricante *" placeholder="Nome do fabricante" value={itemForm.fabricante} onChange={e => handleItemChange('fabricante', e.target.value)} maxLength={80} error={itemErrors.fabricante} />
-          <Select label="Categoria" options={categoryOptions} placeholder="Selecione..." value={itemForm.categoria} onChange={v => handleItemChange('categoria', v)} error={itemErrors.categoria} />
-          <Select label="Unidade" options={unitOptions} placeholder="Selecione..." value={itemForm.unidade} onChange={v => handleItemChange('unidade', v)} error={itemErrors.unidade} />
-          <Input label="Registro ANVISA" placeholder="Ex: 10351800037" value={itemForm.registroAnvisa} onChange={e => handleItemChange('registroAnvisa', e.target.value)} maxLength={30} error={itemErrors.registroAnvisa} />
-          <div style={{ gridColumn: 'span 2' }}>
-            <Input label="Descrição" placeholder="Descrição opcional do produto..." value={itemForm.descricao} onChange={e => handleItemChange('descricao', e.target.value)} maxLength={300} error={itemErrors.descricao} />
-          </div>
+          <div style={{ gridColumn: 'span 2' }}><Input label="Nome do Item *" placeholder="Ex: Toxina Botulínica Allergan..." value={itemForm.nome} onChange={e => handleItemChange('nome', e.target.value)} maxLength={120} error={itemErrors.nome} /></div>
+          <Input label="Código *" placeholder="Ex: BTX-001" value={itemForm.codigo} onChange={e => handleItemChange('codigo', e.target.value.toUpperCase())} maxLength={30} error={itemErrors.codigo} />
+          <Select label="Categoria *" options={categoryOptions} placeholder="Selecione..." value={itemForm.categoria} onChange={v => handleItemChange('categoria', v)} error={itemErrors.categoria} />
+          <Select label="Unidade *" options={unitOptions} placeholder="Selecione..." value={itemForm.unidade} onChange={v => handleItemChange('unidade', v)} error={itemErrors.unidade} />
+          <Input label="Quantidade *" type="number" placeholder="0" value={itemForm.quantidade} onChange={e => handleItemChange('quantidade', e.target.value)} error={itemErrors.quantidade} />
+          <Input label="Estoque Mínimo *" type="number" placeholder="0" value={itemForm.minimo} onChange={e => handleItemChange('minimo', e.target.value)} error={itemErrors.minimo} />
+          <Input label="Estoque Máximo *" type="number" placeholder="0" value={itemForm.maximo} onChange={e => handleItemChange('maximo', e.target.value)} error={itemErrors.maximo} />
+          <Input label="Preço Unitário (R$) *" type="number" placeholder="0,00" value={itemForm.preco} onChange={e => handleItemChange('preco', e.target.value)} error={itemErrors.preco} />
+          <Input label="Fornecedor *" placeholder="Nome do fornecedor" value={itemForm.fornecedor} onChange={e => handleItemChange('fornecedor', e.target.value)} maxLength={80} error={itemErrors.fornecedor} />
+          <Input label="Validade *" type="date" value={itemForm.validade} onChange={e => handleItemDataChange(e.target.value)} error={itemErrors.validade} />
         </FormGrid>
       </Modal>
 
-      {/* ── Movimentação modal ─────────────────────────────────────────────── */}
       <Modal isOpen={isMovModal} onClose={handleMovCancelClick} closeOnOverlayClick={false} title={`Movimentar: ${selected?.name ?? ''}`} size="sm" footer={<><Button variant="outline" onClick={handleMovCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveMovClick}>Confirmar</Button></>}>
         <FormGrid style={{ gridTemplateColumns: '1fr' }}>
           <Select label="Tipo de Movimentação *" options={movTypeOptions} placeholder="Selecione o tipo..." value={movForm.tipoMov} onChange={v => handleMovChange('tipoMov', v)} error={movErrors.tipoMov} />
@@ -451,12 +393,10 @@ export default function Estoque() {
         </FormGrid>
       </Modal>
 
-      {/* ── Item modals ────────────────────────────────────────────────────── */}
       <CancelModal isOpen={showItemCancelModal} title="Deseja cancelar?" message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas." onConfirm={forceCloseItemModal} onCancel={() => setShowItemCancelModal(false)} />
       <ConfirmModal isOpen={showItemConfirmModal} title={selected ? 'Salvar alterações?' : 'Adicionar item?'} message={selected ? `Deseja salvar as alterações do item "${itemForm.nome || selected.name}"?` : `Deseja adicionar o item "${itemForm.nome}" ao estoque?`} confirmText="Confirmar" cancelText="Voltar" onConfirm={handleConfirmSaveItem} onCancel={() => setShowItemConfirmModal(false)} />
-      <SucessModal isOpen={showItemSuccessModal} title="Sucesso!" message={selected ? 'Item atualizado com sucesso!' : 'Item adicionado ao estoque com sucesso!'} onClose={() => { setShowItemSuccessModal(false); setSelected(null); }} buttonText="Continuar" />
+      <SucessModal isOpen={showItemSuccessModal} title="Sucesso!" message={selected ? 'Item atualizado com sucesso!' : 'Item adicionado ao estoque com sucesso!'} onClose={() => setShowItemSuccessModal(false)} buttonText="Continuar" />
 
-      {/* ── Movimentação modals ────────────────────────────────────────────── */}
       <CancelModal isOpen={showMovCancelModal} title="Deseja cancelar?" message="Você preencheu alguns campos. Se continuar, a movimentação será descartada." onConfirm={forceCloseMovModal} onCancel={() => setShowMovCancelModal(false)} />
       <ConfirmModal isOpen={showMovConfirmModal} title="Confirmar movimentação?" message={`Deseja registrar a movimentação de "${selected?.name ?? 'item'}"?`} confirmText="Confirmar" cancelText="Voltar" onConfirm={handleConfirmSaveMov} onCancel={() => setShowMovConfirmModal(false)} />
       <SucessModal isOpen={showMovSuccessModal} title="Sucesso!" message="Movimentação registrada com sucesso!" onClose={() => setShowMovSuccessModal(false)} buttonText="Continuar" />

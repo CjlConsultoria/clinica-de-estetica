@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRoleRedirect } from '@/components/ui/hooks/useRoleRedirect';
 import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
@@ -227,6 +228,8 @@ function Modal({ open, title, children, onClose, footer }: any) {
 }
 
 export default function Configuracoes() {
+  const allowed = useRoleRedirect({ permission: 'configuracoes.read' });
+
   const [active,      setActive]      = useState('plataforma');
   const [accentColor, setAccentColor] = useState('#BBA188');
   const [toast,       setToast]       = useState('');
@@ -252,6 +255,8 @@ export default function Configuracoes() {
   const [anvisaToggles, setAnvisaToggles] = useState({ lote: true, bloqueio: true, relatorio: false });
 
   const [secToggles, setSecToggles] = useState({ twoFa: false, timeout: true, alertLogin: true, audit: true, twoFaAdmin: false });
+
+  if (!allowed) return null;
 
   const [editPlan,     setEditPlan]     = useState<{ name: string; price: string } | null>(null);
   const [confirmModal, setConfirmModal] = useState<{ title: string; msg: string; onConfirm: () => void } | null>(null);

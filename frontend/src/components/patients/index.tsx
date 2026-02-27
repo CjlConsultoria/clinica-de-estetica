@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -21,11 +21,9 @@ import {
   DetailModal, DetailHeader, DetailAvatar, DetailName, DetailMeta, DetailMetaItem,
   DetailSection, DetailSectionTitle, StatsRow, StatPill,
   InfoGrid, InfoItem, InfoLabel, InfoValue, ObsBox,
+  WizardSteps, WizardStep, WizardStepLine, WizardStepCircle, WizardStepLabel,
+  StepSection,
 } from './styles';
-import {
-  listarPacientes, criarPaciente, atualizarPaciente,
-  PacienteResponse,
-} from '@/services/pacientesApi';
 
 interface PacienteForm {
   nome: string;
@@ -33,29 +31,49 @@ interface PacienteForm {
   telefone: string;
   nascimento: string;
   cpf: string;
-  status: string;
+  sexo: string;
+  // Etapa 2 — Endereço
+  cep: string;
+  logradouro: string;
+  numero: string;
+  complemento: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  convenio: string;
+  numeroCarteirinha: string;
   indicacao: string;
   observacoes: string;
+  status: string;
 }
 
-type PacienteField = keyof Omit<PacienteForm, 'observacoes' | 'indicacao' | 'status'>;
+type Step1Field = 'nome' | 'email' | 'telefone' | 'nascimento' | 'cpf';
+type Step2Field = 'cep' | 'logradouro' | 'numero';
+type Step3Field = never; 
 
 const FORM_INITIAL: PacienteForm = {
-  nome: '', email: '', telefone: '', nascimento: '',
-  cpf: '', status: 'ativo', indicacao: '', observacoes: '',
+  nome: '', email: '', telefone: '', nascimento: '', cpf: '', sexo: '',
+  cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '',
+  convenio: '', numeroCarteirinha: '', indicacao: '', observacoes: '', status: 'ativo',
 };
 
-const VALIDATION_FIELDS = [
-  { key: 'nome'       as PacienteField, validate: (v: string) => !v.trim() ? 'Nome completo é obrigatório'      : null },
-  { key: 'email'      as PacienteField, validate: (v: string) => !v.trim() ? 'E-mail é obrigatório'             : null },
-  { key: 'telefone'   as PacienteField, validate: (v: string) => !v.trim() ? 'Telefone é obrigatório'           : null },
-  { key: 'nascimento' as PacienteField, validate: (v: string) => !v        ? 'Data de nascimento é obrigatória' : null },
-  { key: 'cpf'        as PacienteField, validate: (v: string) => !v.trim() ? 'CPF é obrigatório'                : null },
+const STEP_LABELS = ['Dados Pessoais', 'Endereço', 'Convênio & Extras'];
+
+const sexoOptions = [
+  { value: 'feminino',     label: 'Feminino'     },
+  { value: 'masculino',    label: 'Masculino'     },
+  { value: 'nao_binario',  label: 'Não-binário'   },
+  { value: 'prefiro_nao',  label: 'Prefiro não dizer' },
 ];
 
 const statusOptions   = [{ value: 'ativo', label: 'Ativo' }, { value: 'inativo', label: 'Inativo' }];
 const filterStatus    = ['Todos', 'Ativo', 'Inativo'];
 const filterProcedure = ['Todos', 'Botox', 'Preenchimento', 'Bioestimulador', 'Fio PDO', 'Microagulhamento'];
+
+const UF_OPTIONS = [
+  'AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG',
+  'PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO',
+].map(uf => ({ value: uf, label: uf }));
 
 const statusColors: Record<string, { bg: string; color: string }> = {
   ativo:   { bg: '#f0ebe4', color: '#8a7560' },
@@ -64,37 +82,22 @@ const statusColors: Record<string, { bg: string; color: string }> = {
 
 const avatarColors = ['#BBA188', '#8a7560', '#a8906f', '#c9a882', '#917255', '#d4b896'];
 
-interface Patient {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  birthdate: string;
-  cpf: string;
-  lastVisit: string;
-  procedure: string;
-  status: string;
-  visits: number;
-  indicacao: string;
-  observacoes: string;
-}
+const INITIAL_PATIENTS = [
+  { id: 1,  name: 'Ana Beatriz Costa',  email: 'ana.costa@email.com',     phone: '(11) 98765-4321', birthdate: '1988-03-15', cpf: '123.456.789-00', lastVisit: '18/02/2025', procedure: 'Botox',            status: 'ativo',   visits: 8,  indicacao: 'Instagram',          observacoes: 'Alergia a látex',                sexo: 'feminino',  cep: '01310-100', logradouro: 'Av. Paulista',      numero: '1000', complemento: 'Apto 51', bairro: 'Bela Vista',     cidade: 'São Paulo',     estado: 'SP', convenio: 'Unimed',     numeroCarteirinha: '123456789' },
+  { id: 2,  name: 'Carla Mendonça',     email: 'carla.m@email.com',       phone: '(11) 97654-3210', birthdate: '1992-07-22', cpf: '234.567.890-11', lastVisit: '15/02/2025', procedure: 'Preenchimento',    status: 'ativo',   visits: 5,  indicacao: 'Indicação de amiga', observacoes: '',                               sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
+  { id: 3,  name: 'Fernanda Lima',      email: 'fernanda.lima@email.com', phone: '(11) 96543-2109', birthdate: '1985-11-05', cpf: '345.678.901-22', lastVisit: '10/02/2025', procedure: 'Bioestimulador',   status: 'ativo',   visits: 3,  indicacao: 'Google',             observacoes: 'Gestante, verificar procedimentos', sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
+  { id: 4,  name: 'Marina Souza',       email: 'marina.s@email.com',      phone: '(21) 95432-1098', birthdate: '1990-04-30', cpf: '456.789.012-33', lastVisit: '08/01/2025', procedure: 'Fio PDO',          status: 'ativo',   visits: 6,  indicacao: 'Instagram',          observacoes: '',                               sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
+  { id: 5,  name: 'Juliana Rocha',      email: 'juliana.r@email.com',     phone: '(21) 94321-0987', birthdate: '1995-09-14', cpf: '567.890.123-44', lastVisit: '05/01/2025', procedure: 'Botox',            status: 'ativo',   visits: 2,  indicacao: 'Indicação médico',   observacoes: '',                               sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
+  { id: 6,  name: 'Patrícia Alves',     email: 'patricia.a@email.com',    phone: '(31) 93210-9876', birthdate: '1982-12-19', cpf: '678.901.234-55', lastVisit: '20/12/2024', procedure: 'Microagulhamento', status: 'inativo', visits: 12, indicacao: 'Google',             observacoes: 'Histórico de queloides',         sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
+  { id: 7,  name: 'Roberta Gomes',      email: 'roberta.g@email.com',     phone: '(31) 92109-8765', birthdate: '1998-06-08', cpf: '789.012.345-66', lastVisit: '15/12/2024', procedure: 'Preenchimento',    status: 'ativo',   visits: 1,  indicacao: 'TikTok',             observacoes: '',                               sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
+  { id: 8,  name: 'Sandra Oliveira',    email: 'sandra.o@email.com',      phone: '(41) 91098-7654', birthdate: '1978-02-25', cpf: '890.123.456-77', lastVisit: '10/11/2024', procedure: 'Bioestimulador',   status: 'inativo', visits: 7,  indicacao: 'Indicação de amiga', observacoes: '',                               sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
+  { id: 9,  name: 'Luciana Ferreira',   email: 'luciana.f@email.com',     phone: '(11) 90987-6543', birthdate: '1991-01-10', cpf: '901.234.567-88', lastVisit: '12/02/2025', procedure: 'Botox',            status: 'ativo',   visits: 4,  indicacao: 'Instagram',          observacoes: '',                               sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
+  { id: 10, name: 'Renata Cardoso',     email: 'renata.c@email.com',      phone: '(21) 99876-5432', birthdate: '1987-08-03', cpf: '012.345.678-99', lastVisit: '20/01/2025', procedure: 'Fio PDO',          status: 'ativo',   visits: 9,  indicacao: 'Google',             observacoes: 'Diabética tipo 2',               sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
+  { id: 11, name: 'Camila Torres',      email: 'camila.t@email.com',      phone: '(31) 98765-0123', birthdate: '1994-05-17', cpf: '111.222.333-44', lastVisit: '05/02/2025', procedure: 'Preenchimento',    status: 'ativo',   visits: 2,  indicacao: 'Indicação de amiga', observacoes: '',                               sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
+  { id: 12, name: 'Beatriz Nunes',      email: 'beatriz.n@email.com',     phone: '(41) 97654-9012', birthdate: '2000-11-28', cpf: '222.333.444-55', lastVisit: '01/01/2025', procedure: 'Microagulhamento', status: 'ativo',   visits: 1,  indicacao: 'Instagram',          observacoes: '',                               sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
+];
 
-function mapPaciente(p: PacienteResponse): Patient {
-  return {
-    id:          p.id,
-    name:        p.nome,
-    email:       p.email ?? '',
-    phone:       p.celular ?? p.telefone ?? '',
-    birthdate:   p.dataNascimento ?? '',
-    cpf:         p.cpf,
-    lastVisit:   '—',
-    procedure:   '—',
-    status:      p.ativo ? 'ativo' : 'inativo',
-    visits:      0,
-    indicacao:   '',
-    observacoes: p.observacoes ?? '',
-  };
-}
+type Patient = typeof INITIAL_PATIENTS[0];
 
 const ITEMS_PER_PAGE = 10;
 
@@ -130,47 +133,69 @@ function calcAge(dateStr: string): string {
   return `${age} anos`;
 }
 
-function isFormDirty(form: PacienteForm): boolean {
-  return (
-    form.nome.trim() !== '' ||
-    form.email.trim() !== '' ||
-    form.telefone.trim() !== '' ||
-    form.nascimento !== '' ||
-    form.cpf.trim() !== '' ||
-    form.indicacao.trim() !== '' ||
-    form.observacoes.trim() !== ''
-  );
+function maskCEP(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+  if (digits.length > 5) return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+  return digits;
 }
 
-export default function Patients() {
-  const [patients,        setPatients]        = useState<Patient[]>([]);
-  const [loading,         setLoading]         = useState(true);
-  const [search,          setSearch]          = useState('');
-  const [filterSt,        setFilterSt]        = useState('Todos');
-  const [filterProc,      setFilterProc]      = useState('Todos');
-  const [openDrop,        setOpenDrop]        = useState<string | null>(null);
-  const [isModalOpen,     setIsModalOpen]     = useState(false);
-  const [isDetailOpen,    setIsDetailOpen]    = useState(false);
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [isEditing,       setIsEditing]       = useState(false);
-  const [form,            setForm]            = useState<PacienteForm>(FORM_INITIAL);
-  const [currentPage,     setCurrentPage]     = useState(1);
+function maskCPF(value: string): string {
+  const d = value.replace(/\D/g, '').slice(0, 11);
+  if (d.length > 9) return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
+  if (d.length > 6) return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6)}`;
+  if (d.length > 3) return `${d.slice(0,3)}.${d.slice(3)}`;
+  return d;
+}
 
+function maskPhone(value: string): string {
+  const d = value.replace(/\D/g, '').slice(0, 11);
+  if (d.length > 10) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+  if (d.length > 6)  return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+  if (d.length > 2)  return `(${d.slice(0,2)}) ${d.slice(2)}`;
+  return d;
+}
+
+function getSexoLabel(value: string): string {
+  return sexoOptions.find(o => o.value === value)?.label || '—';
+}
+
+function isFormDirty(form: PacienteForm): boolean {
+  return form.nome.trim() !== '' || form.email.trim() !== '' || form.telefone.trim() !== '' || form.cpf.trim() !== '';
+}
+
+
+export default function Patients() {
+  const [patients,         setPatients]         = useState<Patient[]>(INITIAL_PATIENTS);
+  const [search,           setSearch]           = useState('');
+  const [filterSt,         setFilterSt]         = useState('Todos');
+  const [filterProc,       setFilterProc]       = useState('Todos');
+  const [openDrop,         setOpenDrop]         = useState<string | null>(null);
+  const [isModalOpen,      setIsModalOpen]      = useState(false);
+  const [isDetailOpen,     setIsDetailOpen]     = useState(false);
+  const [selectedPatient,  setSelectedPatient]  = useState<Patient | null>(null);
+  const [isEditing,        setIsEditing]        = useState(false);
+  const [form,             setForm]             = useState<PacienteForm>(FORM_INITIAL);
+  const [step,             setStep]             = useState(1);
+  const [currentPage,      setCurrentPage]      = useState(1);
+  const [cepLoading,       setCepLoading]       = useState(false);
+  const [cepError,         setCepError]         = useState('');
   const [showCancelModal,  setShowCancelModal]  = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const { errors, validate, clearError, clearAll } = useSequentialValidation<PacienteField>(VALIDATION_FIELDS);
+  const step1Validation = useSequentialValidation<Step1Field>([
+    { key: 'nome',       validate: (v) => !v.trim() ? 'Nome completo é obrigatório'      : null },
+    { key: 'email',      validate: (v) => !v.trim() ? 'E-mail é obrigatório'             : null },
+    { key: 'telefone',   validate: (v) => !v.trim() ? 'Telefone é obrigatório'           : null },
+    { key: 'nascimento', validate: (v) => !v        ? 'Data de nascimento é obrigatória' : null },
+    { key: 'cpf',        validate: (v) => !v.trim() ? 'CPF é obrigatório'                : null },
+  ]);
 
-  const fetchPatients = () => {
-    setLoading(true);
-    listarPacientes()
-      .then(r => setPatients(r.content.map(mapPaciente)))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => { fetchPatients(); }, []);
+  const step2Validation = useSequentialValidation<Step2Field>([
+    { key: 'cep',        validate: (v) => (v && v.replace(/\D/g,'').length > 0 && v.replace(/\D/g,'').length < 8) ? 'CEP inválido' : null },
+    { key: 'logradouro', validate: () => null },
+    { key: 'numero',     validate: () => null },
+  ]);
 
   const filtered = patients.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.email.includes(search);
@@ -195,110 +220,369 @@ export default function Patients() {
 
   function handleChange(field: keyof PacienteForm, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
-    if (field !== 'observacoes' && field !== 'indicacao' && field !== 'status') {
-      clearError(field as PacienteField);
+    if (['nome','email','telefone','nascimento','cpf'].includes(field))
+      step1Validation.clearError(field as Step1Field);
+    if (['cep','logradouro','numero'].includes(field))
+      step2Validation.clearError(field as Step2Field);
+  }
+
+  /* busca CEP */
+  async function handleCEPChange(raw: string) {
+    const masked = maskCEP(raw);
+    handleChange('cep', masked);
+    setCepError('');
+    const digits = masked.replace(/\D/g, '');
+    if (digits.length === 8) {
+      setCepLoading(true);
+      try {
+        const res  = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+        const data = await res.json();
+        if (data.erro) {
+          setCepError('CEP não encontrado');
+          setForm(prev => ({ ...prev, logradouro: '', bairro: '', cidade: '', estado: '' }));
+        } else {
+          setForm(prev => ({
+            ...prev,
+            logradouro: data.logradouro || '',
+            bairro:     data.bairro     || '',
+            cidade:     data.localidade || '',
+            estado:     data.uf         || '',
+          }));
+        }
+      } catch {
+        setCepError('Erro ao buscar CEP');
+      } finally {
+        setCepLoading(false);
+      }
     }
   }
 
-  function handleDateChange(raw: string) {
-    if (!raw) { handleChange('nascimento', ''); return; }
-    const [y, m, d] = raw.split('-');
-    handleChange('nascimento', `${(y ?? '').slice(0, 4)}-${m ?? ''}-${d ?? ''}`);
+  function validateStep(s: number): boolean {
+    if (s === 1) return step1Validation.validate({ nome: form.nome, email: form.email, telefone: form.telefone, nascimento: form.nascimento, cpf: form.cpf });
+    if (s === 2) return step2Validation.validate({ cep: form.cep, logradouro: form.logradouro, numero: form.numero });
+    return true;
   }
 
+  function nextStep() { if (!validateStep(step)) return; setStep(s => Math.min(s + 1, 3)); }
+  function prevStep() {
+    step1Validation.clearAll();
+    step2Validation.clearAll();
+    setStep(s => Math.max(s - 1, 1));
+  }
+
+  function clearAllErrors() { step1Validation.clearAll(); step2Validation.clearAll(); }
+
   function openNew() {
-    setIsEditing(false);
-    setSelectedPatient(null);
-    setForm(FORM_INITIAL);
-    clearAll();
-    setIsModalOpen(true);
+    setIsEditing(false); setSelectedPatient(null);
+    setForm(FORM_INITIAL); clearAllErrors(); setCepError(''); setStep(1); setIsModalOpen(true);
   }
 
   function openEdit(p: Patient) {
-    setIsEditing(true);
-    setSelectedPatient(p);
+    setIsEditing(true); setSelectedPatient(p);
     setForm({
-      nome:        p.name,
-      email:       p.email,
-      telefone:    p.phone,
-      nascimento:  toInputDate(p.birthdate),
-      cpf:         p.cpf,
-      status:      p.status,
-      indicacao:   p.indicacao,
-      observacoes: p.observacoes,
+      nome: p.name, email: p.email, telefone: p.phone,
+      nascimento: toInputDate(p.birthdate), cpf: p.cpf,
+      sexo: p.sexo || '', status: p.status,
+      cep: p.cep || '', logradouro: p.logradouro || '',
+      numero: p.numero || '', complemento: p.complemento || '',
+      bairro: p.bairro || '', cidade: p.cidade || '', estado: p.estado || '',
+      convenio: p.convenio || '', numeroCarteirinha: p.numeroCarteirinha || '',
+      indicacao: p.indicacao, observacoes: p.observacoes,
     });
-    clearAll();
-    setIsDetailOpen(false);
-    setIsModalOpen(true);
+    clearAllErrors(); setCepError(''); setStep(1); setIsDetailOpen(false); setIsModalOpen(true);
   }
 
-  function openDetail(p: Patient) {
-    setSelectedPatient(p);
-    setIsDetailOpen(true);
-  }
+  function openDetail(p: Patient) { setSelectedPatient(p); setIsDetailOpen(true); }
 
   function handleCancelClick() {
-    if (isFormDirty(form)) {
-      setShowCancelModal(true);
-    } else {
-      forceClose();
-    }
+    if (isFormDirty(form)) { setShowCancelModal(true); } else { forceClose(); }
   }
 
   function forceClose() {
-    setForm(FORM_INITIAL);
-    clearAll();
-    setIsModalOpen(false);
-    setSelectedPatient(null);
-    setIsEditing(false);
-    setShowCancelModal(false);
-    setShowConfirmModal(false);
+    setForm(FORM_INITIAL); clearAllErrors(); setCepError('');
+    setIsModalOpen(false); setSelectedPatient(null); setIsEditing(false);
+    setStep(1); setShowCancelModal(false); setShowConfirmModal(false);
   }
 
   function handleSaveClick() {
-    const isValid = validate({
-      nome:       form.nome,
-      email:      form.email,
-      telefone:   form.telefone,
-      nascimento: form.nascimento,
-      cpf:        form.cpf,
-    });
-    if (!isValid) return;
+    if (step < 3) { nextStep(); return; }
     setShowConfirmModal(true);
   }
 
-  async function handleConfirmSave() {
+  function handleConfirmSave() {
     setShowConfirmModal(false);
-    const payload = {
-      nome:           form.nome,
-      cpf:            form.cpf,
-      email:          form.email || undefined,
-      celular:        form.telefone || undefined,
-      dataNascimento: form.nascimento || undefined,
-      observacoes:    form.observacoes || undefined,
-    };
-    try {
-      if (isEditing && selectedPatient) {
-        const updated = await atualizarPaciente(selectedPatient.id, payload);
-        setPatients(prev => prev.map(p => p.id === selectedPatient.id ? mapPaciente(updated) : p));
-      } else {
-        const created = await criarPaciente(payload);
-        setPatients(prev => [...prev, mapPaciente(created)]);
-      }
-      setIsModalOpen(false);
-      setShowSuccessModal(true);
-    } catch (err) {
-      alert((err as Error).message);
+    const today = new Date().toLocaleDateString('pt-BR');
+    if (isEditing && selectedPatient) {
+      setPatients(prev => prev.map(p => p.id === selectedPatient.id
+        ? {
+            ...p,
+            name: form.nome, email: form.email, phone: form.telefone,
+            birthdate: form.nascimento, cpf: form.cpf,
+            sexo: form.sexo, status: form.status,
+            cep: form.cep, logradouro: form.logradouro, numero: form.numero,
+            complemento: form.complemento, bairro: form.bairro,
+            cidade: form.cidade, estado: form.estado,
+            convenio: form.convenio, numeroCarteirinha: form.numeroCarteirinha,
+            indicacao: form.indicacao, observacoes: form.observacoes,
+          }
+        : p
+      ));
+    } else {
+      setPatients(prev => [...prev, {
+        id: Date.now(), name: form.nome, email: form.email, phone: form.telefone,
+        birthdate: form.nascimento, cpf: form.cpf,
+        lastVisit: today, procedure: '—', status: 'ativo', visits: 0,
+        sexo: form.sexo,
+        cep: form.cep, logradouro: form.logradouro, numero: form.numero,
+        complemento: form.complemento, bairro: form.bairro,
+        cidade: form.cidade, estado: form.estado,
+        convenio: form.convenio, numeroCarteirinha: form.numeroCarteirinha,
+        indicacao: form.indicacao, observacoes: form.observacoes,
+      }]);
     }
+    setIsModalOpen(false); setShowSuccessModal(true);
   }
 
   function handleSuccessClose() {
-    setShowSuccessModal(false);
-    setForm(FORM_INITIAL);
-    clearAll();
-    setSelectedPatient(null);
-    setIsEditing(false);
+    setShowSuccessModal(false); setForm(FORM_INITIAL);
+    clearAllErrors(); setCepError(''); setSelectedPatient(null); setIsEditing(false); setStep(1);
   }
+
+  const errors1 = step1Validation.errors;
+  const errors2 = step2Validation.errors;
+
+  function renderStepContent() {
+    switch (step) {
+      case 1:
+        return (
+          <StepSection>
+            <SectionLabel style={{ marginBottom: 12 }}>Dados Pessoais</SectionLabel>
+            <FormGrid>
+              <div style={{ gridColumn: 'span 2' }}>
+                <Input
+                  label="Nome Completo *"
+                  placeholder="Digite o nome completo"
+                  value={form.nome}
+                  onChange={e => handleChange('nome', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))}
+                  maxLength={80}
+                  error={errors1.nome}
+                />
+              </div>
+              <Input
+                label="E-mail *"
+                type="email"
+                placeholder="Digite o e-mail"
+                value={form.email}
+                onChange={e => handleChange('email', e.target.value)}
+                error={errors1.email}
+              />
+              <Input
+                label="Telefone *"
+                placeholder="(11) 99999-9999"
+                value={form.telefone}
+                inputMode="numeric"
+                maxLength={15}
+                onChange={e => handleChange('telefone', maskPhone(e.target.value))}
+                error={errors1.telefone}
+              />
+              <Input
+                label="Data de Nascimento *"
+                type="date"
+                value={form.nascimento}
+                onChange={e => handleChange('nascimento', e.target.value)}
+                error={errors1.nascimento}
+              />
+              <Input
+                label="CPF *"
+                placeholder="000.000.000-00"
+                value={form.cpf}
+                inputMode="numeric"
+                maxLength={14}
+                onChange={e => handleChange('cpf', maskCPF(e.target.value))}
+                error={errors1.cpf}
+              />
+              <div style={{ gridColumn: isEditing ? 'auto' : 'auto' }}>
+                <Select
+                  label="Sexo"
+                  options={sexoOptions}
+                  placeholder="Selecione..."
+                  value={form.sexo}
+                  onChange={v => handleChange('sexo', v)}
+                />
+              </div>
+              {isEditing && (
+                <Select
+                  label="Status"
+                  options={statusOptions}
+                  placeholder="Selecione o status"
+                  value={form.status}
+                  onChange={v => handleChange('status', v)}
+                />
+              )}
+            </FormGrid>
+          </StepSection>
+        );
+
+      case 2:
+        return (
+          <StepSection>
+            <SectionLabel style={{ marginBottom: 12 }}>Endereço</SectionLabel>
+            <FormGrid>
+              <div style={{ position: 'relative' }}>
+                <Input
+                  label="CEP"
+                  placeholder="00000-000"
+                  value={form.cep}
+                  inputMode="numeric"
+                  maxLength={9}
+                  onChange={e => handleCEPChange(e.target.value)}
+                  error={cepError || errors2.cep}
+                />
+                {cepLoading && (
+                  <div style={{
+                    position: 'absolute', right: 12, top: 34,
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    fontSize: '0.72rem', color: '#BBA188',
+                  }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                    </svg>
+                    Buscando...
+                    <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+                  </div>
+                )}
+              </div>
+              <div style={{ gridColumn: 'auto' }}>
+                <Input
+                  label="Logradouro"
+                  placeholder="Rua, Avenida..."
+                  value={form.logradouro}
+                  onChange={e => handleChange('logradouro', e.target.value)}
+                  maxLength={120}
+                />
+              </div>
+              <Input
+                label="Número"
+                placeholder="Ex: 123"
+                value={form.numero}
+                inputMode="numeric"
+                maxLength={10}
+                onChange={e => handleChange('numero', e.target.value.replace(/\D/g, ''))}
+              />
+              <Input
+                label="Complemento"
+                placeholder="Apto, bloco..."
+                value={form.complemento}
+                onChange={e => handleChange('complemento', e.target.value)}
+                maxLength={60}
+              />
+              <Input
+                label="Bairro"
+                placeholder="Bairro"
+                value={form.bairro}
+                onChange={e => handleChange('bairro', e.target.value)}
+                maxLength={80}
+              />
+              <Input
+                label="Cidade"
+                placeholder="Cidade"
+                value={form.cidade}
+                onChange={e => handleChange('cidade', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))}
+                maxLength={80}
+              />
+              <Select
+                label="Estado (UF)"
+                options={UF_OPTIONS}
+                placeholder="UF"
+                value={form.estado}
+                onChange={v => handleChange('estado', v)}
+              />
+            </FormGrid>
+          </StepSection>
+        );
+
+      case 3:
+        return (
+          <StepSection>
+            <SectionLabel style={{ marginBottom: 12 }}>Convênio & Informações Extras</SectionLabel>
+            <FormGrid>
+              <Input
+                label="Convênio"
+                placeholder="Ex: Unimed, Bradesco Saúde..."
+                value={form.convenio}
+                onChange={e => handleChange('convenio', e.target.value)}
+                maxLength={80}
+              />
+              <Input
+                label="Nº da Carteirinha"
+                placeholder="Número do convênio"
+                value={form.numeroCarteirinha}
+                inputMode="numeric"
+                maxLength={30}
+                onChange={e => handleChange('numeroCarteirinha', e.target.value.replace(/\D/g, ''))}
+              />
+              <div style={{ gridColumn: 'span 2' }}>
+                <Input
+                  label="Como nos conheceu?"
+                  placeholder="Ex: Instagram, indicação, Google..."
+                  value={form.indicacao}
+                  onChange={e => handleChange('indicacao', e.target.value)}
+                  maxLength={100}
+                />
+              </div>
+              <div style={{ gridColumn: 'span 2' }}>
+                <Input
+                  label="Observações / Alergias"
+                  placeholder="Digite observações de saúde relevantes ou alergias"
+                  maxLength={300}
+                  value={form.observacoes}
+                  onChange={e => handleChange('observacoes', e.target.value)}
+                />
+              </div>
+
+              <div style={{ gridColumn: 'span 2', background: '#fdf9f5', borderRadius: 12, padding: 16, border: '1px solid #f0ebe4', marginTop: 4 }}>
+                <p style={{ fontSize: '0.77rem', fontWeight: 600, color: '#BBA188', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 10px' }}>Resumo do Cadastro</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px' }}>
+                  {([
+                    ['Nome',        form.nome],
+                    ['E-mail',      form.email],
+                    ['Telefone',    form.telefone],
+                    ['Nascimento',  formatDate(form.nascimento)],
+                    ['CPF',         form.cpf],
+                    ['Sexo',        getSexoLabel(form.sexo)],
+                    ['CEP',         form.cep || '—'],
+                    ['Cidade/UF',   form.cidade ? `${form.cidade}/${form.estado}` : '—'],
+                    ['Convênio',    form.convenio || '—'],
+                  ] as [string, string][]).map(([label, value]) => (
+                    <div key={label}>
+                      <span style={{ fontSize: '0.72rem', color: '#bbb', display: 'block' }}>{label}</span>
+                      <span style={{ fontSize: '0.83rem', color: '#555', fontWeight: 500 }}>{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </FormGrid>
+          </StepSection>
+        );
+
+      default: return null;
+    }
+  }
+
+  const modalFooter = (
+    <WizardNav>
+      {step > 1
+        ? <Button variant="outline" onClick={prevStep}>Voltar</Button>
+        : <Button variant="outline" onClick={handleCancelClick}>Cancelar</Button>
+      }
+      {step < 3
+        ? <Button variant="primary" onClick={nextStep}>Continuar</Button>
+        : <Button variant="primary" onClick={() => setShowConfirmModal(true)}>
+            {isEditing ? 'Salvar Alterações' : 'Cadastrar Paciente'}
+          </Button>
+      }
+    </WizardNav>
+  );
 
   return (
     <Container>
@@ -323,7 +607,7 @@ export default function Patients() {
         <StatCard label="Inativos" value={inativos} color="#EBD5B0"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>}
         />
-        <StatCard label="Total Cadastrados" value={patients.length} color="#a8906f"
+        <StatCard label="Novos este mês" value={3} color="#a8906f"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>}
         />
       </StatsGrid>
@@ -395,13 +679,7 @@ export default function Patients() {
               </tr>
             </Thead>
             <Tbody>
-              {loading ? (
-                <tr><td colSpan={8}>
-                  <EmptyState>
-                    <p style={{ color: '#bbb' }}>Carregando pacientes...</p>
-                  </EmptyState>
-                </td></tr>
-              ) : paginatedData.length === 0 ? (
+              {paginatedData.length === 0 ? (
                 <tr><td colSpan={8}>
                   <EmptyState>
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
@@ -459,13 +737,10 @@ export default function Patients() {
         size="lg"
         footer={
           <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'space-between' }}>
-            <Button
-              variant="outline"
+            <Button variant="outline"
               icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
               onClick={() => selectedPatient && openEdit(selectedPatient)}
-            >
-              Editar Ficha
-            </Button>
+            >Editar Ficha</Button>
             <Button variant="outline" onClick={() => setIsDetailOpen(false)}>Fechar</Button>
           </div>
         }
@@ -474,7 +749,7 @@ export default function Patients() {
           <DetailModal>
             <DetailHeader>
               <DetailAvatar $color="#BBA188">{getInitials(selectedPatient.name)}</DetailAvatar>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <DetailName>{selectedPatient.name}</DetailName>
                 <DetailMeta>
                   <DetailMetaItem>
@@ -487,48 +762,47 @@ export default function Patients() {
                   </DetailMetaItem>
                 </DetailMeta>
                 <StatsRow style={{ marginTop: 10 }}>
-                  <StatPill $color={selectedPatient.status === 'ativo' ? '#8a7560' : '#888'}>
-                    {selectedPatient.status === 'ativo' ? 'Ativo' : 'Inativo'}
-                  </StatPill>
+                  <StatPill $color="#BBA188">{selectedPatient.visits} visitas</StatPill>
+                  <StatPill $color={selectedPatient.status === 'ativo' ? '#8a7560' : '#888'}>{selectedPatient.status === 'ativo' ? 'Ativo' : 'Inativo'}</StatPill>
+                  <StatPill $color="#a8906f">{selectedPatient.procedure}</StatPill>
+                  {selectedPatient.sexo && <StatPill $color="#BBA188">{getSexoLabel(selectedPatient.sexo)}</StatPill>}
                 </StatsRow>
               </div>
             </DetailHeader>
 
             {selectedPatient.observacoes && (
-              <ObsBox>
-                <strong>⚠ Observações / Alergias: </strong>{selectedPatient.observacoes}
-              </ObsBox>
+              <ObsBox><strong>⚠ Observações / Alergias: </strong>{selectedPatient.observacoes}</ObsBox>
             )}
 
             <DetailSection>
               <DetailSectionTitle>Dados do Paciente</DetailSectionTitle>
               <InfoGrid>
-                <InfoItem>
-                  <InfoLabel>Data de Nascimento</InfoLabel>
-                  <InfoValue>{formatDate(selectedPatient.birthdate)}</InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>Idade</InfoLabel>
-                  <InfoValue>{calcAge(selectedPatient.birthdate)}</InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>CPF</InfoLabel>
-                  <InfoValue>
-                    <code style={{ fontSize: '0.83rem', color: '#888', background: '#f5f5f5', padding: '3px 8px', borderRadius: 5 }}>
-                      {selectedPatient.cpf}
-                    </code>
-                  </InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>Status</InfoLabel>
-                  <InfoValue>
-                    <Badge $bg={statusColors[selectedPatient.status].bg} $color={statusColors[selectedPatient.status].color}>
-                      {selectedPatient.status === 'ativo' ? 'Ativo' : 'Inativo'}
-                    </Badge>
-                  </InfoValue>
-                </InfoItem>
+                <InfoItem><InfoLabel>Data de Nascimento</InfoLabel><InfoValue>{formatDate(selectedPatient.birthdate)}</InfoValue></InfoItem>
+                <InfoItem><InfoLabel>Idade</InfoLabel><InfoValue>{calcAge(selectedPatient.birthdate)}</InfoValue></InfoItem>
+                <InfoItem><InfoLabel>CPF</InfoLabel><InfoValue><code style={{ fontSize: '0.83rem', color: '#888', background: '#f5f5f5', padding: '3px 8px', borderRadius: 5 }}>{selectedPatient.cpf}</code></InfoValue></InfoItem>
+                <InfoItem><InfoLabel>Sexo</InfoLabel><InfoValue>{getSexoLabel(selectedPatient.sexo || '')}</InfoValue></InfoItem>
+                <InfoItem><InfoLabel>Último Procedimento</InfoLabel><InfoValue>{selectedPatient.procedure}</InfoValue></InfoItem>
+                <InfoItem><InfoLabel>Última Visita</InfoLabel><InfoValue>{selectedPatient.lastVisit}</InfoValue></InfoItem>
+                <InfoItem><InfoLabel>Total de Visitas</InfoLabel><InfoValue style={{ fontWeight: 700, color: '#1a1a1a', fontSize: '1.1rem' }}>{selectedPatient.visits}</InfoValue></InfoItem>
+                <InfoItem><InfoLabel>Como nos conheceu</InfoLabel><InfoValue>{selectedPatient.indicacao || '—'}</InfoValue></InfoItem>
+                <InfoItem><InfoLabel>Status</InfoLabel><InfoValue><Badge $bg={statusColors[selectedPatient.status].bg} $color={statusColors[selectedPatient.status].color}>{selectedPatient.status === 'ativo' ? 'Ativo' : 'Inativo'}</Badge></InfoValue></InfoItem>
+                {selectedPatient.convenio && <InfoItem><InfoLabel>Convênio</InfoLabel><InfoValue>{selectedPatient.convenio}</InfoValue></InfoItem>}
+                {selectedPatient.numeroCarteirinha && <InfoItem><InfoLabel>Nº Carteirinha</InfoLabel><InfoValue><code style={{ fontSize: '0.83rem', color: '#888', background: '#f5f5f5', padding: '3px 8px', borderRadius: 5 }}>{selectedPatient.numeroCarteirinha}</code></InfoValue></InfoItem>}
               </InfoGrid>
             </DetailSection>
+
+            {(selectedPatient.logradouro || selectedPatient.cep) && (
+              <DetailSection style={{ marginTop: 16 }}>
+                <DetailSectionTitle>Endereço</DetailSectionTitle>
+                <InfoGrid>
+                  {selectedPatient.cep         && <InfoItem><InfoLabel>CEP</InfoLabel><InfoValue>{selectedPatient.cep}</InfoValue></InfoItem>}
+                  {selectedPatient.logradouro   && <InfoItem><InfoLabel>Logradouro</InfoLabel><InfoValue>{selectedPatient.logradouro}{selectedPatient.numero ? `, ${selectedPatient.numero}` : ''}</InfoValue></InfoItem>}
+                  {selectedPatient.complemento  && <InfoItem><InfoLabel>Complemento</InfoLabel><InfoValue>{selectedPatient.complemento}</InfoValue></InfoItem>}
+                  {selectedPatient.bairro       && <InfoItem><InfoLabel>Bairro</InfoLabel><InfoValue>{selectedPatient.bairro}</InfoValue></InfoItem>}
+                  {selectedPatient.cidade       && <InfoItem><InfoLabel>Cidade / UF</InfoLabel><InfoValue>{selectedPatient.cidade}{selectedPatient.estado ? ` / ${selectedPatient.estado}` : ''}</InfoValue></InfoItem>}
+                </InfoGrid>
+              </DetailSection>
+            )}
           </DetailModal>
         )}
       </Modal>
@@ -539,98 +813,30 @@ export default function Patients() {
         closeOnOverlayClick={false}
         title={isEditing ? 'Editar Paciente' : 'Novo Paciente'}
         size="lg"
-        footer={
-          <WizardNav>
-            <Button variant="outline" onClick={handleCancelClick}>Cancelar</Button>
-            <Button variant="primary" onClick={handleSaveClick}>
-              {isEditing ? 'Salvar Alterações' : 'Cadastrar Paciente'}
-            </Button>
-          </WizardNav>
-        }
+        footer={modalFooter}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, overflowY: 'auto', maxHeight: '65vh', paddingRight: 4 }}>
-          <div>
-            <SectionLabel style={{ marginBottom: 12 }}>Dados Pessoais</SectionLabel>
-            <FormGrid>
-              <div style={{ gridColumn: 'span 2' }}>
-                <Input
-                  label="Nome Completo *"
-                  placeholder="Digite o nome completo"
-                  value={form.nome}
-                  onChange={e => handleChange('nome', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))}
-                  maxLength={80}
-                  error={errors.nome}
-                />
-              </div>
-              <Input
-                label="E-mail *"
-                type="email"
-                placeholder="Digite o e-mail"
-                value={form.email}
-                onChange={e => handleChange('email', e.target.value)}
-                error={errors.email}
-              />
-              <Input
-                label="Telefone *"
-                mask="telefone"
-                placeholder="Digite o telefone"
-                value={form.telefone}
-                inputMode="numeric"
-                maxLength={15}
-                onValueChange={v => handleChange('telefone', v)}
-                error={errors.telefone}
-              />
-              <Input
-                label="Data de Nascimento *"
-                type="date"
-                value={form.nascimento}
-                onChange={e => handleDateChange(e.target.value)}
-                error={errors.nascimento}
-              />
-              <Input
-                label="CPF *"
-                mask="cpf"
-                placeholder="Digite o CPF"
-                value={form.cpf}
-                inputMode="numeric"
-                maxLength={14}
-                onValueChange={v => handleChange('cpf', v)}
-                error={errors.cpf}
-              />
-            </FormGrid>
-          </div>
-          <div>
-            <SectionLabel style={{ marginBottom: 12 }}>Informações Adicionais</SectionLabel>
-            <FormGrid>
-              {isEditing && (
-                <Select
-                  key={`status-${selectedPatient?.id}`}
-                  label="Status"
-                  options={statusOptions}
-                  placeholder="Selecione o status"
-                  value={form.status}
-                  onChange={v => handleChange('status', v)}
-                />
-              )}
-              <div style={{ gridColumn: isEditing ? 'auto' : 'span 2' }}>
-                <Input
-                  label="Como nos conheceu?"
-                  placeholder="Ex: Instagram, indicação, Google..."
-                  value={form.indicacao}
-                  onChange={e => handleChange('indicacao', e.target.value)}
-                />
-              </div>
-              <div style={{ gridColumn: 'span 2' }}>
-                <Input
-                  label="Observações / Alergias"
-                  placeholder="Digite observações de saúde relevantes ou alergias"
-                  maxLength={300}
-                  value={form.observacoes}
-                  onChange={e => handleChange('observacoes', e.target.value)}
-                />
-              </div>
-            </FormGrid>
-          </div>
+        <WizardSteps>
+          {STEP_LABELS.map((label, idx) => {
+            const num     = idx + 1;
+            const done    = num < step;
+            const current = num === step;
+            return (
+              <WizardStep key={num}>
+                {idx > 0 && <WizardStepLine $done={done || current} />}
+                <WizardStepCircle $done={done} $current={current}>
+                  {done
+                    ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    : num
+                  }
+                </WizardStepCircle>
+                <WizardStepLabel $current={current}>{label}</WizardStepLabel>
+              </WizardStep>
+            );
+          })}
+        </WizardSteps>
+
+        <div style={{ overflowY: 'auto', maxHeight: '60vh', paddingRight: 4 }}>
+          {renderStepContent()}
         </div>
       </Modal>
 
@@ -641,21 +847,17 @@ export default function Patients() {
         onConfirm={forceClose}
         onCancel={() => setShowCancelModal(false)}
       />
-
       <ConfirmModal
         isOpen={showConfirmModal}
         title={isEditing ? 'Salvar alterações?' : 'Cadastrar paciente?'}
-        message={
-          isEditing
-            ? 'Tem certeza que deseja salvar as alterações feitas na ficha deste paciente?'
-            : `Tem certeza que deseja cadastrar ${form.nome || 'este paciente'}?`
-        }
+        message={isEditing
+          ? 'Tem certeza que deseja salvar as alterações feitas na ficha deste paciente?'
+          : `Tem certeza que deseja cadastrar ${form.nome || 'este paciente'}?`}
         confirmText="Confirmar"
         cancelText="Voltar"
         onConfirm={handleConfirmSave}
         onCancel={() => setShowConfirmModal(false)}
       />
-
       <SucessModal
         isOpen={showSuccessModal}
         title="Sucesso!"

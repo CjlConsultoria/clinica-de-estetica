@@ -247,6 +247,65 @@ function isUploadFormDirty(form: UploadForm): boolean {
   );
 }
 
+/* ── FotoThumb: renders the square thumbnail correctly ── */
+function FotoThumb({ foto, color }: { foto: Foto; color: string }) {
+  const tipo = tipoColors[foto.tipo] ?? { bg: '#f5f5f5', color: '#999', label: foto.tipo };
+  return (
+    <FotoItem>
+      <div style={{
+        width: '100%',
+        paddingBottom: '100%',
+        position: 'relative',
+        borderRadius: 8,
+        overflow: 'hidden',
+        background: foto.imgUrl
+          ? 'transparent'
+          : `linear-gradient(135deg, ${color}22, ${color}44)`,
+      }}>
+        {foto.imgUrl ? (
+          <img
+            src={foto.imgUrl}
+            alt={foto.tipo}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block',
+            }}
+          />
+        ) : (
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color,
+            opacity: 0.5,
+          }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+        )}
+        <Badge
+          $bg={tipo.bg}
+          $color={tipo.color}
+          style={{ position: 'absolute', top: 4, left: 4, zIndex: 1 }}
+        >
+          {tipo.label}
+        </Badge>
+      </div>
+      <FotoLabel>{foto.procedimento}</FotoLabel>
+      <FotoDate>{foto.data}</FotoDate>
+    </FotoItem>
+  );
+}
+
 export default function Fotos() {
   const [patients, setPatients] = useState<PatientData[]>(INITIAL_PATIENTS);
 
@@ -264,15 +323,14 @@ export default function Fotos() {
   const [compareForm,   setCompareForm]   = useState<CompareForm>(COMPARE_INITIAL);
   const [compareAntes,  setCompareAntes]  = useState<string | null>(null);
   const [compareDepois, setCompareDepois] = useState<string | null>(null);
-  const [compareSaved,  setCompareSaved]  = useState(false);
   const compareAntesRef  = useRef<HTMLInputElement>(null);
   const compareDepoisRef = useRef<HTMLInputElement>(null);
 
-  const [showCancelUploadModal,  setShowCancelUploadModal]  = useState(false);
-  const [showConfirmUploadModal, setShowConfirmUploadModal] = useState(false);
-  const [showSuccessModal,       setShowSuccessModal]       = useState(false);
-  const [showConfirmCompareModal,setShowConfirmCompareModal]= useState(false);
-  const [showSuccessCompareModal,setShowSuccessCompareModal]= useState(false);
+  const [showCancelUploadModal,   setShowCancelUploadModal]   = useState(false);
+  const [showConfirmUploadModal,  setShowConfirmUploadModal]  = useState(false);
+  const [showSuccessModal,        setShowSuccessModal]        = useState(false);
+  const [showConfirmCompareModal, setShowConfirmCompareModal] = useState(false);
+  const [showSuccessCompareModal, setShowSuccessCompareModal] = useState(false);
 
   const {
     errors: uploadErrors,
@@ -283,16 +341,18 @@ export default function Fotos() {
 
   const patientOptions = patients.map(p => ({ value: String(p.id), label: p.name }));
 
-  const filtered = patients.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = patients.filter(p => {
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    const matchProc   = filterProc === 'Todos' ||
+      p.fotos.some(f => f.procedimento.toLowerCase().includes(filterProc.toLowerCase()));
+    return matchSearch && matchProc;
+  });
 
-  const totalPages  = Math.max(1, Math.ceil(filtered.length / CARDS_PER_PAGE));
-  const safePage    = Math.min(currentPage, totalPages);
-  const startIdx    = (safePage - 1) * CARDS_PER_PAGE;
-  const paginated   = filtered.slice(startIdx, startIdx + CARDS_PER_PAGE);
-  const startItem   = filtered.length === 0 ? 0 : startIdx + 1;
-  const endItem     = Math.min(safePage * CARDS_PER_PAGE, filtered.length);
+  const totalPages   = Math.max(1, Math.ceil(filtered.length / CARDS_PER_PAGE));
+  const safePage     = Math.min(currentPage, totalPages);
+  const startIdx     = (safePage - 1) * CARDS_PER_PAGE;
+  const paginated    = filtered.slice(startIdx, startIdx + CARDS_PER_PAGE);
+  const startItem    = filtered.length === 0 ? 0 : startIdx + 1;
   const visiblePages = getVisiblePages(safePage, totalPages);
 
   function handleSearchChange(v: string) { setSearch(v); setCurrentPage(1); }
@@ -300,7 +360,8 @@ export default function Fotos() {
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploadPreview(await readFileAsDataURL(file));
+    const dataUrl = await readFileAsDataURL(file);
+    setUploadPreview(dataUrl);
   }
 
   function handleUploadChange(field: keyof UploadForm, value: string) {
@@ -448,7 +509,6 @@ export default function Fotos() {
     setCompareForm({ ...COMPARE_INITIAL, pacienteId: patient ? String(patient.id) : '' });
     setCompareAntes(null);
     setCompareDepois(null);
-    setCompareSaved(false);
     setIsCompareOpen(true);
   }
 
@@ -457,7 +517,6 @@ export default function Fotos() {
     setCompareAntes(null);
     setCompareDepois(null);
     setCompareForm(COMPARE_INITIAL);
-    setCompareSaved(false);
     if (compareAntesRef.current)  compareAntesRef.current.value  = '';
     if (compareDepoisRef.current) compareDepoisRef.current.value = '';
   }
@@ -540,23 +599,7 @@ export default function Fotos() {
                     ) : (
                       <FotoGrid>
                         {patient.fotos.map(foto => (
-                          <FotoItem key={foto.id}>
-                            <div style={{ width: '100%', paddingBottom: '100%', background: foto.imgUrl ? 'transparent' : `linear-gradient(135deg, ${patient.color}22, ${patient.color}44)`, borderRadius: 8, position: 'relative', overflow: 'hidden' }}>
-                              {foto.imgUrl
-                                ? <FotoImg src={foto.imgUrl} alt={foto.tipo} />
-                                : (
-                                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: patient.color, opacity: 0.5 }}>
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                                  </div>
-                                )
-                              }
-                              <Badge $bg={tipoColors[foto.tipo]?.bg} $color={tipoColors[foto.tipo]?.color} style={{ position: 'absolute', top: 4, left: 4 }}>
-                                {tipoColors[foto.tipo]?.label}
-                              </Badge>
-                            </div>
-                            <FotoLabel>{foto.procedimento}</FotoLabel>
-                            <FotoDate>{foto.data}</FotoDate>
-                          </FotoItem>
+                          <FotoThumb key={foto.id} foto={foto} color={patient.color} />
                         ))}
                       </FotoGrid>
                     )}
@@ -587,7 +630,7 @@ export default function Fotos() {
               page === '...' ? (
                 <PageEllipsis key={`ellipsis-${idx}`}>…</PageEllipsis>
               ) : (
-                <PageButton key={page} $active={page === safePage} onClick={() => setCurrentPage(page as number)} aria-label={`Página ${page}`} aria-current={page === safePage ? 'page' : undefined}>
+                <PageButton key={page} $active={page === safePage} onClick={() => setCurrentPage(page as number)}>
                   {page}
                 </PageButton>
               )
@@ -599,6 +642,7 @@ export default function Fotos() {
         </PaginationWrapper>
       </div>
 
+      {/* ── Modal Upload ── */}
       <Modal isOpen={isUploadOpen} onClose={handleCancelUploadClick} closeOnOverlayClick={false} title="Adicionar Foto" size="lg"
         footer={
           <WizardNav>
@@ -616,11 +660,18 @@ export default function Fotos() {
                 ? <UploadPreview src={uploadPreview} alt="preview" />
                 : (
                   <>
-                    <UploadIcon><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></UploadIcon>
+                    <UploadIcon>
+                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                      </svg>
+                    </UploadIcon>
                     <UploadText>Clique para selecionar ou arraste a foto aqui</UploadText>
                     <UploadHint>JPG, PNG ou WEBP · Máx. 10MB</UploadHint>
                   </>
-                )}
+                )
+              }
             </UploadZone>
             {uploadPreview && (
               <div style={{ textAlign: 'center', marginTop: 8 }}>
@@ -652,6 +703,7 @@ export default function Fotos() {
         </div>
       </Modal>
 
+      {/* ── Modal Comparar ── */}
       <Modal isOpen={isCompareOpen} onClose={handleCloseCompare} closeOnOverlayClick={false} title="Comparativo Antes / Depois" size="xl"
         footer={
           <WizardNav>
@@ -685,7 +737,12 @@ export default function Fotos() {
                   <CompareImg $color="#BBA188" $hasImage={!!compareAntes} onClick={() => compareAntesRef.current?.click()}>
                     {compareAntes
                       ? <img src={compareAntes} alt="antes" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10 }} />
-                      : (<><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Clique para selecionar</span></>)
+                      : (
+                        <>
+                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                          <span>Clique para selecionar</span>
+                        </>
+                      )
                     }
                   </CompareImg>
                   {compareAntes && (
@@ -704,7 +761,12 @@ export default function Fotos() {
                   <CompareImg $color="#a8906f" $hasImage={!!compareDepois} onClick={() => compareDepoisRef.current?.click()}>
                     {compareDepois
                       ? <img src={compareDepois} alt="depois" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10 }} />
-                      : (<><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Clique para selecionar</span></>)
+                      : (
+                        <>
+                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                          <span>Clique para selecionar</span>
+                        </>
+                      )
                     }
                   </CompareImg>
                   {compareDepois && (
@@ -733,7 +795,6 @@ export default function Fotos() {
         onConfirm={forceCloseUpload}
         onCancel={() => setShowCancelUploadModal(false)}
       />
-
       <ConfirmModal
         isOpen={showConfirmUploadModal}
         title="Salvar foto?"
@@ -743,7 +804,6 @@ export default function Fotos() {
         onConfirm={handleConfirmUpload}
         onCancel={() => setShowConfirmUploadModal(false)}
       />
-
       <SucessModal
         isOpen={showSuccessModal}
         title="Sucesso!"
@@ -751,7 +811,6 @@ export default function Fotos() {
         onClose={() => setShowSuccessModal(false)}
         buttonText="Continuar"
       />
-
       <ConfirmModal
         isOpen={showConfirmCompareModal}
         title="Salvar comparativo?"
@@ -761,7 +820,6 @@ export default function Fotos() {
         onConfirm={handleConfirmComparativo}
         onCancel={() => setShowConfirmCompareModal(false)}
       />
-
       <SucessModal
         isOpen={showSuccessCompareModal}
         title="Sucesso!"

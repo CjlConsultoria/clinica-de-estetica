@@ -31,7 +31,7 @@ export default function Login() {
   const [modalMessage, setModalMessage] = useState('');
 
   useEffect(() => {
-    if (isAuthenticated) router.replace('/agenda');
+    if (isAuthenticated) router.replace('/dashboard');
   }, [isAuthenticated, router]);
 
   function clearAllErrors() {

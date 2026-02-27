@@ -4,7 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export function usePermissions() {
   const { currentUser } = useAuth();
-  const role = currentUser?.role ?? null;
+  const role      = currentUser?.role      ?? null;
+  const companyId = currentUser?.companyId ?? null;
 
   const can = useCallback((permission: Permission): boolean => {
     if (!role) return false;
@@ -23,6 +24,7 @@ export function usePermissions() {
   return {
     can, canAny, canAll,
     role,
+    companyId,
     isSuperAdmin:    role === 'super_admin',
     isCompanyAdmin:  role === 'company_admin',
     isGerente:       role === 'gerente',
@@ -30,9 +32,9 @@ export function usePermissions() {
     isRecepcionista: role === 'recepcionista',
     isFinanceiro:    role === 'financeiro',
 
-    canAccessCompany: (_targetCompanyId: string): boolean => {
-      if (role === 'super_admin' || role === 'company_admin') return true;
-      return false;
+    canAccessCompany: (targetCompanyId: string): boolean => {
+      if (role === 'super_admin') return true;
+      return companyId === targetCompanyId;
     },
   };
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -10,11 +10,6 @@ import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
-import {
-  listarProcedimentos, criarProcedimento, atualizarProcedimento,
-  inativarProcedimento, ativarProcedimento,
-  type ProcedimentoResponse,
-} from '@/services/procedimentosApi';
 import {
   Container, Header, Title, Controls, SearchBarWrapper, SearchIconWrap, SearchInputStyled,
   FilterRow, DropdownWrapper, DropdownBtn, DropdownList, DropdownItem, ClearFilterBtn,
@@ -37,19 +32,6 @@ interface ProcedimentoForm {
   valor: string;
   duracao: string;
   comissao: string;
-  descricao: string;
-}
-
-interface Procedure {
-  id: number;
-  code: string;
-  name: string;
-  category: string;
-  price: number;
-  duration: number;
-  commission: number;
-  status: string;
-  sessions: number;
   descricao: string;
 }
 
@@ -76,6 +58,17 @@ const categoryOptions = [
 
 const filterCategories = ['Todas', 'Toxina Botulínica', 'Preenchimento', 'Bioestimulador', 'Fio de PDO', 'Skincare/Pele'];
 
+const INITIAL_PROCEDURES = [
+  { id: 1, code: 'BTX-001', name: 'Botox Facial Completo',   category: 'Toxina Botulínica', price: 800,  duration: 45, commission: 20, status: 'ativo',   sessions: 142, descricao: '' },
+  { id: 2, code: 'PRE-001', name: 'Preenchimento Labial',    category: 'Preenchimento',     price: 1200, duration: 60, commission: 20, status: 'ativo',   sessions: 98,  descricao: '' },
+  { id: 3, code: 'BIO-001', name: 'Bioestimulador Sculptra', category: 'Bioestimulador',    price: 2500, duration: 90, commission: 15, status: 'ativo',   sessions: 34,  descricao: '' },
+  { id: 4, code: 'FIO-001', name: 'Fio de PDO Tensor',       category: 'Fio de PDO',        price: 1800, duration: 75, commission: 18, status: 'ativo',   sessions: 56,  descricao: '' },
+  { id: 5, code: 'BTX-002', name: 'Toxina para Bruxismo',    category: 'Toxina Botulínica', price: 600,  duration: 30, commission: 20, status: 'ativo',   sessions: 67,  descricao: '' },
+  { id: 6, code: 'SKN-001', name: 'Microagulhamento',        category: 'Skincare/Pele',     price: 450,  duration: 60, commission: 25, status: 'ativo',   sessions: 89,  descricao: '' },
+  { id: 7, code: 'PRE-002', name: 'Preenchimento Malar',     category: 'Preenchimento',     price: 1400, duration: 60, commission: 20, status: 'inativo', sessions: 23,  descricao: '' },
+  { id: 8, code: 'SKN-002', name: 'Peelings Químicos',       category: 'Skincare/Pele',     price: 300,  duration: 45, commission: 25, status: 'ativo',   sessions: 110, descricao: '' },
+];
+
 const catColors: Record<string, string> = {
   'Toxina Botulínica': '#BBA188',
   'Preenchimento':     '#EBD5B0',
@@ -93,20 +86,7 @@ function getCategoryLabel(value: string): string {
   return categoryOptions.find(c => c.value === value)?.label ?? value;
 }
 
-function mapProcedimento(p: ProcedimentoResponse): Procedure {
-  return {
-    id:         p.id,
-    code:       p.codigo,
-    name:       p.nome,
-    category:   getCategoryLabel(p.categoria),
-    price:      p.valor,
-    duration:   p.duracaoMinutos ?? 0,
-    commission: p.percentualComissao ?? 0,
-    status:     p.ativo ? 'ativo' : 'inativo',
-    sessions:   0,
-    descricao:  p.descricao ?? '',
-  };
-}
+type Procedure = typeof INITIAL_PROCEDURES[0];
 
 const CARDS_PER_PAGE = 6;
 const TABLE_PER_PAGE = 10;
@@ -140,8 +120,7 @@ function isFormDirty(form: ProcedimentoForm): boolean {
 }
 
 export default function Procedures() {
-  const [procedures,   setProcedures]   = useState<Procedure[]>([]);
-  const [loading,      setLoading]      = useState(true);
+  const [procedures,   setProcedures]   = useState<Procedure[]>(INITIAL_PROCEDURES);
 
   const [view,         setView]         = useState<'cards' | 'tabela'>('cards');
   const [search,       setSearch]       = useState('');
@@ -161,13 +140,6 @@ export default function Procedures() {
   const { errors, validate, clearError, clearAll } =
     useSequentialValidation<ProcedimentoField>(VALIDATION_FIELDS);
 
-  useEffect(() => {
-    listarProcedimentos()
-      .then(list => setProcedures(list.map(mapProcedimento)))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
-
   const totalSessions = procedures.reduce((a, p) => a + p.sessions, 0);
   const avgPrice      = procedures.length > 0
     ? procedures.reduce((a, p) => a + p.price, 0) / procedures.length
@@ -183,12 +155,14 @@ export default function Procedures() {
   const safePageCards     = Math.min(currentPage, totalPagesCards);
   const startIdxCards     = (safePageCards - 1) * CARDS_PER_PAGE;
   const paginatedCards    = filtered.slice(startIdxCards, startIdxCards + CARDS_PER_PAGE);
+  const startItemCards    = filtered.length === 0 ? 0 : startIdxCards + 1;
   const visiblePagesCards = getVisiblePages(safePageCards, totalPagesCards);
 
   const totalPagesTable   = Math.max(1, Math.ceil(filtered.length / TABLE_PER_PAGE));
   const safePageTable     = Math.min(currentPage, totalPagesTable);
   const startIdxTable     = (safePageTable - 1) * TABLE_PER_PAGE;
   const paginatedTable    = filtered.slice(startIdxTable, startIdxTable + TABLE_PER_PAGE);
+  const startItemTable    = filtered.length === 0 ? 0 : startIdxTable + 1;
   const visiblePagesTable = getVisiblePages(safePageTable, totalPagesTable);
 
   function handleSearchChange(v: string)  { setSearch(v);      setCurrentPage(1); }
@@ -256,47 +230,44 @@ export default function Procedures() {
     setShowConfirmModal(true);
   }
 
-  async function handleConfirmSave() {
-    setShowConfirmModal(false);
-    const payload = {
-      nome:                form.nome,
-      codigo:              form.codigo,
-      categoria:           form.categoria,
-      valor:               parseMoeda(form.valor),
-      duracaoMinutos:      parseInt(form.duracao, 10) || undefined,
-      percentualComissao:  parseFloat(form.comissao) || undefined,
-      descricao:           form.descricao || undefined,
-    };
-    try {
-      if (isEditing && selected) {
-        const updated = await atualizarProcedimento(selected.id, payload);
-        setProcedures(prev => prev.map(p => p.id === selected.id ? mapProcedimento(updated) : p));
-        setSuccessMessage('Procedimento atualizado com sucesso!');
-      } else {
-        const created = await criarProcedimento(payload);
-        setProcedures(prev => [mapProcedimento(created), ...prev]);
-        setCurrentPage(1);
-        setSuccessMessage('Procedimento cadastrado com sucesso!');
-      }
-      setIsModalOpen(false);
-      setShowSuccessModal(true);
-    } catch (err) {
-      alert((err as Error).message);
+  function handleConfirmSave() {
+    if (isEditing && selected) {
+      setProcedures(prev => prev.map(p =>
+        p.id === selected.id
+          ? {
+              ...p,
+              name:       form.nome,
+              code:       form.codigo,
+              category:   getCategoryLabel(form.categoria),
+              price:      parseMoeda(form.valor),
+              duration:   parseInt(form.duracao, 10) || 0,
+              commission: parseInt(form.comissao, 10) || 0,
+              descricao:  form.descricao,
+            }
+          : p
+      ));
+      setSuccessMessage('Procedimento atualizado com sucesso!');
+    } else {
+      const newProc: Procedure = {
+        id:         Date.now(),
+        code:       form.codigo,
+        name:       form.nome,
+        category:   getCategoryLabel(form.categoria),
+        price:      parseMoeda(form.valor),
+        duration:   parseInt(form.duracao, 10) || 0,
+        commission: parseInt(form.comissao, 10) || 0,
+        status:     'ativo',
+        sessions:   0,
+        descricao:  form.descricao,
+      };
+      setProcedures(prev => [newProc, ...prev]);
+      setCurrentPage(1); 
+      setSuccessMessage('Procedimento cadastrado com sucesso!');
     }
-  }
 
-  async function handleToggleStatus(proc: Procedure) {
-    try {
-      if (proc.status === 'ativo') {
-        await inativarProcedimento(proc.id);
-        setProcedures(prev => prev.map(p => p.id === proc.id ? { ...p, status: 'inativo' } : p));
-      } else {
-        await ativarProcedimento(proc.id);
-        setProcedures(prev => prev.map(p => p.id === proc.id ? { ...p, status: 'ativo' } : p));
-      }
-    } catch (err) {
-      alert((err as Error).message);
-    }
+    setShowConfirmModal(false);
+    setIsModalOpen(false);
+    setShowSuccessModal(true);
   }
 
   function handleSuccessClose() {
@@ -322,13 +293,13 @@ export default function Procedures() {
       </Header>
 
       <StatsGrid>
-        <StatCard label="Total de Procedimentos" value={loading ? '...' : procedures.length} color="#BBA188"
+        <StatCard label="Total de Procedimentos" value={procedures.length} color="#BBA188"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>}
         />
-        <StatCard label="Total de Sessões" value={loading ? '...' : totalSessions} color="#EBD5B0"
+        <StatCard label="Total de Sessões" value={totalSessions} color="#EBD5B0"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>}
         />
-        <StatCard label="Ticket Médio" value={loading ? '...' : `R$ ${avgPrice.toFixed(0)}`} color="#8a7560"
+        <StatCard label="Ticket Médio" value={`R$ ${avgPrice.toFixed(0)}`} color="#8a7560"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>}
         />
         <StatCard label="Categorias" value={categoryOptions.length} color="#1b1b1b"
@@ -377,11 +348,7 @@ export default function Procedures() {
       {view === 'cards' ? (
         <CardsContainer>
           <div style={{ padding: 20, flex: 1, overflow: 'hidden' }}>
-            {loading ? (
-              <EmptyState>
-                <p>Carregando procedimentos...</p>
-              </EmptyState>
-            ) : filtered.length === 0 ? (
+            {filtered.length === 0 ? (
               <EmptyState>
                 <h3>Nenhum procedimento encontrado</h3>
                 <p>Tente ajustar os filtros ou a busca.</p>
@@ -401,17 +368,13 @@ export default function Procedures() {
                       <DetailRow><DetailLabel>Valor</DetailLabel><DetailValue $highlight>R$ {proc.price.toLocaleString('pt-BR')}</DetailValue></DetailRow>
                       <DetailRow><DetailLabel>Duração</DetailLabel><DetailValue>{proc.duration} min</DetailValue></DetailRow>
                       <DetailRow><DetailLabel>Comissão</DetailLabel><DetailValue>{proc.commission}%</DetailValue></DetailRow>
-                      <DetailRow><DetailLabel>Status</DetailLabel><DetailValue>{proc.status.charAt(0).toUpperCase() + proc.status.slice(1)}</DetailValue></DetailRow>
+                      <DetailRow><DetailLabel>Sessões</DetailLabel><DetailValue>{proc.sessions}</DetailValue></DetailRow>
                     </ProcDetails>
                     <ProcActions>
                       <Button variant="outline" size="sm" onClick={() => openEdit(proc)}>Editar</Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleToggleStatus(proc)}
-                      >
-                        {proc.status === 'ativo' ? 'Inativar' : 'Ativar'}
-                      </Button>
+                      <Badge $bg={proc.status === 'ativo' ? '#f0ebe4' : '#f5f5f5'} $color={proc.status === 'ativo' ? '#8a7560' : '#888'}>
+                        {proc.status.charAt(0).toUpperCase() + proc.status.slice(1)}
+                      </Badge>
                     </ProcActions>
                   </ProcCard>
                 ))}
@@ -476,13 +439,7 @@ export default function Procedures() {
                 </tr>
               </Thead>
               <Tbody>
-                {loading ? (
-                  <tr>
-                    <Td colSpan={8} style={{ textAlign: 'center', padding: '48px 0', color: '#bbb' }}>
-                      Carregando...
-                    </Td>
-                  </tr>
-                ) : filtered.length === 0 ? (
+                {filtered.length === 0 ? (
                   <tr>
                     <Td colSpan={8} style={{ textAlign: 'center', padding: '48px 0', color: '#bbb' }}>
                       Nenhum procedimento encontrado.
@@ -515,9 +472,6 @@ export default function Procedures() {
                       <ActionGroup>
                         <IconBtn onClick={() => openEdit(proc)} title="Editar">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                        </IconBtn>
-                        <IconBtn onClick={() => handleToggleStatus(proc)} title={proc.status === 'ativo' ? 'Inativar' : 'Ativar'}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18.36 6.64A9 9 0 1 1 5.64 19.36"/><path d="M12 2v10"/></svg>
                         </IconBtn>
                       </ActionGroup>
                     </Td>

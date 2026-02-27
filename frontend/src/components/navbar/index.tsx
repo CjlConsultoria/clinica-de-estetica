@@ -2,21 +2,36 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  LayoutDashboard, CalendarDays, Users, Syringe, Package,
-  DollarSign, BadgeDollarSign, BarChart3, Settings, LogOut,
-  Menu, Camera, FileText, FlaskConical, RefreshCcw,
-  ClipboardList, Stethoscope, ScrollText,
+  LayoutDashboard,
+  CalendarDays,
+  Users,
+  Syringe,
+  Package,
+  DollarSign,
+  BadgeDollarSign,
+  BarChart3,
+  Settings,
+  LogOut,
+  Menu,
+  Camera,
+  FileText,
+  FlaskConical,
+  RefreshCcw,
+  ClipboardList,
+  Stethoscope,
+  ScrollText,
+  Building2,
+  CreditCard,
+  HeadphonesIcon,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/components/ui/hooks/usePermissions';
-import { useCurrentUser } from '@/components/ui/hooks/useCurrentUser';
-import { ROLE_LABELS, ROLE_COLORS, Permission } from '@/types/auth';
-import MockLoginScreen from '@/components/auth/MockLoginScreen';
+import { Permission } from '@/types/auth';
+
 import {
   NavbarContainer,
-  LogoButton,
   TopSection,
   TitleText,
   GreetingText,
@@ -38,55 +53,176 @@ import {
   SectionDividerLabel,
 } from './styles';
 
+const NOTIF_UNREAD_COUNT = 3;
+
+function IconMegafone({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 2L11 13"/>
+      <path d="M22 2L15 22l-4-9-9-4 20-7z"/>
+    </svg>
+  );
+}
+
+function IconSino({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    </svg>
+  );
+}
+
+function BadgeCount({ count, collapsed, isMobile = false }: {
+  count:     number;
+  collapsed: boolean;
+  isMobile?: boolean;
+}) {
+  if (!count) return null;
+  const label = count > 9 ? '9+' : String(count);
+
+  if (collapsed && !isMobile) {
+    return (
+      <span
+        style={{
+          position:       'absolute',
+          top:            -3,
+          right:          10,
+          minWidth:       14,
+          height:         14,
+          borderRadius:   7,
+          background:     '#e74c3c',
+          color:          'white',
+          fontSize:       '0.52rem',
+          fontWeight:     800,
+          display:        'flex',
+          alignItems:     'center',
+          justifyContent: 'center',
+          padding:        '0 3px',
+          lineHeight:     1,
+          letterSpacing:  '-0.2px',
+          boxShadow:      '0 0 0 1.5px #1b1b1b',
+          boxSizing:      'border-box' as const,
+          pointerEvents:  'none',
+          zIndex:         2,
+        }}
+      >
+        {label}
+      </span>
+    );
+  }
+
+  return (
+    <span
+      style={{
+        minWidth:       16,
+        height:         16,
+        borderRadius:   8,
+        background:     '#e74c3c',
+        color:          'white',
+        fontSize:       '0.58rem',
+        fontWeight:     800,
+        display:        'inline-flex',
+        alignItems:     'center',
+        justifyContent: 'center',
+        padding:        '0 4px',
+        flexShrink:     0,
+        letterSpacing:  '-0.2px',
+        lineHeight:     1,
+        marginLeft:     6,
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
+const superAdminSections = [
+  {
+    label: 'Visão Geral',
+    items: [
+      { label: 'Dashboard',    href: '/dashboard-admin', Icon: LayoutDashboard, badge: 0 },
+    ],
+  },
+  {
+    label: 'Gestão',
+    items: [
+      { label: 'Empresas',   href: '/empresas', Icon: Building2,  badge: 0 },
+      { label: 'Financeiro', href: '/finance',  Icon: CreditCard, badge: 0 },
+    ],
+  },
+  {
+    label: 'Operação',
+    items: [
+      { label: 'Suporte',       href: '/suporte',      Icon: HeadphonesIcon, badge: 0                 },
+      { label: 'Comunicados',   href: '/comunicados',  Icon: IconMegafone,   badge: 0                 },
+      { label: 'Notificações',  href: '/notificacoes', Icon: IconSino,       badge: NOTIF_UNREAD_COUNT },
+      { label: 'Configurações', href: '/settings',     Icon: Settings,       badge: 0                 },
+    ],
+  },
+];
+
 const navSections = [
   {
     label: 'Core',
     items: [
-      { label: 'Dashboard',      href: '/dashboard',          icon: LayoutDashboard, permission: 'dashboard.read'        as Permission, permissionAlt: null },
-      { label: 'Agenda',         href: '/agenda',             icon: CalendarDays,    permission: 'agenda.read'            as Permission, permissionAlt: 'agenda.read_own'        as Permission },
-      { label: 'Pacientes',      href: '/patients',           icon: Users,           permission: 'pacientes.read'         as Permission, permissionAlt: 'pacientes.read_own'     as Permission },
+      { label: 'Dashboard', href: '/dashboard', Icon: LayoutDashboard, permission: 'dashboard.read' as Permission, permissionAlt: null },
+      { label: 'Agenda',    href: '/agenda',    Icon: CalendarDays,    permission: 'agenda.read'    as Permission, permissionAlt: 'agenda.read_own'    as Permission },
+      { label: 'Pacientes', href: '/patients',  Icon: Users,           permission: 'pacientes.read' as Permission, permissionAlt: 'pacientes.read_own' as Permission },
     ],
   },
   {
     label: 'Clínico',
     items: [
-      { label: 'Histórico Pac.', href: '/historico-paciente', icon: ClipboardList,   permission: 'historico.read'         as Permission, permissionAlt: 'historico.read_own'     as Permission },
-      { label: 'Fotos Clínicas', href: '/fotos',              icon: Camera,          permission: 'fotos.read'             as Permission, permissionAlt: 'fotos.read_own'         as Permission },
-      { label: 'Reaplicações',   href: '/reaplicacoes',       icon: RefreshCcw,      permission: 'reaplicacoes.read'      as Permission, permissionAlt: 'reaplicacoes.read_own'  as Permission },
-      { label: 'Procedimentos',  href: '/procedures',         icon: Syringe,         permission: 'procedimentos.read'     as Permission, permissionAlt: null },
-      { label: 'Consentimento',  href: '/consentimento',      icon: FileText,        permission: 'consentimento.read'     as Permission, permissionAlt: 'consentimento.read_own' as Permission },
+      { label: 'Histórico Pac.', href: '/historico-paciente', Icon: ClipboardList, permission: 'historico.read'     as Permission, permissionAlt: 'historico.read_own'     as Permission },
+      { label: 'Fotos Clínicas', href: '/fotos',              Icon: Camera,        permission: 'fotos.read'         as Permission, permissionAlt: 'fotos.read_own'         as Permission },
+      { label: 'Reaplicações',   href: '/reaplicacoes',       Icon: RefreshCcw,    permission: 'reaplicacoes.read'  as Permission, permissionAlt: 'reaplicacoes.read_own'  as Permission },
+      { label: 'Procedimentos',  href: '/procedures',         Icon: Syringe,       permission: 'procedimentos.read' as Permission, permissionAlt: null },
+      { label: 'Consentimento',  href: '/consentimento',      Icon: FileText,      permission: 'consentimento.read' as Permission, permissionAlt: 'consentimento.read_own' as Permission },
     ],
   },
   {
     label: 'Operacional',
     items: [
-      { label: 'Profissionais',  href: '/profissionais',      icon: Stethoscope,     permission: 'profissionais.read'    as Permission, permissionAlt: null },
-      { label: 'Lotes ANVISA',   href: '/lotes',              icon: FlaskConical,    permission: 'lotes.read'            as Permission, permissionAlt: null },
-      { label: 'Estoque',        href: '/estoque',            icon: Package,         permission: 'estoque.read'          as Permission, permissionAlt: null },
-      { label: 'Financeiro',     href: '/finance',            icon: DollarSign,      permission: 'financeiro.read'       as Permission, permissionAlt: null },
-      { label: 'Comissões',      href: '/comissoes',          icon: BadgeDollarSign, permission: 'comissoes.read'        as Permission, permissionAlt: 'comissoes.read_own'     as Permission },
-      { label: 'Relatórios',     href: '/reports',            icon: BarChart3,       permission: 'relatorios.financeiro' as Permission, permissionAlt: null },
-      { label: 'Termos de Uso',  href: '/termos',             icon: ScrollText,      permission: 'configuracoes.read'    as Permission, permissionAlt: null },
-      { label: 'Configurações',  href: '/settings',           icon: Settings,        permission: 'configuracoes.read'    as Permission, permissionAlt: null },
+      { label: 'Profissionais', href: '/profissionais', Icon: Stethoscope,     permission: 'profissionais.read'    as Permission, permissionAlt: null },
+      { label: 'Lotes ANVISA',  href: '/lotes',         Icon: FlaskConical,    permission: 'lotes.read'            as Permission, permissionAlt: null },
+      { label: 'Estoque',       href: '/estoque',       Icon: Package,         permission: 'estoque.read'          as Permission, permissionAlt: null },
+      { label: 'Financeiro',    href: '/finance',       Icon: DollarSign,      permission: 'financeiro.read'       as Permission, permissionAlt: null },
+      { label: 'Comissões',     href: '/comissoes',     Icon: BadgeDollarSign, permission: 'comissoes.read'        as Permission, permissionAlt: 'comissoes.read_own' as Permission },
+      { label: 'Relatórios',    href: '/reports',       Icon: BarChart3,       permission: 'relatorios.financeiro' as Permission, permissionAlt: null },
+      { label: 'Termos de Uso', href: '/termos',        Icon: ScrollText,      permission: 'configuracoes.read'    as Permission, permissionAlt: null },
+      { label: 'Configurações', href: '/settings',      Icon: Settings,        permission: 'configuracoes.read'    as Permission, permissionAlt: null },
+    ],
+  },
+  {
+    label: 'Ajuda',
+    items: [
+      { label: 'Suporte',     href: '/suporte-empresa',                 Icon: HeadphonesIcon, permission: 'suporte.read'     as Permission, permissionAlt: null },
+      { label: 'Comunicados', href: '/comunicados/comunicados-empresa', Icon: IconMegafone,   permission: 'comunicados.read' as Permission, permissionAlt: null },
     ],
   },
 ];
 
 export default function Navbar() {
-  const pathname = usePathname();
-  const router = useRouter();
-  const { logout } = useAuth();
+  const pathname              = usePathname();
+  const router                = useRouter();
+  const { user, logout }      = useAuth();
   const { can, isSuperAdmin } = usePermissions();
-  const { currentUser } = useCurrentUser();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen,    setIsOpen]    = useState(false);
   const [collapsed, setCollapsed] = useState(true);
-  const [showSwitcher, setShowSwitcher] = useState(false);
+
+  const [isMobile, setIsMobile] = useState(false);
   const navbarRef = useRef<HTMLDivElement>(null);
 
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
-  };
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 1024px)');
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  const handleLogout = () => { logout(); router.push('/login'); };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -105,16 +241,19 @@ export default function Navbar() {
     return false;
   };
 
-  const filteredSections = navSections
-    .map(section => ({
-      ...section,
-      items: section.items.filter(item => canSeeItem(item.permission, item.permissionAlt)),
-    }))
-    .filter(section => section.items.length > 0);
-
-  const roleKey    = currentUser?.role;
-  const roleColors = roleKey ? ROLE_COLORS[roleKey] : null;
-  const roleLabel  = roleKey ? ROLE_LABELS[roleKey] : 'perfil';
+  const sectionsToRender = isSuperAdmin
+    ? superAdminSections
+    : navSections
+        .map(section => ({
+          ...section,
+          items: section.items.filter(item =>
+            canSeeItem(
+              (item as any).permission,
+              (item as any).permissionAlt,
+            )
+          ),
+        }))
+        .filter(section => section.items.length > 0);
 
   return (
     <>
@@ -128,7 +267,7 @@ export default function Navbar() {
         <div style={{ width: '100%' }}>
           <CollapseButton
             $collapsed={collapsed}
-            onClick={() => setCollapsed((prev) => !prev)}
+            onClick={() => setCollapsed(prev => !prev)}
             title={collapsed ? 'Expandir menu' : 'Recolher menu'}
           >
             {collapsed ? (
@@ -149,18 +288,24 @@ export default function Navbar() {
           </CollapseButton>
 
           <TopSection $collapsed={collapsed}>
-            <TitleText>Clínica Estética</TitleText>
-            <GreetingText>Olá, {currentUser?.name ?? 'Administrador'}</GreetingText>
+            <TitleText>{isSuperAdmin ? 'Admin Sistema' : 'Clínica Estética'}</TitleText>
+            <GreetingText>Olá, {user?.name ?? 'Administrador'}</GreetingText>
           </TopSection>
 
           <LogoCollapsed $collapsed={collapsed}>
-            <Image src="/logocjl.png" alt="Logo" width={160} height={160} style={{ objectFit: 'contain', display: 'block' }} />
+            <Image
+              src="/logocjl.png"
+              alt="Logo"
+              width={160}
+              height={160}
+              style={{ objectFit: 'contain', display: 'block' }}
+            />
           </LogoCollapsed>
 
           <DividerTop $collapsed={collapsed} />
 
           <Nav $collapsed={collapsed}>
-            {filteredSections.map((section, sectionIndex) => (
+            {sectionsToRender.map((section, sectionIndex) => (
               <div key={section.label} style={{ width: '100%' }}>
                 <SectionDividerWrap $collapsed={collapsed} $first={sectionIndex === 0}>
                   <SectionDividerLine $collapsed={collapsed} />
@@ -168,14 +313,47 @@ export default function Navbar() {
                   <SectionDividerLine $collapsed={collapsed} />
                 </SectionDividerWrap>
 
-                {section.items.map((item) => {
-                  const Icon = item.icon;
-                  const selected = pathname === item.href;
+                {section.items.map(item => {
+                  const { Icon, label, href } = item;
+                  const badge    = (item as any).badge as number ?? 0;
+                  const selected = pathname === href;
+
                   return (
-                    <NavLink key={item.href} href={item.href} onClick={() => setIsOpen(false)} $selected={selected} $collapsed={collapsed}>
-                      <NavLinkIcon $selected={selected}><Icon size={18} /></NavLinkIcon>
-                      <NavLinkText $selected={selected} $collapsed={collapsed}>{item.label}</NavLinkText>
-                      <NavTooltip>{item.label}</NavTooltip>
+                    <NavLink
+                      key={href}
+                      href={href}
+                      onClick={() => setIsOpen(false)}
+                      $selected={selected}
+                      $collapsed={collapsed}
+                    >
+                      <NavLinkIcon
+                        $selected={selected}
+                        style={{ position: 'relative', flexShrink: 0 }}
+                      >
+                        <Icon size={18} />
+                        {badge > 0 && collapsed && !isMobile && (
+                          <BadgeCount count={badge} collapsed={true} isMobile={false} />
+                        )}
+                      </NavLinkIcon>
+                      <NavLinkText
+                        $selected={selected}
+                        $collapsed={collapsed}
+                        style={{
+                          display:        'flex',
+                          alignItems:     'center',
+                          justifyContent: 'flex-start',
+                          width:          '100%',
+                        }}
+                      >
+                        <span>{label}</span>
+                        {badge > 0 && (!collapsed || isMobile) && (
+                          <BadgeCount count={badge} collapsed={false} isMobile={isMobile} />
+                        )}
+                      </NavLinkText>
+                      <NavTooltip>
+                        {label}
+                        {badge > 0 ? ` · ${badge} não lida${badge !== 1 ? 's' : ''}` : ''}
+                      </NavTooltip>
                     </NavLink>
                   );
                 })}
@@ -186,35 +364,11 @@ export default function Navbar() {
 
         <div style={{ width: '100%' }}>
           <LogoutDivider $collapsed={collapsed} />
-
-          <SectionDividerWrap $collapsed={collapsed} $isBottom>
-            <SectionDividerLine $collapsed={collapsed} />
-            <SectionDividerLabel $collapsed={collapsed}>Perfil</SectionDividerLabel>
-            <SectionDividerLine $collapsed={collapsed} />
-          </SectionDividerWrap>
-
-          <LogoutButton type="button" onClick={() => setShowSwitcher(true)} $collapsed={collapsed}>
-            <div style={{
-              width: 18, height: 18, borderRadius: 5,
-              background: roleColors?.bg ?? '#2a2a2a',
-              color: roleColors?.color ?? '#95A5A6',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '0.55rem', fontWeight: 700, flexShrink: 0, marginLeft: '23px',
-            }}>
-              {currentUser?.name?.split(' ').slice(0, 2).map(n => n[0]).join('') ?? '?'}
-            </div>
-            <LogoutText $collapsed={collapsed} style={{ color: roleColors?.color ?? '#95A5A6' }}>{roleLabel}</LogoutText>
-            <NavTooltip>Trocar perfil ({roleLabel})</NavTooltip>
-          </LogoutButton>
-
-          <LogoutDivider $collapsed={collapsed} />
-
           <SectionDividerWrap $collapsed={collapsed} $isBottom>
             <SectionDividerLine $collapsed={collapsed} />
             <SectionDividerLabel $collapsed={collapsed}>Sessão</SectionDividerLabel>
             <SectionDividerLine $collapsed={collapsed} />
           </SectionDividerWrap>
-
           <LogoutButton type="button" onClick={handleLogout} $collapsed={collapsed}>
             <LogOut size={18} />
             <LogoutText $collapsed={collapsed}>Sair da conta</LogoutText>
@@ -222,8 +376,6 @@ export default function Navbar() {
           </LogoutButton>
         </div>
       </NavbarContainer>
-
-      {showSwitcher && <MockLoginScreen onClose={() => setShowSwitcher(false)} />}
     </>
   );
 }
