@@ -10,6 +10,7 @@ import Pagination from '@/components/ui/pagination';
 import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
+<<<<<<< HEAD
 import ErrorModal from '@/components/modals/errorModal';
 import { getApiErrorMessage } from '@/utils/apiError';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
@@ -20,6 +21,11 @@ import {
   type LancamentoResponse,
 } from '@/services/financeiroApi';
 import { listarPacientes, type PacienteResponse } from '@/services/pacientesApi';
+=======
+import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
+import { usePermissions } from '@/components/ui/hooks/usePermissions';
+import AccessDenied from '@/components/ui/AccessDenied';
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 import {
   Container, Header, Title, Controls, SearchBarWrapper, SearchIconWrap, SearchInputStyled,
   FilterRow, DropdownWrapper, DropdownBtn, DropdownList, DropdownItem, ClearFilterBtn,
@@ -28,8 +34,31 @@ import {
   BarFill, BarLabel, BarValue,
 } from './styles';
 
+<<<<<<< HEAD
 const pagamentoOptions = [{ value: 'PIX', label: 'Pix' }, { value: 'CARTAO_CREDITO', label: 'Cartão de Crédito' }, { value: 'CARTAO_DEBITO', label: 'Cartão de Débito' }, { value: 'DINHEIRO', label: 'Dinheiro' }, { value: 'TRANSFERENCIA', label: 'Transferência Bancária' }];
 const filterMonths     = ['Todos', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho'];
+=======
+const typeOptions      = [{ value: 'receita', label: 'Receita' }, { value: 'despesa', label: 'Despesa' }];
+const categoryOptions  = [{ value: 'procedimento', label: 'Procedimento' }, { value: 'produto', label: 'Produto' }, { value: 'aluguel', label: 'Aluguel' }, { value: 'insumo', label: 'Insumo' }, { value: 'comissao', label: 'Comissão' }, { value: 'outros', label: 'Outros' }];
+const pagamentoOptions = [{ value: 'pix', label: 'Pix' }, { value: 'cartao_cred', label: 'Cartão de Crédito' }, { value: 'cartao_deb', label: 'Cartão de Débito' }, { value: 'dinheiro', label: 'Dinheiro' }, { value: 'transferencia', label: 'Transferência Bancária' }];
+const filterTypes      = ['Todos', 'Receita', 'Despesa'];
+const filterMonths     = ['Todos', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho'];
+
+const mockFinance = [
+  { id: 1,  date: '18/02/2025', description: 'Botox Facial - Ana Costa',          type: 'receita' as const, category: 'Procedimento', value: 800,  patient: 'Ana Costa'      },
+  { id: 2,  date: '18/02/2025', description: 'Preenchimento Labial - Carla M.',   type: 'receita' as const, category: 'Procedimento', value: 1200, patient: 'Carla Mendonça' },
+  { id: 3,  date: '17/02/2025', description: 'Reposição de Insumos ANVISA',       type: 'despesa' as const, category: 'Insumo',       value: 2340, patient: null             },
+  { id: 4,  date: '16/02/2025', description: 'Bioestimulador - Fernanda Lima',    type: 'receita' as const, category: 'Procedimento', value: 2500, patient: 'Fernanda Lima'  },
+  { id: 5,  date: '15/02/2025', description: 'Aluguel do Espaço',                 type: 'despesa' as const, category: 'Aluguel',      value: 3500, patient: null             },
+  { id: 6,  date: '14/02/2025', description: 'Fio PDO - Marina Souza',            type: 'receita' as const, category: 'Procedimento', value: 1800, patient: 'Marina Souza'   },
+  { id: 7,  date: '13/02/2025', description: 'Comissão Profissional - Fevereiro', type: 'despesa' as const, category: 'Comissão',     value: 1280, patient: null             },
+  { id: 8,  date: '12/02/2025', description: 'Microagulhamento - Patrícia A.',    type: 'receita' as const, category: 'Procedimento', value: 450,  patient: 'Patrícia Alves' },
+  { id: 9,  date: '10/02/2025', description: 'Toxina Botulínica - Juliana R.',    type: 'receita' as const, category: 'Procedimento', value: 600,  patient: 'Juliana Rocha'  },
+  { id: 10, date: '08/02/2025', description: 'Material de Escritório',            type: 'despesa' as const, category: 'Outros',       value: 180,  patient: null             },
+  { id: 11, date: '08/02/2025', description: 'Material de Escritório',            type: 'despesa' as const, category: 'Outros',       value: 180,  patient: null             },
+  { id: 12, date: '08/02/2025', description: 'Material de Escritório',            type: 'despesa' as const, category: 'Outros',       value: 180,  patient: null             },
+];
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 
 // Static chart data (decorative - monthly trend)
 const monthlyData = [
@@ -43,6 +72,7 @@ const monthlyData = [
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+<<<<<<< HEAD
 interface FinanceItem {
   id: number;
   date: string;
@@ -98,11 +128,30 @@ function mapLancamento(l: LancamentoResponse): FinanceItem {
 
 function isLancFormDirty(form: LancamentoForm) {
   return form.pacienteId !== '' || form.valor.trim() !== '' || form.data !== '' || form.pagamento !== '' || form.descricao.trim() !== '';
+=======
+type LancamentoField = 'tipo' | 'categoria' | 'descricao' | 'valor' | 'data' | 'pagamento';
+interface LancamentoForm { tipo: string; categoria: string; descricao: string; valor: string; data: string; paciente: string; pagamento: string; }
+const LANCAMENTO_INITIAL: LancamentoForm = { tipo: '', categoria: '', descricao: '', valor: '', data: '', paciente: '', pagamento: '' };
+const LANCAMENTO_VALIDATION_FIELDS = [
+  { key: 'tipo'      as LancamentoField, validate: (v: string) => !v ? 'Selecione o tipo (Receita ou Despesa)' : null },
+  { key: 'categoria' as LancamentoField, validate: (v: string) => !v ? 'Selecione uma categoria' : null },
+  { key: 'descricao' as LancamentoField, validate: (v: string) => !v.trim() ? 'Descrição é obrigatória' : null },
+  { key: 'valor'     as LancamentoField, validate: (v: string) => !v.trim() || v === 'R$ 0,00' ? 'Informe o valor do lançamento' : null },
+  { key: 'data'      as LancamentoField, validate: (v: string) => !v ? 'Data é obrigatória' : null },
+  { key: 'pagamento' as LancamentoField, validate: (v: string) => !v ? 'Selecione a forma de pagamento' : null },
+];
+const ITEMS_PER_PAGE   = 10;
+const TABLE_MIN_HEIGHT = 540;
+
+function isLancFormDirty(form: LancamentoForm) {
+  return form.tipo !== '' || form.categoria !== '' || form.descricao.trim() !== '' || form.valor.trim() !== '' || form.data !== '' || form.paciente.trim() !== '' || form.pagamento !== '';
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 }
 
 export default function Finance() {
   const { can, isSuperAdmin } = usePermissions();
 
+<<<<<<< HEAD
   const [lancamentos,  setLancamentos]  = useState<FinanceItem[]>([]);
   const [pacientes,    setPacientes]    = useState<PacienteResponse[]>([]);
   const [loading,      setLoading]      = useState(true);
@@ -112,14 +161,33 @@ export default function Finance() {
   const [isModalOpen,  setIsModalOpen]  = useState(false);
   const [exporting,    setExporting]    = useState(false);
   const [currentPage,  setCurrentPage]  = useState(1);
+=======
+  const [search, setSearch]             = useState('');
+  const [filterType, setFilterType]     = useState('Todos');
+  const [filterMonth, setFilterMonth]   = useState('Todos');
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen]   = useState(false);
+  const [exporting, setExporting]       = useState(false);
+  const [currentPage, setCurrentPage]   = useState(1);
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   const [showCancelModal,        setShowCancelModal]        = useState(false);
   const [showConfirmModal,       setShowConfirmModal]       = useState(false);
   const [showSuccessModal,       setShowSuccessModal]       = useState(false);
   const [showExportConfirmModal, setShowExportConfirmModal] = useState(false);
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [lancForm, setLancForm] = useState<LancamentoForm>(LANCAMENTO_INITIAL);
+<<<<<<< HEAD
   const [errorMsg,    setErrorMsg]    = useState('');
   const [isErrorOpen, setIsErrorOpen] = useState(false);
+=======
+
+  const { errors: lancErrors, validate: lancValidate, clearError: lancClearError, clearAll: lancClearAll } =
+    useSequentialValidation<LancamentoField>(LANCAMENTO_VALIDATION_FIELDS);
+
+  if (!isSuperAdmin && !can('financeiro.read')) return <AccessDenied />;
+
+  const canCreate = isSuperAdmin || can('financeiro.create');
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 
   const { errors: lancErrors, validate: lancValidate, clearError: lancClearError, clearAll: lancClearAll } =
     useSequentialValidation<LancamentoField>(LANCAMENTO_VALIDATION_FIELDS);
@@ -158,6 +226,7 @@ export default function Finance() {
   const totalPages    = Math.max(1, Math.ceil(totalFiltered / ITEMS_PER_PAGE));
   const safePage      = Math.min(currentPage, totalPages);
   const paginatedData = filtered.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
+<<<<<<< HEAD
 
   function handleLancChange(field: keyof LancamentoForm, value: string) {
     setLancForm(prev => ({ ...prev, [field]: value }));
@@ -217,7 +286,26 @@ export default function Finance() {
       showError(err, 'cancelar lançamento');
     }
   }
+=======
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 
+  function handleLancChange(field: LancamentoField | 'paciente', value: string) {
+    setLancForm(prev => ({ ...prev, [field]: value }));
+    if (field !== 'paciente') lancClearError(field as LancamentoField);
+  }
+  function handleLancDataChange(raw: string) {
+    if (!raw) { handleLancChange('data', ''); return; }
+    const [yearStr, month, day] = raw.split('-');
+    handleLancChange('data', `${(yearStr || '').slice(0, 4)}-${month ?? ''}-${day ?? ''}`);
+  }
+  function handleCancelClick() { isLancFormDirty(lancForm) ? setShowCancelModal(true) : forceClose(); }
+  function forceClose() { setLancForm(LANCAMENTO_INITIAL); lancClearAll(); setIsModalOpen(false); setShowCancelModal(false); }
+  function handleSaveLancClick() {
+    const isValid = lancValidate({ tipo: lancForm.tipo, categoria: lancForm.categoria, descricao: lancForm.descricao, valor: lancForm.valor, data: lancForm.data, pagamento: lancForm.pagamento });
+    if (!isValid) return;
+    setShowConfirmModal(true);
+  }
+  function handleConfirmSave() { setShowConfirmModal(false); setIsModalOpen(false); setLancForm(LANCAMENTO_INITIAL); lancClearAll(); setShowSuccessModal(true); }
   const toggle = (name: string) => setOpenDropdown(prev => prev === name ? null : name);
   const handleExportClick = () => setShowExportConfirmModal(true);
   const handleConfirmExport = async () => {
@@ -232,6 +320,7 @@ export default function Finance() {
       a.href = url; a.download = 'relatorio-financeiro.pdf'; a.click();
       URL.revokeObjectURL(url);
       setShowExportSuccessModal(true);
+<<<<<<< HEAD
     } catch (err) { showError(err, 'exportar PDF'); } finally { setExporting(false); }
   };
 
@@ -240,6 +329,9 @@ export default function Finance() {
     if (status === 'PENDENTE')  return { bg: '#fff3cd', color: '#856404' };
     if (status === 'CANCELADO') return { bg: '#fde8e8', color: '#c53030' };
     return { bg: '#f5f5f5', color: '#888' };
+=======
+    } catch (err) { console.error('[Exportar PDF]', err); alert('Erro ao exportar o PDF. Tente novamente.'); } finally { setExporting(false); }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   };
 
   return (
@@ -295,13 +387,18 @@ export default function Finance() {
         <TableWrapper style={{ minHeight: TABLE_MIN_HEIGHT }}>
           <Table>
             <Thead>
+<<<<<<< HEAD
               <tr><Th $width="12%">Data</Th><Th $width="28%">Descrição</Th><Th $width="14%">Pagamento</Th><Th $width="10%">Status</Th><Th $width="14%">Valor</Th><Th $width="12%">Paciente</Th><Th $width="10%">Ações</Th></tr>
+=======
+              <tr><Th $width="12%">Data</Th><Th $width="32%">Descrição</Th><Th $width="15%">Categoria</Th><Th $width="10%">Tipo</Th><Th $width="14%">Valor</Th><Th $width="11%">Paciente</Th><Th $width="6%">Ações</Th></tr>
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
             </Thead>
             <Tbody>
               {loading ? (
                 <tr><Td colSpan={7} style={{ textAlign: 'center', padding: '48px 0', color: '#bbb' }}>Carregando...</Td></tr>
               ) : paginatedData.length === 0 ? (
                 <tr><Td colSpan={7} style={{ textAlign: 'center', padding: '48px 0', color: '#bbb' }}>Nenhum lançamento encontrado.</Td></tr>
+<<<<<<< HEAD
               ) : paginatedData.map(f => {
                 const sc = statusColor(f.status);
                 const isPendente = f.status === 'PENDENTE';
@@ -330,6 +427,19 @@ export default function Finance() {
                   </Tr>
                 );
               })}
+=======
+              ) : paginatedData.map(f => (
+                <Tr key={f.id}>
+                  <Td style={{ color: '#888' }}>{f.date}</Td>
+                  <Td style={{ fontWeight: 500, color: '#1a1a1a' }}>{f.description}</Td>
+                  <Td><Badge $bg="rgba(187,161,136,0.12)" $color="#a8906f">{f.category}</Badge></Td>
+                  <Td><TypeBadge $type={f.type}><span style={{ fontSize: '0.72rem' }}>{f.type === 'receita' ? '↑' : '↓'}</span>{f.type === 'receita' ? ' Receita' : ' Despesa'}</TypeBadge></Td>
+                  <Td style={{ fontWeight: 700, color: f.type === 'receita' ? '#BBA188' : '#e74c3c', fontSize: '0.85rem' }}>{f.type === 'receita' ? '+' : '-'} R$ {fmt(f.value)}</Td>
+                  <Td style={{ color: '#777' }}>{f.patient || '—'}</Td>
+                  <Td><ActionGroup>{canCreate && <IconBtn><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></IconBtn>}</ActionGroup></Td>
+                </Tr>
+              ))}
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
             </Tbody>
           </Table>
         </TableWrapper>
@@ -356,11 +466,18 @@ export default function Finance() {
       </Modal>
 
       <CancelModal isOpen={showCancelModal} title="Deseja cancelar?" message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas." onConfirm={forceClose} onCancel={() => setShowCancelModal(false)} />
+<<<<<<< HEAD
       <ConfirmModal isOpen={showConfirmModal} title="Salvar lançamento?" message={`Deseja registrar este lançamento?`} confirmText="Confirmar" cancelText="Voltar" onConfirm={handleConfirmSave} onCancel={() => setShowConfirmModal(false)} />
       <SucessModal isOpen={showSuccessModal} title="Sucesso!" message="Lançamento registrado com sucesso!" onClose={() => setShowSuccessModal(false)} buttonText="Continuar" />
       <ConfirmModal isOpen={showExportConfirmModal} title="Exportar PDF?" message="Deseja exportar o relatório financeiro em PDF?" confirmText="Exportar" cancelText="Cancelar" onConfirm={handleConfirmExport} onCancel={() => setShowExportConfirmModal(false)} />
       <SucessModal isOpen={showExportSuccessModal} title="PDF exportado!" message="Relatório financeiro exportado com sucesso!" onClose={() => setShowExportSuccessModal(false)} buttonText="Continuar" />
       <ErrorModal isOpen={isErrorOpen} message={errorMsg} onClose={() => setIsErrorOpen(false)} />
+=======
+      <ConfirmModal isOpen={showConfirmModal} title="Salvar lançamento?" message={`Deseja registrar este lançamento de ${lancForm.tipo === 'receita' ? 'receita' : 'despesa'}${lancForm.descricao ? `: "${lancForm.descricao}"` : ''}?`} confirmText="Confirmar" cancelText="Voltar" onConfirm={handleConfirmSave} onCancel={() => setShowConfirmModal(false)} />
+      <SucessModal isOpen={showSuccessModal} title="Sucesso!" message="Lançamento registrado com sucesso!" onClose={() => setShowSuccessModal(false)} buttonText="Continuar" />
+      <ConfirmModal isOpen={showExportConfirmModal} title="Exportar PDF?" message="Deseja exportar o relatório financeiro em PDF?" confirmText="Exportar" cancelText="Cancelar" onConfirm={handleConfirmExport} onCancel={() => setShowExportConfirmModal(false)} />
+      <SucessModal isOpen={showExportSuccessModal} title="PDF exportado!" message="Relatório financeiro exportado com sucesso!" onClose={() => setShowExportSuccessModal(false)} buttonText="Continuar" />
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
     </Container>
   );
 }

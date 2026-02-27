@@ -116,7 +116,6 @@ export const DropdownItem = styled.div<{ $active?: boolean }>`
   }
 `;
 
-/* ── Texto de erro: mesma cor da borda (#ab031d) ── */
 export const ErrorText = styled.div`
   padding: 8px 12px;
   background-color: transparent;

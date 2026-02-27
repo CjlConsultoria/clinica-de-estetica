@@ -6,8 +6,19 @@ export const Container = styled.div`
   min-height: 100vh;
   background: #f5f5f5;
   box-sizing: border-box;
-  @media (max-width: 1024px) { padding: 24px 20px; }
-  @media (max-width: 768px)  { padding: 20px 16px; }
+  overflow-x: hidden;
+
+  @media (max-width: 1024px) {
+    padding: 72px 20px 24px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 72px 14px 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 68px 12px 20px;
+  }
 `;
 
 export const Header = styled.div`
@@ -17,6 +28,24 @@ export const Header = styled.div`
   margin-bottom: 28px;
   flex-wrap: wrap;
   gap: 16px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 16px;
+    & > div {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+    }
+    & > div > button,
+    & > div > a {
+      width: 100%;
+      justify-content: center;
+    }
+  }
 `;
 
 export const Title = styled.h1`
@@ -25,6 +54,26 @@ export const Title = styled.h1`
   color: #BBA188;
   margin: 0;
   font-weight: 600;
+
+  @media (max-width: 768px) {
+    font-size: 1.6rem;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.4rem;
+  }
+`;
+
+export const HeaderActions = styled.div`
+  display: flex;
+  gap: 12px;
+  align-items: center;
+
+  @media (max-width: 768px) {
+    display: contents;
+  }
 `;
 
 export const Controls = styled.div`
@@ -33,13 +82,24 @@ export const Controls = styled.div`
   margin-bottom: 24px;
   flex-wrap: wrap;
   align-items: center;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
 `;
 
 export const SearchBarWrapper = styled.div`
   position: relative;
   flex: 1;
   max-width: 380px;
-  @media (max-width: 768px) { max-width: 100%; }
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    width: 100%;
+  }
 `;
 
 export const SearchIconWrap = styled.div`
@@ -62,8 +122,21 @@ export const SearchInputStyled = styled.input`
   color: #333;
   transition: all 0.25s;
   box-sizing: border-box;
-  &:focus { outline: none; border-color: #BBA188; box-shadow: 0 0 0 3px rgba(187,161,136,0.15); }
-  &::placeholder { color: #bbb; }
+
+  &:focus {
+    outline: none;
+    border-color: #BBA188;
+    box-shadow: 0 0 0 3px rgba(187,161,136,0.15);
+  }
+
+  &::placeholder {
+    color: #bbb;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.85rem;
+    padding: 10px 14px 10px 40px;
+  }
 `;
 
 export const FilterRow = styled.div`
@@ -71,10 +144,18 @@ export const FilterRow = styled.div`
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 export const DropdownWrapper = styled.div`
   position: relative;
+
+  @media (max-width: 768px) {
+    flex: 1;
+  }
 `;
 
 export const DropdownBtn = styled.button`
@@ -92,7 +173,20 @@ export const DropdownBtn = styled.button`
   min-width: 150px;
   justify-content: space-between;
   transition: all 0.2s;
-  &:hover { border-color: #BBA188; }
+
+  &:hover {
+    border-color: #BBA188;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    min-width: unset;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.84rem;
+    padding: 9px 14px;
+  }
 `;
 
 export const DropdownList = styled.div`
@@ -107,6 +201,7 @@ export const DropdownList = styled.div`
   z-index: 100;
   overflow: hidden;
   animation: dropIn 0.18s ease;
+
   @keyframes dropIn {
     from { opacity: 0; transform: translateY(-8px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -121,8 +216,15 @@ export const DropdownItem = styled.div<{ $active?: boolean }>`
   font-weight: ${({ $active }) => ($active ? '600' : '400')};
   cursor: pointer;
   border-bottom: 1px solid #f5f5f5;
-  &:last-child { border-bottom: none; }
-  &:hover { background: rgba(187,161,136,0.08); color: #BBA188; }
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: rgba(187,161,136,0.08);
+    color: #BBA188;
+  }
 `;
 
 export const ClearFilterBtn = styled.button`
@@ -137,7 +239,17 @@ export const ClearFilterBtn = styled.button`
   font-size: 0.84rem;
   cursor: pointer;
   transition: all 0.2s;
-  &:hover { background: #e74c3c; color: white; }
+  flex-shrink: 0;
+
+  &:hover {
+    background: #e74c3c;
+    color: white;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.78rem;
+    padding: 8px 12px;
+  }
 `;
 
 export const Badge = styled.span<{ $bg?: string; $color?: string }>`
@@ -148,6 +260,11 @@ export const Badge = styled.span<{ $bg?: string; $color?: string }>`
   font-weight: 700;
   background: ${({ $bg }) => $bg || '#f0ebe4'};
   color: ${({ $color }) => $color || '#BBA188'};
+
+  @media (max-width: 480px) {
+    font-size: 0.6rem;
+    padding: 2px 6px;
+  }
 `;
 
 
@@ -158,8 +275,29 @@ export const PatientsGrid = styled.div`
   gap: 20px;
   height: 720px;
   align-items: stretch;
+<<<<<<< HEAD
   @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); height: auto; }
   @media (max-width: 640px) { grid-template-columns: 1fr; height: auto; }
+=======
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: unset;
+    height: auto;
+  }
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+    height: auto;
+    gap: 14px;
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    height: auto;
+    gap: 12px;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PatientFotoCard = styled.div`
@@ -171,7 +309,19 @@ export const PatientFotoCard = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
+<<<<<<< HEAD
   &:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+=======
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  }
+
+  @media (max-width: 768px) {
+    border-radius: 12px;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PatientCardHeader = styled.div`
@@ -181,6 +331,14 @@ export const PatientCardHeader = styled.div`
   padding: 18px 20px 14px;
   border-bottom: 1px solid #f5f5f5;
   flex-shrink: 0;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) {
+    padding: 14px 16px 12px;
+    gap: 10px;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PatientAvatar = styled.div<{ $color: string }>`
@@ -195,18 +353,33 @@ export const PatientAvatar = styled.div<{ $color: string }>`
   font-size: 0.85rem;
   font-weight: 700;
   flex-shrink: 0;
+
+  @media (max-width: 480px) {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    font-size: 0.78rem;
+  }
 `;
 
 export const PatientName = styled.div`
   font-size: 0.95rem;
   font-weight: 700;
   color: #1a1a1a;
+
+  @media (max-width: 480px) {
+    font-size: 0.87rem;
+  }
 `;
 
 export const PatientSub = styled.div`
   font-size: 0.78rem;
   color: #999;
   margin-top: 2px;
+
+  @media (max-width: 480px) {
+    font-size: 0.7rem;
+  }
 `;
 
 export const PatientCardBody = styled.div`
@@ -216,9 +389,29 @@ export const PatientCardBody = styled.div`
   overflow-x: hidden;
   scrollbar-width: thin;
   scrollbar-color: #e0d4c8 transparent;
+<<<<<<< HEAD
   &::-webkit-scrollbar { width: 4px; }
   &::-webkit-scrollbar-track { background: transparent; }
   &::-webkit-scrollbar-thumb { background: #e0d4c8; border-radius: 4px; }
+=======
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #e0d4c8;
+    border-radius: 4px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 10px 12px;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PatientCardFooter = styled.div`
@@ -229,6 +422,14 @@ export const PatientCardFooter = styled.div`
   border-top: 1px solid #f5f5f5;
   flex-shrink: 0;
   background: white;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) {
+    padding: 8px 12px;
+    gap: 6px;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const FotoGrid = styled.div`
@@ -236,6 +437,13 @@ export const FotoGrid = styled.div`
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   width: 100%;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) {
+    gap: 8px;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const FotoItem = styled.div`
@@ -260,11 +468,19 @@ export const FotoLabel = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  @media (max-width: 480px) {
+    font-size: 0.58rem;
+  }
 `;
 
 export const FotoDate = styled.div`
   font-size: 0.62rem;
   color: #bbb;
+
+  @media (max-width: 480px) {
+    font-size: 0.55rem;
+  }
 `;
 
 export const FotoEmpty = styled.div`
@@ -276,7 +492,10 @@ export const FotoEmpty = styled.div`
   min-height: 120px;
   color: #ccc;
   font-size: 0.82rem;
-  svg { color: #ddd; }
+
+  svg {
+    color: #ddd;
+  }
 `;
 
 export const SectionLabel = styled.div`
@@ -294,15 +513,34 @@ export const WizardNav = styled.div`
   justify-content: space-between;
   align-items: center;
   width: 100%;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) {
+    gap: 10px;
+
+    & > button {
+      flex: 1;
+    }
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const FormGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+<<<<<<< HEAD
   @media (max-width: 560px) { grid-template-columns: 1fr; }
 `;
 
+=======
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+`;
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 
 export const UploadZone = styled.div`
   border: 2px dashed #e0d4c8;
@@ -318,7 +556,21 @@ export const UploadZone = styled.div`
   align-items: center;
   justify-content: center;
   overflow: hidden;
+<<<<<<< HEAD
   &:hover { border-color: #BBA188; background: #fdf5ef; }
+=======
+
+  &:hover {
+    border-color: #BBA188;
+    background: #fdf5ef;
+  }
+
+  @media (max-width: 480px) {
+    padding: 24px 16px;
+    min-height: 120px;
+    border-radius: 10px;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const UploadPreview = styled.img`
@@ -326,24 +578,57 @@ export const UploadPreview = styled.img`
   max-width: 100%;
   object-fit: contain;
   border-radius: 8px;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) {
+    max-height: 160px;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const UploadIcon = styled.div`
   color: #BBA188;
   margin-bottom: 12px;
   opacity: 0.7;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) {
+    margin-bottom: 8px;
+
+    svg {
+      width: 32px;
+      height: 32px;
+    }
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const UploadText = styled.div`
   font-size: 0.9rem;
   color: #666;
   font-weight: 500;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) {
+    font-size: 0.82rem;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const UploadHint = styled.div`
   font-size: 0.78rem;
   color: #bbb;
   margin-top: 4px;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) {
+    font-size: 0.72rem;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 /* ─── Comparar ─── */
@@ -355,6 +640,14 @@ export const CompareGrid = styled.div`
   grid-template-columns: 1fr 40px 1fr;
   gap: 16px;
   align-items: start;
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    & > div:nth-child(2) {
+      display: none;
+    }
+  }
 `;
 
 export const CompareSide = styled.div`
@@ -371,6 +664,11 @@ export const CompareSideLabel = styled.div<{ $tipo: string }>`
   border-radius: 8px;
   background: ${({ $tipo }) => $tipo === 'antes' ? '#fff3cd' : '#f0ebe4'};
   color: ${({ $tipo }) => $tipo === 'antes' ? '#856404' : '#8a7560'};
+
+  @media (max-width: 480px) {
+    font-size: 0.78rem;
+    padding: 5px 10px;
+  }
 `;
 
 export const CompareImg = styled.div<{ $color: string; $hasImage?: boolean }>`
@@ -390,7 +688,26 @@ export const CompareImg = styled.div<{ $color: string; $hasImage?: boolean }>`
   cursor: pointer;
   transition: all 0.2s;
   overflow: hidden;
+<<<<<<< HEAD
   &:hover { opacity: 1; background: ${({ $color, $hasImage }) => $hasImage ? 'transparent' : `${$color}18`}; }
+=======
+
+  &:hover {
+    opacity: 1;
+    background: ${({ $color, $hasImage }) => $hasImage ? 'transparent' : `${$color}18`};
+  }
+
+  @media (max-width: 480px) {
+    aspect-ratio: 4/3;
+    border-radius: 10px;
+    font-size: 0.75rem;
+
+    svg {
+      width: 36px;
+      height: 36px;
+    }
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const SavedBanner = styled.div`
@@ -406,14 +723,21 @@ export const SavedBanner = styled.div`
   font-weight: 600;
   margin-bottom: 16px;
   animation: fadeIn 0.3s ease;
+<<<<<<< HEAD
+=======
+
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-6px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 `;
 
+<<<<<<< HEAD
 /* ─────────────── Paginação ─────────────── */
 
+=======
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 export const PaginationWrapper = styled.div`
   display: flex;
   align-items: center;
@@ -421,9 +745,20 @@ export const PaginationWrapper = styled.div`
   gap: 16px;
   padding: 14px 20px;
   border-top: 1px solid #f0ebe4;
+<<<<<<< HEAD
   /* sempre visível mesmo com 1 página */
   min-height: 56px;
   flex-shrink: 0;
+=======
+  min-height: 56px;
+  flex-shrink: 0;
+
+  @media (max-width: 480px) {
+    gap: 8px;
+    padding: 12px 14px;
+    justify-content: space-between;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PaginationInfo = styled.span`
@@ -431,12 +766,26 @@ export const PaginationInfo = styled.span`
   color: #999;
   font-weight: 400;
   white-space: nowrap;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) {
+    font-size: 0.72rem;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PaginationControls = styled.div`
   display: flex;
   align-items: center;
   gap: 4px;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) {
+    gap: 2px;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PageButton = styled.button<{ $active?: boolean }>`
@@ -458,6 +807,15 @@ export const PageButton = styled.button<{ $active?: boolean }>`
     background: ${({ $active }) => ($active ? '#BBA188' : 'rgba(187,161,136,0.12)')};
     color: ${({ $active }) => ($active ? '#ffffff' : '#BBA188')};
   }
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) {
+    width: 28px;
+    height: 28px;
+    font-size: 0.74rem;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PageEllipsis = styled.span`
@@ -469,6 +827,15 @@ export const PageEllipsis = styled.span`
   font-size: 0.85rem;
   color: #bbb;
   user-select: none;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) {
+    width: 24px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PaginationArrow = styled.button`
@@ -492,4 +859,12 @@ export const PaginationArrow = styled.button`
     color: #ddd;
     cursor: not-allowed;
   }
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) {
+    width: 28px;
+    height: 28px;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;

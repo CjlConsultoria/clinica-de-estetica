@@ -13,8 +13,11 @@ import Pagination from '@/components/ui/pagination';
 import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
+<<<<<<< HEAD
 import ErrorModal from '@/components/modals/errorModal';
 import { getApiErrorMessage } from '@/utils/apiError';
+=======
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import {
   Container, Header, Title, Controls,
@@ -80,6 +83,95 @@ const procedureOptions = [
   { value: 'Microagulhamento',     label: 'Microagulhamento'     },
   { value: 'Toxina Botulínica',    label: 'Toxina Botulínica'    },
   { value: 'Outro',                label: 'Outro'                },
+<<<<<<< HEAD
+=======
+];
+
+const professionalOptions = [
+  { value: 'Maria Oliveira', label: 'Maria Oliveira' },
+  { value: 'Clara Andrade',  label: 'Clara Andrade'  },
+  { value: 'Beatriz Santos', label: 'Beatriz Santos' },
+];
+
+type HistoryItem = {
+  id: number; date: string; procedure: string; units: string;
+  value: number; professional: string; lote: string; status: string;
+};
+
+type Patient = {
+  id: number; name: string; phone: string; email: string;
+  birthdate: string; since: string; status: string;
+  totalSpent: number; totalSessions: number;
+  lastVisit: string; nextVisit: string | null;
+  observations: string; history: HistoryItem[];
+};
+
+const INITIAL_PATIENTS: Patient[] = [
+  {
+    id: 1, name: 'Ana Beatriz Costa', phone: '(11) 99872-3141', email: 'ana@email.com',
+    birthdate: '1990-03-14', since: 'Mar 2023', status: 'ativo',
+    totalSpent: 8400, totalSessions: 12, lastVisit: '18/02/2025', nextVisit: '18/05/2025',
+    observations: 'Paciente VIP. Alergia a lidocaína em pomada. Prefere horários matinais.',
+    history: [
+      { id: 1, date: '18/02/2025', procedure: 'Botox Facial',         units: '40U',      value: 980,  professional: 'Maria Oliveira', lote: 'BTX-2025-003', status: 'realizado' },
+      { id: 2, date: '18/11/2024', procedure: 'Botox Facial',         units: '40U',      value: 980,  professional: 'Maria Oliveira', lote: 'BTX-2024-087', status: 'realizado' },
+      { id: 3, date: '15/08/2024', procedure: 'Preenchimento Labial', units: '1ml',      value: 1200, professional: 'Clara Andrade',  lote: 'PRE-2024-042', status: 'realizado' },
+      { id: 4, date: '10/05/2024', procedure: 'Bioestimulador',       units: '1 frasco', value: 1800, professional: 'Maria Oliveira', lote: 'BIO-2024-011', status: 'realizado' },
+      { id: 5, date: '20/02/2024', procedure: 'Botox Facial',         units: '40U',      value: 980,  professional: 'Maria Oliveira', lote: 'BTX-2024-015', status: 'realizado' },
+    ],
+  },
+  {
+    id: 2, name: 'Carla Mendonça', phone: '(11) 97654-2211', email: 'carla@email.com',
+    birthdate: '1985-07-22', since: 'Jun 2023', status: 'ativo',
+    totalSpent: 4500, totalSessions: 6, lastVisit: '15/02/2025', nextVisit: '15/05/2025',
+    observations: 'Tende a apresentar hematomas. Usar técnica retrógrada.',
+    history: [
+      { id: 1, date: '15/02/2025', procedure: 'Preenchimento Labial', units: '1ml', value: 1200, professional: 'Maria Oliveira', lote: 'PRE-2025-007', status: 'realizado' },
+      { id: 2, date: '20/09/2024', procedure: 'Botox Facial',         units: '30U', value: 750,  professional: 'Beatriz Santos', lote: 'BTX-2024-062', status: 'realizado' },
+      { id: 3, date: '10/04/2024', procedure: 'Preenchimento Labial', units: '1ml', value: 1200, professional: 'Maria Oliveira', lote: 'PRE-2024-029', status: 'realizado' },
+    ],
+  },
+  {
+    id: 3, name: 'Fernanda Lima', phone: '(11) 98877-5544', email: 'fernanda@email.com',
+    birthdate: '1992-11-08', since: 'Jan 2024', status: 'ativo',
+    totalSpent: 3600, totalSessions: 4, lastVisit: '10/02/2025', nextVisit: null,
+    observations: '',
+    history: [
+      { id: 1, date: '10/02/2025', procedure: 'Bioestimulador', units: '1 frasco', value: 1800, professional: 'Clara Andrade', lote: 'BIO-2025-003', status: 'realizado' },
+      { id: 2, date: '10/08/2024', procedure: 'Bioestimulador', units: '1 frasco', value: 1800, professional: 'Clara Andrade', lote: 'BIO-2024-049', status: 'realizado' },
+    ],
+  },
+  {
+    id: 4, name: 'Marina Souza', phone: '(21) 99123-7788', email: 'marina@email.com',
+    birthdate: '1988-04-30', since: 'Set 2022', status: 'ativo',
+    totalSpent: 12800, totalSessions: 18, lastVisit: '05/01/2025', nextVisit: '05/04/2025',
+    observations: 'Paciente antiga. Protocolo personalizado de manutenção trimestral.',
+    history: [
+      { id: 1, date: '05/01/2025', procedure: 'Fio de PDO',           units: '10 fios', value: 2500, professional: 'Beatriz Santos', lote: 'FIO-2025-001', status: 'realizado' },
+      { id: 2, date: '05/10/2024', procedure: 'Botox Facial',         units: '50U',     value: 1200, professional: 'Maria Oliveira', lote: 'BTX-2024-081', status: 'realizado' },
+      { id: 3, date: '05/07/2024', procedure: 'Preenchimento Labial', units: '2ml',     value: 2400, professional: 'Clara Andrade',  lote: 'PRE-2024-055', status: 'realizado' },
+    ],
+  },
+  {
+    id: 5, name: 'Juliana Rocha', phone: '(11) 91234-5678', email: 'juliana@email.com',
+    birthdate: '1995-09-15', since: 'Nov 2024', status: 'ativo',
+    totalSpent: 980, totalSessions: 1, lastVisit: '10/01/2025', nextVisit: '10/04/2025',
+    observations: 'Primeira sessão. Orientada sobre protocolo inicial.',
+    history: [
+      { id: 1, date: '10/01/2025', procedure: 'Toxina Botulínica', units: '20U', value: 980, professional: 'Maria Oliveira', lote: 'BTX-2025-001', status: 'realizado' },
+    ],
+  },
+  {
+    id: 6, name: 'Patrícia Alves', phone: '(11) 97788-1122', email: 'patricia@email.com',
+    birthdate: '1978-12-01', since: 'Dez 2022', status: 'inativo',
+    totalSpent: 5600, totalSessions: 7, lastVisit: '20/12/2024', nextVisit: null,
+    observations: 'Última sessão foi de microagulhamento. Sem retorno agendado.',
+    history: [
+      { id: 1, date: '20/12/2024', procedure: 'Microagulhamento', units: '1 sessão', value: 800, professional: 'Beatriz Santos', lote: 'MIC-2024-019', status: 'realizado' },
+      { id: 2, date: '20/09/2024', procedure: 'Microagulhamento', units: '1 sessão', value: 800, professional: 'Beatriz Santos', lote: 'MIC-2024-010', status: 'realizado' },
+    ],
+  },
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 ];
 
 
@@ -158,6 +250,7 @@ function isAtendimentoFormDirty(form: AtendimentoForm): boolean {
   return form.procedure.trim() !== '' || form.units.trim() !== '' || form.value.trim() !== '' ||
     form.professional.trim() !== '' || form.lote.trim() !== '';
 }
+<<<<<<< HEAD
 
 type ObsExtra = { units?: string; value?: string; lote?: string; nextVisit?: string; notes?: string; serviceDate?: string };
 
@@ -201,6 +294,11 @@ export default function HistoricoPaciente() {
   const [patients,     setPatients]     = useState<Patient[]>([]);
   const [loading,      setLoading]      = useState(true);
   const [professionalOptions, setProfessionalOptions] = useState<{ value: string; label: string }[]>([]);
+=======
+
+export default function HistoricoPaciente() {
+  const [patients,     setPatients]     = useState<Patient[]>(INITIAL_PATIENTS);
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   const [search,       setSearch]       = useState('');
   const [filter,       setFilter]       = useState('Todos');
   const [openDropdown, setOpenDropdown] = useState(false);
@@ -225,8 +323,11 @@ export default function HistoricoPaciente() {
   const [showConfirmEditModal, setShowConfirmEditModal] = useState(false);
   const [showSuccessModal,     setShowSuccessModal]     = useState(false);
   const [successMessage,       setSuccessMessage]       = useState('');
+<<<<<<< HEAD
   const [errorMsg,             setErrorMsg]             = useState('');
   const [isErrorOpen,          setIsErrorOpen]          = useState(false);
+=======
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 
   const {
     errors: pacienteErrors, validate: validatePaciente,
@@ -238,6 +339,7 @@ export default function HistoricoPaciente() {
     clearError: clearAtendError, clearAll: clearAtendAll,
   } = useSequentialValidation<AtendimentoField>(ATENDIMENTO_VALIDATION);
 
+<<<<<<< HEAD
   useEffect(() => {
     async function load() {
       setLoading(true);
@@ -263,6 +365,8 @@ export default function HistoricoPaciente() {
     load();
   }, []);
 
+=======
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   const filtered = patients.filter(p => {
     const matchSearch =
       p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -286,11 +390,14 @@ export default function HistoricoPaciente() {
   const totalSessoes   = patients.reduce((a, p) => a + p.totalSessions, 0);
   const totalReceita   = patients.reduce((a, p) => a + p.totalSpent, 0);
 
+<<<<<<< HEAD
   function showError(err: unknown, context: string) {
     setErrorMsg(getApiErrorMessage(err, context));
     setIsErrorOpen(true);
   }
 
+=======
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   function handleSearchChange(v: string) { setSearch(v);  setCurrentPage(1); }
   function handleFilterChange(v: string) { setFilter(v);  setCurrentPage(1); setOpenDropdown(false); }
   function handleClearFilter()           { setFilter('Todos'); setCurrentPage(1); }
@@ -301,7 +408,10 @@ export default function HistoricoPaciente() {
     setSelected(updated);
     setPatients(prev => prev.map(p => p.id === updated.id ? updated : p));
   }
+<<<<<<< HEAD
 
+=======
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 
   function handleChange(field: keyof NovoPacienteForm, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -335,6 +445,7 @@ export default function HistoricoPaciente() {
     setShowConfirmNewModal(true);
   }
 
+<<<<<<< HEAD
   async function handleConfirmNew() {
     try {
       const req: PacienteRequest = {
@@ -352,13 +463,35 @@ export default function HistoricoPaciente() {
       showError(err, 'cadastrar paciente');
       return;
     }
+=======
+  function handleConfirmNew() {
+    const newPatient: Patient = {
+      id:            Date.now(),
+      name:          form.nome,
+      phone:         form.telefone,
+      email:         form.email,
+      birthdate:     form.nascimento,
+      since:         new Date().toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }),
+      status:        'ativo',
+      totalSpent:    0,
+      totalSessions: 0,
+      lastVisit:     '—',
+      nextVisit:     null,
+      observations:  form.observacoes,
+      history:       [],
+    };
+    setPatients(prev => [newPatient, ...prev]);
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
     setShowConfirmNewModal(false);
     setIsNewOpen(false);
     setSuccessMessage('Paciente cadastrado com sucesso!');
     setShowSuccessModal(true);
   }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   function handleEditChange(field: keyof NovoPacienteForm, value: string) {
     setEditForm(prev => ({ ...prev, [field]: value }));
     setEditErrors(prev => ({ ...prev, [field]: undefined }));
@@ -382,7 +515,11 @@ export default function HistoricoPaciente() {
   }
 
   function openEdit(p: Patient) {
+<<<<<<< HEAD
     setEditForm({ nome: p.name, cpf: p.cpf ?? '', nascimento: toInputDate(p.birthdate), telefone: p.phone, email: p.email, observacoes: p.observations });
+=======
+    setEditForm({ nome: p.name, cpf: '', nascimento: toInputDate(p.birthdate), telefone: p.phone, email: p.email, observacoes: p.observations });
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
     setEditErrors({});
     setIsDetailOpen(false);
     setIsEditOpen(true);
@@ -403,6 +540,7 @@ export default function HistoricoPaciente() {
     setShowConfirmEditModal(true);
   }
 
+<<<<<<< HEAD
   async function handleConfirmEdit() {
     if (!selected) return;
     try {
@@ -421,6 +559,19 @@ export default function HistoricoPaciente() {
       showError(err, 'salvar alterações do paciente');
       return;
     }
+=======
+  function handleConfirmEdit() {
+    if (!selected) return;
+    const updated: Patient = {
+      ...selected,
+      name:         editForm.nome,
+      phone:        editForm.telefone,
+      email:        editForm.email,
+      birthdate:    editForm.nascimento,
+      observations: editForm.observacoes,
+    };
+    syncSelected(updated);
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
     setShowConfirmEditModal(false);
     setIsEditOpen(false);
     setSuccessMessage('Alterações salvas com sucesso!');
@@ -463,6 +614,7 @@ export default function HistoricoPaciente() {
     setShowConfirmAtend(true);
   }
 
+<<<<<<< HEAD
   async function handleConfirmAtend() {
     if (!selected) return;
 
@@ -504,6 +656,39 @@ export default function HistoricoPaciente() {
       return;
     }
 
+=======
+  function handleConfirmAtend() {
+    if (!selected) return;
+
+    const valor = parseMoeda(atendimentoForm.value);
+
+    const newItem: HistoryItem = {
+      id:           Date.now(),
+      date:         formatDate(atendimentoForm.date),
+      procedure:    atendimentoForm.procedure,
+      units:        atendimentoForm.units,
+      value:        valor,
+      professional: atendimentoForm.professional,
+      lote:         atendimentoForm.lote,
+      status:       'realizado',
+    };
+
+    const nextVisit = atendimentoForm.nextVisit
+      ? formatDate(atendimentoForm.nextVisit)
+      : selected.nextVisit;
+
+    const updated: Patient = {
+      ...selected,
+      history:       [newItem, ...selected.history],
+      totalSessions: selected.totalSessions + 1,
+      totalSpent:    selected.totalSpent + valor,
+      lastVisit:     formatDate(atendimentoForm.date),
+      nextVisit,
+      status:        'ativo',
+    };
+
+    syncSelected(updated);
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
     setShowConfirmAtend(false);
     setIsAtendimentoOpen(false);
     clearAtendAll();
@@ -630,11 +815,15 @@ export default function HistoricoPaciente() {
 
       <CardsContainer>
         <CardsWrapper>
+<<<<<<< HEAD
           {loading ? (
             <div style={{ padding: '3rem', textAlign: 'center', color: '#aaa', fontSize: '0.95rem' }}>
               Carregando pacientes...
             </div>
           ) : filtered.length === 0 ? (
+=======
+          {filtered.length === 0 ? (
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
             <EmptyState>
               <h3>Nenhum paciente encontrado</h3>
               <p>Tente ajustar os filtros ou a busca.</p>
@@ -716,6 +905,7 @@ export default function HistoricoPaciente() {
         title="Ficha do Paciente"
         size="lg"
         footer={
+<<<<<<< HEAD
           <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', gap: 10 }}>
               <Button
@@ -745,6 +935,37 @@ export default function HistoricoPaciente() {
               </Button>
             </div>
             <Button type="button" variant="outline" onClick={() => setIsDetailOpen(false)}>Fechar</Button>
+=======
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, width: '100%' }}>
+            <Button
+              type="button"
+              variant="primary"
+              fullWidth
+              icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>}
+              onClick={openAtendimento}
+            >
+              Novo Atendimento
+            </Button>
+            <Button type="button" variant="outline" fullWidth
+              icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
+              onClick={() => selected && openEdit(selected)}
+            >
+              Editar Ficha
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              fullWidth
+              onClick={handleExportFicha}
+              disabled={exporting}
+              icon={exporting
+                ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>}
+            >
+              {exporting ? 'Gerando...' : 'Exportar PDF'}
+            </Button>
+            <Button type="button" variant="outline" fullWidth onClick={() => setIsDetailOpen(false)}>Fechar</Button>
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
           </div>
         }
       >
@@ -1091,12 +1312,15 @@ export default function HistoricoPaciente() {
         onClose={handleSuccessClose}
         buttonText="Continuar"
       />
+<<<<<<< HEAD
 
       <ErrorModal
         isOpen={isErrorOpen}
         message={errorMsg}
         onClose={() => setIsErrorOpen(false)}
       />
+=======
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
     </Container>
   );
 }

@@ -9,12 +9,15 @@ export const Container = styled.div`
   box-sizing: border-box;
 
   @media (max-width: 1024px) {
-    width: 100%;
-    padding: 24px 20px;
+    padding: 72px 20px 24px;
   }
 
   @media (max-width: 768px) {
-    padding: 20px 16px;
+    padding: 72px 14px 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 68px 12px 20px;
   }
 `;
 
@@ -25,6 +28,15 @@ export const Header = styled.div`
   margin-bottom: 28px;
   flex-wrap: wrap;
   gap: 16px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 16px;
+    gap: 12px;
+
+    & > button {
+      width: 100%;
+    }
+  }
 `;
 
 export const Title = styled.h1`
@@ -33,6 +45,14 @@ export const Title = styled.h1`
   color: #BBA188;
   margin: 0;
   font-weight: 600;
+
+  @media (max-width: 768px) {
+    font-size: 1.6rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.4rem;
+  }
 `;
 
 export const StatsGrid = styled.div`
@@ -40,6 +60,17 @@ export const StatsGrid = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 18px;
   margin-bottom: 28px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
 `;
 
 export const ProfGrid = styled.div`
@@ -47,6 +78,12 @@ export const ProfGrid = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
   margin-bottom: 28px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
 `;
 
 export const ProfCard = styled.div`
@@ -59,6 +96,10 @@ export const ProfCard = styled.div`
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  }
+
+  @media (max-width: 480px) {
+    padding: 18px 16px;
   }
 `;
 
@@ -94,12 +135,20 @@ export const ProfStats = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
+
+  @media (max-width: 480px) {
+    gap: 8px;
+  }
 `;
 
 export const ProfStat = styled.div`
   background: #f8f8f8;
   border-radius: 10px;
   padding: 10px;
+
+  @media (max-width: 480px) {
+    padding: 8px;
+  }
 `;
 
 export const ProfStatLabel = styled.div`
@@ -107,6 +156,10 @@ export const ProfStatLabel = styled.div`
   color: #999;
   font-family: var(--font-metropolis-regular), 'Metropolis', sans-serif;
   margin-bottom: 4px;
+
+  @media (max-width: 480px) {
+    font-size: 0.62rem;
+  }
 `;
 
 export const ProfStatValue = styled.div<{ $highlight?: boolean }>`
@@ -114,6 +167,10 @@ export const ProfStatValue = styled.div<{ $highlight?: boolean }>`
   font-weight: 700;
   color: ${({ $highlight }) => ($highlight ? '#BBA188' : '#1a1a1a')};
   font-family: var(--font-roboto-medium), 'Roboto', sans-serif;
+
+  @media (max-width: 480px) {
+    font-size: ${({ $highlight }) => ($highlight ? '0.88rem' : '0.78rem')};
+  }
 `;
 
 export const ProgressBar = styled.div`
@@ -138,6 +195,11 @@ export const Controls = styled.div`
   margin-bottom: 20px;
   flex-wrap: wrap;
   align-items: center;
+
+  @media (max-width: 768px) {
+    gap: 10px;
+    margin-bottom: 14px;
+  }
 `;
 
 export const SearchBarWrapper = styled.div`
@@ -147,6 +209,8 @@ export const SearchBarWrapper = styled.div`
 
   @media (max-width: 768px) {
     max-width: 100%;
+    width: 100%;
+    flex: none;
   }
 `;
 
@@ -181,6 +245,11 @@ export const SearchInputStyled = styled.input`
   &::placeholder {
     color: #bbb;
   }
+
+  @media (max-width: 480px) {
+    font-size: 0.84rem;
+    padding: 10px 14px 10px 40px;
+  }
 `;
 
 export const FilterRow = styled.div`
@@ -188,10 +257,18 @@ export const FilterRow = styled.div`
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 export const DropdownWrapper = styled.div`
   position: relative;
+
+  @media (max-width: 768px) {
+    flex: 1;
+  }
 `;
 
 export const DropdownBtn = styled.button`
@@ -210,9 +287,16 @@ export const DropdownBtn = styled.button`
   min-width: 160px;
   justify-content: space-between;
   transition: all 0.2s;
+  width: 100%;
 
   &:hover {
     border-color: #BBA188;
+  }
+
+  @media (max-width: 480px) {
+    min-width: 0;
+    padding: 9px 14px;
+    font-size: 0.82rem;
   }
 `;
 
@@ -280,18 +364,25 @@ export const ClearFilterBtn = styled.button`
     background: #e74c3c;
     color: white;
   }
+
+  @media (max-width: 480px) {
+    padding: 8px 12px;
+    font-size: 0.78rem;
+  }
 `;
 
 export const TableWrapper = styled.div`
   width: 100%;
   overflow-x: auto;
-`;
 
-/* ── Igualado ao Finance ── */
+  @media (max-width: 768px) {
+    -webkit-overflow-scrolling: touch;
+  }
+`;
 
 export const Table = styled.table`
   width: 100%;
-  min-width: 750px;          /* era 850px */
+  min-width: 750px;
   border-collapse: collapse;
 `;
 
@@ -300,14 +391,14 @@ export const Thead = styled.thead`
 `;
 
 export const Th = styled.th<{ $width?: string }>`
-  padding: 11px 10px;        /* era 13px 14px */
+  padding: 11px 10px;
   text-align: left;
-  font-size: 0.69rem;        /* era 0.77rem */
+  font-size: 0.69rem;
   font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
   font-weight: 600;
   color: white;
   text-transform: uppercase;
-  letter-spacing: 0.4px;    /* era 0.5px */
+  letter-spacing: 0.4px;
   width: ${({ $width }) => $width || 'auto'};
 `;
 
@@ -327,8 +418,8 @@ export const Tr = styled.tr`
 `;
 
 export const Td = styled.td`
-  padding: 10px 10px;        /* era 13px 14px */
-  font-size: 0.78rem;        /* era 0.88rem */
+  padding: 10px 10px;
+  font-size: 0.78rem;
   font-family: var(--font-inter-variable-regular), 'Inter', sans-serif;
   color: #444;
   vertical-align: middle;
@@ -336,9 +427,9 @@ export const Td = styled.td`
 
 export const Badge = styled.span<{ $bg?: string; $color?: string }>`
   display: inline-block;
-  padding: 3px 7px;          /* era 4px 10px */
+  padding: 3px 7px;
   border-radius: 20px;
-  font-size: 0.68rem;        /* era 0.74rem */
+  font-size: 0.68rem;
   font-weight: 600;
   font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
   background: ${({ $bg }) => $bg || '#f0ebe4'};
@@ -348,12 +439,12 @@ export const Badge = styled.span<{ $bg?: string; $color?: string }>`
 
 export const ActionGroup = styled.div`
   display: flex;
-  gap: 4px;                  /* era 6px */
+  gap: 4px;
 `;
 
 export const IconBtn = styled.button`
-  width: 30px;               /* era 32px */
-  height: 30px;              /* era 32px */
+  width: 30px;
+  height: 30px;
   border: 1.5px solid #e8e8e8;
   border-radius: 8px;
   background: white;
@@ -390,5 +481,9 @@ export const EmptyState = styled.div`
     font-size: 0.88rem;
     color: #999;
     margin: 0;
+  }
+
+  @media (max-width: 480px) {
+    padding: 40px 16px;
   }
 `;

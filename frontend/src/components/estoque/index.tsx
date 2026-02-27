@@ -10,6 +10,7 @@ import Pagination from '@/components/ui/pagination';
 import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
+<<<<<<< HEAD
 import ErrorModal from '@/components/modals/errorModal';
 import { getApiErrorMessage } from '@/utils/apiError';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
@@ -19,6 +20,11 @@ import {
   listarProdutos, criarProduto, atualizarProduto,
   ProdutoResponse,
 } from '@/services/produtosApi';
+=======
+import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
+import { usePermissions } from '@/components/ui/hooks/usePermissions';
+import AccessDenied from '@/components/ui/AccessDenied';
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 import {
   Container, Header, Title, Controls, SearchBarWrapper, SearchIconWrap, SearchInputStyled,
   FilterRow, DropdownWrapper, DropdownBtn, DropdownList, DropdownItem, ClearFilterBtn,
@@ -94,6 +100,23 @@ const movTypeOptions = [
   { value: 'saida',    label: 'Saída (Uso em procedimento)'  },
   { value: 'ajuste',   label: 'Ajuste de Inventário'         },
   { value: 'descarte', label: 'Descarte / Vencimento'        },
+<<<<<<< HEAD
+=======
+];
+
+const mockStock = [
+  { id: 1,  code: 'BTX-ALE-001', name: 'Toxina Botulínica Allergan 100U',  category: 'Toxina Botulínica', quantity: 8,  minStock: 5,  maxStock: 30,  unit: 'fr',  price: 980,  expiryDate: '2025-06-15', supplier: 'Biolab',       status: 'normal'   },
+  { id: 2,  code: 'BTX-MED-002', name: 'Toxina Botulínica Medytoxin 200U', category: 'Toxina Botulínica', quantity: 2,  minStock: 4,  maxStock: 20,  unit: 'fr',  price: 1200, expiryDate: '2025-04-20', supplier: 'MedEsthetics', status: 'critico'  },
+  { id: 3,  code: 'PRE-JUV-001', name: 'Ácido Hialurônico Juvederm 1ml',   category: 'Preenchimento',     quantity: 3,  minStock: 5,  maxStock: 25,  unit: 'ser', price: 450,  expiryDate: '2025-08-10', supplier: 'Allergan',     status: 'baixo'    },
+  { id: 4,  code: 'PRE-RES-002', name: 'Restylane Lyft 1ml',               category: 'Preenchimento',     quantity: 12, minStock: 4,  maxStock: 20,  unit: 'ser', price: 520,  expiryDate: '2025-09-30', supplier: 'Galderma',     status: 'normal'   },
+  { id: 5,  code: 'BIO-SCU-001', name: 'Sculptra 150mg',                   category: 'Bioestimulador',    quantity: 0,  minStock: 2,  maxStock: 10,  unit: 'fr',  price: 1800, expiryDate: '2025-07-22', supplier: 'Galderma',     status: 'esgotado' },
+  { id: 6,  code: 'BIO-RAD-002', name: 'Radiesse 1.5ml',                   category: 'Bioestimulador',    quantity: 6,  minStock: 3,  maxStock: 15,  unit: 'ser', price: 950,  expiryDate: '2025-11-05', supplier: 'Merz',         status: 'normal'   },
+  { id: 7,  code: 'FIO-PDO-001', name: 'Fio PDO Tensor Espiral 19G',       category: 'Fio de PDO',        quantity: 4,  minStock: 5,  maxStock: 30,  unit: 'cx',  price: 320,  expiryDate: '2026-01-10', supplier: 'Aesthetic',    status: 'baixo'    },
+  { id: 8,  code: 'SKN-VIT-001', name: 'Vitamina C 20% Sérum',             category: 'Skincare/Pele',     quantity: 15, minStock: 5,  maxStock: 40,  unit: 'fr',  price: 180,  expiryDate: '2025-12-01', supplier: 'Sesderma',     status: 'normal'   },
+  { id: 9,  code: 'DES-AGU-001', name: 'Agulhas 30G 0.5mm',                category: 'Descartável',       quantity: 1,  minStock: 10, maxStock: 100, unit: 'cx',  price: 45,   expiryDate: '2027-01-01', supplier: 'BD',           status: 'critico'  },
+  { id: 10, code: 'DES-LUV-002', name: 'Luvas Nitrila M',                  category: 'Descartável',       quantity: 22, minStock: 5,  maxStock: 50,  unit: 'cx',  price: 38,   expiryDate: '2027-06-01', supplier: 'Medix',        status: 'normal'   },
+  { id: 11, code: 'DES-LUV-003', name: 'Luvas Nitrila G',                  category: 'Descartável',       quantity: 22, minStock: 5,  maxStock: 50,  unit: 'cx',  price: 38,   expiryDate: '2027-06-01', supplier: 'Medix',        status: 'normal'   },
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 ];
 
 const catColors: Record<string, string> = {
@@ -136,8 +159,21 @@ const MOV_INITIAL: MovForm = {
 };
 
 const ITEM_VALIDATION_FIELDS = [
+<<<<<<< HEAD
   { key: 'nome'       as ItemField, validate: (v: string) => !v.trim() ? 'Nome do item é obrigatório' : null },
   { key: 'fabricante' as ItemField, validate: (v: string) => !v.trim() ? 'Fabricante é obrigatório'   : null },
+=======
+  { key: 'nome'       as ItemField, validate: (v: string) => !v.trim()                      ? 'Nome do item é obrigatório'   : null },
+  { key: 'codigo'     as ItemField, validate: (v: string) => !v.trim()                      ? 'Código é obrigatório'         : null },
+  { key: 'categoria'  as ItemField, validate: (v: string) => !v                             ? 'Selecione uma categoria'      : null },
+  { key: 'unidade'    as ItemField, validate: (v: string) => !v                             ? 'Selecione uma unidade'        : null },
+  { key: 'quantidade' as ItemField, validate: (v: string) => !v.trim() || isNaN(Number(v)) ? 'Quantidade é obrigatória'     : null },
+  { key: 'minimo'     as ItemField, validate: (v: string) => !v.trim() || isNaN(Number(v)) ? 'Estoque mínimo é obrigatório' : null },
+  { key: 'maximo'     as ItemField, validate: (v: string) => !v.trim() || isNaN(Number(v)) ? 'Estoque máximo é obrigatório' : null },
+  { key: 'preco'      as ItemField, validate: (v: string) => !v.trim() || isNaN(Number(v)) ? 'Preço unitário é obrigatório' : null },
+  { key: 'fornecedor' as ItemField, validate: (v: string) => !v.trim()                      ? 'Fornecedor é obrigatório'     : null },
+  { key: 'validade'   as ItemField, validate: (v: string) => !v                             ? 'Validade é obrigatória'       : null },
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 ];
 
 const MOV_VALIDATION_FIELDS = [
@@ -151,8 +187,15 @@ const TABLE_MIN_HEIGHT = 540;
 
 function isItemFormDirty(form: ItemForm): boolean {
   return (
+<<<<<<< HEAD
     form.nome.trim() !== '' || form.fabricante.trim() !== '' || form.categoria !== '' ||
     form.unidade !== '' || form.registroAnvisa.trim() !== '' || form.descricao.trim() !== ''
+=======
+    form.nome.trim() !== '' || form.codigo.trim() !== '' || form.categoria !== '' ||
+    form.unidade !== '' || form.quantidade.trim() !== '' || form.minimo.trim() !== '' ||
+    form.maximo.trim() !== '' || form.preco.trim() !== '' || form.fornecedor.trim() !== '' ||
+    form.validade !== ''
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   );
 }
 
@@ -160,6 +203,7 @@ function isMovFormDirty(form: MovForm): boolean {
   return form.tipoMov !== '' || form.quantidadeMov.trim() !== '' || form.observacaoMov.trim() !== '';
 }
 
+<<<<<<< HEAD
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Estoque() {
@@ -167,6 +211,12 @@ export default function Estoque() {
 
   const [estoque,          setEstoque]          = useState<StockItem[]>([]);
   const [loading,          setLoading]          = useState(true);
+=======
+export default function Estoque() {
+
+  const { can, isSuperAdmin } = usePermissions();
+
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   const [view,             setView]             = useState<'cards' | 'tabela'>('tabela');
   const [search,           setSearch]           = useState('');
   const [filterCat,        setFilterCat]        = useState('Todas');
@@ -183,13 +233,17 @@ export default function Estoque() {
   const [showMovCancelModal,   setShowMovCancelModal]   = useState(false);
   const [showMovConfirmModal,  setShowMovConfirmModal]  = useState(false);
   const [showMovSuccessModal,  setShowMovSuccessModal]  = useState(false);
+<<<<<<< HEAD
   const [errorMsg,             setErrorMsg]             = useState('');
   const [isErrorOpen,          setIsErrorOpen]          = useState(false);
+=======
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   const [itemForm, setItemForm] = useState<ItemForm>(ITEM_INITIAL);
   const { errors: itemErrors, validate: itemValidate, clearError: itemClearError, clearAll: itemClearAll } = useSequentialValidation<ItemField>(ITEM_VALIDATION_FIELDS);
   const [movForm, setMovForm] = useState<MovForm>(MOV_INITIAL);
   const { errors: movErrors, validate: movValidate, clearError: movClearError, clearAll: movClearAll } = useSequentialValidation<MovField>(MOV_VALIDATION_FIELDS);
 
+<<<<<<< HEAD
   function showError(err: unknown, context: string) {
     setErrorMsg(getApiErrorMessage(err, context));
     setIsErrorOpen(true);
@@ -202,12 +256,18 @@ export default function Estoque() {
       .finally(() => setLoading(false));
   }, []);
 
+=======
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   if (!isSuperAdmin && !can('estoque.read')) return <AccessDenied />;
 
   const canCreate = isSuperAdmin || can('estoque.create');
   const canEdit   = isSuperAdmin || can('estoque.edit');
 
+<<<<<<< HEAD
   const filtered = estoque.filter(item => {
+=======
+  const filtered = mockStock.filter(item => {
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
     const matchSearch = item.name.toLowerCase().includes(search.toLowerCase()) || item.code.toLowerCase().includes(search.toLowerCase());
     const matchCat    = filterCat  === 'Todas' || item.category === filterCat;
     const matchStat   = filterStat === 'Todos' || item.status   === filterStat.toLowerCase();
@@ -220,6 +280,7 @@ export default function Estoque() {
   const startIndex    = (safePage - 1) * ITEMS_PER_PAGE;
   const paginatedData = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
+<<<<<<< HEAD
   const totalItems    = estoque.length;
   const esgotados     = estoque.filter(i => i.quantity === 0 && i.ativo).length;
   const inativos      = estoque.filter(i => !i.ativo).length;
@@ -297,6 +358,55 @@ export default function Estoque() {
     setIsModalOpen(true);
   }
   function openMov(item: StockItem) { setSelected(item); setMovForm(MOV_INITIAL); movClearAll(); setIsMovModal(true); }
+=======
+  const totalItems    = mockStock.length;
+  const lowStock      = mockStock.filter(i => i.status === 'baixo' || i.status === 'critico').length;
+  const outOfStock    = mockStock.filter(i => i.status === 'esgotado').length;
+  const expiringSoon  = mockStock.filter(i => isExpiringSoon(i.expiryDate)).length;
+  const totalValue    = mockStock.reduce((acc, i) => acc + i.price * i.quantity, 0);
+  const criticalItems = mockStock.filter(i => i.status === 'critico' || i.status === 'esgotado');
+
+  function handleItemChange(field: ItemField, value: string) { setItemForm(prev => ({ ...prev, [field]: value })); itemClearError(field); }
+  function handleItemDataChange(raw: string) { if (!raw) { handleItemChange('validade', ''); return; } const [yearStr, month, day] = raw.split('-'); const safeYear = yearStr ? yearStr.slice(0, 4) : ''; handleItemChange('validade', `${safeYear}-${month ?? ''}-${day ?? ''}`); }
+
+  function handleItemCancelClick() {
+    if (isItemFormDirty(itemForm)) { setShowItemCancelModal(true); } else { forceCloseItemModal(); }
+  }
+  function forceCloseItemModal() {
+    setItemForm(ITEM_INITIAL); itemClearAll(); setIsModalOpen(false); setSelected(null); setShowItemCancelModal(false);
+  }
+  function handleSaveItemClick() {
+    const isValid = itemValidate({ nome: itemForm.nome, codigo: itemForm.codigo, categoria: itemForm.categoria, unidade: itemForm.unidade, quantidade: itemForm.quantidade, minimo: itemForm.minimo, maximo: itemForm.maximo, preco: itemForm.preco, fornecedor: itemForm.fornecedor, validade: itemForm.validade });
+    if (!isValid) return;
+    setShowItemConfirmModal(true);
+  }
+  function handleConfirmSaveItem() {
+    setShowItemConfirmModal(false); setIsModalOpen(false); setItemForm(ITEM_INITIAL); itemClearAll(); setSelected(null); setShowItemSuccessModal(true);
+  }
+
+  function handleMovChange(field: MovField, value: string) { setMovForm(prev => ({ ...prev, [field]: value })); movClearError(field); }
+  function handleMovCancelClick() {
+    if (isMovFormDirty(movForm)) { setShowMovCancelModal(true); } else { forceCloseMovModal(); }
+  }
+  function forceCloseMovModal() {
+    setMovForm(MOV_INITIAL); movClearAll(); setIsMovModal(false); setSelected(null); setShowMovCancelModal(false);
+  }
+  function handleSaveMovClick() {
+    const isValid = movValidate({ tipoMov: movForm.tipoMov, quantidadeMov: movForm.quantidadeMov, observacaoMov: movForm.observacaoMov });
+    if (!isValid) return;
+    setShowMovConfirmModal(true);
+  }
+  function handleConfirmSaveMov() {
+    setShowMovConfirmModal(false); setIsMovModal(false); setMovForm(MOV_INITIAL); movClearAll(); setSelected(null); setShowMovSuccessModal(true);
+  }
+
+  function openEdit(item: typeof mockStock[0]) {
+    setSelected(item);
+    setItemForm({ nome: item.name, codigo: item.code, categoria: categoryOptions.find(c => c.label === item.category)?.value ?? '', unidade: item.unit, quantidade: String(item.quantity), minimo: String(item.minStock), maximo: String(item.maxStock), preco: String(item.price), fornecedor: item.supplier, validade: item.expiryDate });
+    setIsModalOpen(true);
+  }
+  function openMov(item: typeof mockStock[0]) { setSelected(item); setMovForm(MOV_INITIAL); movClearAll(); setIsMovModal(true); }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 
   return (
     <Container>
@@ -315,10 +425,18 @@ export default function Estoque() {
       )}
 
       <StatsGrid>
+<<<<<<< HEAD
         <StatCard label="Total de Itens"  value={totalItems}  color="#BBA188" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>} />
         <StatCard label="Esgotados"       value={esgotados}   color="#e74c3c" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>} trend={{ value: 'Repor urgente', positive: false }} />
         <StatCard label="Inativos"        value={inativos}    color="#95a5a6" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>} />
         <StatCard label="Total de Lotes"  value={totalLotes}  color="#a8906f" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>} />
+=======
+        <StatCard label="Total de Itens"        value={totalItems}   color="#BBA188" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>} />
+        <StatCard label="Estoque Baixo/Crítico"  value={lowStock}     color="#f39c12" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>} trend={{ value: 'Atenção!', positive: false }} />
+        <StatCard label="Esgotados"              value={outOfStock}   color="#e74c3c" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>} trend={{ value: 'Repor urgente', positive: false }} />
+        <StatCard label="A Vencer (30 dias)"    value={expiringSoon} color="#a8906f" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>} />
+        <StatCard label="Valor em Estoque"      value={`R$ ${totalValue.toLocaleString('pt-BR')}`} color="#8a7560" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>} trend={{ value: '+R$ 4.200 vs mês', positive: true }} />
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
       </StatsGrid>
 
       <Controls>
@@ -362,6 +480,7 @@ export default function Estoque() {
                     <Td><code style={{ fontSize: '0.73rem', color: '#888' }}>{item.code}</code></Td>
                     <Td style={{ fontWeight: 600, color: '#1a1a1a' }}>{item.name}</Td>
                     <Td>
+<<<<<<< HEAD
                       {item.category !== '—'
                         ? <Badge $bg={`${catColors[item.category] ?? '#BBA188'}18`} $color={catColors[item.category] ?? '#BBA188'}>{item.category}</Badge>
                         : <span style={{ color: '#ccc' }}>—</span>
@@ -372,6 +491,8 @@ export default function Estoque() {
                     <Td style={{ color: '#555' }}>{item.fabricante}</Td>
                     <Td><Badge $bg={statusConfig[item.status]?.bg ?? '#f0f0f0'} $color={statusConfig[item.status]?.color ?? '#888'}>{statusConfig[item.status]?.label ?? item.status}</Badge></Td>
                     <Td>
+=======
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
                       {canEdit && (
                         <ActionGroup>
                           <IconBtn title="Movimentar" onClick={() => openMov(item)}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg></IconBtn>
@@ -435,7 +556,10 @@ export default function Estoque() {
         </CardsGrid>
       )}
 
+<<<<<<< HEAD
       {/* ── Item modal ─────────────────────────────────────────────────────── */}
+=======
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
       <Modal isOpen={isModalOpen} onClose={handleItemCancelClick} closeOnOverlayClick={false} title={selected ? 'Editar Item' : 'Novo Item de Estoque'} size="md" footer={<><Button variant="outline" onClick={handleItemCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveItemClick}>Salvar</Button></>}>
         <FormGrid>
           <div style={{ gridColumn: 'span 2' }}>
@@ -451,7 +575,10 @@ export default function Estoque() {
         </FormGrid>
       </Modal>
 
+<<<<<<< HEAD
       {/* ── Movimentação modal ─────────────────────────────────────────────── */}
+=======
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
       <Modal isOpen={isMovModal} onClose={handleMovCancelClick} closeOnOverlayClick={false} title={`Movimentar: ${selected?.name ?? ''}`} size="sm" footer={<><Button variant="outline" onClick={handleMovCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveMovClick}>Confirmar</Button></>}>
         <FormGrid style={{ gridTemplateColumns: '1fr' }}>
           <Select label="Tipo de Movimentação *" options={movTypeOptions} placeholder="Selecione o tipo..." value={movForm.tipoMov} onChange={v => handleMovChange('tipoMov', v)} error={movErrors.tipoMov} />
@@ -460,6 +587,7 @@ export default function Estoque() {
         </FormGrid>
       </Modal>
 
+<<<<<<< HEAD
       {/* ── Item modals ────────────────────────────────────────────────────── */}
       <CancelModal isOpen={showItemCancelModal} title="Deseja cancelar?" message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas." onConfirm={forceCloseItemModal} onCancel={() => setShowItemCancelModal(false)} />
       <ConfirmModal isOpen={showItemConfirmModal} title={selected ? 'Salvar alterações?' : 'Adicionar item?'} message={selected ? `Deseja salvar as alterações do item "${itemForm.nome || selected.name}"?` : `Deseja adicionar o item "${itemForm.nome}" ao estoque?`} confirmText="Confirmar" cancelText="Voltar" onConfirm={handleConfirmSaveItem} onCancel={() => setShowItemConfirmModal(false)} />
@@ -470,6 +598,15 @@ export default function Estoque() {
       <ConfirmModal isOpen={showMovConfirmModal} title="Confirmar movimentação?" message={`Deseja registrar a movimentação de "${selected?.name ?? 'item'}"?`} confirmText="Confirmar" cancelText="Voltar" onConfirm={handleConfirmSaveMov} onCancel={() => setShowMovConfirmModal(false)} />
       <SucessModal isOpen={showMovSuccessModal} title="Sucesso!" message="Movimentação registrada com sucesso!" onClose={() => setShowMovSuccessModal(false)} buttonText="Continuar" />
       <ErrorModal isOpen={isErrorOpen} message={errorMsg} onClose={() => setIsErrorOpen(false)} />
+=======
+      <CancelModal isOpen={showItemCancelModal} title="Deseja cancelar?" message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas." onConfirm={forceCloseItemModal} onCancel={() => setShowItemCancelModal(false)} />
+      <ConfirmModal isOpen={showItemConfirmModal} title={selected ? 'Salvar alterações?' : 'Adicionar item?'} message={selected ? `Deseja salvar as alterações do item "${itemForm.nome || selected.name}"?` : `Deseja adicionar o item "${itemForm.nome}" ao estoque?`} confirmText="Confirmar" cancelText="Voltar" onConfirm={handleConfirmSaveItem} onCancel={() => setShowItemConfirmModal(false)} />
+      <SucessModal isOpen={showItemSuccessModal} title="Sucesso!" message={selected ? 'Item atualizado com sucesso!' : 'Item adicionado ao estoque com sucesso!'} onClose={() => setShowItemSuccessModal(false)} buttonText="Continuar" />
+
+      <CancelModal isOpen={showMovCancelModal} title="Deseja cancelar?" message="Você preencheu alguns campos. Se continuar, a movimentação será descartada." onConfirm={forceCloseMovModal} onCancel={() => setShowMovCancelModal(false)} />
+      <ConfirmModal isOpen={showMovConfirmModal} title="Confirmar movimentação?" message={`Deseja registrar a movimentação de "${selected?.name ?? 'item'}"?`} confirmText="Confirmar" cancelText="Voltar" onConfirm={handleConfirmSaveMov} onCancel={() => setShowMovConfirmModal(false)} />
+      <SucessModal isOpen={showMovSuccessModal} title="Sucesso!" message="Movimentação registrada com sucesso!" onClose={() => setShowMovSuccessModal(false)} buttonText="Continuar" />
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
     </Container>
   );
 }

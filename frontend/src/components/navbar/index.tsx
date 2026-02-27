@@ -19,6 +19,7 @@ import {
   RefreshCcw,
   ClipboardList,
   Stethoscope,
+  ScrollText,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
@@ -79,6 +80,10 @@ const navSections = [
       { label: 'Financeiro',     href: '/finance',            icon: DollarSign,      permission: 'financeiro.read'       as Permission, permissionAlt: null },
       { label: 'Comissões',      href: '/comissoes',          icon: BadgeDollarSign, permission: 'comissoes.read'        as Permission, permissionAlt: 'comissoes.read_own'     as Permission },
       { label: 'Relatórios',     href: '/reports',            icon: BarChart3,       permission: 'relatorios.financeiro' as Permission, permissionAlt: null },
+<<<<<<< HEAD
+=======
+      { label: 'Termos de Uso',  href: '/termos',             icon: ScrollText,      permission: 'configuracoes.read'    as Permission, permissionAlt: null },
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
       { label: 'Configurações',  href: '/settings',           icon: Settings,        permission: 'configuracoes.read'    as Permission, permissionAlt: null },
     ],
   },
@@ -87,7 +92,11 @@ const navSections = [
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+<<<<<<< HEAD
   const { logout } = useAuth();
+=======
+  const { user, logout } = useAuth();
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   const { can, isSuperAdmin } = usePermissions();
   const { currentUser } = useCurrentUser();
   const [isOpen, setIsOpen] = useState(false);

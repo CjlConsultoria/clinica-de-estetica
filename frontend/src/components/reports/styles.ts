@@ -9,12 +9,15 @@ export const Container = styled.div`
   box-sizing: border-box;
 
   @media (max-width: 1024px) {
-    width: 100%;
-    padding: 24px 20px;
+    padding: 72px 20px 24px;
   }
 
   @media (max-width: 768px) {
-    padding: 20px 16px;
+    padding: 72px 14px 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 68px 12px 20px;
   }
 `;
 
@@ -25,6 +28,11 @@ export const Header = styled.div`
   margin-bottom: 28px;
   flex-wrap: wrap;
   gap: 16px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 16px;
+    gap: 12px;
+  }
 `;
 
 export const Title = styled.h1`
@@ -33,6 +41,14 @@ export const Title = styled.h1`
   color: #BBA188;
   margin: 0;
   font-weight: 600;
+
+  @media (max-width: 768px) {
+    font-size: 1.6rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.4rem;
+  }
 `;
 
 export const StatsGrid = styled.div`
@@ -40,6 +56,17 @@ export const StatsGrid = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 18px;
   margin-bottom: 28px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
 `;
 
 export const FiltersRow = styled.div`
@@ -47,10 +74,23 @@ export const FiltersRow = styled.div`
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    gap: 10px;
+
+    & > button {
+      flex: 1;
+    }
+  }
 `;
 
 export const DropdownWrapper = styled.div`
   position: relative;
+
+  @media (max-width: 768px) {
+    flex: 1;
+  }
 `;
 
 export const DropdownBtn = styled.button`
@@ -69,9 +109,16 @@ export const DropdownBtn = styled.button`
   min-width: 160px;
   justify-content: space-between;
   transition: all 0.2s;
+  width: 100%;
 
   &:hover {
     border-color: #BBA188;
+  }
+
+  @media (max-width: 480px) {
+    min-width: 0;
+    padding: 9px 14px;
+    font-size: 0.82rem;
   }
 `;
 
@@ -118,6 +165,16 @@ export const ReportsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 16px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
 `;
 
 export const ReportCard = styled.div<{ $color: string }>`
@@ -136,6 +193,11 @@ export const ReportCard = styled.div<{ $color: string }>`
     transform: translateY(-2px);
     box-shadow: 0 8px 20px ${({ $color }) => $color}22;
   }
+
+  @media (max-width: 480px) {
+    padding: 16px;
+    gap: 10px;
+  }
 `;
 
 export const ReportIcon = styled.div<{ $color: string }>`
@@ -147,6 +209,12 @@ export const ReportIcon = styled.div<{ $color: string }>`
   align-items: center;
   justify-content: center;
   font-size: 1.3rem;
+
+  @media (max-width: 480px) {
+    width: 38px;
+    height: 38px;
+    font-size: 1.1rem;
+  }
 `;
 
 export const ReportInfo = styled.div`
@@ -159,6 +227,10 @@ export const ReportTitle = styled.div`
   color: #1a1a1a;
   font-family: var(--font-metropolis-semibold), 'Metropolis', sans-serif;
   margin-bottom: 4px;
+
+  @media (max-width: 480px) {
+    font-size: 0.84rem;
+  }
 `;
 
 export const ReportDesc = styled.div`
@@ -166,6 +238,10 @@ export const ReportDesc = styled.div`
   color: #999;
   font-family: var(--font-inter-variable-regular), 'Inter', sans-serif;
   line-height: 1.4;
+
+  @media (max-width: 480px) {
+    font-size: 0.72rem;
+  }
 `;
 
 export const ReportAction = styled.button<{ $color: string }>`
@@ -188,6 +264,27 @@ export const ReportAction = styled.button<{ $color: string }>`
     background: ${({ $color }) => $color};
     color: white;
   }
+
+  @media (max-width: 480px) {
+    font-size: 0.74rem;
+    padding: 7px 12px;
+  }
+`;
+
+export const ChartsRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 20px;
+  margin-top: 24px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+
+  @media (max-width: 480px) {
+    margin-top: 16px;
+    gap: 14px;
+  }
 `;
 
 export const ChartSection = styled.div`
@@ -195,6 +292,10 @@ export const ChartSection = styled.div`
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+
+  @media (max-width: 480px) {
+    padding: 18px 16px;
+  }
 `;
 
 export const ChartTitle = styled.h3`
@@ -203,6 +304,11 @@ export const ChartTitle = styled.h3`
   color: #1a1a1a;
   margin: 0 0 20px;
   font-weight: 700;
+
+  @media (max-width: 480px) {
+    font-size: 0.88rem;
+    margin-bottom: 14px;
+  }
 `;
 
 export const PieChart = styled.div`
@@ -210,6 +316,12 @@ export const PieChart = styled.div`
   height: 140px;
   border-radius: 50%;
   margin: 0 auto 20px;
+
+  @media (max-width: 480px) {
+    width: 110px;
+    height: 110px;
+    margin-bottom: 14px;
+  }
 `;
 
 export const PieSlice = styled.div``;
@@ -218,6 +330,10 @@ export const PieLegend = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+
+  @media (max-width: 480px) {
+    gap: 6px;
+  }
 `;
 
 export const PieLegendItem = styled.div`
@@ -232,6 +348,10 @@ export const PieLegendItem = styled.div`
     margin-left: auto;
     color: #1a1a1a;
   }
+
+  @media (max-width: 480px) {
+    font-size: 0.72rem;
+  }
 `;
 
 export const LegendDot = styled.div<{ $color: string }>`
@@ -245,11 +365,16 @@ export const LegendDot = styled.div<{ $color: string }>`
 export const TableWrapper = styled.div`
   width: 100%;
   overflow-x: auto;
+
+  @media (max-width: 768px) {
+    -webkit-overflow-scrolling: touch;
+  }
 `;
 
 export const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
+  min-width: 500px;
 `;
 
 export const Thead = styled.thead`
@@ -266,6 +391,11 @@ export const Th = styled.th<{ $width?: string }>`
   text-transform: uppercase;
   letter-spacing: 0.5px;
   width: ${({ $width }) => $width || 'auto'};
+
+  @media (max-width: 768px) {
+    padding: 10px 14px;
+    font-size: 0.68rem;
+  }
 `;
 
 export const Tbody = styled.tbody``;
@@ -289,6 +419,11 @@ export const Td = styled.td`
   font-family: var(--font-inter-variable-regular), 'Inter', sans-serif;
   color: #444;
   vertical-align: middle;
+
+  @media (max-width: 768px) {
+    padding: 10px 14px;
+    font-size: 0.78rem;
+  }
 `;
 
 export const Badge = styled.span<{ $bg?: string; $color?: string }>`

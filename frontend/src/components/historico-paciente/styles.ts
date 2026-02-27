@@ -6,8 +6,15 @@ export const Container = styled.div`
   min-height: 100vh;
   background: #f5f5f5;
   box-sizing: border-box;
+<<<<<<< HEAD
   @media (max-width: 1024px) { padding: 24px 20px; }
   @media (max-width: 768px)  { padding: 20px 16px; }
+=======
+
+  @media (max-width: 1024px) { padding: 72px 20px 24px; }
+  @media (max-width: 768px)  { padding: 72px 14px 20px; }
+  @media (max-width: 480px)  { padding: 68px 12px 20px; }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const Header = styled.div`
@@ -17,6 +24,15 @@ export const Header = styled.div`
   margin-bottom: 28px;
   flex-wrap: wrap;
   gap: 16px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 20px;
+    gap: 12px;
+
+    & > button {
+      width: 100%;
+    }
+  }
 `;
 
 export const Title = styled.h1`
@@ -25,6 +41,9 @@ export const Title = styled.h1`
   color: #BBA188;
   margin: 0;
   font-weight: 600;
+
+  @media (max-width: 768px) { font-size: 1.6rem; }
+  @media (max-width: 480px) { font-size: 1.4rem; }
 `;
 
 export const StatsGrid = styled.div`
@@ -32,6 +51,18 @@ export const StatsGrid = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 18px;
   margin-bottom: 28px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
 `;
 
 export const Controls = styled.div`
@@ -40,13 +71,24 @@ export const Controls = styled.div`
   margin-bottom: 24px;
   flex-wrap: wrap;
   align-items: center;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
 `;
 
 export const SearchBarWrapper = styled.div`
   position: relative;
   flex: 1;
   max-width: 420px;
-  @media (max-width: 768px) { max-width: 100%; }
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    width: 100%;
+  }
 `;
 
 export const SearchIconWrap = styled.div`
@@ -69,8 +111,14 @@ export const SearchInputStyled = styled.input`
   color: #333;
   transition: all 0.25s;
   box-sizing: border-box;
+<<<<<<< HEAD
+=======
+
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
   &:focus { outline: none; border-color: #BBA188; box-shadow: 0 0 0 3px rgba(187,161,136,0.15); }
   &::placeholder { color: #bbb; }
+
+  @media (max-width: 480px) { font-size: 0.84rem; }
 `;
 
 export const FilterRow = styled.div`
@@ -78,10 +126,18 @@ export const FilterRow = styled.div`
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 export const DropdownWrapper = styled.div`
   position: relative;
+
+  @media (max-width: 768px) {
+    flex: 1;
+  }
 `;
 
 export const DropdownBtn = styled.button`
@@ -99,7 +155,13 @@ export const DropdownBtn = styled.button`
   min-width: 140px;
   justify-content: space-between;
   transition: all 0.2s;
+
   &:hover { border-color: #BBA188; }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    min-width: 0;
+  }
 `;
 
 export const DropdownList = styled.div`
@@ -123,6 +185,7 @@ export const DropdownItem = styled.div<{ $active?: boolean }>`
   font-weight: ${({ $active }) => ($active ? '600' : '400')};
   cursor: pointer;
   border-bottom: 1px solid #f5f5f5;
+
   &:last-child { border-bottom: none; }
   &:hover { background: rgba(187,161,136,0.08); color: #BBA188; }
 `;
@@ -139,6 +202,8 @@ export const ClearFilterBtn = styled.button`
   font-size: 0.84rem;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
+
   &:hover { background: #e74c3c; color: white; }
 `;
 
@@ -150,12 +215,24 @@ export const CardsContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: 780px;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 1024px) { height: auto; min-height: 600px; }
+  @media (max-width: 768px)  { height: auto; min-height: 0;     border-radius: 12px; }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const CardsWrapper = styled.div`
   flex: 1;
   padding: 20px;
   min-height: 0;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 768px) { padding: 14px; }
+  @media (max-width: 480px) { padding: 12px; }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PaginationContainer = styled.div`
@@ -169,7 +246,14 @@ export const PatientGrid = styled.div`
   gap: 20px;
   height: 100%;
   align-content: start;
+<<<<<<< HEAD
   @media (max-width: 840px) { grid-template-columns: 1fr; }
+=======
+
+  @media (max-width: 1024px) { gap: 16px; }
+  @media (max-width: 840px)  { grid-template-columns: 1fr; }
+  @media (max-width: 480px)  { gap: 12px; }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PatientCard = styled.div`
@@ -182,7 +266,17 @@ export const PatientCard = styled.div`
   display: flex;
   flex-direction: column;
   height: 330px;
+<<<<<<< HEAD
   &:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(187,161,136,0.18); }
+=======
+
+  &:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(187,161,136,0.18); }
+
+  @media (max-width: 840px) {
+    height: auto;
+    min-height: 0;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PatientCardHeader = styled.div`
@@ -192,6 +286,11 @@ export const PatientCardHeader = styled.div`
   padding: 16px 18px 14px;
   border-bottom: 1px solid #f5f5f5;
   flex-shrink: 0;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) { padding: 12px 14px 12px; gap: 10px; }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const PatientAvatar = styled.div<{ $color: string }>`
@@ -208,6 +307,8 @@ export const PatientAvatar = styled.div<{ $color: string }>`
   color: ${({ $color }) => $color};
   flex-shrink: 0;
   font-family: var(--font-cabourg-bold), 'Cabourg', serif;
+
+  @media (max-width: 480px) { width: 40px; height: 40px; font-size: 0.82rem; }
 `;
 
 export const PatientInfo = styled.div`
@@ -224,12 +325,19 @@ export const PatientName = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  @media (max-width: 480px) { font-size: 0.88rem; }
 `;
 
 export const PatientSub = styled.div`
   font-size: 0.76rem;
   color: #999;
   margin-bottom: 6px;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) { font-size: 0.7rem; }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const StatsRow = styled.div`
@@ -246,12 +354,19 @@ export const StatPill = styled.span<{ $color: string }>`
   font-weight: 600;
   background: ${({ $color }) => $color}18;
   color: ${({ $color }) => $color};
+
+  @media (max-width: 480px) { font-size: 0.66rem; padding: 2px 8px; }
 `;
 
 export const PatientCardBody = styled.div`
   padding: 12px 18px;
   flex: 1;
   overflow: hidden;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) { padding: 10px 14px; }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 export const TimelineWrap = styled.div`
@@ -324,6 +439,16 @@ export const PatientCardFooter = styled.div`
   border-top: 1px solid #f5f5f5;
   background: #fdf9f5;
   flex-shrink: 0;
+<<<<<<< HEAD
+=======
+
+  @media (max-width: 480px) {
+    padding: 8px 14px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
 
 
@@ -331,6 +456,11 @@ export const DetailModal = styled.div`
   max-height: 65vh;
   overflow-y: auto;
   padding-right: 4px;
+
+  @media (max-width: 768px) {
+    max-height: 70vh;
+    padding-right: 2px;
+  }
 `;
 
 export const DetailHeader = styled.div`
@@ -340,6 +470,12 @@ export const DetailHeader = styled.div`
   margin-bottom: 20px;
   padding-bottom: 20px;
   border-bottom: 1px solid #f0ebe4;
+
+  @media (max-width: 480px) {
+    gap: 12px;
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+  }
 `;
 
 export const DetailAvatar = styled.div<{ $color: string }>`
@@ -356,6 +492,8 @@ export const DetailAvatar = styled.div<{ $color: string }>`
   color: ${({ $color }) => $color};
   flex-shrink: 0;
   font-family: var(--font-cabourg-bold), 'Cabourg', serif;
+
+  @media (max-width: 480px) { width: 48px; height: 48px; font-size: 1rem; }
 `;
 
 export const DetailName = styled.h2`
@@ -363,6 +501,8 @@ export const DetailName = styled.h2`
   font-family: var(--font-cabourg-bold), 'Cabourg', serif;
   color: #1a1a1a;
   margin: 0 0 8px;
+
+  @media (max-width: 480px) { font-size: 1rem; margin-bottom: 6px; }
 `;
 
 export const DetailMeta = styled.div`
@@ -378,6 +518,8 @@ export const DetailMetaItem = styled.div`
   font-size: 0.83rem;
   color: #666;
   svg { color: #BBA188; flex-shrink: 0; }
+
+  @media (max-width: 480px) { font-size: 0.75rem; }
 `;
 
 export const DetailSection = styled.div`
@@ -391,6 +533,8 @@ export const DetailSectionTitle = styled.h3`
   font-weight: 700;
   border-bottom: 1px solid #f0ebe4;
   padding-bottom: 8px;
+
+  @media (max-width: 480px) { font-size: 0.82rem; }
 `;
 
 export const FullTimeline = styled.div`
@@ -415,6 +559,8 @@ export const FullTimelineItem = styled.div`
   padding-bottom: 20px;
   position: relative;
   &:last-child { padding-bottom: 0; }
+
+  @media (max-width: 480px) { gap: 12px; padding-bottom: 14px; }
 `;
 
 export const FullDot = styled.div<{ $color: string; $first?: boolean }>`
@@ -435,6 +581,8 @@ export const FullContent = styled.div`
   border-radius: 12px;
   padding: 12px 16px;
   border: 1px solid #f0ebe4;
+
+  @media (max-width: 480px) { padding: 10px 12px; border-radius: 10px; }
 `;
 
 export const FullDate = styled.div`
@@ -448,6 +596,8 @@ export const FullTitle = styled.div`
   font-weight: 700;
   color: #1a1a1a;
   margin-bottom: 4px;
+
+  @media (max-width: 480px) { font-size: 0.86rem; }
 `;
 
 export const FullDesc = styled.div`
@@ -458,6 +608,8 @@ export const FullDesc = styled.div`
   color: #666;
   flex-wrap: wrap;
   margin-bottom: 8px;
+
+  @media (max-width: 480px) { font-size: 0.75rem; gap: 6px; }
 `;
 
 export const FullTags = styled.div`
@@ -474,12 +626,15 @@ export const FullTag = styled.span<{ $color: string }>`
   font-weight: 600;
   background: ${({ $color }) => $color}18;
   color: ${({ $color }) => $color};
+
+  @media (max-width: 480px) { font-size: 0.66rem; padding: 2px 8px; }
 `;
 
 export const FormGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+
   @media (max-width: 560px) { grid-template-columns: 1fr; }
 `;
 
@@ -491,6 +646,19 @@ export const EmptyState = styled.div`
   height: 100%;
   text-align: center;
   color: #bbb;
+<<<<<<< HEAD
   h3 { font-size: 1.1rem; font-family: var(--font-cabourg-bold), 'Cabourg', serif; color: #555; margin: 0 0 6px; }
   p  { font-size: 0.88rem; color: #999; margin: 0; }
+=======
+  padding: 40px 20px;
+
+  h3 { font-size: 1.1rem; font-family: var(--font-cabourg-bold), 'Cabourg', serif; color: #555; margin: 0 0 6px; }
+  p  { font-size: 0.88rem; color: #999; margin: 0; }
+
+  @media (max-width: 480px) {
+    padding: 30px 16px;
+    h3 { font-size: 0.95rem; }
+    p  { font-size: 0.8rem; }
+  }
+>>>>>>> f28813edf0f1c78aa8233460f31ac36892245d4a
 `;
