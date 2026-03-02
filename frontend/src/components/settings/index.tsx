@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRoleRedirect } from '@/components/ui/hooks/useRoleRedirect';
+import { buscarPerfil } from '@/services/profissionalService';
 import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
@@ -265,6 +266,14 @@ export default function Configuracoes() {
 
   const [perfil,       setPerfil]       = useState({ nome: 'Super Administrador', email: 'super.admin@aestheticos.com.br', telefone: '(11) 99999-0000', senha: '', senhaConfirm: '' });
   const [perfilErrors, setPerfilErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    buscarPerfil().then(u => {
+      setPerfil(prev => ({ ...prev, nome: u.nome || prev.nome, email: u.email || prev.email, telefone: u.telefone || prev.telefone }));
+      setPerfilSnapshot(prev => ({ ...prev, nome: u.nome || prev.nome, email: u.email || prev.email, telefone: u.telefone || prev.telefone }));
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [platform,     setPlatform]     = useState({ nome: 'AestheticOS', dominio: 'app.aestheticos.com.br', email: 'suporte@aestheticos.com.br', telefone: '(11) 99999-0000' });
   const [comissao,     setComissao]     = useState({ botox: '20', preenchimento: '20', bioestimulador: '15', fio: '18', skincare: '25', outros: '20', base: 'bruto', periodicidade: 'mensal' });
 

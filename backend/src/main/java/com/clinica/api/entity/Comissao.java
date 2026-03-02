@@ -42,6 +42,9 @@ public class Comissao {
     @Column(name = "valor_comissao", nullable = false, precision = 10, scale = 2)
     private BigDecimal valorComissao;
 
+    @Column(name = "empresa_id")
+    private Long empresaId;
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

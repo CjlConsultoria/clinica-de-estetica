@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -13,6 +13,7 @@ import SucessModal from '@/components/modals/sucessModal';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import { usePermissions } from '@/components/ui/hooks/usePermissions';
 import AccessDenied from '@/components/ui/AccessDenied';
+import { listarProdutos, criarProduto, atualizarProduto, listarLotes, criarLote, ProdutoAPI, LoteAPI } from '@/services/estoqueService';
 import {
   Container, Header, Title, Controls, SearchBarWrapper, SearchIconWrap, SearchInputStyled,
   FilterRow, DropdownWrapper, DropdownBtn, DropdownList, DropdownItem, ClearFilterBtn,
@@ -148,6 +149,33 @@ const MOV_VALIDATION_FIELDS = [
 const ITEMS_PER_PAGE   = 10;
 const TABLE_MIN_HEIGHT = 540;
 
+interface StockItem {
+  id: number; code: string; name: string; category: string;
+  quantity: number; minStock: number; maxStock: number; unit: string;
+  price: number; expiryDate: string; supplier: string; status: string;
+}
+
+function mapLoteToStockItem(lote: LoteAPI): StockItem {
+  const qty    = lote.quantidadeAtual ?? 0;
+  const maxQty = lote.quantidadeTotal ?? 1;
+  const ratio  = qty / Math.max(maxQty, 1);
+  const status = qty === 0 ? 'esgotado' : ratio <= 0.2 ? 'critico' : ratio <= 0.5 ? 'baixo' : 'normal';
+  return {
+    id:         lote.id,
+    code:       lote.numeroLote || `L${lote.id}`,
+    name:       lote.produto?.nome || '—',
+    category:   lote.produto?.categoria || '—',
+    quantity:   qty,
+    minStock:   0,
+    maxStock:   maxQty,
+    unit:       lote.produto?.unidade || 'unid',
+    price:      0,
+    expiryDate: lote.dataValidade || '',
+    supplier:   lote.fornecedor || '',
+    status,
+  };
+}
+
 function isItemFormDirty(form: ItemForm): boolean {
   return (
     form.nome.trim() !== '' || form.codigo.trim() !== '' || form.categoria !== '' ||
@@ -173,7 +201,8 @@ export default function Estoque() {
   const [openDropdownStat, setOpenDropdownStat] = useState(false);
   const [isModalOpen,      setIsModalOpen]      = useState(false);
   const [isMovModal,       setIsMovModal]       = useState(false);
-  const [selected,         setSelected]         = useState<typeof mockStock[0] | null>(null);
+  const [estoque,          setEstoque]          = useState<StockItem[]>(mockStock as StockItem[]);
+  const [selected,         setSelected]         = useState<StockItem | null>(null);
   const [currentPage,      setCurrentPage]      = useState(1);
   const [showItemCancelModal,  setShowItemCancelModal]  = useState(false);
   const [showItemConfirmModal, setShowItemConfirmModal] = useState(false);
@@ -186,12 +215,18 @@ export default function Estoque() {
   const [movForm, setMovForm] = useState<MovForm>(MOV_INITIAL);
   const { errors: movErrors, validate: movValidate, clearError: movClearError, clearAll: movClearAll } = useSequentialValidation<MovField>(MOV_VALIDATION_FIELDS);
 
+  useEffect(() => {
+    listarLotes().then(lotes => {
+      setEstoque(lotes.map(mapLoteToStockItem));
+    }).catch(() => {});
+  }, []);
+
   if (!isSuperAdmin && !can('estoque.read')) return <AccessDenied />;
 
   const canCreate = isSuperAdmin || can('estoque.create');
   const canEdit   = isSuperAdmin || can('estoque.edit');
 
-  const filtered = mockStock.filter(item => {
+  const filtered = estoque.filter(item => {
     const matchSearch = item.name.toLowerCase().includes(search.toLowerCase()) || item.code.toLowerCase().includes(search.toLowerCase());
     const matchCat    = filterCat  === 'Todas' || item.category === filterCat;
     const matchStat   = filterStat === 'Todos' || item.status   === filterStat.toLowerCase();
@@ -204,12 +239,12 @@ export default function Estoque() {
   const startIndex    = (safePage - 1) * ITEMS_PER_PAGE;
   const paginatedData = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  const totalItems    = mockStock.length;
-  const lowStock      = mockStock.filter(i => i.status === 'baixo' || i.status === 'critico').length;
-  const outOfStock    = mockStock.filter(i => i.status === 'esgotado').length;
-  const expiringSoon  = mockStock.filter(i => isExpiringSoon(i.expiryDate)).length;
-  const totalValue    = mockStock.reduce((acc, i) => acc + i.price * i.quantity, 0);
-  const criticalItems = mockStock.filter(i => i.status === 'critico' || i.status === 'esgotado');
+  const totalItems    = estoque.length;
+  const lowStock      = estoque.filter(i => i.status === 'baixo' || i.status === 'critico').length;
+  const outOfStock    = estoque.filter(i => i.status === 'esgotado').length;
+  const expiringSoon  = estoque.filter(i => isExpiringSoon(i.expiryDate)).length;
+  const totalValue    = estoque.reduce((acc, i) => acc + i.price * i.quantity, 0);
+  const criticalItems = estoque.filter(i => i.status === 'critico' || i.status === 'esgotado');
 
   function handleItemChange(field: ItemField, value: string) { setItemForm(prev => ({ ...prev, [field]: value })); itemClearError(field); }
   function handleItemDataChange(raw: string) { if (!raw) { handleItemChange('validade', ''); return; } const [yearStr, month, day] = raw.split('-'); const safeYear = yearStr ? yearStr.slice(0, 4) : ''; handleItemChange('validade', `${safeYear}-${month ?? ''}-${day ?? ''}`); }
@@ -225,8 +260,33 @@ export default function Estoque() {
     if (!isValid) return;
     setShowItemConfirmModal(true);
   }
-  function handleConfirmSaveItem() {
-    setShowItemConfirmModal(false); setIsModalOpen(false); setItemForm(ITEM_INITIAL); itemClearAll(); setSelected(null); setShowItemSuccessModal(true);
+  async function handleConfirmSaveItem() {
+    setShowItemConfirmModal(false);
+    try {
+      if (selected) {
+        await atualizarProduto(selected.id, {
+          nome: itemForm.nome, fabricante: itemForm.fornecedor,
+          categoria: categoryOptions.find(c => c.value === itemForm.categoria)?.label || itemForm.categoria,
+          unidade: itemForm.unidade,
+        });
+      } else {
+        const produto = await criarProduto({
+          nome: itemForm.nome, fabricante: itemForm.fornecedor,
+          categoria: categoryOptions.find(c => c.value === itemForm.categoria)?.label || itemForm.categoria,
+          unidade: itemForm.unidade,
+        });
+        await criarLote({
+          produtoId:       produto.id,
+          numeroLote:      itemForm.codigo,
+          dataValidade:    itemForm.validade,
+          quantidadeTotal: Number(itemForm.quantidade) || 0,
+          fornecedor:      itemForm.fornecedor,
+        });
+      }
+      const lotes = await listarLotes();
+      setEstoque(lotes.map(mapLoteToStockItem));
+    } catch {}
+    setIsModalOpen(false); setItemForm(ITEM_INITIAL); itemClearAll(); setSelected(null); setShowItemSuccessModal(true);
   }
 
   function handleMovChange(field: MovField, value: string) { setMovForm(prev => ({ ...prev, [field]: value })); movClearError(field); }
@@ -245,12 +305,12 @@ export default function Estoque() {
     setShowMovConfirmModal(false); setIsMovModal(false); setMovForm(MOV_INITIAL); movClearAll(); setSelected(null); setShowMovSuccessModal(true);
   }
 
-  function openEdit(item: typeof mockStock[0]) {
+  function openEdit(item: StockItem) {
     setSelected(item);
     setItemForm({ nome: item.name, codigo: item.code, categoria: categoryOptions.find(c => c.label === item.category)?.value ?? '', unidade: item.unit, quantidade: String(item.quantity), minimo: String(item.minStock), maximo: String(item.maxStock), preco: String(item.price), fornecedor: item.supplier, validade: item.expiryDate });
     setIsModalOpen(true);
   }
-  function openMov(item: typeof mockStock[0]) { setSelected(item); setMovForm(MOV_INITIAL); movClearAll(); setIsMovModal(true); }
+  function openMov(item: StockItem) { setSelected(item); setMovForm(MOV_INITIAL); movClearAll(); setIsMovModal(true); }
 
   return (
     <Container>

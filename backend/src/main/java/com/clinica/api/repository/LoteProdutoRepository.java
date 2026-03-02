@@ -30,4 +30,8 @@ public interface LoteProdutoRepository extends JpaRepository<LoteProduto, Long> 
     List<LoteProduto> findEstoqueBaixo(@Param("percentual") double percentual);
 
     List<LoteProduto> findByStatus(StatusLote status);
+
+    List<LoteProduto> findByProduto_EmpresaIdAndAtivoTrue(Long empresaId);
+
+    List<LoteProduto> findByProduto_EmpresaId(Long empresaId);
 }

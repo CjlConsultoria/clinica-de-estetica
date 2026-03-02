@@ -59,6 +59,9 @@ public class Lancamento {
     @Column(columnDefinition = "TEXT")
     private String observacoes;
 
+    @Column(name = "empresa_id")
+    private Long empresaId;
+
     @Column(name = "criado_em", nullable = false, updatable = false)
     private LocalDateTime criadoEm;
 

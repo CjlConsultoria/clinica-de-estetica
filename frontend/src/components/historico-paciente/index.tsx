@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -208,6 +208,9 @@ function todayInputDate(): string {
   return new Date().toISOString().split('T')[0];
 }
 
+import { listarPacientes, PacienteAPI } from '@/services/pacienteService';
+import { listarProntuariosPorPaciente, ProntuarioAPI } from '@/services/prontuarioService';
+
 const CARDS_PER_PAGE = 4;
 
 function isNewFormDirty(form: NovoPacienteForm): boolean {
@@ -223,6 +226,24 @@ function isEditFormDirty(form: NovoPacienteForm): boolean {
 function isAtendimentoFormDirty(form: AtendimentoForm): boolean {
   return form.procedure.trim() !== '' || form.units.trim() !== '' || form.value.trim() !== '' ||
     form.professional.trim() !== '' || form.lote.trim() !== '';
+}
+
+function mapPacienteToPatient(p: PacienteAPI, history: HistoryItem[] = []): Patient {
+  return {
+    id:            p.id,
+    name:          p.nome,
+    phone:         p.telefone || p.celular || '',
+    email:         p.email,
+    birthdate:     p.dataNascimento || '',
+    since:         p.criadoEm ? new Date(p.criadoEm).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) : '',
+    status:        p.ativo ? 'ativo' : 'inativo',
+    totalSpent:    history.reduce((a, h) => a + h.value, 0),
+    totalSessions: history.length,
+    lastVisit:     history[0]?.date || '—',
+    nextVisit:     null,
+    observations:  p.observacoes || '',
+    history,
+  };
 }
 
 export default function HistoricoPaciente() {
@@ -261,6 +282,13 @@ export default function HistoricoPaciente() {
     errors: atendErrors, validate: validateAtend,
     clearError: clearAtendError, clearAll: clearAtendAll,
   } = useSequentialValidation<AtendimentoField>(ATENDIMENTO_VALIDATION);
+
+  useEffect(() => {
+    listarPacientes('', 0, 500).then(res => {
+      const pacs = res.content || [];
+      setPatients(pacs.map(p => mapPacienteToPatient(p)));
+    }).catch(() => {});
+  }, []);
 
   const filtered = patients.filter(p => {
     const matchSearch =

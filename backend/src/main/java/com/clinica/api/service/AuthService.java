@@ -42,6 +42,7 @@ public class AuthService {
                 .role(usuario.getRole())
                 .cargo(usuario.getCargo())
                 .areaProfissional(usuario.getAreaProfissional())
+                .empresaId(usuario.getEmpresaId())
                 .build();
     }
 
@@ -76,6 +77,7 @@ public class AuthService {
                 .role(usuario.getRole())
                 .cargo(usuario.getCargo())
                 .areaProfissional(usuario.getAreaProfissional())
+                .empresaId(usuario.getEmpresaId())
                 .build();
     }
 }

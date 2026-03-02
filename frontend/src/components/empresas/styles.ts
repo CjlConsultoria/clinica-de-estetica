@@ -1,6 +1,5 @@
 import styled from 'styled-components';
 
-// ─── Layout base (idêntico ao Pacientes) ──────────────────────────────────────
 
 export const Container = styled.div`
   padding: 40px;
@@ -72,8 +71,6 @@ export const StatsGrid = styled.div`
     margin-bottom: 16px;
   }
 `;
-
-// ─── Controls / Search / Filtros (idêntico ao Pacientes) ─────────────────────
 
 export const Controls = styled.div`
   display: flex;
@@ -208,7 +205,6 @@ export const ClearFilterBtn = styled.button`
   &:hover { background: #e74c3c; color: white; }
 `;
 
-// ─── Tabela (header gradient igual ao Pacientes) ──────────────────────────────
 
 export const TableWrapper = styled.div`
   width: 100%;
@@ -312,7 +308,6 @@ export const EmptyState = styled.div`
   p   { font-size: 0.85rem; color: #999; margin: 0; }
 `;
 
-// ─── Avatar empresa ───────────────────────────────────────────────────────────
 
 export const AvatarEmpresa = styled.div<{ $color: string }>`
   width: 32px;
@@ -351,7 +346,6 @@ export const EmpresaEmail = styled.div`
   text-overflow: ellipsis;
 `;
 
-// ─── Modal forms (idêntico ao Pacientes) ─────────────────────────────────────
 
 export const FormGrid = styled.div`
   display: grid;
@@ -375,7 +369,6 @@ export const SectionLabel = styled.p`
   margin: 0 0 12px;
 `;
 
-// ─── Wizard (idêntico ao Pacientes) ──────────────────────────────────────────
 
 export const WizardSteps = styled.div`
   display: flex;
@@ -472,7 +465,7 @@ export const WizardNav = styled.div`
   }
 `;
 
-// ─── Detail modal (idêntico ao Pacientes) ────────────────────────────────────
+
 
 export const DetailSection = styled.div`
   margin-top: 20px;
@@ -523,7 +516,7 @@ export const InfoValue = styled.span`
   font-weight: 500;
 `;
 
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
+
 
 export const TabRow = styled.div`
   display: flex;
@@ -559,7 +552,7 @@ export const Tab = styled.button<{ $active?: boolean }>`
   }
 `;
 
-// ─── InfoBox (aviso azul no step admin) ──────────────────────────────────────
+
 
 export const InfoBox = styled.div`
   display: flex;
@@ -576,8 +569,6 @@ export const InfoBox = styled.div`
   svg { flex-shrink: 0; margin-top: 1px; }
   strong { font-weight: 700; }
 `;
-
-// ─── Checkbox ─────────────────────────────────────────────────────────────────
 
 export const CheckboxRow = styled.div`
   display: flex;

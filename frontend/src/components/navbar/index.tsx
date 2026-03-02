@@ -147,8 +147,9 @@ const superAdminSections = [
   {
     label: 'Gestão',
     items: [
-      { label: 'Empresas',   href: '/empresas', Icon: Building2,  badge: 0 },
-      { label: 'Financeiro', href: '/finance',  Icon: CreditCard, badge: 0 },
+      { label: 'Empresas',       href: '/empresas',       Icon: Building2,    badge: 0 },
+      { label: 'Profissionais',  href: '/profissionais',  Icon: Stethoscope,  badge: 0 },
+      { label: 'Financeiro',     href: '/finance',        Icon: CreditCard,   badge: 0 },
     ],
   },
   {

@@ -13,7 +13,8 @@ public enum Cargo {
     NUTRICIONISTA("Nutricionista", AreaProfissional.TECNICA),
     PSICOLOGO("Psicólogo", AreaProfissional.TECNICA),
     ESTETICISTA("Esteticista", AreaProfissional.TECNICA),
-
+    BIOMEDICO("Biomédico", AreaProfissional.TECNICA),
+    DERMATOLOGO("Dermatologista", AreaProfissional.TECNICA),
 
     RECEPCIONISTA("Recepcionista", AreaProfissional.ADMINISTRATIVA),
     GERENTE("Gerente", AreaProfissional.ADMINISTRATIVA),

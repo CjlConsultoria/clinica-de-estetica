@@ -27,6 +27,14 @@ import {
   ObsBox,
 } from './styles';
 import { validateEmail, validatePassword, ERROR_MESSAGES } from './validation';
+import {
+  listarProfissionais,
+  criarProfissional,
+  atualizarProfissional,
+  inativarProfissional,
+} from '@/services/profissionalService';
+import { listarEmpresas, EmpresaAPI } from '@/services/empresaService';
+import { useAuth } from '@/contexts/AuthContext';
 
 type AreaType = 'tecnica' | 'administrativa' | '';
 type CargoTecnico = 'esteticista' | 'biomedico' | 'enfermeiro' | 'dermatologista' | 'fisioterapeuta';
@@ -147,6 +155,36 @@ const CARGO_TO_ROLE: Record<string, 'tecnico' | 'recepcionista' | 'gerente' | 'f
   financeiro:     'financeiro',
 };
 
+// Map frontend cargo values to backend Cargo enum values
+const CARGO_TO_BACKEND: Record<string, string> = {
+  esteticista:    'ESTETICISTA',
+  biomedico:      'BIOMEDICO',
+  enfermeiro:     'ENFERMEIRO',
+  dermatologista: 'DERMATOLOGO',
+  fisioterapeuta: 'FISIOTERAPEUTA',
+  recepcionista:  'RECEPCIONISTA',
+  gerente:        'GERENTE',
+  financeiro:     'FINANCEIRO',
+};
+
+// Map backend cargo values back to frontend keys
+const BACKEND_TO_CARGO: Record<string, string> = {
+  ESTETICISTA:    'esteticista',
+  BIOMEDICO:      'biomedico',
+  ENFERMEIRO:     'enfermeiro',
+  DERMATOLOGO:    'dermatologista',
+  FISIOTERAPEUTA: 'fisioterapeuta',
+  RECEPCIONISTA:  'recepcionista',
+  GERENTE:        'gerente',
+  FINANCEIRO:     'financeiro',
+};
+
+// Map backend areaProfissional to frontend area
+const BACKEND_TO_AREA: Record<string, AreaType> = {
+  TECNICA:        'tecnica',
+  ADMINISTRATIVA: 'administrativa',
+};
+
 const PERMISSION_GROUPS: { label: string; perms: Permission[] }[] = [
   { label: 'Dashboard',       perms: ['dashboard.read'] },
   { label: 'Profissionais',   perms: ['profissionais.read', 'profissionais.create', 'profissionais.edit', 'profissionais.delete'] },
@@ -225,21 +263,6 @@ const filterStatus  = ['Todos', 'Ativo', 'Inativo'];
 const filterAreas   = ['Todos', 'Técnica', 'Administrativa'];
 const STEP_LABELS   = ['Dados Básicos', 'Área', 'Cargo', 'Acesso', 'Permissões'];
 
-const INITIAL_PROFISSIONAIS = [
-  { id: 1,  name: 'Ana Beatriz Lima',   email: 'ana.lima@clinica.com',       phone: '(11) 98765-4321', registro: 'CREFITO-3 112233-F', area: 'tecnica',        cargo: 'esteticista',    especialidade: 'estetica-facial',         status: 'ativo',   atendimentos: 142, ultimoAcesso: '20/02/2025', observacoes: '', customPermissions: null as Permission[] | null },
-  { id: 2,  name: 'Dra. Clara Andrade', email: 'clara.andrade@clinica.com',  phone: '(11) 97654-3210', registro: 'CRM/SP 654321',      area: 'tecnica',        cargo: 'dermatologista', especialidade: 'dermatologia-clinica',     status: 'ativo',   atendimentos: 98,  ultimoAcesso: '19/02/2025', observacoes: '', customPermissions: null as Permission[] | null },
-  { id: 3,  name: 'Juliana Ferreira',   email: 'juliana.f@clinica.com',      phone: '(31) 94321-0987', registro: 'COREN/SP 901234',    area: 'tecnica',        cargo: 'enfermeiro',     especialidade: 'enfermagem-estetica',      status: 'ativo',   atendimentos: 55,  ultimoAcesso: '17/02/2025', observacoes: '', customPermissions: null as Permission[] | null },
-  { id: 4,  name: 'Rafael Costa',       email: 'rafael.costa@clinica.com',   phone: '(21) 95432-1098', registro: '',                   area: 'administrativa', cargo: 'recepcionista',  especialidade: '',                         status: 'inativo', atendimentos: 0,   ultimoAcesso: '10/01/2025', observacoes: '', customPermissions: null as Permission[] | null },
-  { id: 5,  name: 'Mariana Souza',      email: 'mariana.s@clinica.com',      phone: '(21) 94321-9876', registro: 'CRBim-5 445566',     area: 'tecnica',        cargo: 'biomedico',      especialidade: 'biomedicina-estetica',     status: 'ativo',   atendimentos: 76,  ultimoAcesso: '18/02/2025', observacoes: '', customPermissions: null as Permission[] | null },
-  { id: 6,  name: 'Patricia Gomes',     email: 'patricia.g@clinica.com',     phone: '(11) 93210-8765', registro: '',                   area: 'administrativa', cargo: 'gerente',        especialidade: '',                         status: 'ativo',   atendimentos: 0,   ultimoAcesso: '20/02/2025', observacoes: '', customPermissions: null as Permission[] | null },
-  { id: 7,  name: 'Fernanda Oliveira',  email: 'fernanda.o@clinica.com',     phone: '(11) 91234-5678', registro: 'CREFITO-3 778899-F', area: 'tecnica',        cargo: 'fisioterapeuta', especialidade: 'dermato-funcional',        status: 'ativo',   atendimentos: 63,  ultimoAcesso: '15/02/2025', observacoes: '', customPermissions: null as Permission[] | null },
-  { id: 8,  name: 'Dr. Lucas Mendes',   email: 'lucas.mendes@clinica.com',   phone: '(11) 99876-5432', registro: 'CRM/SP 789012',      area: 'tecnica',        cargo: 'dermatologista', especialidade: 'dermatologia-estetica',    status: 'ativo',   atendimentos: 110, ultimoAcesso: '20/02/2025', observacoes: '', customPermissions: null as Permission[] | null },
-  { id: 9,  name: 'Camila Rocha',       email: 'camila.rocha@clinica.com',   phone: '(21) 98765-1234', registro: '',                   area: 'administrativa', cargo: 'financeiro',     especialidade: '',                         status: 'ativo',   atendimentos: 0,   ultimoAcesso: '19/02/2025', observacoes: '', customPermissions: null as Permission[] | null },
-  { id: 10, name: 'Beatriz Santos',     email: 'beatriz.santos@clinica.com', phone: '(31) 97654-3210', registro: 'COREN/SP 345678',    area: 'tecnica',        cargo: 'enfermeiro',     especialidade: 'procedimentos-injetaveis', status: 'ativo',   atendimentos: 41,  ultimoAcesso: '16/02/2025', observacoes: '', customPermissions: null as Permission[] | null },
-  { id: 11, name: 'Thiago Almeida',     email: 'thiago.a@clinica.com',       phone: '(11) 96543-2109', registro: '',                   area: 'administrativa', cargo: 'recepcionista',  especialidade: '',                         status: 'ativo',   atendimentos: 0,   ultimoAcesso: '18/02/2025', observacoes: '', customPermissions: null as Permission[] | null },
-  { id: 12, name: 'Larissa Duarte',     email: 'larissa.d@clinica.com',      phone: '(11) 95432-1098', registro: 'CRBim-5 667788',     area: 'tecnica',        cargo: 'biomedico',      especialidade: 'laser-terapia',            status: 'inativo', atendimentos: 29,  ultimoAcesso: '05/01/2025', observacoes: '', customPermissions: null as Permission[] | null },
-];
-
 const avatarColors = ['#BBA188', '#8a7560', '#a8906f', '#c9a882', '#917255', '#d4b896'];
 
 const statusColors: Record<string, { bg: string; color: string }> = {
@@ -265,6 +288,7 @@ interface ProfissionalForm {
   senha: string; confirmarSenha: string;
   useCustomPermissions: boolean;
   customPermissions: Permission[];
+  empresaId: string;
 }
 
 const FORM_INITIAL: ProfissionalForm = {
@@ -273,9 +297,10 @@ const FORM_INITIAL: ProfissionalForm = {
   senha: '', confirmarSenha: '',
   useCustomPermissions: false,
   customPermissions: [],
+  empresaId: '',
 };
 
-type Step1Field = 'nome' | 'email' | 'telefone';
+type Step1Field = 'nome' | 'email' | 'telefone' | 'empresaId';
 type Step2Field = 'area';
 type Step3Field = 'cargo' | 'registro' | 'especialidade';
 type Step4Field = 'senha' | 'confirmarSenha';
@@ -349,12 +374,18 @@ const ITEMS_PER_PAGE = 10;
 
 export default function Profissionais() {
   const { can } = usePermissions();
+  const { currentUser } = useAuth();
 
-  const canCreate = can('profissionais.create');
-  const canEdit   = can('profissionais.edit');
-  const canRead   = can('profissionais.read');
+  const canCreate    = can('profissionais.create');
+  const canEdit      = can('profissionais.edit');
+  const canRead      = can('profissionais.read');
+  const isSuperAdmin = currentUser?.role === 'super_admin';
 
-  const [profissionais,        setProfissionais]        = useState<Profissional[]>(INITIAL_PROFISSIONAIS);
+  const [profissionais,        setProfissionais]        = useState<Profissional[]>([]);
+  const [empresas,             setEmpresas]             = useState<EmpresaAPI[]>([]);
+  const [loading,              setLoading]              = useState(true);
+  const [saveLoading,          setSaveLoading]          = useState(false);
+  const [apiError,             setApiError]             = useState<string | null>(null);
   const [search,               setSearch]               = useState('');
   const [filterStat,           setFilterStat]           = useState('Todos');
   const [filterArea,           setFilterArea]           = useState('Todos');
@@ -369,10 +400,48 @@ export default function Profissionais() {
   const [isEditing,            setIsEditing]            = useState(false);
   const [currentPage,          setCurrentPage]          = useState(1);
 
+  // Fetch professionals from API on mount
+  useEffect(() => {
+    fetchProfissionais();
+    if (isSuperAdmin) {
+      listarEmpresas().then(setEmpresas).catch(() => {});
+    }
+  }, [isSuperAdmin]);
+
+  async function fetchProfissionais() {
+    try {
+      setLoading(true);
+      setApiError(null);
+      const data = await listarProfissionais();
+      const mapped: Profissional[] = data.map((p, idx) => ({
+        id:              p.id,
+        name:            p.nome,
+        email:           p.email,
+        phone:           p.telefone || '',
+        registro:        p.registro || '',
+        area:            BACKEND_TO_AREA[p.areaProfissional] || 'tecnica',
+        cargo:           BACKEND_TO_CARGO[p.cargo] || p.cargo.toLowerCase(),
+        especialidade:   p.especialidade || '',
+        status:          p.ativo ? 'ativo' : 'inativo',
+        atendimentos:    p.atendimentos || 0,
+        ultimoAcesso:    p.criadoEm ? new Date(p.criadoEm).toLocaleDateString('pt-BR') : '—',
+        observacoes:     p.observacoes || '',
+        customPermissions: null,
+      }));
+      setProfissionais(mapped);
+    } catch (err: any) {
+      console.error('[Profissionais] Erro ao carregar:', err);
+      setApiError('Erro ao carregar profissionais. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const step1Validation = useSequentialValidation<Step1Field>([
-    { key: 'nome',     validate: (v) => !v.trim() ? 'Nome completo é obrigatório' : null },
-    { key: 'email',    validate: (v) => { const err = validateEmail(v); return err ? err.message : null; } },
-    { key: 'telefone', validate: (v) => !v.trim() ? 'Telefone é obrigatório' : null },
+    { key: 'nome',      validate: (v) => !v.trim() ? 'Nome completo é obrigatório' : null },
+    { key: 'email',     validate: (v) => { const err = validateEmail(v); return err ? err.message : null; } },
+    { key: 'telefone',  validate: (v) => !v.trim() ? 'Telefone é obrigatório' : null },
+    { key: 'empresaId', validate: (v) => (isSuperAdmin && !isEditing && !v) ? 'Selecione a clínica' : null },
   ]);
 
   const step2Validation = useSequentialValidation<Step2Field>([
@@ -465,14 +534,14 @@ export default function Profissionais() {
       if (field === 'cargo') { next.especialidade = ''; next.registro = ''; next.useCustomPermissions = false; next.customPermissions = []; }
       return next;
     });
-    if (field === 'nome' || field === 'email' || field === 'telefone')          step1Validation.clearError(field as Step1Field);
+    if (field === 'nome' || field === 'email' || field === 'telefone' || field === 'empresaId') step1Validation.clearError(field as Step1Field);
     if (field === 'area')                                                         step2Validation.clearError('area');
     if (field === 'cargo' || field === 'registro' || field === 'especialidade')  step3Validation.clearError(field as Step3Field);
     if (field === 'senha' || field === 'confirmarSenha')                         step4Validation.clearError(field as Step4Field);
   }
 
   function validateStep(s: number): boolean {
-    if (s === 1) return step1Validation.validate({ nome: form.nome, email: form.email, telefone: form.telefone });
+    if (s === 1) return step1Validation.validate({ nome: form.nome, email: form.email, telefone: form.telefone, empresaId: form.empresaId });
     if (s === 2) return step2Validation.validate({ area: form.area });
     if (s === 3) return step3Validation.validate({ cargo: form.cargo, registro: form.registro, especialidade: form.especialidade });
     if (s === 4) return step4Validation.validate({ senha: form.senha, confirmarSenha: form.confirmarSenha });
@@ -508,6 +577,7 @@ export default function Profissionais() {
       senha: '', confirmarSenha: '',
       useCustomPermissions: p.customPermissions !== null,
       customPermissions: p.customPermissions ?? [],
+      empresaId: '',
     });
     clearAllErrors(); setStep(1); setIsDetailOpen(false); setIsModalOpen(true);
   }
@@ -518,30 +588,55 @@ export default function Profissionais() {
     setForm(FORM_INITIAL); clearAllErrors(); setIsModalOpen(false);
     setSelectedProfissional(null); setStep(1);
     setShowSenha(false); setShowConfirm(false); setIsEditing(false);
+    setApiError(null);
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (step === 4 && !validateStep(4)) return;
     if (form.senha && form.senha !== form.confirmarSenha) { step4Validation.clearAll(); return; }
-    const today = new Date().toLocaleDateString('pt-BR');
-    const savedCustomPerms = form.useCustomPermissions ? form.customPermissions : null;
-    if (isEditing && selectedProfissional) {
-      setProfissionais(prev =>
-        prev.map(p => p.id === selectedProfissional.id
-          ? { ...p, name: form.nome, email: form.email, phone: form.telefone, area: form.area, cargo: form.cargo, especialidade: form.especialidade, registro: form.registro, status: form.status, observacoes: form.observacoes, customPermissions: savedCustomPerms }
-          : p
-        )
-      );
-    } else {
-      setProfissionais(prev => [...prev, {
-        id: Date.now(), name: form.nome, email: form.email, phone: form.telefone,
-        registro: form.registro, area: form.area, cargo: form.cargo,
-        especialidade: form.especialidade, status: 'ativo',
-        atendimentos: 0, ultimoAcesso: today, observacoes: form.observacoes,
-        customPermissions: savedCustomPerms,
-      }]);
+
+    try {
+      setSaveLoading(true);
+      setApiError(null);
+
+      const backendCargo = CARGO_TO_BACKEND[form.cargo] || form.cargo.toUpperCase();
+
+      if (isEditing && selectedProfissional) {
+        const payload: Record<string, unknown> = {
+          nome:         form.nome,
+          email:        form.email,
+          cargo:        backendCargo,
+          telefone:     form.telefone,
+          especialidade: form.especialidade || undefined,
+          registro:     form.registro || undefined,
+          observacoes:  form.observacoes || undefined,
+        };
+        if (form.senha) payload.senha = form.senha;
+
+        await atualizarProfissional(selectedProfissional.id, payload as any);
+      } else {
+        await criarProfissional({
+          nome:         form.nome,
+          email:        form.email,
+          senha:        form.senha,
+          cargo:        backendCargo,
+          telefone:     form.telefone,
+          especialidade: form.especialidade || undefined,
+          registro:     form.registro || undefined,
+          observacoes:  form.observacoes || undefined,
+          empresaId:    form.empresaId ? Number(form.empresaId) : undefined,
+        });
+      }
+
+      await fetchProfissionais();
+      handleClose();
+    } catch (err: any) {
+      console.error('[Profissionais] Erro ao salvar:', err);
+      const msg = err?.response?.data?.mensagem || err?.message || 'Erro ao salvar profissional.';
+      setApiError(msg);
+    } finally {
+      setSaveLoading(false);
     }
-    handleClose();
   }
 
   const errors1 = step1Validation.errors;
@@ -565,6 +660,18 @@ export default function Profissionais() {
                 value={form.email} onChange={e => handleChange('email', e.target.value)} error={errors1.email} />
               <Input label="Telefone *" mask="telefone" value={form.telefone} inputMode="numeric"
                 maxLength={15} onValueChange={v => handleChange('telefone', v)} error={errors1.telefone} />
+              {isSuperAdmin && !isEditing && (
+                <div style={{ gridColumn: 'span 2' }}>
+                  <Select
+                    label="Clínica (empresa) *"
+                    placeholder="Selecione a clínica..."
+                    value={form.empresaId}
+                    onChange={v => handleChange('empresaId', v)}
+                    options={empresas.map(e => ({ value: String(e.id), label: e.nome }))}
+                    error={errors1.empresaId}
+                  />
+                </div>
+              )}
             </FormGrid>
           </StepSection>
         );
@@ -829,7 +936,7 @@ export default function Profissionais() {
       }
       {step < 5
         ? <Button variant="primary" onClick={nextStep}>Continuar →</Button>
-        : <Button variant="primary" onClick={handleSave}>{isEditing ? 'Salvar Alterações' : 'Cadastrar Profissional'}</Button>
+        : <Button variant="primary" loading={saveLoading} onClick={handleSave}>{isEditing ? 'Salvar Alterações' : 'Cadastrar Profissional'}</Button>
       }
     </WizardNav>
   );
@@ -929,7 +1036,22 @@ export default function Profissionais() {
               </tr>
             </Thead>
             <Tbody>
-              {paginatedData.length === 0 ? (
+              {loading ? (
+                <tr><td colSpan={10}>
+                  <EmptyState>
+                    <p style={{ color: '#bbb' }}>Carregando profissionais...</p>
+                  </EmptyState>
+                </td></tr>
+              ) : apiError ? (
+                <tr><td colSpan={10}>
+                  <EmptyState>
+                    <p style={{ color: '#e74c3c' }}>{apiError}</p>
+                    <button onClick={fetchProfissionais} style={{ marginTop: 8, padding: '6px 16px', background: '#BBA188', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
+                      Tentar novamente
+                    </button>
+                  </EmptyState>
+                </td></tr>
+              ) : paginatedData.length === 0 ? (
                 <tr><td colSpan={10}>
                   <EmptyState>
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -976,7 +1098,7 @@ export default function Profissionais() {
                   <Td $center $bold>{p.atendimentos || '—'}</Td>
                   <Td $muted>{p.ultimoAcesso}</Td>
                   <Td>
-                    <Badge $bg={statusColors[p.status].bg} $color={statusColors[p.status].color}>
+                    <Badge $bg={statusColors[p.status]?.bg ?? '#f5f5f5'} $color={statusColors[p.status]?.color ?? '#888'}>
                       {p.status === 'ativo' ? 'Ativo' : 'Inativo'}
                     </Badge>
                   </Td>
@@ -1124,6 +1246,11 @@ export default function Profissionais() {
                 );
               })}
             </WizardSteps>
+            {apiError && step === 5 && (
+              <div style={{ margin: '0 0 12px', padding: '10px 14px', background: '#fde8e8', borderRadius: 8, border: '1px solid #f5c0c0', color: '#c93a3a', fontSize: '0.82rem' }}>
+                {apiError}
+              </div>
+            )}
             {renderStepContent()}
           </form>
         </Modal>

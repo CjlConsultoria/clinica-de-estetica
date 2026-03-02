@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { listarEmpresas, atualizarEmpresa, EmpresaAPI } from '@/services/empresaService';
+import { listarFaturas, criarFatura, pagarFatura, FaturaAPI } from '@/services/faturaService';
 import Button from '@/components/ui/button';
 import StatCard from '@/components/ui/statcard';
 import Pagination from '@/components/ui/pagination';
@@ -63,6 +65,30 @@ const statusOptions = [{value:'pago',label:'Pago'},{value:'pendente',label:'Pend
 const PLANO_VALOR: Record<string,number>={Starter:97,Profissional:297,Enterprise:697};
 const fmt=(v:number)=>v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 
+
+function mapPlano(raw: string): PlanType {
+  if (raw === 'Pro' || raw === 'Profissional') return 'Profissional';
+  if (raw === 'Enterprise') return 'Enterprise';
+  return 'Starter';
+}
+
+function derivarStatusPagamento(
+  empresaStatus: string,
+  ativo: boolean,
+  faturas: FaturaAPI[],
+): StatusFatura {
+  if (!ativo) return 'cancelado';
+  const sorted = [...faturas].sort(
+    (a, b) => new Date(b.vencimento || 0).getTime() - new Date(a.vencimento || 0).getTime(),
+  );
+  if (sorted.length > 0) {
+    const s = sorted[0].status || '';
+    if (['pago','pendente','vencido','cancelado'].includes(s)) return s as StatusFatura;
+  }
+  if (empresaStatus === 'suspenso') return 'vencido';
+  return 'pendente';
+}
+
 const statusConfig: Record<StatusFatura,{label:string;bg:string;color:string}> = {
   pago:     {label:'Pago',     bg:'rgba(138,117,96,0.12)', color:'#8a7560'},
   pendente: {label:'Pendente', bg:'rgba(234,179,8,0.12)',  color:'#ca8a04'},
@@ -96,6 +122,46 @@ export default function FinanceSuperAdmin() {
 
   const [empresas, setEmpresas]  = useState<Empresa[]>(EMPRESAS_INICIAL);
   const [historico,setHistorico] = useState<HistoricoFatura[]>(mockHistoricoInicial);
+
+  useEffect(() => {
+    Promise.all([listarEmpresas(), listarFaturas()])
+      .then(([empresasData, faturasData]) => {
+        const mappedFaturas: HistoricoFatura[] = faturasData.map(f => ({
+          id: f.id,
+          empresaId: String(f.empresaId),
+          empresaNome: f.empresaNome || '—',
+          competencia: f.competencia || '—',
+          valor: f.valor || 0,
+          vencimento: f.vencimento ? new Date(f.vencimento).toLocaleDateString('pt-BR') : '—',
+          pagamento: f.pagamento ? new Date(f.pagamento).toLocaleDateString('pt-BR') : null,
+          status: (['pago','pendente','vencido','cancelado'].includes(f.status||'') ? f.status : 'pendente') as StatusFatura,
+          plano: mapPlano(f.plano || ''),
+        }));
+        if (mappedFaturas.length > 0) setHistorico(mappedFaturas);
+
+        const faturasPorEmpresa: Record<number, FaturaAPI[]> = {};
+        faturasData.forEach(f => {
+          if (!faturasPorEmpresa[f.empresaId]) faturasPorEmpresa[f.empresaId] = [];
+          faturasPorEmpresa[f.empresaId].push(f);
+        });
+
+        const mappedEmpresas: Empresa[] = empresasData.map(e => ({
+          id: String(e.id),
+          nome: e.nome || '',
+          email: e.email || '',
+          plano: mapPlano(e.plano || ''),
+          valor: e.valor || 0,
+          vencimento: e.vencimento ? new Date(e.vencimento).toLocaleDateString('pt-BR') : '—',
+          status: derivarStatusPagamento(e.status || '', e.ativo !== false, faturasPorEmpresa[e.id] || []),
+          dataInicio: e.dataInicio ? new Date(e.dataInicio).toLocaleDateString('pt-BR') : '—',
+          proximaCobranca: e.proximaCobranca ? new Date(e.proximaCobranca).toLocaleDateString('pt-BR') : '—',
+          ativo: e.ativo !== false,
+          usuarios: e.usuarios || 0,
+        }));
+        if (mappedEmpresas.length > 0) setEmpresas(mappedEmpresas);
+      })
+      .catch(() => {});
+  }, []);
 
   const [activeTab,      setActiveTab]      = useState<ActiveTab>('visao_geral');
   const [search,         setSearch]         = useState('');
@@ -169,28 +235,56 @@ export default function FinanceSuperAdmin() {
     setPaymentFatura({empresaId:h.empresaId,empresaNome:h.empresaNome,plano:h.plano,valor:h.valor,competencia:h.competencia,vencimento:h.vencimento});
     setSelectedHistFatura(h); setShowPaymentModal(true);
   }
-  function handlePaymentSuccess(method:string){
+  async function handlePaymentSuccess(method:string){
     if(!paymentFatura) return;
     const now=hoje();
-    setEmpresas(prev=>prev.map(e=>e.id===paymentFatura.empresaId?{...e,status:'pago'}:e));
     if(selectedHistFatura){
+      try { await pagarFatura(selectedHistFatura.id); } catch {}
       setHistorico(prev=>prev.map(h=>h.id===selectedHistFatura.id?{...h,status:'pago',pagamento:now}:h));
     } else {
       setHistorico(prev=>[{id:prev.length+1,empresaId:paymentFatura.empresaId,empresaNome:paymentFatura.empresaNome,competencia:paymentFatura.competencia,valor:paymentFatura.valor,vencimento:paymentFatura.vencimento,pagamento:now,status:'pago',plano:paymentFatura.plano as PlanType},...prev]);
     }
+    setEmpresas(prev=>prev.map(e=>e.id===paymentFatura.empresaId?{...e,status:'pago'}:e));
     setShowPaymentModal(false); setPaymentFatura(null);
   }
 
-  function handleConfirmPlano(){
+  async function handleConfirmPlano(){
     if(!selectedEmpresa) return;
     const novoValor=PLANO_VALOR[editPlano]??selectedEmpresa.valor;
+    try {
+      await atualizarEmpresa(Number(selectedEmpresa.id), { nome: selectedEmpresa.nome, email: selectedEmpresa.email, plano: editPlano, status: editStatus, valor: novoValor });
+    } catch {}
     setEmpresas(prev=>prev.map(e=>e.id===selectedEmpresa.id?{...e,plano:editPlano as PlanType,status:editStatus as StatusFatura,valor:novoValor,ativo:editStatus!=='cancelado'}:e));
     setShowConfirmPlano(false);setShowSuccessPlano(true);
   }
-  function handleConfirmCobranca(){
+  async function handleConfirmCobranca(){
     if(!selectedEmpresa) return;
-    const novaFatura:HistoricoFatura={id:historico.length+1,empresaId:selectedEmpresa.id,empresaNome:selectedEmpresa.nome,competencia:cobrancaCompetencia||competenciaAtual(),valor:selectedEmpresa.valor,vencimento:cobrancaVencimento?cobrancaVencimento.split('-').reverse().join('/'):hoje(),pagamento:null,status:'pendente',plano:selectedEmpresa.plano};
-    setHistorico(prev=>[novaFatura,...prev]);
+    const vencimentoDate = cobrancaVencimento ? new Date(cobrancaVencimento).toISOString().split('T')[0] : undefined;
+    try {
+      const nova = await criarFatura({
+        empresaId: Number(selectedEmpresa.id),
+        competencia: cobrancaCompetencia || competenciaAtual(),
+        valor: selectedEmpresa.valor,
+        plano: selectedEmpresa.plano,
+        vencimento: vencimentoDate,
+        observacoes: cobrancaObs || undefined,
+      });
+      const novaFatura: HistoricoFatura = {
+        id: nova.id,
+        empresaId: selectedEmpresa.id,
+        empresaNome: selectedEmpresa.nome,
+        competencia: nova.competencia || cobrancaCompetencia || competenciaAtual(),
+        valor: nova.valor || selectedEmpresa.valor,
+        vencimento: nova.vencimento ? new Date(nova.vencimento).toLocaleDateString('pt-BR') : hoje(),
+        pagamento: null,
+        status: 'pendente',
+        plano: selectedEmpresa.plano,
+      };
+      setHistorico(prev=>[novaFatura,...prev]);
+    } catch {
+      const novaFatura:HistoricoFatura={id:historico.length+1,empresaId:selectedEmpresa.id,empresaNome:selectedEmpresa.nome,competencia:cobrancaCompetencia||competenciaAtual(),valor:selectedEmpresa.valor,vencimento:cobrancaVencimento?cobrancaVencimento.split('-').reverse().join('/'):hoje(),pagamento:null,status:'pendente',plano:selectedEmpresa.plano};
+      setHistorico(prev=>[novaFatura,...prev]);
+    }
     setEmpresas(prev=>prev.map(e=>e.id===selectedEmpresa.id?{...e,status:'pendente'}:e));
     setShowConfirmCobranca(false);setShowSuccessCobranca(true);
   }

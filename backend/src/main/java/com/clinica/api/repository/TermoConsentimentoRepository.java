@@ -8,4 +8,8 @@ import java.util.List;
 public interface TermoConsentimentoRepository extends JpaRepository<TermoConsentimento, Long> {
 
     List<TermoConsentimento> findByAtivoTrue();
+
+    List<TermoConsentimento> findByEmpresaIdAndAtivoTrue(Long empresaId);
+
+    List<TermoConsentimento> findByEmpresaId(Long empresaId);
 }

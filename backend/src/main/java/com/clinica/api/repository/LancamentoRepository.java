@@ -45,4 +45,6 @@ public interface LancamentoRepository extends JpaRepository<Lancamento, Long> {
     long countByStatus(StatusPagamento status);
 
     List<Lancamento> findByStatusAndDataVencimentoBefore(StatusPagamento status, LocalDate data);
+
+    Page<Lancamento> findByEmpresaId(Long empresaId, Pageable pageable);
 }

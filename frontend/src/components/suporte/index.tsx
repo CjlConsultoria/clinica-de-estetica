@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRoleRedirect } from '@/components/ui/hooks/useRoleRedirect';
+import { listarTickets, SuporteTicketAPI } from '@/services/suporteService';
+import { listarEmpresas, EmpresaAPI } from '@/services/empresaService';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
 import {
@@ -46,20 +48,6 @@ interface Ticket {
   descricao: string;
 }
 
-const EMPRESAS: Empresa[] = [
-  { id: 'e1', nome: 'Clínica Bella Vita',    plano: 'Pro',        status: 'ativo',    adminNome: 'Juliana Ferreira', adminEmail: 'juliana@bellavita.com',  usuarios: 8,  ultimoAcesso: 'Hoje, 09:14',    dataCadastro: '01/11/2024', mrr: 349 },
-  { id: 'e2', nome: 'Studio Ana Rodrigues',  plano: 'Starter',    status: 'trial',    adminNome: 'Ana Rodrigues',   adminEmail: 'ana@studioana.com',      usuarios: 3,  ultimoAcesso: 'Ontem, 15:30',   dataCadastro: '15/01/2025', mrr: 149 },
-  { id: 'e3', nome: 'Clínica Derma Saúde',   plano: 'Enterprise', status: 'ativo',    adminNome: 'Carlos Souza',    adminEmail: 'carlos@dermasaude.com',  usuarios: 22, ultimoAcesso: 'Hoje, 11:02',    dataCadastro: '10/03/2024', mrr: 749 },
-  { id: 'e4', nome: 'Instituto Skin Care',   plano: 'Pro',        status: 'suspenso', adminNome: 'Renata Moura',    adminEmail: 'renata@skincare.com',    usuarios: 6,  ultimoAcesso: '05/01/2025',     dataCadastro: '05/06/2024', mrr: 349 },
-  { id: 'e5', nome: 'Espaço Beleza Premium', plano: 'Pro',        status: 'ativo',    adminNome: 'Fernanda Lima',   adminEmail: 'fernanda@espacobeleza.com', usuarios: 11, ultimoAcesso: 'Ontem, 18:45', dataCadastro: '20/02/2025', mrr: 349 },
-];
-
-const TICKETS: Ticket[] = [
-  { id: 1, empresaId: 'e1', empresaNome: 'Clínica Bella Vita',    assunto: 'Não consigo gerar relatório de comissões', status: 'aberto',       prioridade: 'alta',  data: 'Hoje, 08:30',    descricao: 'Ao tentar exportar o relatório de comissões do mês de fevereiro, o sistema retorna erro 500.' },
-  { id: 2, empresaId: 'e3', empresaNome: 'Clínica Derma Saúde',   assunto: 'Dúvida sobre controle de lotes ANVISA',    status: 'em_andamento', prioridade: 'media', data: 'Ontem, 14:20',  descricao: 'Preciso entender como cadastrar lotes de produtos importados com número de lote estrangeiro.' },
-  { id: 3, empresaId: 'e2', empresaNome: 'Studio Ana Rodrigues',  assunto: 'Como adicionar novos usuários?',           status: 'resolvido',    prioridade: 'baixa', data: '20/02/2025',     descricao: 'Quero adicionar mais dois profissionais mas não encontrei a opção no painel.' },
-  { id: 4, empresaId: 'e4', empresaNome: 'Instituto Skin Care',   assunto: 'Conta suspensa — quero reativar',          status: 'aberto',       prioridade: 'alta',  data: 'Hoje, 06:15',    descricao: 'Nossa conta foi suspensa por falta de pagamento. Já realizamos o pagamento e queremos reativar.' },
-];
 
 const LOGS_POR_EMPRESA: Record<string, { acao: string; tempo: string; tipo: string }[]> = {
   e1: [
@@ -129,16 +117,60 @@ export default function Suporte() {
   const [sucessModal, setSucessModal] = useState<{ title: string; message: string } | null>(null);
   const [tab, setTab]                 = useState<'empresas' | 'tickets'>('empresas');
   const [ticketTab, setTicketTab]     = useState<'aberto' | 'em_andamento' | 'resolvido' | 'todos'>('todos');
+  const [allTickets, setAllTickets]   = useState<Ticket[]>([]);
+  const [empresas,   setEmpresas]     = useState<Empresa[]>([]);
+
+  useEffect(() => {
+    listarTickets().then((data: SuporteTicketAPI[]) => {
+      const mapped: Ticket[] = data.map(t => {
+        const rawStatus = (t.status || 'aberto').toLowerCase().replace(/\s+/g, '_');
+        const status: 'aberto' | 'em_andamento' | 'resolvido' =
+          rawStatus === 'resolvido' ? 'resolvido' :
+          rawStatus === 'em_andamento' ? 'em_andamento' : 'aberto';
+        const rawPrio = (t.prioridade || 'media').toLowerCase();
+        const prioridade: 'alta' | 'media' | 'baixa' =
+          rawPrio === 'alta' ? 'alta' : rawPrio === 'baixa' ? 'baixa' : 'media';
+        return {
+          id:          t.id,
+          empresaId:   t.empresaId ? String(t.empresaId) : '—',
+          empresaNome: t.empresaNome || t.nomeAutor || '—',
+          assunto:     t.titulo,
+          status,
+          prioridade,
+          data:        t.criadoEm ? new Date(t.criadoEm).toLocaleDateString('pt-BR') : '—',
+          descricao:   t.descricao,
+        };
+      });
+      if (mapped.length > 0) setAllTickets(mapped);
+    }).catch(() => {});
+
+    listarEmpresas().then((data: EmpresaAPI[]) => {
+      const mapped: Empresa[] = data.map(e => ({
+        id:           String(e.id),
+        nome:         e.nome || '',
+        plano:        e.plano || 'Starter',
+        status:       (e.status === 'suspenso' ? 'suspenso' : e.ativo ? 'ativo' : 'trial') as 'ativo' | 'suspenso' | 'trial',
+        adminNome:    e.adminNome || '',
+        adminEmail:   e.adminEmail || '',
+        usuarios:     e.usuarios || 0,
+        ultimoAcesso: '—',
+        dataCadastro: e.dataInicio ? new Date(e.dataInicio).toLocaleDateString('pt-BR') : '—',
+        mrr:          e.valor || 0,
+      }));
+      if (mapped.length > 0) setEmpresas(mapped);
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!allowed) return null;
 
-  const filtered = EMPRESAS.filter(e => {
+  const filtered = empresas.filter(e => {
     const matchSearch = e.nome.toLowerCase().includes(search.toLowerCase()) || e.adminEmail.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filterStatus === 'Todos' || e.status === filterStatus.toLowerCase();
     return matchSearch && matchStatus;
   });
 
-  const tickets = ticketTab === 'todos' ? TICKETS : TICKETS.filter(t => t.status === ticketTab);
+  const tickets = ticketTab === 'todos' ? allTickets : allTickets.filter(t => t.status === ticketTab);
 
   function toggle(name: string) {
     setOpenDropdown(p => p === name ? null : name);
@@ -185,19 +217,19 @@ export default function Suporte() {
 
       <StatsRow>
         <StatBox>
-          <StatBoxValue>{EMPRESAS.filter(e => e.status === 'ativo').length}</StatBoxValue>
+          <StatBoxValue>{empresas.filter(e => e.status === 'ativo').length}</StatBoxValue>
           <StatBoxLabel>Ativas</StatBoxLabel>
         </StatBox>
         <StatBox>
-          <StatBoxValue>{EMPRESAS.filter(e => e.status === 'trial').length}</StatBoxValue>
+          <StatBoxValue>{empresas.filter(e => e.status === 'trial').length}</StatBoxValue>
           <StatBoxLabel>Em trial</StatBoxLabel>
         </StatBox>
         <StatBox $alert>
-          <StatBoxValue>{EMPRESAS.filter(e => e.status === 'suspenso').length}</StatBoxValue>
+          <StatBoxValue>{empresas.filter(e => e.status === 'suspenso').length}</StatBoxValue>
           <StatBoxLabel>Suspensas</StatBoxLabel>
         </StatBox>
         <StatBox>
-          <StatBoxValue>{TICKETS.filter(t => t.status === 'aberto').length}</StatBoxValue>
+          <StatBoxValue>{allTickets.filter(t => t.status === 'aberto').length}</StatBoxValue>
           <StatBoxLabel>Tickets abertos</StatBoxLabel>
         </StatBox>
       </StatsRow>
@@ -360,7 +392,7 @@ export default function Suporte() {
                   <TicketBody>{t.descricao}</TicketBody>
                   <div style={{ marginTop: 14 }}>
                     <Btn $size="sm" onClick={() => {
-                      const emp = EMPRESAS.find(e => e.id === t.empresaId);
+                      const emp = empresas.find(e => e.id === t.empresaId);
                       if (emp) handleImpersonate(emp);
                     }}>
                       Entrar na empresa para suporte →

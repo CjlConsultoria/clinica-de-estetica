@@ -7,6 +7,7 @@ import com.clinica.api.dto.response.PageResponse;
 import com.clinica.api.entity.Agendamento;
 import com.clinica.api.entity.Lancamento;
 import com.clinica.api.entity.Paciente;
+import com.clinica.api.entity.Usuario;
 import com.clinica.api.enums.StatusPagamento;
 import com.clinica.api.exception.BusinessException;
 import com.clinica.api.exception.ExceptionMessages;
@@ -16,6 +17,7 @@ import com.clinica.api.repository.LancamentoRepository;
 import com.clinica.api.repository.PacienteRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +44,16 @@ public class LancamentoService {
         this.comissaoService = comissaoService;
     }
 
+    private Long getEmpresaId() {
+        Usuario u = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return u.getEmpresaId();
+    }
+
     public PageResponse<LancamentoResponse> listar(Pageable pageable) {
+        Long empresaId = getEmpresaId();
+        if (empresaId != null) {
+            return PageResponse.of(lancamentoRepository.findByEmpresaId(empresaId, pageable).map(this::toResponse));
+        }
         return PageResponse.of(lancamentoRepository.findAll(pageable).map(this::toResponse));
     }
 
@@ -78,6 +89,7 @@ public class LancamentoService {
                 .descricao(request.getDescricao())
                 .observacoes(request.getObservacoes())
                 .numeroRecibo(gerarNumeroRecibo())
+                .empresaId(getEmpresaId())
                 .build();
 
         return toResponse(lancamentoRepository.save(lancamento));

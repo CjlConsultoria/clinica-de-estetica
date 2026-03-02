@@ -7,6 +7,7 @@ import com.clinica.api.dto.response.TermoResponse;
 import com.clinica.api.entity.AssinaturaConsentimento;
 import com.clinica.api.entity.Paciente;
 import com.clinica.api.entity.TermoConsentimento;
+import com.clinica.api.entity.Usuario;
 import com.clinica.api.exception.BusinessException;
 import com.clinica.api.exception.ExceptionMessages;
 import com.clinica.api.exception.ResourceNotFoundException;
@@ -14,6 +15,7 @@ import com.clinica.api.repository.AssinaturaConsentimentoRepository;
 import com.clinica.api.repository.PacienteRepository;
 import com.clinica.api.repository.TermoConsentimentoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,11 +35,24 @@ public class ConsentimentoService {
     private final AssinaturaConsentimentoRepository assinaturaRepository;
     private final PacienteRepository pacienteRepository;
 
+    private Long getEmpresaId() {
+        Usuario u = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return u.getEmpresaId();
+    }
+
     public List<TermoResponse> listarTermosAtivos() {
+        Long empresaId = getEmpresaId();
+        if (empresaId != null) {
+            return termoRepository.findByEmpresaIdAndAtivoTrue(empresaId).stream().map(this::toTermoResponse).toList();
+        }
         return termoRepository.findByAtivoTrue().stream().map(this::toTermoResponse).toList();
     }
 
     public List<TermoResponse> listarTodosTermos() {
+        Long empresaId = getEmpresaId();
+        if (empresaId != null) {
+            return termoRepository.findByEmpresaId(empresaId).stream().map(this::toTermoResponse).toList();
+        }
         return termoRepository.findAll().stream().map(this::toTermoResponse).toList();
     }
 
@@ -51,6 +66,7 @@ public class ConsentimentoService {
                 .titulo(request.getTitulo())
                 .conteudo(request.getConteudo())
                 .versao(request.getVersao())
+                .empresaId(getEmpresaId())
                 .build();
         return toTermoResponse(termoRepository.save(termo));
     }
@@ -101,11 +117,21 @@ public class ConsentimentoService {
     }
 
     public List<AssinaturaResponse> listarTodasAssinaturas() {
+        Long empresaId = getEmpresaId();
+        if (empresaId != null) {
+            return assinaturaRepository.findByPaciente_EmpresaId(empresaId)
+                    .stream().map(this::toAssinaturaResponse).toList();
+        }
         return assinaturaRepository.findAllByOrderByDataAssinaturaDesc()
                 .stream().map(this::toAssinaturaResponse).toList();
     }
 
     public List<AssinaturaResponse> listarAssinaturasPorPaciente(Long pacienteId) {
+        Long empresaId = getEmpresaId();
+        if (empresaId != null) {
+            return assinaturaRepository.findByPaciente_EmpresaIdAndPacienteId(empresaId, pacienteId)
+                    .stream().map(this::toAssinaturaResponse).toList();
+        }
         return assinaturaRepository.findByPacienteIdOrderByDataAssinaturaDesc(pacienteId)
                 .stream().map(this::toAssinaturaResponse).toList();
     }

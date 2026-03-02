@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { obterDashboard } from '@/services/dashboardService';
 import Button from '@/components/ui/button';
 import StatCard from '@/components/ui/statcard';
 import {
@@ -46,6 +47,20 @@ export default function Reports() {
   const [period,       setPeriod]       = useState('Este mês');
   const [openDropdown, setOpenDropdown] = useState(false);
   const [exporting,    setExporting]    = useState(false);
+  const [dashStats, setDashStats] = useState({ totalRevenue: 462540, totalSessions: 562, avgTicket: 822, newPatients: 42 });
+
+  useEffect(() => {
+    obterDashboard().then(d => {
+      const sessions = d.agendamentosMes || 562;
+      const revenue  = d.receitaMes      || 462540;
+      setDashStats({
+        totalRevenue:  revenue,
+        totalSessions: sessions,
+        avgTicket:     sessions > 0 ? Math.round(revenue / sessions) : 822,
+        newPatients:   d.totalPacientes   || 42,
+      });
+    }).catch(() => {});
+  }, []);
 
   let cumulative = 0;
   const pieGradient = pieData.map(d => {
@@ -67,12 +82,7 @@ export default function Reports() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           period,
-          stats: {
-            totalRevenue:  462540,
-            totalSessions: 562,
-            avgTicket:     822,
-            newPatients:   42,
-          },
+          stats: dashStats,
           procedures: topProcedures,
           pieData,
         }),
@@ -171,28 +181,28 @@ export default function Reports() {
       <StatsGrid>
         <StatCard
           label="Receita Total"
-          value="R$ 462.540"
+          value={`R$ ${fmt(dashStats.totalRevenue)}`}
           color="#BBA188"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>}
           trend={{ value: '+14% vs período ant.', positive: true }}
         />
         <StatCard
           label="Total de Sessões"
-          value="562"
+          value={String(dashStats.totalSessions)}
           color="#EBD5B0"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>}
           trend={{ value: '+9% vs período ant.', positive: true }}
         />
         <StatCard
           label="Ticket Médio"
-          value="R$ 822"
+          value={`R$ ${fmt(dashStats.avgTicket)}`}
           color="#8a7560"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>}
           trend={{ value: '+4.5% vs período ant.', positive: true }}
         />
         <StatCard
-          label="Novos Pacientes"
-          value="42"
+          label="Total de Pacientes"
+          value={String(dashStats.newPatients)}
           color="#1b1b1b"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>}
           trend={{ value: '+18% vs período ant.', positive: true }}

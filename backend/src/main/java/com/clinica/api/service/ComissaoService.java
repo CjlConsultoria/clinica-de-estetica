@@ -17,6 +17,7 @@ import com.clinica.api.repository.ComissaoRepository;
 import com.clinica.api.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +36,20 @@ public class ComissaoService {
     private final ComissaoConfigRepository configRepository;
     private final UsuarioRepository usuarioRepository;
 
+    private Long getEmpresaId() {
+        Usuario u = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return u.getEmpresaId();
+    }
+
     public List<ComissaoResponse> listarTodas() {
+        Long empresaId = getEmpresaId();
+        if (empresaId != null) {
+            return comissaoRepository.findByUsuario_EmpresaId(empresaId)
+                    .stream()
+                    .sorted((a, b) -> b.getCriadoEm().compareTo(a.getCriadoEm()))
+                    .map(this::toResponse)
+                    .toList();
+        }
         return comissaoRepository.findAll()
                 .stream()
                 .sorted((a, b) -> b.getCriadoEm().compareTo(a.getCriadoEm()))

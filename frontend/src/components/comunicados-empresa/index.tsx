@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRoleRedirect } from '@/components/ui/hooks/useRoleRedirect';
+import { listarComunicados, ComunicadoAPI } from '@/services/comunicadoService';
 import {
   Container, Header, Title, Subtitle,
   StatsRow, StatBox, StatBoxValue, StatBoxLabel,
@@ -60,48 +61,6 @@ const tipoConfig: Record<Tipo, { label: string }> = {
   cobranca:   { label: 'Cobrança'   },
 };
 
-const MOCK_COMUNICADOS: Comunicado[] = [
-  {
-    id: 1,
-    titulo: 'Manutenção programada — 15/03/2025',
-    mensagem: 'Informamos que o sistema ficará indisponível no dia 15/03/2025 das 02h às 04h para manutenção de infraestrutura. Durante este período, o acesso ao painel estará temporariamente suspenso.',
-    tipo: 'manutencao',
-    dataEnvio: '10/03/2025',
-    lido: true,
-  },
-  {
-    id: 2,
-    titulo: 'Nova funcionalidade: Relatório de Fotos Clínicas',
-    mensagem: 'Temos o prazer de anunciar o lançamento do módulo de Relatório de Fotos Clínicas. Agora é possível exportar comparativos antes/depois em PDF diretamente pela plataforma.',
-    tipo: 'novidade',
-    dataEnvio: '05/03/2025',
-    lido: true,
-  },
-  {
-    id: 3,
-    titulo: 'Atualização de Termos de Uso — versão 2.1',
-    mensagem: 'Nossos Termos de Uso foram atualizados. A nova versão entrará em vigor em 01/04/2025. Recomendamos a leitura completa antes desta data.',
-    tipo: 'alerta',
-    dataEnvio: '25/03/2025',
-    lido: false,
-  },
-  {
-    id: 4,
-    titulo: 'Fatura vencida — regularize seu acesso',
-    mensagem: 'Identificamos que sua fatura do mês de janeiro está em atraso. Para evitar a suspensão do acesso, realize o pagamento até 20/03/2025.',
-    tipo: 'cobranca',
-    dataEnvio: '12/03/2025',
-    lido: false,
-  },
-  {
-    id: 5,
-    titulo: 'Dica: use o módulo de agendamento integrado',
-    mensagem: 'Você sabia que é possível sincronizar o módulo de agendamento com o Google Agenda? Acesse Configurações › Integrações para ativar.',
-    tipo: 'novidade',
-    dataEnvio: '01/03/2025',
-    lido: false,
-  },
-];
 
 export default function ComunicadosEmpresa() {
   const allowed = useRoleRedirect({
@@ -109,8 +68,25 @@ export default function ComunicadosEmpresa() {
     blockSuperAdmin: true,
   });
 
-  const [comunicados, setComunicados] = useState<Comunicado[]>(MOCK_COMUNICADOS);
+  const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [filtro, setFiltro]           = useState<'todos' | 'nao_lidos' | 'lidos'>('todos');
+
+  useEffect(() => {
+    listarComunicados().then((data: ComunicadoAPI[]) => {
+      const mapped: Comunicado[] = data.filter(c => c.ativo).map(c => ({
+        id:       c.id,
+        titulo:   c.titulo,
+        mensagem: c.conteudo,
+        tipo:     (['manutencao', 'novidade', 'alerta', 'cobranca'].includes((c.tipo || '').toLowerCase())
+                    ? (c.tipo || '').toLowerCase()
+                    : 'novidade') as Tipo,
+        dataEnvio: c.criadoEm ? new Date(c.criadoEm).toLocaleDateString('pt-BR') : '—',
+        lido:      false,
+      }));
+      if (mapped.length > 0) setComunicados(mapped);
+    }).catch(() => {});
+
+  }, []);
 
   if (!allowed) return null;
 

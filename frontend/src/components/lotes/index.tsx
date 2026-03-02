@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { listarLotes, criarLote, criarProduto, LoteAPI } from '@/services/estoqueService';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -130,7 +131,41 @@ export default function Lotes() {
 
   const { errors, validate, clearError, clearAll } = useSequentialValidation<LoteField>(VALIDATION_FIELDS);
 
-  const filtered = mockLotes.filter(l => {
+  const [lotes, setLotes] = useState<Lote[]>(mockLotes as Lote[]);
+
+  useEffect(() => {
+    listarLotes().then((data: LoteAPI[]) => {
+      const mapped: Lote[] = data.map(l => {
+        const qty    = l.quantidadeAtual  ?? 0;
+        const maxQty = l.quantidadeTotal  ?? 1;
+        const ratio  = qty / Math.max(maxQty, 1);
+        const status = l.dataValidade && isExpired(l.dataValidade)
+          ? 'vencido'
+          : qty === 0 ? 'esgotado'
+          : ratio <= 0.2 ? 'critico' : 'ativo';
+        return {
+          id:                l.id,
+          lote:              l.numeroLote   || `L${l.id}`,
+          produto:           l.produto?.nome || '—',
+          categoria:         l.produto?.categoria || '—',
+          fabricante:        '—',
+          fornecedor:        l.fornecedor   || '—',
+          dataEntrada:       l.criadoEm ? new Date(l.criadoEm).toLocaleDateString('pt-BR') : '—',
+          dataFabricacao:    '—',
+          dataValidade:      l.dataValidade || '2099-12-31',
+          quantidadeEntrada: maxQty,
+          quantidadeAtual:   qty,
+          unidade:           l.produto?.unidade || 'unid',
+          registroAnvisa:    '—',
+          status,
+          usos: [],
+        } as Lote;
+      });
+      if (mapped.length > 0) setLotes(mapped);
+    }).catch(() => {});
+  }, []);
+
+  const filtered = lotes.filter(l => {
     const matchSearch = l.lote.toLowerCase().includes(search.toLowerCase()) || l.produto.toLowerCase().includes(search.toLowerCase()) || l.registroAnvisa.toLowerCase().includes(search.toLowerCase());
     const matchCat    = filterCat  === 'Todas' || l.categoria === filterCat;
     const matchStat   = filterStat === 'Todos' || l.status    === filterStat.toLowerCase();
@@ -143,11 +178,11 @@ export default function Lotes() {
   const startIndex    = (safePage - 1) * ITEMS_PER_PAGE;
   const paginatedData = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  const totalLotes    = mockLotes.length;
-  const ativos        = mockLotes.filter(l => l.status === 'ativo').length;
-  const criticos      = mockLotes.filter(l => l.status === 'critico' || isExpiringSoon(l.dataValidade)).length;
-  const esgotados     = mockLotes.filter(l => l.status === 'esgotado').length;
-  const totalProdutos = mockLotes.reduce((a, l) => a + l.quantidadeAtual, 0);
+  const totalLotes    = lotes.length;
+  const ativos        = lotes.filter(l => l.status === 'ativo').length;
+  const criticos      = lotes.filter(l => l.status === 'critico' || isExpiringSoon(l.dataValidade)).length;
+  const esgotados     = lotes.filter(l => l.status === 'esgotado').length;
+  const totalProdutos = lotes.reduce((a, l) => a + l.quantidadeAtual, 0);
 
   function handleSearchChange(value: string)     { setSearch(value);    setCurrentPage(1); }
   function handleFilterCatChange(value: string)  { setFilterCat(value); setCurrentPage(1); setOpenDropCat(false); }
@@ -197,8 +232,30 @@ export default function Lotes() {
     setShowConfirmModal(true);
   }
 
-  function handleConfirmSave() {
-    setShowConfirmModal(false); setIsModalOpen(false);
+  async function handleConfirmSave() {
+    setShowConfirmModal(false);
+    try {
+      if (!selected) {
+        const catLabel = categoryOptions.find(c => c.value === form.categoria)?.label ?? form.categoria;
+        const produto  = await criarProduto({ nome: form.produto, fabricante: form.fabricante || '—', categoria: catLabel, unidade: 'unid', descricao: form.produto });
+        await criarLote({
+          produtoId:        produto.id,
+          numeroLote:       form.lote,
+          quantidadeTotal:  parseInt(form.quantidadeEntrada, 10) || 1,
+          dataValidade:     form.dataValidade,
+          fornecedor:       form.fornecedor,
+        });
+        const updated = await listarLotes();
+        setLotes(updated.map((l: LoteAPI) => {
+          const qty = l.quantidadeAtual ?? 0;
+          const maxQty = l.quantidadeTotal ?? 1;
+          const ratio = qty / Math.max(maxQty, 1);
+          const status = l.dataValidade && isExpired(l.dataValidade) ? 'vencido' : qty === 0 ? 'esgotado' : ratio <= 0.2 ? 'critico' : 'ativo';
+          return { id: l.id, lote: l.numeroLote || `L${l.id}`, produto: l.produto?.nome || '—', categoria: l.produto?.categoria || '—', fabricante: '—', fornecedor: l.fornecedor || '—', dataEntrada: l.criadoEm ? new Date(l.criadoEm).toLocaleDateString('pt-BR') : '—', dataFabricacao: '—', dataValidade: l.dataValidade || '2099-12-31', quantidadeEntrada: maxQty, quantidadeAtual: qty, unidade: l.produto?.unidade || 'unid', registroAnvisa: '—', status, usos: [] } as Lote;
+        }));
+      }
+    } catch {}
+    setIsModalOpen(false);
     setForm(FORM_INITIAL); clearAll(); setSelected(null); setShowSuccessModal(true);
   }
 

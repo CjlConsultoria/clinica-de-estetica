@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePermissions } from '@/components/ui/hooks/usePermissions';
 import { useRoleRedirect } from '@/components/ui/hooks/useRoleRedirect';
+import { listarEmpresas, EmpresaAPI } from '@/services/empresaService';
 import {
   Container, Header, Title, Subtitle, LiveBadge,
   StatsGrid, StatCard, StatValue, StatLabel, StatTrend, StatIcon,
@@ -23,7 +24,7 @@ import {
 const fmt = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 const fmtFull = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-const EMPRESAS = [
+const EMPRESAS_FALLBACK = [
   { id: 1, nome: 'Clínica Bella Vita',    plano: 'Pro',        status: 'ativo',    usuarios: 8,  mrr: 349, ingresso: '01/11/2024' },
   { id: 2, nome: 'Studio Ana Rodrigues',  plano: 'Starter',    status: 'ativo',    usuarios: 3,  mrr: 149, ingresso: '15/01/2025' },
   { id: 3, nome: 'Clínica Derma Saúde',   plano: 'Enterprise', status: 'ativo',    usuarios: 22, mrr: 749, ingresso: '10/03/2024' },
@@ -65,15 +66,39 @@ const planConfig: Record<string, { bg: string; color: string }> = {
 };
 
 const hoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+const maxMRR = Math.max(...MRR_HISTORY.map(m => m.valor));
 
-const totalMRR  = EMPRESAS.filter(e => e.status === 'ativo').reduce((a, e) => a + e.mrr, 0);
-const ativas    = EMPRESAS.filter(e => e.status === 'ativo').length;
-const suspensos = EMPRESAS.filter(e => e.status === 'suspenso').length;
-const maxMRR    = Math.max(...MRR_HISTORY.map(m => m.valor));
+type EmpresaRow = { id: number; nome: string; plano: string; status: string; usuarios: number; mrr: number; ingresso: string };
 
 export default function DashboardSuperAdmin() {
   const allowed = useRoleRedirect({ superAdminOnly: true });
   const [tab, setTab] = useState<'visao' | 'empresas'>('visao');
+  const [empresas, setEmpresas] = useState<EmpresaRow[]>(EMPRESAS_FALLBACK);
+
+  useEffect(() => {
+    listarEmpresas().then((data: EmpresaAPI[]) => {
+      const mapped: EmpresaRow[] = data.map(e => ({
+        id: e.id,
+        nome: e.nome,
+        plano: e.plano || 'Starter',
+        status: e.status || 'ativo',
+        usuarios: e.usuarios || 0,
+        mrr: e.valor || 0,
+        ingresso: e.dataInicio ? new Date(e.dataInicio).toLocaleDateString('pt-BR') : '—',
+      }));
+      if (mapped.length > 0) setEmpresas(mapped);
+    }).catch(() => {});
+  }, []);
+
+  const totalMRR  = empresas.filter(e => e.status === 'ativo').reduce((a, e) => a + e.mrr, 0);
+  const ativas    = empresas.filter(e => e.status === 'ativo').length;
+  const suspensos = empresas.filter(e => e.status === 'suspenso').length;
+
+  const planoDist = (['Starter', 'Pro', 'Profissional', 'Enterprise'] as const).map(nome => ({
+    nome,
+    count: empresas.filter(e => e.plano === nome).length,
+    color: nome === 'Starter' ? '#3b82f6' : nome === 'Enterprise' ? '#1b1b1b' : '#BBA188',
+  })).filter(p => p.count > 0);
 
   if (!allowed) return null;
 
@@ -111,7 +136,7 @@ export default function DashboardSuperAdmin() {
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           </StatIcon>
           <StatLabel>Usuários Totais</StatLabel>
-          <StatValue>{EMPRESAS.reduce((a, e) => a + e.usuarios, 0)}</StatValue>
+          <StatValue>{empresas.reduce((a, e) => a + e.usuarios, 0)}</StatValue>
           <StatTrend $positive>+8 vs mês anterior</StatTrend>
         </StatCard>
 
@@ -172,7 +197,7 @@ export default function DashboardSuperAdmin() {
           </CardHeader>
           <CardBody>
             <PlanDistGrid>
-              {PLANO_DIST.map(p => (
+              {planoDist.map(p => (
                 <PlanItem key={p.nome}>
                   <PlanDot $color={p.color} />
                   <PlanName>{p.nome}</PlanName>
@@ -183,8 +208,8 @@ export default function DashboardSuperAdmin() {
 
             <div style={{ marginTop: 24 }}>
               <div style={{ fontSize: '0.78rem', color: '#aaa', marginBottom: 8, fontWeight: 600 }}>RECEITA POR PLANO</div>
-              {PLANO_DIST.map(p => {
-                const empresasDePlano = EMPRESAS.filter(e => e.plano === p.nome && e.status === 'ativo');
+              {planoDist.map(p => {
+                const empresasDePlano = empresas.filter(e => e.plano === p.nome && e.status === 'ativo');
                 const receitaPlano = empresasDePlano.reduce((a, e) => a + e.mrr, 0);
                 const pct = totalMRR > 0 ? Math.round((receitaPlano / totalMRR) * 100) : 0;
                 return (
@@ -222,7 +247,7 @@ export default function DashboardSuperAdmin() {
                   </tr>
                 </Thead>
                 <Tbody>
-                  {EMPRESAS.map(e => (
+                  {empresas.map(e => (
                     <Tr key={e.id}>
                       <Td>
                         <CompanyRow>

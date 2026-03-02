@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -11,6 +11,7 @@ import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
+import { listarPacientes, criarPaciente, atualizarPaciente, inativarPaciente, PacienteAPI } from '@/services/pacienteService';
 import {
   Container, Header, Title, StatsGrid, Controls,
   SearchBarWrapper, SearchIconWrap, SearchInputStyled,
@@ -49,7 +50,7 @@ interface PacienteForm {
 
 type Step1Field = 'nome' | 'email' | 'telefone' | 'nascimento' | 'cpf';
 type Step2Field = 'cep' | 'logradouro' | 'numero';
-type Step3Field = never; 
+type Step3Field = never;
 
 const FORM_INITIAL: PacienteForm = {
   nome: '', email: '', telefone: '', nascimento: '', cpf: '', sexo: '',
@@ -82,22 +83,67 @@ const statusColors: Record<string, { bg: string; color: string }> = {
 
 const avatarColors = ['#BBA188', '#8a7560', '#a8906f', '#c9a882', '#917255', '#d4b896'];
 
-const INITIAL_PATIENTS = [
-  { id: 1,  name: 'Ana Beatriz Costa',  email: 'ana.costa@email.com',     phone: '(11) 98765-4321', birthdate: '1988-03-15', cpf: '123.456.789-00', lastVisit: '18/02/2025', procedure: 'Botox',            status: 'ativo',   visits: 8,  indicacao: 'Instagram',          observacoes: 'Alergia a látex',                sexo: 'feminino',  cep: '01310-100', logradouro: 'Av. Paulista',      numero: '1000', complemento: 'Apto 51', bairro: 'Bela Vista',     cidade: 'São Paulo',     estado: 'SP', convenio: 'Unimed',     numeroCarteirinha: '123456789' },
-  { id: 2,  name: 'Carla Mendonça',     email: 'carla.m@email.com',       phone: '(11) 97654-3210', birthdate: '1992-07-22', cpf: '234.567.890-11', lastVisit: '15/02/2025', procedure: 'Preenchimento',    status: 'ativo',   visits: 5,  indicacao: 'Indicação de amiga', observacoes: '',                               sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
-  { id: 3,  name: 'Fernanda Lima',      email: 'fernanda.lima@email.com', phone: '(11) 96543-2109', birthdate: '1985-11-05', cpf: '345.678.901-22', lastVisit: '10/02/2025', procedure: 'Bioestimulador',   status: 'ativo',   visits: 3,  indicacao: 'Google',             observacoes: 'Gestante, verificar procedimentos', sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
-  { id: 4,  name: 'Marina Souza',       email: 'marina.s@email.com',      phone: '(21) 95432-1098', birthdate: '1990-04-30', cpf: '456.789.012-33', lastVisit: '08/01/2025', procedure: 'Fio PDO',          status: 'ativo',   visits: 6,  indicacao: 'Instagram',          observacoes: '',                               sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
-  { id: 5,  name: 'Juliana Rocha',      email: 'juliana.r@email.com',     phone: '(21) 94321-0987', birthdate: '1995-09-14', cpf: '567.890.123-44', lastVisit: '05/01/2025', procedure: 'Botox',            status: 'ativo',   visits: 2,  indicacao: 'Indicação médico',   observacoes: '',                               sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
-  { id: 6,  name: 'Patrícia Alves',     email: 'patricia.a@email.com',    phone: '(31) 93210-9876', birthdate: '1982-12-19', cpf: '678.901.234-55', lastVisit: '20/12/2024', procedure: 'Microagulhamento', status: 'inativo', visits: 12, indicacao: 'Google',             observacoes: 'Histórico de queloides',         sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
-  { id: 7,  name: 'Roberta Gomes',      email: 'roberta.g@email.com',     phone: '(31) 92109-8765', birthdate: '1998-06-08', cpf: '789.012.345-66', lastVisit: '15/12/2024', procedure: 'Preenchimento',    status: 'ativo',   visits: 1,  indicacao: 'TikTok',             observacoes: '',                               sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
-  { id: 8,  name: 'Sandra Oliveira',    email: 'sandra.o@email.com',      phone: '(41) 91098-7654', birthdate: '1978-02-25', cpf: '890.123.456-77', lastVisit: '10/11/2024', procedure: 'Bioestimulador',   status: 'inativo', visits: 7,  indicacao: 'Indicação de amiga', observacoes: '',                               sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
-  { id: 9,  name: 'Luciana Ferreira',   email: 'luciana.f@email.com',     phone: '(11) 90987-6543', birthdate: '1991-01-10', cpf: '901.234.567-88', lastVisit: '12/02/2025', procedure: 'Botox',            status: 'ativo',   visits: 4,  indicacao: 'Instagram',          observacoes: '',                               sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
-  { id: 10, name: 'Renata Cardoso',     email: 'renata.c@email.com',      phone: '(21) 99876-5432', birthdate: '1987-08-03', cpf: '012.345.678-99', lastVisit: '20/01/2025', procedure: 'Fio PDO',          status: 'ativo',   visits: 9,  indicacao: 'Google',             observacoes: 'Diabética tipo 2',               sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
-  { id: 11, name: 'Camila Torres',      email: 'camila.t@email.com',      phone: '(31) 98765-0123', birthdate: '1994-05-17', cpf: '111.222.333-44', lastVisit: '05/02/2025', procedure: 'Preenchimento',    status: 'ativo',   visits: 2,  indicacao: 'Indicação de amiga', observacoes: '',                               sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
-  { id: 12, name: 'Beatriz Nunes',      email: 'beatriz.n@email.com',     phone: '(41) 97654-9012', birthdate: '2000-11-28', cpf: '222.333.444-55', lastVisit: '01/01/2025', procedure: 'Microagulhamento', status: 'ativo',   visits: 1,  indicacao: 'Instagram',          observacoes: '',                               sexo: 'feminino',  cep: '',     logradouro: '',                  numero: '',    complemento: '',        bairro: '',               cidade: '',              estado: '', convenio: '',           numeroCarteirinha: ''          },
-];
+interface Patient {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  birthdate: string;
+  cpf: string;
+  lastVisit: string;
+  procedure: string;
+  status: string;
+  visits: number;
+  indicacao: string;
+  observacoes: string;
+  sexo: string;
+  cep: string;
+  logradouro: string;
+  numero: string;
+  complemento: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  convenio: string;
+  numeroCarteirinha: string;
+}
 
-type Patient = typeof INITIAL_PATIENTS[0];
+function mapApiToPatient(p: PacienteAPI): Patient {
+  return {
+    id:                p.id,
+    name:              p.nome,
+    email:             p.email,
+    phone:             p.telefone || p.celular || '',
+    birthdate:         p.dataNascimento,
+    cpf:               p.cpf,
+    lastVisit:         '—',
+    procedure:         '',
+    status:            p.ativo ? 'ativo' : 'inativo',
+    visits:            0,
+    indicacao:         '',
+    observacoes:       p.observacoes || '',
+    sexo:              p.sexo?.toLowerCase() || '',
+    cep:               p.cep || '',
+    logradouro:        p.logradouro || '',
+    numero:            p.numero || '',
+    complemento:       p.complemento || '',
+    bairro:            p.bairro || '',
+    cidade:            p.cidade || '',
+    estado:            p.estado || '',
+    convenio:          p.convenio || '',
+    numeroCarteirinha: p.numeroCarteirinha || '',
+  };
+}
+
+function mapSexoToBackend(sexo: string): string {
+  switch (sexo) {
+    case 'masculino':   return 'MASCULINO';
+    case 'feminino':    return 'FEMININO';
+    case 'nao_binario':
+    case 'prefiro_nao':
+    default:            return 'OUTRO';
+  }
+}
 
 const ITEMS_PER_PAGE = 10;
 
@@ -165,7 +211,8 @@ function isFormDirty(form: PacienteForm): boolean {
 
 
 export default function Patients() {
-  const [patients,         setPatients]         = useState<Patient[]>(INITIAL_PATIENTS);
+  const [patients,         setPatients]         = useState<Patient[]>([]);
+  const [loading,          setLoading]          = useState(false);
   const [search,           setSearch]           = useState('');
   const [filterSt,         setFilterSt]         = useState('Todos');
   const [filterProc,       setFilterProc]       = useState('Todos');
@@ -196,6 +243,22 @@ export default function Patients() {
     { key: 'logradouro', validate: () => null },
     { key: 'numero',     validate: () => null },
   ]);
+
+  async function fetchPatients() {
+    setLoading(true);
+    try {
+      const response = await listarPacientes('', 0, 1000);
+      setPatients(response.content.map(mapApiToPatient));
+    } catch {
+      setPatients([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchPatients();
+  }, []);
 
   const filtered = patients.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.email.includes(search);
@@ -309,37 +372,38 @@ export default function Patients() {
     setShowConfirmModal(true);
   }
 
-  function handleConfirmSave() {
+  async function handleConfirmSave() {
     setShowConfirmModal(false);
-    const today = new Date().toLocaleDateString('pt-BR');
-    if (isEditing && selectedPatient) {
-      setPatients(prev => prev.map(p => p.id === selectedPatient.id
-        ? {
-            ...p,
-            name: form.nome, email: form.email, phone: form.telefone,
-            birthdate: form.nascimento, cpf: form.cpf,
-            sexo: form.sexo, status: form.status,
-            cep: form.cep, logradouro: form.logradouro, numero: form.numero,
-            complemento: form.complemento, bairro: form.bairro,
-            cidade: form.cidade, estado: form.estado,
-            convenio: form.convenio, numeroCarteirinha: form.numeroCarteirinha,
-            indicacao: form.indicacao, observacoes: form.observacoes,
-          }
-        : p
-      ));
-    } else {
-      setPatients(prev => [...prev, {
-        id: Date.now(), name: form.nome, email: form.email, phone: form.telefone,
-        birthdate: form.nascimento, cpf: form.cpf,
-        lastVisit: today, procedure: '—', status: 'ativo', visits: 0,
-        sexo: form.sexo,
-        cep: form.cep, logradouro: form.logradouro, numero: form.numero,
-        complemento: form.complemento, bairro: form.bairro,
-        cidade: form.cidade, estado: form.estado,
-        convenio: form.convenio, numeroCarteirinha: form.numeroCarteirinha,
-        indicacao: form.indicacao, observacoes: form.observacoes,
-      }]);
+    const pacienteRequest = {
+      nome:              form.nome,
+      email:             form.email,
+      telefone:          form.telefone,
+      dataNascimento:    form.nascimento,
+      cpf:               form.cpf,
+      sexo:              mapSexoToBackend(form.sexo),
+      cep:               form.cep || undefined,
+      logradouro:        form.logradouro || undefined,
+      numero:            form.numero || undefined,
+      complemento:       form.complemento || undefined,
+      bairro:            form.bairro || undefined,
+      cidade:            form.cidade || undefined,
+      estado:            form.estado || undefined,
+      convenio:          form.convenio || undefined,
+      numeroCarteirinha: form.numeroCarteirinha || undefined,
+      observacoes:       form.observacoes || undefined,
+    };
+
+    try {
+      if (isEditing && selectedPatient) {
+        await atualizarPaciente(selectedPatient.id, pacienteRequest);
+      } else {
+        await criarPaciente(pacienteRequest);
+      }
+      await fetchPatients();
+    } catch {
+      // keep existing list on error
     }
+
     setIsModalOpen(false); setShowSuccessModal(true);
   }
 
@@ -679,7 +743,13 @@ export default function Patients() {
               </tr>
             </Thead>
             <Tbody>
-              {paginatedData.length === 0 ? (
+              {loading ? (
+                <tr><td colSpan={8}>
+                  <EmptyState>
+                    <p>Carregando pacientes...</p>
+                  </EmptyState>
+                </td></tr>
+              ) : paginatedData.length === 0 ? (
                 <tr><td colSpan={8}>
                   <EmptyState>
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
@@ -703,7 +773,7 @@ export default function Patients() {
                   <Td><PhoneText>{p.phone}</PhoneText></Td>
                   <Td><DateText>{formatDate(p.birthdate)}</DateText></Td>
                   <Td><DateText>{p.lastVisit}</DateText></Td>
-                  <Td><Badge $bg="rgba(187,161,136,0.15)" $color="#BBA188">{p.procedure}</Badge></Td>
+                  <Td><Badge $bg="rgba(187,161,136,0.15)" $color="#BBA188">{p.procedure || '—'}</Badge></Td>
                   <Td $center $bold>{p.visits || '—'}</Td>
                   <Td><Badge $bg={statusColors[p.status].bg} $color={statusColors[p.status].color}>{p.status === 'ativo' ? 'Ativo' : 'Inativo'}</Badge></Td>
                   <Td>
@@ -764,7 +834,7 @@ export default function Patients() {
                 <StatsRow style={{ marginTop: 10 }}>
                   <StatPill $color="#BBA188">{selectedPatient.visits} visitas</StatPill>
                   <StatPill $color={selectedPatient.status === 'ativo' ? '#8a7560' : '#888'}>{selectedPatient.status === 'ativo' ? 'Ativo' : 'Inativo'}</StatPill>
-                  <StatPill $color="#a8906f">{selectedPatient.procedure}</StatPill>
+                  <StatPill $color="#a8906f">{selectedPatient.procedure || '—'}</StatPill>
                   {selectedPatient.sexo && <StatPill $color="#BBA188">{getSexoLabel(selectedPatient.sexo)}</StatPill>}
                 </StatsRow>
               </div>
@@ -781,7 +851,7 @@ export default function Patients() {
                 <InfoItem><InfoLabel>Idade</InfoLabel><InfoValue>{calcAge(selectedPatient.birthdate)}</InfoValue></InfoItem>
                 <InfoItem><InfoLabel>CPF</InfoLabel><InfoValue><code style={{ fontSize: '0.83rem', color: '#888', background: '#f5f5f5', padding: '3px 8px', borderRadius: 5 }}>{selectedPatient.cpf}</code></InfoValue></InfoItem>
                 <InfoItem><InfoLabel>Sexo</InfoLabel><InfoValue>{getSexoLabel(selectedPatient.sexo || '')}</InfoValue></InfoItem>
-                <InfoItem><InfoLabel>Último Procedimento</InfoLabel><InfoValue>{selectedPatient.procedure}</InfoValue></InfoItem>
+                <InfoItem><InfoLabel>Último Procedimento</InfoLabel><InfoValue>{selectedPatient.procedure || '—'}</InfoValue></InfoItem>
                 <InfoItem><InfoLabel>Última Visita</InfoLabel><InfoValue>{selectedPatient.lastVisit}</InfoValue></InfoItem>
                 <InfoItem><InfoLabel>Total de Visitas</InfoLabel><InfoValue style={{ fontWeight: 700, color: '#1a1a1a', fontSize: '1.1rem' }}>{selectedPatient.visits}</InfoValue></InfoItem>
                 <InfoItem><InfoLabel>Como nos conheceu</InfoLabel><InfoValue>{selectedPatient.indicacao || '—'}</InfoValue></InfoItem>

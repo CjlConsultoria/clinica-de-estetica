@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRoleRedirect } from '@/components/ui/hooks/useRoleRedirect';
+import { listarTicketsPorUsuario, criarTicket, listarMensagens, criarMensagem, atualizarStatusTicket, SuporteTicketAPI, TicketMensagemAPI } from '@/services/suporteService';
 import { useAuth } from '@/contexts/AuthContext';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
@@ -63,55 +64,6 @@ const TICKET_VALIDATION = [
   {
     key:      'descricao' as NovoTicketField,
     validate: (v: string) => !v.trim() ? 'Descrição detalhada é obrigatória' : null,
-  },
-];
-
-// ─── Dados mock por empresa ───────────────────────────────────────────────────
-
-const TICKETS_EMPRESA_A: Ticket[] = [
-  {
-    id: 1,
-    assunto: 'Não consigo gerar relatório de comissões',
-    categoria: 'bug',
-    prioridade: 'alta',
-    status: 'em_andamento',
-    descricao: 'Ao tentar exportar o relatório de comissões do mês de fevereiro, o sistema retorna erro 500. Já tentei em diferentes navegadores e o problema persiste.',
-    data: 'Hoje, 08:30',
-    mensagens: [
-      { id: 1, autor: 'Admin Empresa A', fromSupport: false, texto: 'Ao tentar exportar o relatório de comissões do mês de fevereiro, o sistema retorna erro 500.', hora: 'Hoje, 08:30' },
-      { id: 2, autor: 'Suporte CJL',     fromSupport: true,  texto: 'Olá! Recebemos seu chamado. Estamos investigando o problema com o relatório de comissões. Pode nos informar qual plano está usando e o navegador?', hora: 'Hoje, 09:15' },
-      { id: 3, autor: 'Admin Empresa A', fromSupport: false, texto: 'Estou no plano Pro, usando Google Chrome versão mais recente.', hora: 'Hoje, 09:22' },
-    ],
-  },
-  {
-    id: 2,
-    assunto: 'Dúvida sobre cadastro de lotes ANVISA',
-    categoria: 'duvida',
-    prioridade: 'media',
-    status: 'resolvido',
-    descricao: 'Preciso entender como cadastrar lotes de produtos importados com número de lote estrangeiro no sistema.',
-    data: '20/02/2025',
-    mensagens: [
-      { id: 1, autor: 'Admin Empresa A', fromSupport: false, texto: 'Preciso entender como cadastrar lotes de produtos importados com número de lote estrangeiro.', hora: '20/02/2025, 10:00' },
-      { id: 2, autor: 'Suporte CJL',     fromSupport: true,  texto: 'Para produtos importados, no campo "Nº do Lote" você pode inserir o código estrangeiro diretamente. No campo "País de Origem" selecione o país correspondente. O sistema aceita lotes alfanuméricos de até 20 caracteres.', hora: '20/02/2025, 11:30' },
-      { id: 3, autor: 'Admin Empresa A', fromSupport: false, texto: 'Perfeito, funcionou! Muito obrigada.', hora: '20/02/2025, 11:45' },
-      { id: 4, autor: 'Suporte CJL',     fromSupport: true,  texto: 'Ótimo! Marcando como resolvido. Qualquer dúvida estamos à disposição.', hora: '20/02/2025, 11:50' },
-    ],
-  },
-];
-
-const TICKETS_EMPRESA_B: Ticket[] = [
-  {
-    id: 3,
-    assunto: 'Como adicionar novos usuários ao sistema?',
-    categoria: 'duvida',
-    prioridade: 'baixa',
-    status: 'aberto',
-    descricao: 'Quero adicionar mais dois profissionais mas não encontrei a opção no painel de configurações.',
-    data: 'Ontem, 14:00',
-    mensagens: [
-      { id: 1, autor: 'Admin Empresa B', fromSupport: false, texto: 'Quero adicionar mais dois profissionais mas não encontrei a opção no painel de configurações.', hora: 'Ontem, 14:00' },
-    ],
   },
 ];
 
@@ -178,12 +130,8 @@ export default function SuporteEmpresa() {
   const allowed = useRoleRedirect({ permission: 'suporte.read', blockSuperAdmin: true });
   const { currentUser } = useAuth();
 
-  const ticketsEmpresa = currentUser?.companyId === 'empresa_b'
-    ? TICKETS_EMPRESA_B
-    : TICKETS_EMPRESA_A;
-
   // ── Estado principal ──
-  const [tickets,         setTickets]         = useState<Ticket[]>(ticketsEmpresa);
+  const [tickets,         setTickets]         = useState<Ticket[]>([]);
   const [filterStatus,    setFilterStatus]    = useState<TicketStatus | 'todos'>('todos');
   const [ticketAberto,    setTicketAberto]    = useState<Ticket | null>(null);
   const [replyText,       setReplyText]       = useState('');
@@ -202,11 +150,55 @@ export default function SuporteEmpresa() {
     clearAll:   clearTicketAll,
   } = useSequentialValidation<NovoTicketField>(TICKET_VALIDATION);
 
+  // ── Abre ticket e carrega mensagens da API ──
+  function abrirTicket(t: Ticket) {
+    setTicketAberto(t);
+    listarMensagens(t.id).then((data: TicketMensagemAPI[]) => {
+      const msgs: Mensagem[] = data.map(m => ({
+        id:          m.id,
+        autor:       m.autor,
+        fromSupport: m.fromSupport,
+        texto:       m.texto,
+        hora:        m.criadoEm ? new Date(m.criadoEm).toLocaleString('pt-BR') : '—',
+      }));
+      const atualizado = { ...t, mensagens: msgs.length > 0 ? msgs : t.mensagens };
+      setTickets(prev => prev.map(tk => tk.id === t.id ? atualizado : tk));
+      setTicketAberto(atualizado);
+    }).catch(() => {});
+  }
+
   // ── Modal encerrar ticket ──
   const [confirmFechar, setConfirmFechar] = useState<Ticket | null>(null);
 
   // ── Modal sucesso ──
   const [sucessModal, setSucessModal] = useState<{ title: string; message: string } | null>(null);
+
+  // ── Carrega tickets do usuário logado ──
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    listarTicketsPorUsuario(currentUser.id).then((data: SuporteTicketAPI[]) => {
+      const mapped: Ticket[] = data.map(t => {
+        const rawStatus = (t.status || 'aberto').toLowerCase().replace(/\s+/g, '_');
+        const status: TicketStatus = rawStatus === 'resolvido' ? 'resolvido' : rawStatus === 'em_andamento' ? 'em_andamento' : 'aberto';
+        const rawPrio = (t.prioridade || 'media').toLowerCase();
+        const prioridade: TicketPrioridade = rawPrio === 'alta' ? 'alta' : rawPrio === 'baixa' ? 'baixa' : 'media';
+        const rawCat = (t.categoria || 'outro').toLowerCase();
+        const categoria: TicketCategoria = (['financeiro','tecnico','duvida','bug','outro'] as string[]).includes(rawCat) ? rawCat as TicketCategoria : 'outro';
+        return {
+          id: t.id,
+          assunto: t.titulo,
+          categoria,
+          prioridade,
+          status,
+          descricao: t.descricao,
+          data: t.criadoEm ? new Date(t.criadoEm).toLocaleDateString('pt-BR') : '—',
+          mensagens: [{ id: 1, autor: t.nomeAutor || 'Você', fromSupport: false, texto: t.descricao, hora: t.criadoEm ? new Date(t.criadoEm).toLocaleString('pt-BR') : '—' }],
+        };
+      });
+      setTickets(mapped);
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id]);
 
   // ── Guard: só redireciona após o contexto carregar ──
   if (!allowed) return null;
@@ -252,7 +244,7 @@ export default function SuporteEmpresa() {
     setShowConfirmNovo(true);
   }
 
-  function handleConfirmNovo() {
+  async function handleConfirmNovo() {
     const novo: Ticket = {
       id:         tickets.length + 10,
       assunto:    form.assunto,
@@ -271,6 +263,10 @@ export default function SuporteEmpresa() {
         },
       ],
     };
+    try {
+      const criado = await criarTicket({ titulo: form.assunto, descricao: form.descricao, categoria: form.categoria, prioridade: form.prioridade });
+      novo.id = criado.id;
+    } catch {}
     setTickets(prev => [novo, ...prev]);
     setShowConfirmNovo(false);
     setIsNovoOpen(false);
@@ -285,17 +281,19 @@ export default function SuporteEmpresa() {
   // ── Enviar resposta no chat ──
   function handleReply() {
     if (!replyText.trim() || !ticketAberto) return;
+    const texto = replyText.trim();
     const novaMsg: Mensagem = {
       id:          ticketAberto.mensagens.length + 1,
       autor:       currentUser?.name ?? 'Você',
       fromSupport: false,
-      texto:       replyText.trim(),
+      texto,
       hora:        'Agora',
     };
     const atualizado = { ...ticketAberto, mensagens: [...ticketAberto.mensagens, novaMsg] };
     setTickets(prev => prev.map(t => t.id === atualizado.id ? atualizado : t));
     setTicketAberto(atualizado);
     setReplyText('');
+    criarMensagem(ticketAberto.id, { texto, fromSupport: false }).catch(() => {});
   }
 
   // ── Fechar ticket ──
@@ -306,6 +304,7 @@ export default function SuporteEmpresa() {
     if (ticketAberto?.id === atualizado.id) setTicketAberto(atualizado);
     setConfirmFechar(null);
     setSucessModal({ title: 'Ticket encerrado', message: 'O ticket foi marcado como resolvido.' });
+    atualizarStatusTicket(confirmFechar.id, 'resolvido').catch(() => {});
   }
 
   // ── View: detalhe do ticket (chat) ──
@@ -486,7 +485,7 @@ export default function SuporteEmpresa() {
             const pc = prioridadeConfig[t.prioridade];
             const semResposta = t.mensagens[t.mensagens.length - 1]?.fromSupport === false;
             return (
-              <TicketCard key={t.id} $clickable onClick={() => setTicketAberto(t)}>
+              <TicketCard key={t.id} $clickable onClick={() => abrirTicket(t)}>
                 <TicketCardHeader>
                   <TicketCardTitle>
                     {t.assunto}

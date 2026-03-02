@@ -17,4 +17,6 @@ public interface ProcedimentoRepository extends JpaRepository<Procedimento, Long
     Optional<Procedimento> findByCodigo(String codigo);
 
     boolean existsByCodigo(String codigo);
+
+    List<Procedimento> findByEmpresaIdAndAtivoTrue(Long empresaId);
 }

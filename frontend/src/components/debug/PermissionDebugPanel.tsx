@@ -21,8 +21,7 @@ import {
   type Permission,
   type CurrentUser,
 } from '@/types/auth';
-
-// ─── helpers ────────────────────────────────────────────────────────────────
+=
 
 function hasPermission(role: Role, permission: Permission): boolean {
   const perms = ROLE_PERMISSIONS[role];
@@ -72,11 +71,11 @@ const roles = Object.keys(ROLE_PERMISSIONS) as Role[];
 
 function Avatar({ user, size = 36 }: { user: CurrentUser; size?: number }) {
   const initials = user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
-  const roleColor = ROLE_COLORS[user.role].color; // ← CORRIGIDO
+  const roleColor = ROLE_COLORS[user.role].color; 
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: ROLE_COLORS[user.role].bg,       // ← CORRIGIDO
+      background: ROLE_COLORS[user.role].bg,      
       border: `2px solid ${roleColor}`,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontSize: size * 0.33, fontWeight: 800, color: roleColor,
@@ -86,7 +85,7 @@ function Avatar({ user, size = 36 }: { user: CurrentUser; size?: number }) {
   );
 }
 
-// ─── componente principal ────────────────────────────────────────────────────
+
 
 export default function PermissionDebugPanel() {
   const { currentUser, switchUser } = useAuth();
@@ -102,14 +101,14 @@ export default function PermissionDebugPanel() {
     ? allPerms.filter(p => p.toLowerCase().includes(search.toLowerCase()))
     : allPerms;
 
-  // agrupa usuários por empresa para exibição
+ 
   const globalUsers = MOCK_USERS.filter(u => u.companyId === null);
   const companiesWithUsers = [
-    // grupo "Sistema" para usuários globais
+ 
     ...(globalUsers.length > 0 && filterCo === 'all'
       ? [{ id: '__global__', name: 'Sistema', paymentStatus: 'ativo' as const, users: globalUsers }]
       : []),
-    // empresas reais
+ 
     ...MOCK_COMPANIES
       .filter(co => filterCo === 'all' || filterCo === co.id)
       .map(co => ({
@@ -130,7 +129,7 @@ export default function PermissionDebugPanel() {
     setTimeout(() => setCopied(null), 2000);
   }
 
-  // ─── botão flutuante ───────────────────────────────────────────────────────
+ 
   if (!isOpen) {
     return (
       <div style={{
@@ -140,7 +139,7 @@ export default function PermissionDebugPanel() {
         {currentUser && (
           <div style={{
             background: '#1b1b1b',
-            border: `1px solid ${ROLE_COLORS[currentUser.role].color}44`, // ← CORRIGIDO
+            border: `1px solid ${ROLE_COLORS[currentUser.role].color}44`, 
             borderRadius: 8, padding: '6px 12px',
             fontFamily: 'monospace', fontSize: 11, color: '#aaa',
             boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
@@ -148,13 +147,13 @@ export default function PermissionDebugPanel() {
           }}>
             <div style={{
               width: 7, height: 7, borderRadius: '50%',
-              background: ROLE_COLORS[currentUser.role].color,           // ← CORRIGIDO
-              boxShadow: `0 0 6px ${ROLE_COLORS[currentUser.role].color}`, // ← CORRIGIDO
+              background: ROLE_COLORS[currentUser.role].color,           
+              boxShadow: `0 0 6px ${ROLE_COLORS[currentUser.role].color}`, 
             }} />
             <span style={{ color: '#ddd' }}>{currentUser.name}</span>
             <span style={{
-              background: ROLE_COLORS[currentUser.role].bg,              // ← CORRIGIDO
-              color: ROLE_COLORS[currentUser.role].color,                // ← CORRIGIDO
+              background: ROLE_COLORS[currentUser.role].bg,              
+              color: ROLE_COLORS[currentUser.role].color,               
               borderRadius: 4, padding: '1px 7px', fontSize: 9, fontWeight: 800,
             }}>
               {ROLE_LABELS[currentUser.role]}
@@ -179,7 +178,7 @@ export default function PermissionDebugPanel() {
     );
   }
 
-  // ─── painel aberto ────────────────────────────────────────────────────────
+  
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
@@ -206,14 +205,14 @@ export default function PermissionDebugPanel() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 12, color: '#555' }}>Logado como</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: currentUser ? ROLE_COLORS[currentUser.role].color : '#aaa' }}> {/* ← CORRIGIDO */}
+                <span style={{ fontSize: 13, fontWeight: 700, color: currentUser ? ROLE_COLORS[currentUser.role].color : '#aaa' }}> 
                   {currentUser?.name ?? '—'}
                 </span>
                 {currentUser && (
                   <span style={{
-                    background: ROLE_COLORS[currentUser.role].color + '25', // ← CORRIGIDO
-                    color: ROLE_COLORS[currentUser.role].color,             // ← CORRIGIDO
-                    border: `1px solid ${ROLE_COLORS[currentUser.role].color}44`, // ← CORRIGIDO
+                    background: ROLE_COLORS[currentUser.role].color + '25',
+                    color: ROLE_COLORS[currentUser.role].color,             
+                    border: `1px solid ${ROLE_COLORS[currentUser.role].color}44`, 
                     borderRadius: 20, padding: '2px 10px', fontSize: 10, fontWeight: 800,
                   }}>
                     {ROLE_LABELS[currentUser.role]}
@@ -246,7 +245,7 @@ export default function PermissionDebugPanel() {
           </button>
         </div>
 
-        {/* ── Tabs + filtro empresa ── */}
+       
         <div style={{
           display: 'flex', gap: 4, padding: '10px 20px',
           borderBottom: '1px solid #1a1a1a', flexShrink: 0,
@@ -280,10 +279,10 @@ export default function PermissionDebugPanel() {
           </div>
         </div>
 
-        {/* ── Conteúdo ── */}
+      
         <div style={{ overflow: 'auto', flex: 1, padding: '16px 20px' }}>
 
-          {/* ══ TROCAR PERFIL ═══════════════════════════════════════════════════ */}
+        
           {tab === 'perfis' && (
             <div>
               <p style={{ fontSize: 11, color: '#3a3a3a', margin: '0 0 18px' }}>
@@ -293,7 +292,7 @@ export default function PermissionDebugPanel() {
               {companiesWithUsers.map(company => (
                 <div key={company.id} style={{ marginBottom: 28 }}>
 
-                  {/* título da empresa */}
+                  
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                     <div style={{ height: 1, flex: 0.05, background: '#222' }} />
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -314,7 +313,7 @@ export default function PermissionDebugPanel() {
                     <div style={{ height: 1, flex: 1, background: '#1e1e1e' }} />
                   </div>
 
-                  {/* grid de cards */}
+                 
                   <div style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fill, minmax(268px, 1fr))',
@@ -324,7 +323,7 @@ export default function PermissionDebugPanel() {
                       const isActive  = currentUser?.id === u.id;
                       const perms     = ROLE_PERMISSIONS[u.role];
                       const isAll     = perms.includes('*');
-                      const roleColor = ROLE_COLORS[u.role].color; // ← CORRIGIDO
+                      const roleColor = ROLE_COLORS[u.role].color; 
 
                       return (
                         <button
@@ -339,7 +338,7 @@ export default function PermissionDebugPanel() {
                             position: 'relative',
                           }}
                         >
-                          {/* badge ATIVO */}
+                          
                           {isActive && (
                             <div style={{
                               position: 'absolute', top: 10, right: 10,
@@ -351,7 +350,7 @@ export default function PermissionDebugPanel() {
                             </div>
                           )}
 
-                          {/* avatar + nome */}
+                         
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                             <Avatar user={u} size={38} />
                             <div style={{ minWidth: 0, flex: 1 }}>
@@ -366,7 +365,7 @@ export default function PermissionDebugPanel() {
                             </div>
                           </div>
 
-                          {/* role + cargo */}
+                          
                           <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 10 }}>
                             <span style={{
                               background: roleColor + '20',
@@ -386,7 +385,7 @@ export default function PermissionDebugPanel() {
                             )}
                           </div>
 
-                          {/* mini mapa de módulos */}
+                          
                           {isAll ? (
                             <div style={{
                               fontSize: 10, color: '#6ecb6e', fontWeight: 700,
@@ -422,7 +421,7 @@ export default function PermissionDebugPanel() {
             </div>
           )}
 
-          {/* ══ MATRIZ ══════════════════════════════════════════════════════════ */}
+          
           {tab === 'matrix' && (
             <>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
@@ -437,7 +436,7 @@ export default function PermissionDebugPanel() {
                     </th>
                     {roles.map(r => {
                       const isCurrent = currentUser?.role === r;
-                      const roleColor = ROLE_COLORS[r].color; // ← CORRIGIDO
+                      const roleColor = ROLE_COLORS[r].color; 
                       return (
                         <th key={r} style={{ padding: '8px', textAlign: 'center', minWidth: 100 }}>
                           <div style={{
@@ -522,7 +521,7 @@ export default function PermissionDebugPanel() {
             </>
           )}
 
-          {/* ══ BUSCA ═══════════════════════════════════════════════════════════ */}
+          
           {tab === 'busca' && (
             <>
               <input
@@ -550,7 +549,7 @@ export default function PermissionDebugPanel() {
                       return (
                         <th key={r} style={{ padding: '8px', textAlign: 'center' }}>
                           <span style={{
-                            color: isCurrent ? ROLE_COLORS[r].color : '#2a2a2a', // ← CORRIGIDO
+                            color: isCurrent ? ROLE_COLORS[r].color : '#2a2a2a', 
                             fontWeight: 700, fontSize: 10,
                           }}>
                             {isCurrent ? '▶ ' : ''}{ROLE_LABELS[r]}

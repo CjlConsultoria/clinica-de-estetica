@@ -15,4 +15,8 @@ public interface AssinaturaConsentimentoRepository extends JpaRepository<Assinat
     Optional<AssinaturaConsentimento> findByHashAssinatura(String hash);
 
     boolean existsByPacienteIdAndTermoId(Long pacienteId, Long termoId);
+
+    List<AssinaturaConsentimento> findByPaciente_EmpresaId(Long empresaId);
+
+    List<AssinaturaConsentimento> findByPaciente_EmpresaIdAndPacienteId(Long empresaId, Long pacienteId);
 }

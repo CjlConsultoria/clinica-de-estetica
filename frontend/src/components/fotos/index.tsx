@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -196,6 +196,9 @@ const INITIAL_PATIENTS: PatientData[] = [
   },
 ];
 
+import { listarFotosPorPaciente, FotoAPI, urlFoto } from '@/services/fotoService';
+import { listarPacientes } from '@/services/pacienteService';
+
 const tipoColors: Record<string, { bg: string; color: string; label: string }> = {
   antes:   { bg: '#fff3cd',                color: '#856404', label: 'Antes'   },
   depois:  { bg: '#f0ebe4',                color: '#8a7560', label: 'Depois'  },
@@ -338,6 +341,38 @@ export default function Fotos() {
     clearError: clearUploadError,
     clearAll: clearUploadAll,
   } = useSequentialValidation<UploadField>(UPLOAD_VALIDATION);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const pacientesRes = await listarPacientes('', 0, 100);
+        const pacs = pacientesRes.content || [];
+        const colors = ['#BBA188', '#a8906f', '#1b1b1b', '#8a7560', '#EBD5B0', '#c9a882', '#917255'];
+        const fotosArr = await Promise.all(
+          pacs.map(p => listarFotosPorPaciente(p.id).catch(() => [] as FotoAPI[]))
+        );
+        const mapped: PatientData[] = pacs.map((p, idx) => {
+          const fotos: Foto[] = fotosArr[idx].map((f: FotoAPI) => ({
+            id:           f.id,
+            tipo:         f.tipoFoto?.toLowerCase() || 'antes',
+            procedimento: f.descricao || '—',
+            data:         f.dataRegistro ? new Date(f.dataRegistro).toLocaleDateString('pt-BR') : '—',
+            imgUrl:       urlFoto(f.id),
+          }));
+          return {
+            id:            p.id,
+            name:          p.nome,
+            initials:      p.nome.split(' ').slice(0,2).map((n: string) => n[0]).join('').toUpperCase(),
+            color:         colors[idx % colors.length],
+            lastProcedure: fotos[fotos.length - 1]?.procedimento || '—',
+            fotos,
+          };
+        });
+        setPatients(mapped);
+      } catch {}
+    };
+    load();
+  }, []);
 
   const patientOptions = patients.map(p => ({ value: String(p.id), label: p.name }));
 

@@ -17,6 +17,7 @@ import com.clinica.api.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,23 +32,41 @@ public class AgendamentoService {
     private final PacienteRepository pacienteRepository;
     private final UsuarioRepository usuarioRepository;
 
+    private Long getEmpresaId() {
+        Usuario u = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return u.getEmpresaId();
+    }
+
     public PageResponse<AgendamentoResponse> listar(Pageable pageable) {
-        Page<Agendamento> page = agendamentoRepository.findAll(pageable);
+        Long empresaId = getEmpresaId();
+        Page<Agendamento> page = (empresaId != null)
+                ? agendamentoRepository.findByEmpresaId(empresaId, pageable)
+                : agendamentoRepository.findAll(pageable);
         return PageResponse.of(page.map(this::toResponse));
     }
 
     public PageResponse<AgendamentoResponse> listarPorMedico(Long medicoId, Pageable pageable) {
-        return PageResponse.of(agendamentoRepository.findByMedicoId(medicoId, pageable).map(this::toResponse));
+        Long empresaId = getEmpresaId();
+        Page<Agendamento> page = (empresaId != null)
+                ? agendamentoRepository.findByEmpresaIdAndMedicoId(empresaId, medicoId, pageable)
+                : agendamentoRepository.findByMedicoId(medicoId, pageable);
+        return PageResponse.of(page.map(this::toResponse));
     }
 
     public PageResponse<AgendamentoResponse> listarPorPaciente(Long pacienteId, Pageable pageable) {
-        return PageResponse.of(agendamentoRepository.findByPacienteId(pacienteId, pageable).map(this::toResponse));
+        Long empresaId = getEmpresaId();
+        Page<Agendamento> page = (empresaId != null)
+                ? agendamentoRepository.findByEmpresaIdAndPacienteId(empresaId, pacienteId, pageable)
+                : agendamentoRepository.findByPacienteId(pacienteId, pageable);
+        return PageResponse.of(page.map(this::toResponse));
     }
 
     public List<AgendamentoResponse> listarPorMedicoEPeriodo(Long medicoId, LocalDateTime inicio, LocalDateTime fim) {
-        return agendamentoRepository.findByMedicoIdAndPeriodo(medicoId, inicio, fim).stream()
-                .map(this::toResponse)
-                .toList();
+        Long empresaId = getEmpresaId();
+        List<Agendamento> agendamentos = (empresaId != null)
+                ? agendamentoRepository.findByEmpresaIdAndMedicoIdAndDataHoraBetween(empresaId, medicoId, inicio, fim)
+                : agendamentoRepository.findByMedicoIdAndPeriodo(medicoId, inicio, fim);
+        return agendamentos.stream().map(this::toResponse).toList();
     }
 
     public AgendamentoResponse buscarPorId(Long id) {
@@ -73,6 +92,7 @@ public class AgendamentoService {
                 .tipoConsulta(request.getTipoConsulta())
                 .observacoes(request.getObservacoes())
                 .status(StatusAgendamento.AGENDADO)
+                .empresaId(getEmpresaId())
                 .build();
 
         return toResponse(agendamentoRepository.save(agendamento));

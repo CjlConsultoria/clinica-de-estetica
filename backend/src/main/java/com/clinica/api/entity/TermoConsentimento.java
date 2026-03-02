@@ -29,6 +29,9 @@ public class TermoConsentimento {
     @Column(nullable = false)
     private String versao;
 
+    @Column(name = "empresa_id")
+    private Long empresaId;
+
     @Builder.Default
     @Column(nullable = false)
     private boolean ativo = true;

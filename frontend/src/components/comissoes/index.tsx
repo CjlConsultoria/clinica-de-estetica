@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from '@/components/ui/button';
 import StatCard from '@/components/ui/statcard';
 import Pagination from '@/components/ui/pagination';
@@ -17,9 +17,9 @@ import {
   EmptyState, ProfCard, ProfGrid, ProfAvatar, ProfName, ProfRole, ProfStats,
   ProfStat, ProfStatLabel, ProfStatValue, ProgressBar, ProgressFill,
 } from './styles';
+import { listarComissoes, listarComissoesPorMedico, ComissaoAPI } from '@/services/comissaoService';
 
 const filterMonths = ['Todos', 'Fevereiro 2025', 'Janeiro 2025', 'Dezembro 2024'];
-const filterProfs  = ['Todos', 'Maria Oliveira', 'Clara Andrade', 'Beatriz Santos'];
 
 const mockProfessionals = [
   { id: 1, name: 'Maria Oliveira', role: 'Esteticista Sênior', avatar: 'MO', color: '#BBA188', sessoes: 12, receita: 14400, comissao: 2880, percentual: 20, meta: 12000 },
@@ -72,19 +72,69 @@ export default function Comissoes() {
   const [showCancelModal,  setShowCancelModal]  = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [comissoes,        setComissoes]        = useState(mockComissoes);
+  const [profCards,        setProfCards]        = useState(mockProfessionals);
+
+  useEffect(() => {
+    const _isOwnOnly = !isSuperAdmin && can('comissoes.read_own') && !can('comissoes.read');
+    const _ownId     = currentUser?.id;
+    const load = async () => {
+      try {
+        const data: ComissaoAPI[] = _isOwnOnly && _ownId
+          ? await listarComissoesPorMedico(_ownId)
+          : await listarComissoes();
+        const mapped = data.map(c => ({
+          id:             c.id,
+          date:           c.criadoEm ? new Date(c.criadoEm).toLocaleDateString('pt-BR') : '',
+          professional:   c.usuarioNome,
+          professionalId: c.usuarioId,
+          procedure:      '—',
+          patient:        '—',
+          value:          c.valorBase,
+          percentual:     c.percentual,
+          comissao:       c.valorComissao,
+          status:         c.status?.toLowerCase() === 'pago' ? 'pago' as const : 'pendente' as const,
+        }));
+        setComissoes(mapped);
+        const byProf = new Map<number, typeof mapped>();
+        mapped.forEach(c => {
+          if (!byProf.has(c.professionalId)) byProf.set(c.professionalId, []);
+          byProf.get(c.professionalId)!.push(c);
+        });
+        const cards = Array.from(byProf.entries()).map(([profId, items], idx) => ({
+          id:         profId,
+          name:       items[0].professional,
+          role:       '',
+          avatar:     items[0].professional.split(' ').slice(0,2).map((n: string) => n[0]).join('').toUpperCase(),
+          color:      avatarColors[idx % avatarColors.length],
+          sessoes:    items.length,
+          receita:    items.reduce((s, c) => s + c.value, 0),
+          comissao:   items.reduce((s, c) => s + c.comissao, 0),
+          percentual: items[0].percentual,
+          meta:       Math.max(items.reduce((s, c) => s + c.comissao, 0) * 1.5, 1000),
+        }));
+        setProfCards(cards);
+      } catch {}
+    };
+    load();
+ 
+  }, []);
+
   const hasAccess = isSuperAdmin || can('comissoes.read') || can('comissoes.read_own');
   if (!hasAccess) return <AccessDenied />;
 
   const isOwnOnly = !isSuperAdmin && can('comissoes.read_own') && !can('comissoes.read');
   const ownName   = currentUser?.name ?? '';
 
+  const filterProfs = ['Todos', ...profCards.map(p => p.name).filter((n, i, a) => a.indexOf(n) === i)];
+
   const baseData = isOwnOnly
-    ? mockComissoes.filter(c => c.professional === ownName)
-    : mockComissoes;
+    ? comissoes.filter(c => c.professional === ownName)
+    : comissoes;
 
   const visibleProfessionals = isOwnOnly
-    ? mockProfessionals.filter(p => p.name === ownName)
-    : mockProfessionals;
+    ? profCards.filter(p => p.name === ownName)
+    : profCards;
 
   const totalComissoes = baseData.reduce((a, c) => a + c.comissao, 0);
   const totalPago      = baseData.filter(c => c.status === 'pago').reduce((a, c) => a + c.comissao, 0);
@@ -204,8 +254,8 @@ export default function Comissoes() {
               {paginatedData.length === 0 ? (
                 <tr><td colSpan={isOwnOnly ? 7 : 8}><EmptyState><h3>Nenhuma comissão encontrada</h3><p>Ajuste os filtros ou o termo de busca.</p></EmptyState></td></tr>
               ) : paginatedData.map(c => {
-                const profIndex = mockProfessionals.findIndex(p => p.name === c.professional);
-                const barColor  = profIndex >= 0 ? getBarColor(mockProfessionals[profIndex].comissao, mockProfessionals[profIndex].meta) : '#BBA188';
+                const profIndex = profCards.findIndex(p => p.name === c.professional);
+                const barColor  = profIndex >= 0 ? getBarColor(profCards[profIndex].comissao, profCards[profIndex].meta) : '#BBA188';
                 return (
                   <Tr key={c.id}>
                     <Td style={{ color: '#888' }}>{c.date}</Td>

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { listarLancamentos, LancamentoAPI } from '@/services/financeService';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -135,6 +136,28 @@ export default function FinanceEmpresa() {
   const {errors:lancErrors,validate:lancValidate,clearError:lancClearError,clearAll:lancClearAll}=
     useSequentialValidation<LancamentoField>(LANCAMENTO_VALIDATION_FIELDS);
 
+  const [financeData, setFinanceData] = useState(mockFinance as typeof mockFinance);
+
+  useEffect(() => {
+    listarLancamentos(0, 200).then(res => {
+      const data = res.content || [];
+      if (data.length > 0) {
+        const mapped = data.map((l: LancamentoAPI) => ({
+          id:          l.id,
+          date:        l.dataPagamento
+                         ? new Date(l.dataPagamento).toLocaleDateString('pt-BR')
+                         : new Date(l.dataVencimento).toLocaleDateString('pt-BR'),
+          description: l.descricao || `Lançamento #${l.id}`,
+          type:        'receita' as const,
+          category:    'Procedimento',
+          value:       l.valor,
+          patient:     l.pacienteId ? `Paciente #${l.pacienteId}` : null,
+        }));
+        setFinanceData(mapped as typeof mockFinance);
+      }
+    }).catch(() => {});
+  }, []);
+
   if (isSuperAdmin) return null;
   if (!can('financeiro.read')) return <AccessDenied/>;
 
@@ -144,12 +167,12 @@ export default function FinanceEmpresa() {
   const statusCfg  = statusConfig[faturaStatus];
   const empresaNome= MOCK_COMPANIES.find(c=>c.id===companyId)?.name??'Minha Clínica';
 
-  const totalReceita=mockFinance.filter(f=>f.type==='receita').reduce((a,f)=>a+f.value,0);
-  const totalDespesa=mockFinance.filter(f=>f.type==='despesa').reduce((a,f)=>a+f.value,0);
+  const totalReceita=financeData.filter(f=>f.type==='receita').reduce((a,f)=>a+f.value,0);
+  const totalDespesa=financeData.filter(f=>f.type==='despesa').reduce((a,f)=>a+f.value,0);
   const saldo       =totalReceita-totalDespesa;
   const maxBar      =Math.max(...monthlyData.map(d=>d.receita));
 
-  const filtered=mockFinance.filter(f=>{
+  const filtered=financeData.filter(f=>{
     const matchSearch=f.description.toLowerCase().includes(search.toLowerCase())||(f.patient||'').toLowerCase().includes(search.toLowerCase());
     const matchType  =filterType==='Todos'||f.type===filterType.toLowerCase();
     return matchSearch&&matchType;

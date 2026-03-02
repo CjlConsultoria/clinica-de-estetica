@@ -22,4 +22,5 @@ public class AuthResponse {
     private Role role;
     private Cargo cargo;
     private AreaProfissional areaProfissional;
+    private Long empresaId;
 }

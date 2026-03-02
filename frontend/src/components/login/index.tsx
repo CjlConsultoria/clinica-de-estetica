@@ -13,9 +13,18 @@ import {
 import ErrorModal from '@/components/modals/errorModal';
 import { useAuth } from '@/contexts/AuthContext';
 
+const ROLE_ROUTES: Record<string, string> = {
+  super_admin:   '/dashboard-admin',
+  company_admin: '/dashboard',
+  gerente:       '/dashboard',
+  tecnico:       '/agenda',
+  recepcionista: '/agenda',
+  financeiro:    '/finance',
+};
+
 export default function Login() {
   const router = useRouter();
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, currentUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,8 +40,10 @@ export default function Login() {
   const [modalMessage, setModalMessage] = useState('');
 
   useEffect(() => {
-    if (isAuthenticated) router.replace('/dashboard');
-  }, [isAuthenticated, router]);
+    if (isAuthenticated && currentUser?.role) {
+      router.replace(ROLE_ROUTES[currentUser.role] ?? '/agenda');
+    }
+  }, []);
 
   function clearAllErrors() {
     setEmailError('');
@@ -90,7 +101,7 @@ export default function Login() {
     setLoading(false);
 
     if (result.success) {
-      router.replace('/agenda');
+      router.replace(ROLE_ROUTES[result.role ?? ''] ?? '/agenda');
     } else {
       setModalTitle('Falha no login');
       setModalMessage(result.error || 'E-mail ou senha incorretos. Tente novamente.');

@@ -4,6 +4,7 @@ import com.clinica.api.dto.request.PacienteRequest;
 import com.clinica.api.dto.response.PageResponse;
 import com.clinica.api.dto.response.PacienteResponse;
 import com.clinica.api.entity.Paciente;
+import com.clinica.api.entity.Usuario;
 import com.clinica.api.exception.BusinessException;
 import com.clinica.api.exception.ExceptionMessages;
 import com.clinica.api.exception.ResourceNotFoundException;
@@ -11,6 +12,7 @@ import com.clinica.api.repository.PacienteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,12 +22,26 @@ public class PacienteService {
 
     private final PacienteRepository pacienteRepository;
 
+    private Long getEmpresaId() {
+        Usuario u = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return u.getEmpresaId();
+    }
+
     public PageResponse<PacienteResponse> listar(String busca, Pageable pageable) {
+        Long empresaId = getEmpresaId();
         Page<Paciente> page;
-        if (busca != null && !busca.isBlank()) {
-            page = pacienteRepository.buscarPorTermoAtivos(busca, pageable);
+        if (empresaId != null) {
+            if (busca != null && !busca.isBlank()) {
+                page = pacienteRepository.buscarPorTermoAtivosEEmpresa(busca, empresaId, pageable);
+            } else {
+                page = pacienteRepository.findByEmpresaIdAndAtivoTrue(empresaId, pageable);
+            }
         } else {
-            page = pacienteRepository.findByAtivoTrue(pageable);
+            if (busca != null && !busca.isBlank()) {
+                page = pacienteRepository.buscarPorTermoAtivos(busca, pageable);
+            } else {
+                page = pacienteRepository.findByAtivoTrue(pageable);
+            }
         }
         return PageResponse.of(page.map(this::toResponse));
     }
@@ -92,6 +108,7 @@ public class PacienteService {
                 .convenio(request.getConvenio())
                 .numeroCarteirinha(request.getNumeroCarteirinha())
                 .observacoes(request.getObservacoes())
+                .empresaId(getEmpresaId())
                 .ativo(true)
                 .build();
     }

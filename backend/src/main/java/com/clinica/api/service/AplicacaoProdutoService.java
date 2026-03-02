@@ -6,12 +6,14 @@ import com.clinica.api.entity.AplicacaoProduto;
 import com.clinica.api.entity.LoteProduto;
 import com.clinica.api.entity.Paciente;
 import com.clinica.api.entity.Prontuario;
+import com.clinica.api.entity.Usuario;
 import com.clinica.api.exception.ResourceNotFoundException;
 import com.clinica.api.repository.AplicacaoProdutoRepository;
 import com.clinica.api.repository.LoteProdutoRepository;
 import com.clinica.api.repository.PacienteRepository;
 import com.clinica.api.repository.ProntuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,14 +30,29 @@ public class AplicacaoProdutoService {
     private final ProntuarioRepository prontuarioRepository;
     private final EstoqueService estoqueService;
 
+    private Long getEmpresaId() {
+        Usuario u = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return u.getEmpresaId();
+    }
+
     public List<AplicacaoProdutoResponse> listarPorPaciente(Long pacienteId) {
+        Long empresaId = getEmpresaId();
+        if (empresaId != null) {
+            return aplicacaoRepository.findByPaciente_EmpresaIdAndPacienteId(empresaId, pacienteId)
+                    .stream().map(this::toResponse).toList();
+        }
         return aplicacaoRepository.findByPacienteIdOrderByDataAplicacaoDesc(pacienteId)
                 .stream().map(this::toResponse).toList();
     }
 
     public List<AplicacaoProdutoResponse> listarVencendo(int diasAntecedencia) {
+        Long empresaId = getEmpresaId();
         LocalDate hoje = LocalDate.now();
         LocalDate limite = hoje.plusDays(diasAntecedencia);
+        if (empresaId != null) {
+            return aplicacaoRepository.findByPaciente_EmpresaIdAndDataProximaAplicacaoBefore(empresaId, limite)
+                    .stream().map(this::toResponse).toList();
+        }
         return aplicacaoRepository.findAplicacoesVencendoEm(hoje, limite)
                 .stream().map(this::toResponse).toList();
     }

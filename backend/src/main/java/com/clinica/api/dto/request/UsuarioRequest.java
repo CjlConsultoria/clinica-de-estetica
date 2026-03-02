@@ -30,4 +30,7 @@ public class UsuarioRequest {
     private String registro;
 
     private String observacoes;
+
+    // Usado pelo admin para vincular o novo usuário a uma empresa específica
+    private Long empresaId;
 }

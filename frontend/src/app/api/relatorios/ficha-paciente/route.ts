@@ -142,15 +142,15 @@ async function generateFichaPDF(body: RequestBody): Promise<ArrayBuffer> {
     color: [number,number,number],
   ): number {
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8.5); // era 7
+    doc.setFontSize(8.5); 
     const tw = doc.getTextWidth(label);
     const pw = tw + 10;
-    const ph = 8;         // era 6.5
+    const ph = 8;        
     const pr = 3.2;
     doc.setFillColor(...lighten(color, 0.82));
     doc.roundedRect(x, py, pw, ph, pr, pr, 'F');
     doc.setTextColor(...color);
-    doc.text(label, x + pw / 2, py + 5.5, { align: 'center' }); // era py + 4.5
+    doc.text(label, x + pw / 2, py + 5.5, { align: 'center' }); 
     return pw;
   }
 

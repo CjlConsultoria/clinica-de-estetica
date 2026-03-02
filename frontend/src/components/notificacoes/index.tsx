@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRoleRedirect } from '@/components/ui/hooks/useRoleRedirect';
+import { listarNotificacoes, marcarComoLida as marcarComoLidaAPI, marcarTodasComoLidas, limparLidas, NotificacaoAPI } from '@/services/notificacaoService';
 import Button from '@/components/ui/button';
 import SucessModal from '@/components/modals/sucessModal';
 import ConfirmModal from '@/components/modals/confirmModal';
@@ -125,108 +126,6 @@ const PRIORIDADE_CONFIG: Record<NotifPrioridade, { label: string; bg: string; co
   baixa: { label: 'Baixa', bg: 'rgba(138,117,96,0.12)', color: '#8a7560' },
 };
 
-const NOTIFICACOES_MOCK: Notificacao[] = [
-  {
-    id: 1,
-    tipo: 'ticket', prioridade: 'alta', lida: false,
-    titulo: 'Novo chamado aberto — Clínica Bella Vita',
-    descricao: 'A empresa Clínica Bella Vita abriu um novo chamado com prioridade alta: "Não consigo gerar relatório de comissões". Aguarda atendimento.',
-    empresaId: 'e1', empresaNome: 'Clínica Bella Vita',
-    data: 'Hoje, 08:30', dataISO: '2025-02-27T08:30:00',
-    acao: 'Ver ticket',
-    meta: { 'Assunto': 'Não consigo gerar relatório de comissões', 'Categoria': 'Bug / Erro', 'Prioridade': 'Alta' },
-  },
-  {
-    id: 2,
-    tipo: 'ticket', prioridade: 'alta', lida: false,
-    titulo: 'Chamado urgente — Instituto Skin Care',
-    descricao: 'Instituto Skin Care abriu chamado urgente: "Conta suspensa — quero reativar". Empresa com pagamento pendente solicita reativação imediata.',
-    empresaId: 'e4', empresaNome: 'Instituto Skin Care',
-    data: 'Hoje, 06:15', dataISO: '2025-02-27T06:15:00',
-    acao: 'Ver ticket',
-    meta: { 'Assunto': 'Conta suspensa — quero reativar', 'Categoria': 'Financeiro', 'Prioridade': 'Alta' },
-  },
-  {
-    id: 3,
-    tipo: 'pagamento', prioridade: 'alta', lida: false,
-    titulo: 'Pagamento vencido — Instituto Skin Care',
-    descricao: 'A fatura do plano Pro da empresa Instituto Skin Care está vencida há 22 dias. Valor pendente: R$ 349,00. Conta foi suspensa automaticamente.',
-    empresaId: 'e4', empresaNome: 'Instituto Skin Care',
-    data: 'Hoje, 06:00', dataISO: '2025-02-27T06:00:00',
-    acao: 'Verificar fatura',
-    meta: { 'Plano': 'Pro', 'Valor': 'R$ 349,00', 'Dias vencidos': '22', 'Status': 'Suspenso' },
-  },
-  {
-    id: 4,
-    tipo: 'pagamento', prioridade: 'media', lida: true,
-    titulo: 'Pagamento recebido — Clínica Derma Saúde',
-    descricao: 'Fatura Enterprise de R$ 749,00 da Clínica Derma Saúde foi paga com sucesso via cartão de crédito. Acesso renovado por mais 30 dias.',
-    empresaId: 'e3', empresaNome: 'Clínica Derma Saúde',
-    data: 'Ontem, 15:00', dataISO: '2025-02-26T15:00:00',
-    acao: 'Ver recibo',
-    meta: { 'Plano': 'Enterprise', 'Valor': 'R$ 749,00', 'Método': 'Cartão de crédito', 'Próximo vencimento': '27/03/2025' },
-  },
-  {
-    id: 5,
-    tipo: 'empresa', prioridade: 'media', lida: true,
-    titulo: 'Nova empresa cadastrada — Espaço Beleza Premium',
-    descricao: 'A empresa Espaço Beleza Premium foi cadastrada com plano Pro. Admin responsável: Fernanda Lima (fernanda@espacobeleza.com).',
-    empresaId: 'e5', empresaNome: 'Espaço Beleza Premium',
-    data: 'Ontem, 10:30', dataISO: '2025-02-26T10:30:00',
-    acao: 'Ver empresa',
-    meta: { 'Plano': 'Pro', 'Admin': 'Fernanda Lima', 'E-mail': 'fernanda@espacobeleza.com', 'MRR': 'R$ 349,00' },
-  },
-  {
-    id: 6,
-    tipo: 'sistema', prioridade: 'baixa', lida: false,
-    titulo: 'Trial expirando — Studio Ana Rodrigues',
-    descricao: 'O período de trial da Studio Ana Rodrigues irá expirar em 11 dias (10/03/2025). Considere entrar em contato para conversão.',
-    empresaId: 'e2', empresaNome: 'Studio Ana Rodrigues',
-    data: 'Ontem, 09:00', dataISO: '2025-02-26T09:00:00',
-    acao: 'Ver empresa',
-    meta: { 'Plano': 'Starter (Trial)', 'Expira em': '11 dias', 'Data': '10/03/2025', 'Admin': 'Ana Rodrigues' },
-  },
-  {
-    id: 7,
-    tipo: 'seguranca', prioridade: 'alta', lida: true,
-    titulo: 'Múltiplas tentativas de login — Clínica Bella Vita',
-    descricao: '5 tentativas de login falharam para "juliana@bellavita.com". O acesso foi temporariamente bloqueado por segurança.',
-    empresaId: 'e1', empresaNome: 'Clínica Bella Vita',
-    data: '25/02/2025', dataISO: '2025-02-25T14:20:00',
-    acao: 'Ver log',
-    meta: { 'Usuário': 'juliana@bellavita.com', 'Tentativas': '5', 'IP': '189.34.x.x', 'Status': 'Bloqueado' },
-  },
-  {
-    id: 8,
-    tipo: 'relatorio', prioridade: 'baixa', lida: true,
-    titulo: 'Relatório mensal gerado — Fevereiro 2025',
-    descricao: 'Relatório de receitas e inadimplência de fevereiro/2025 gerado automaticamente. MRR total: R$ 1.745,00.',
-    empresaId: null, empresaNome: null,
-    data: '01/02/2025', dataISO: '2025-02-01T00:01:00',
-    acao: 'Ver relatório',
-    meta: { 'Período': 'Fevereiro 2025', 'MRR Total': 'R$ 1.745,00', 'Empresas ativas': '4', 'Inadimplentes': '1' },
-  },
-  {
-    id: 9,
-    tipo: 'pagamento', prioridade: 'baixa', lida: true,
-    titulo: 'Pagamento recebido — Clínica Bella Vita',
-    descricao: 'Fatura Pro de R$ 349,00 da Clínica Bella Vita foi paga com sucesso. Acesso renovado.',
-    empresaId: 'e1', empresaNome: 'Clínica Bella Vita',
-    data: '01/02/2025', dataISO: '2025-02-01T09:00:00',
-    acao: 'Ver recibo',
-    meta: { 'Plano': 'Pro', 'Valor': 'R$ 349,00', 'Método': 'Boleto bancário', 'Próximo vencimento': '01/03/2025' },
-  },
-  {
-    id: 10,
-    tipo: 'sistema', prioridade: 'baixa', lida: true,
-    titulo: 'Manutenção programada concluída',
-    descricao: 'Manutenção concluída com sucesso às 03:45. Nenhuma empresa foi afetada. Uptime: 99,97%.',
-    empresaId: null, empresaNome: null,
-    data: '20/01/2025', dataISO: '2025-01-20T03:45:00',
-    acao: undefined,
-    meta: { 'Tipo': 'Manutenção preventiva', 'Duração': '45 minutos', 'Uptime': '99,97%', 'Impacto': 'Nenhum' },
-  },
-];
 
 type TabTipo = 'todas' | NotifTipo;
 
@@ -243,7 +142,7 @@ const TAB_OPTIONS: { key: TabTipo; label: string }[] = [
 export default function Notificacoes() {
   const allowed = useRoleRedirect({ superAdminOnly: true });
 
-  const [notifs,              setNotifs]             = useState<Notificacao[]>(NOTIFICACOES_MOCK);
+  const [notifs,              setNotifs]             = useState<Notificacao[]>([]);
   const [tabTipo,             setTabTipo]            = useState<TabTipo>('todas');
   const [tabLida,             setTabLida]            = useState<'todas' | 'nao_lidas' | 'lidas'>('todas');
   const [search,              setSearch]             = useState('');
@@ -253,6 +152,25 @@ export default function Notificacoes() {
   const [confirmMarcarTodas,  setConfirmMarcarTodas] = useState(false);
   const [confirmLimpar,       setConfirmLimpar]      = useState(false);
   const [sucessModal,         setSucessModal]        = useState<{ title: string; message: string } | null>(null);
+
+  useEffect(() => {
+    listarNotificacoes().then((data: NotificacaoAPI[]) => {
+      const mapped: Notificacao[] = data.map(n => ({
+        id: n.id,
+        tipo: (n.tipo || 'sistema') as NotifTipo,
+        prioridade: (n.prioridade || 'media') as NotifPrioridade,
+        titulo: n.titulo,
+        descricao: n.descricao || '',
+        empresaId: n.empresaId ? String(n.empresaId) : null,
+        empresaNome: n.empresaNome || null,
+        data: n.criadoEm ? new Date(n.criadoEm).toLocaleDateString('pt-BR') : '—',
+        dataISO: n.criadoEm || new Date().toISOString(),
+        lida: n.lida ?? false,
+      }));
+      setNotifs(mapped);
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!allowed) return null;
 
@@ -283,6 +201,7 @@ export default function Notificacoes() {
   function marcarLida(id: number) {
     setNotifs(prev => prev.map(n => n.id === id ? { ...n, lida: true } : n));
     if (selected?.id === id) setSelected(p => p ? { ...p, lida: true } : p);
+    marcarComoLidaAPI(id).catch(() => {});
   }
 
   function marcarNaoLida(id: number) {
@@ -294,6 +213,7 @@ export default function Notificacoes() {
     setNotifs(prev => prev.map(n => ({ ...n, lida: true })));
     setConfirmMarcarTodas(false);
     setSucessModal({ title: 'Tudo marcado como lido', message: 'Todas as notificações foram marcadas como lidas.' });
+    marcarTodasComoLidas().catch(() => {});
   }
 
   function handleLimparLidas() {
@@ -301,6 +221,7 @@ export default function Notificacoes() {
     setConfirmLimpar(false);
     if (selected?.lida) setSelected(null);
     setSucessModal({ title: 'Notificações limpas', message: 'Todas as notificações lidas foram removidas.' });
+    limparLidas().catch(() => {});
   }
 
   function abrirDetalhe(n: Notificacao) {

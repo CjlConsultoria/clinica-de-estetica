@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { listarEmpresas, criarEmpresa, atualizarEmpresa, atualizarStatusEmpresa, EmpresaAPI } from '@/services/empresaService';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -134,6 +135,29 @@ export default function Empresas() {
   const { isSuperAdmin } = usePermissions();
 
   const [empresas,        setEmpresas]        = useState<Empresa[]>(EMPRESAS_INICIAL);
+
+  useEffect(() => {
+    listarEmpresas().then((data: EmpresaAPI[]) => {
+      const mapped: Empresa[] = data.map(e => ({
+        id: String(e.id),
+        nome: e.nome || '',
+        email: e.email || '',
+        telefone: e.telefone || '',
+        cnpj: e.cnpj || '',
+        responsavel: e.responsavel || '',
+        plano: (['Starter','Profissional','Enterprise'].includes(e.plano||'') ? e.plano : 'Starter') as PlanType,
+        valor: e.valor || 0,
+        status: (['ativo','suspenso','cancelado','trial'].includes(e.status||'') ? e.status : 'ativo') as StatusEmpresa,
+        dataInicio: e.dataInicio ? new Date(e.dataInicio).toLocaleDateString('pt-BR') : '—',
+        vencimento: e.vencimento ? new Date(e.vencimento).toLocaleDateString('pt-BR') : '—',
+        usuarios: e.usuarios || 0,
+        observacoes: e.observacoes || '',
+        adminNome: e.adminNome || '',
+        adminEmail: e.adminEmail || '',
+      }));
+      if (mapped.length > 0) setEmpresas(mapped);
+    }).catch(() => {});
+  }, []);
   const [search,          setSearch]          = useState('');
   const [filterSt,        setFilterSt]        = useState('Todos');
   const [filterPl,        setFilterPl]        = useState('Todos');
@@ -260,41 +284,89 @@ export default function Empresas() {
     setSelectedEmpresa(null);
   }
 
-  function handleSave() {
+  async function handleSave() {
     const planoSelecionado = form.plano as PlanType;
+    const requestData = {
+      nome: form.nome, email: form.email, telefone: form.telefone,
+      cnpj: form.cnpj, responsavel: form.responsavel,
+      plano: planoSelecionado, valor: PLANO_VALOR[planoSelecionado],
+      status: form.status, observacoes: form.observacoes,
+      adminNome: form.adminNome, adminEmail: form.adminEmail,
+    };
+
     if (isEditing && selectedEmpresa) {
-      setEmpresas(prev => prev.map(e =>
-        e.id === selectedEmpresa.id
-          ? {
-              ...e,
-              nome: form.nome, email: form.email, telefone: form.telefone,
-              cnpj: form.cnpj, responsavel: form.responsavel,
-              plano: planoSelecionado, valor: PLANO_VALOR[planoSelecionado],
-              status: form.status, observacoes: form.observacoes,
-              adminNome: form.adminNome, adminEmail: form.adminEmail,
-            }
-          : e
-      ));
+      try {
+        const updated = await atualizarEmpresa(Number(selectedEmpresa.id), requestData);
+        setEmpresas(prev => prev.map(e =>
+          e.id === selectedEmpresa.id
+            ? {
+                ...e,
+                nome: updated.nome, email: updated.email, telefone: updated.telefone || e.telefone,
+                cnpj: updated.cnpj || e.cnpj, responsavel: updated.responsavel || e.responsavel,
+                plano: (updated.plano || planoSelecionado) as PlanType,
+                valor: updated.valor || PLANO_VALOR[planoSelecionado],
+                status: (updated.status || form.status) as StatusEmpresa,
+                observacoes: updated.observacoes || '',
+                adminNome: updated.adminNome || e.adminNome,
+                adminEmail: updated.adminEmail || e.adminEmail,
+              }
+            : e
+        ));
+      } catch {
+       
+        setEmpresas(prev => prev.map(e =>
+          e.id === selectedEmpresa.id
+            ? { ...e, nome: form.nome, email: form.email, telefone: form.telefone, cnpj: form.cnpj, responsavel: form.responsavel, plano: planoSelecionado, valor: PLANO_VALOR[planoSelecionado], status: form.status, observacoes: form.observacoes, adminNome: form.adminNome, adminEmail: form.adminEmail }
+            : e
+        ));
+      }
     } else {
-      setEmpresas(prev => [...prev, {
-        id: `empresa_${Date.now()}`,
-        nome: form.nome, email: form.email, telefone: form.telefone,
-        cnpj: form.cnpj, responsavel: form.responsavel,
-        plano: planoSelecionado, valor: PLANO_VALOR[planoSelecionado],
-        status: form.status, dataInicio: hoje(), vencimento: vencimento30(),
-        usuarios: 1, observacoes: form.observacoes,
-        adminNome: form.adminNome, adminEmail: form.adminEmail,
-      }]);
+      try {
+        const created = await criarEmpresa(requestData);
+        setEmpresas(prev => [...prev, {
+          id: String(created.id),
+          nome: created.nome, email: created.email,
+          telefone: created.telefone || form.telefone,
+          cnpj: created.cnpj || form.cnpj,
+          responsavel: created.responsavel || form.responsavel,
+          plano: (created.plano || planoSelecionado) as PlanType,
+          valor: created.valor || PLANO_VALOR[planoSelecionado],
+          status: (created.status || form.status) as StatusEmpresa,
+          dataInicio: created.dataInicio ? new Date(created.dataInicio).toLocaleDateString('pt-BR') : hoje(),
+          vencimento: created.vencimento ? new Date(created.vencimento).toLocaleDateString('pt-BR') : vencimento30(),
+          usuarios: created.usuarios || 1,
+          observacoes: created.observacoes || '',
+          adminNome: created.adminNome || form.adminNome,
+          adminEmail: created.adminEmail || form.adminEmail,
+        }]);
+      } catch {
+        
+        setEmpresas(prev => [...prev, {
+          id: `empresa_${Date.now()}`,
+          nome: form.nome, email: form.email, telefone: form.telefone,
+          cnpj: form.cnpj, responsavel: form.responsavel,
+          plano: planoSelecionado, valor: PLANO_VALOR[planoSelecionado],
+          status: form.status, dataInicio: hoje(), vencimento: vencimento30(),
+          usuarios: 1, observacoes: form.observacoes,
+          adminNome: form.adminNome, adminEmail: form.adminEmail,
+        }]);
+      }
     }
     handleClose();
   }
 
-  function handleSuspender(e: Empresa) {
+  async function handleSuspender(e: Empresa) {
+    try {
+      await atualizarStatusEmpresa(Number(e.id), 'suspenso');
+    } catch {}
     setEmpresas(prev => prev.map(emp => emp.id === e.id ? { ...emp, status: 'suspenso' } : emp));
     setIsDetailOpen(false);
   }
 
-  function handleReativar(e: Empresa) {
+  async function handleReativar(e: Empresa) {
+    try {
+      await atualizarStatusEmpresa(Number(e.id), 'ativo');
+    } catch {}
     setEmpresas(prev => prev.map(emp => emp.id === e.id ? { ...emp, status: 'ativo' } : emp));
     setIsDetailOpen(false);
   }

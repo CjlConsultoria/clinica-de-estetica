@@ -40,6 +40,9 @@ public class Procedimento {
     @Column(columnDefinition = "TEXT")
     private String descricao;
 
+    @Column(name = "empresa_id")
+    private Long empresaId;
+
     @Builder.Default
     @Column(nullable = false)
     private boolean ativo = true;

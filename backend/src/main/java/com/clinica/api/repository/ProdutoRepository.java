@@ -18,4 +18,8 @@ public interface ProdutoRepository extends JpaRepository<Produto, Long> {
            "(LOWER(p.nome) LIKE LOWER(CONCAT('%', :busca, '%')) OR " +
            "LOWER(p.fabricante) LIKE LOWER(CONCAT('%', :busca, '%')))")
     List<Produto> buscar(@Param("busca") String busca);
+
+    List<Produto> findByEmpresaIdAndAtivoTrue(Long empresaId);
+
+    List<Produto> findByEmpresaIdAndAtivoTrueAndNomeContainingIgnoreCase(Long empresaId, String nome);
 }

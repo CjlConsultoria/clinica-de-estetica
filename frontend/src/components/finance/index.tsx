@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -20,27 +20,20 @@ import {
   EmptyState, FormGrid, TypeBadge, ChartSection, ChartTitle, BarChart, BarItem,
   BarFill, BarLabel, BarValue,
 } from './styles';
+import { listarLancamentos, criarLancamento, cancelarLancamento } from '@/services/financeService';
 
 const typeOptions      = [{ value: 'receita', label: 'Receita' }, { value: 'despesa', label: 'Despesa' }];
 const categoryOptions  = [{ value: 'procedimento', label: 'Procedimento' }, { value: 'produto', label: 'Produto' }, { value: 'aluguel', label: 'Aluguel' }, { value: 'insumo', label: 'Insumo' }, { value: 'comissao', label: 'Comissão' }, { value: 'outros', label: 'Outros' }];
 const pagamentoOptions = [{ value: 'pix', label: 'Pix' }, { value: 'cartao_cred', label: 'Cartão de Crédito' }, { value: 'cartao_deb', label: 'Cartão de Débito' }, { value: 'dinheiro', label: 'Dinheiro' }, { value: 'transferencia', label: 'Transferência Bancária' }];
 const filterTypes      = ['Todos', 'Receita', 'Despesa'];
 const filterMonths     = ['Todos', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho'];
-
-const mockFinance = [
-  { id: 1,  date: '18/02/2025', description: 'Botox Facial - Ana Costa',          type: 'receita' as const, category: 'Procedimento', value: 800,  patient: 'Ana Costa'      },
-  { id: 2,  date: '18/02/2025', description: 'Preenchimento Labial - Carla M.',   type: 'receita' as const, category: 'Procedimento', value: 1200, patient: 'Carla Mendonça' },
-  { id: 3,  date: '17/02/2025', description: 'Reposição de Insumos ANVISA',       type: 'despesa' as const, category: 'Insumo',       value: 2340, patient: null             },
-  { id: 4,  date: '16/02/2025', description: 'Bioestimulador - Fernanda Lima',    type: 'receita' as const, category: 'Procedimento', value: 2500, patient: 'Fernanda Lima'  },
-  { id: 5,  date: '15/02/2025', description: 'Aluguel do Espaço',                 type: 'despesa' as const, category: 'Aluguel',      value: 3500, patient: null             },
-  { id: 6,  date: '14/02/2025', description: 'Fio PDO - Marina Souza',            type: 'receita' as const, category: 'Procedimento', value: 1800, patient: 'Marina Souza'   },
-  { id: 7,  date: '13/02/2025', description: 'Comissão Profissional - Fevereiro', type: 'despesa' as const, category: 'Comissão',     value: 1280, patient: null             },
-  { id: 8,  date: '12/02/2025', description: 'Microagulhamento - Patrícia A.',    type: 'receita' as const, category: 'Procedimento', value: 450,  patient: 'Patrícia Alves' },
-  { id: 9,  date: '10/02/2025', description: 'Toxina Botulínica - Juliana R.',    type: 'receita' as const, category: 'Procedimento', value: 600,  patient: 'Juliana Rocha'  },
-  { id: 10, date: '08/02/2025', description: 'Material de Escritório',            type: 'despesa' as const, category: 'Outros',       value: 180,  patient: null             },
-  { id: 11, date: '08/02/2025', description: 'Material de Escritório',            type: 'despesa' as const, category: 'Outros',       value: 180,  patient: null             },
-  { id: 12, date: '08/02/2025', description: 'Material de Escritório',            type: 'despesa' as const, category: 'Outros',       value: 180,  patient: null             },
-];
+const PAGAMENTO_MAP: Record<string, string> = {
+  pix:           'PIX',
+  cartao_cred:   'CARTAO_CREDITO',
+  cartao_deb:    'CARTAO_DEBITO',
+  dinheiro:      'DINHEIRO',
+  transferencia: 'TRANSFERENCIA',
+};
 
 const monthlyData = [
   { month: 'Set', receita: 32000, despesa: 12000 },
@@ -52,6 +45,33 @@ const monthlyData = [
 ];
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+function formatDateFromISO(iso: string): string {
+  if (!iso) return '—';
+  try {
+    const [datePart] = iso.split('T');
+    const [year, month, day] = datePart.split('-');
+    return `${day}/${month}/${year}`;
+  } catch {
+    return iso;
+  }
+}
+
+function parseMoeda(v: string): number {
+  if (!v) return 0;
+  const cleaned = v.replace(/[^0-9,]/g, '').replace(',', '.');
+  return parseFloat(cleaned) || 0;
+}
+
+type FinanceItem = {
+  id: number;
+  date: string;
+  description: string;
+  type: 'receita' | 'despesa';
+  category: string;
+  value: number;
+  patient: string | null;
+};
 
 type LancamentoField = 'tipo' | 'categoria' | 'descricao' | 'valor' | 'data' | 'pagamento';
 interface LancamentoForm { tipo: string; categoria: string; descricao: string; valor: string; data: string; paciente: string; pagamento: string; }
@@ -74,6 +94,10 @@ function isLancFormDirty(form: LancamentoForm) {
 export default function Finance() {
   const { can, isSuperAdmin } = usePermissions();
 
+  const [lancamentos,            setLancamentos]            = useState<FinanceItem[]>([]);
+  const [loading,                setLoading]                = useState(true);
+  const [saveLoading,            setSaveLoading]            = useState(false);
+  const [apiError,               setApiError]              = useState<string | null>(null);
   const [search, setSearch]             = useState('');
   const [filterType, setFilterType]     = useState('Todos');
   const [filterMonth, setFilterMonth]   = useState('Todos');
@@ -90,17 +114,43 @@ export default function Finance() {
 
   const { errors: lancErrors, validate: lancValidate, clearError: lancClearError, clearAll: lancClearAll } =
     useSequentialValidation<LancamentoField>(LANCAMENTO_VALIDATION_FIELDS);
+  useEffect(() => {
+    fetchLancamentos();
+  }, []);
+
+  async function fetchLancamentos() {
+    try {
+      setLoading(true);
+      setApiError(null);
+      const page = await listarLancamentos(0, 200);
+      const items = (page.content ?? []).map((l): FinanceItem => ({
+        id:          l.id,
+        date:        formatDateFromISO(l.criadoEm),
+        description: l.descricao,
+        type:        'receita' as const,
+        category:    'Procedimento',
+        value:       l.valor,
+        patient:     null,
+      }));
+      setLancamentos(items);
+    } catch (err: any) {
+      console.error('[Finance] Erro ao carregar lançamentos:', err);
+      setApiError('Erro ao carregar lançamentos. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   if (!isSuperAdmin && !can('financeiro.read')) return <AccessDenied />;
 
   const canCreate = isSuperAdmin || can('financeiro.create');
 
-  const totalReceita = mockFinance.filter(f => f.type === 'receita').reduce((a, f) => a + f.value, 0);
-  const totalDespesa = mockFinance.filter(f => f.type === 'despesa').reduce((a, f) => a + f.value, 0);
+  const totalReceita = lancamentos.filter(f => f.type === 'receita').reduce((a, f) => a + f.value, 0);
+  const totalDespesa = lancamentos.filter(f => f.type === 'despesa').reduce((a, f) => a + f.value, 0);
   const saldo        = totalReceita - totalDespesa;
   const maxBar       = Math.max(...monthlyData.map(d => d.receita));
 
-  const filtered = mockFinance.filter(f => {
+  const filtered = lancamentos.filter(f => {
     const matchSearch = f.description.toLowerCase().includes(search.toLowerCase()) || (f.patient || '').toLowerCase().includes(search.toLowerCase());
     const matchType   = filterType === 'Todos' || f.type === filterType.toLowerCase();
     return matchSearch && matchType;
@@ -121,20 +171,43 @@ export default function Finance() {
     handleLancChange('data', `${(yearStr || '').slice(0, 4)}-${month ?? ''}-${day ?? ''}`);
   }
   function handleCancelClick() { isLancFormDirty(lancForm) ? setShowCancelModal(true) : forceClose(); }
-  function forceClose() { setLancForm(LANCAMENTO_INITIAL); lancClearAll(); setIsModalOpen(false); setShowCancelModal(false); }
+  function forceClose() { setLancForm(LANCAMENTO_INITIAL); lancClearAll(); setIsModalOpen(false); setShowCancelModal(false); setApiError(null); }
   function handleSaveLancClick() {
     const isValid = lancValidate({ tipo: lancForm.tipo, categoria: lancForm.categoria, descricao: lancForm.descricao, valor: lancForm.valor, data: lancForm.data, pagamento: lancForm.pagamento });
     if (!isValid) return;
     setShowConfirmModal(true);
   }
-  function handleConfirmSave() { setShowConfirmModal(false); setIsModalOpen(false); setLancForm(LANCAMENTO_INITIAL); lancClearAll(); setShowSuccessModal(true); }
+  async function handleConfirmSave() {
+    setShowConfirmModal(false);
+    try {
+      setSaveLoading(true);
+      setApiError(null);
+      await criarLancamento({
+        valor:           parseMoeda(lancForm.valor),
+        formaPagamento:  PAGAMENTO_MAP[lancForm.pagamento] || lancForm.pagamento.toUpperCase(),
+        dataVencimento:  lancForm.data,
+        descricao:       lancForm.descricao,
+      });
+      setIsModalOpen(false);
+      setLancForm(LANCAMENTO_INITIAL);
+      lancClearAll();
+      setShowSuccessModal(true);
+      await fetchLancamentos();
+    } catch (err: any) {
+      console.error('[Finance] Erro ao criar lançamento:', err);
+      const msg = err?.response?.data?.mensagem || err?.message || 'Erro ao salvar lançamento.';
+      setApiError(msg);
+    } finally {
+      setSaveLoading(false);
+    }
+  }
   const toggle = (name: string) => setOpenDropdown(prev => prev === name ? null : name);
   const handleExportClick = () => setShowExportConfirmModal(true);
   const handleConfirmExport = async () => {
     setShowExportConfirmModal(false);
     try {
       setExporting(true);
-      const response = await fetch('/api/relatorios/financeiro', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transactions: mockFinance, monthlyData, month: 'Fevereiro 2025', totalReceita, totalDespesa, saldo }) });
+      const response = await fetch('/api/relatorios/financeiro', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transactions: lancamentos, monthlyData, month: 'Fevereiro 2025', totalReceita, totalDespesa, saldo }) });
       if (!response.ok) throw new Error('Falha ao gerar PDF');
       const blob = await response.blob();
       const url  = URL.createObjectURL(blob);
@@ -161,7 +234,7 @@ export default function Finance() {
         <StatCard label="Receita do Mês" value={`R$ ${fmt(totalReceita)}`} color="#BBA188" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>} trend={{ value: '+8.5% vs mês ant.', positive: true }} />
         <StatCard label="Despesas do Mês" value={`R$ ${fmt(totalDespesa)}`} color="#e74c3c" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>} trend={{ value: '+2.1% vs mês ant.', positive: false }} />
         <StatCard label="Saldo do Mês" value={`R$ ${fmt(saldo)}`} color={saldo >= 0 ? '#8a7560' : '#e74c3c'} icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>} />
-        <StatCard label="Transações" value={mockFinance.length} color="#EBD5B0" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>} />
+        <StatCard label="Transações" value={lancamentos.length} color="#EBD5B0" icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>} />
       </StatsGrid>
 
       <ChartSection>
@@ -213,7 +286,16 @@ export default function Finance() {
               <tr><Th $width="12%">Data</Th><Th $width="32%">Descrição</Th><Th $width="15%">Categoria</Th><Th $width="10%">Tipo</Th><Th $width="14%">Valor</Th><Th $width="11%">Paciente</Th><Th $width="6%">Ações</Th></tr>
             </Thead>
             <Tbody>
-              {paginatedData.length === 0 ? (
+              {loading ? (
+                <tr><Td colSpan={7} style={{ textAlign: 'center', padding: '48px 0', color: '#bbb' }}>Carregando lançamentos...</Td></tr>
+              ) : apiError ? (
+                <tr><Td colSpan={7} style={{ textAlign: 'center', padding: '48px 0' }}>
+                  <div style={{ color: '#e74c3c', marginBottom: 8 }}>{apiError}</div>
+                  <button onClick={fetchLancamentos} style={{ padding: '6px 16px', background: '#BBA188', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
+                    Tentar novamente
+                  </button>
+                </Td></tr>
+              ) : paginatedData.length === 0 ? (
                 <tr><Td colSpan={7} style={{ textAlign: 'center', padding: '48px 0', color: '#bbb' }}>Nenhum lançamento encontrado.</Td></tr>
               ) : paginatedData.map(f => (
                 <Tr key={f.id}>
@@ -232,7 +314,12 @@ export default function Finance() {
         <Pagination currentPage={safePage} totalItems={totalFiltered} itemsPerPage={ITEMS_PER_PAGE} onPageChange={setCurrentPage} />
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={handleCancelClick} closeOnOverlayClick={false} title="Novo Lançamento" size="md" footer={<><Button variant="outline" onClick={handleCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveLancClick}>Salvar</Button></>}>
+      <Modal isOpen={isModalOpen} onClose={handleCancelClick} closeOnOverlayClick={false} title="Novo Lançamento" size="md" footer={<><Button variant="outline" onClick={handleCancelClick}>Cancelar</Button><Button variant="primary" loading={saveLoading} onClick={handleSaveLancClick}>Salvar</Button></>}>
+        {apiError && (
+          <div style={{ marginBottom: 12, padding: '10px 14px', background: '#fde8e8', borderRadius: 8, border: '1px solid #f5c0c0', color: '#c93a3a', fontSize: '0.82rem' }}>
+            {apiError}
+          </div>
+        )}
         <FormGrid>
           <Select label="Tipo *" options={typeOptions} placeholder="Selecione..." value={lancForm.tipo} onChange={v => handleLancChange('tipo', v)} error={lancErrors.tipo} />
           <Select label="Categoria *" options={categoryOptions} placeholder="Selecione..." value={lancForm.categoria} onChange={v => handleLancChange('categoria', v)} error={lancErrors.categoria} />

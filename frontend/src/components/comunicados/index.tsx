@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRoleRedirect } from '@/components/ui/hooks/useRoleRedirect';
+import { listarComunicadosAdmin, criarComunicado, ComunicadoAPI } from '@/services/comunicadoService';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -72,63 +73,6 @@ const EMPRESAS = [
   { id: 'e5', nome: 'Espaço Beleza Premium' },
 ];
 
-const MOCK_COMUNICADOS: Comunicado[] = [
-  {
-    id: 1,
-    titulo: 'Manutenção programada — 15/03/2025',
-    mensagem: 'Informamos que o sistema ficará indisponível no dia 15/03/2025 das 02h às 04h para manutenção de infraestrutura. Durante este período, o acesso ao painel estará temporariamente suspenso.',
-    tipo: 'manutencao',
-    status: 'enviado',
-    destinatarios: 'todas',
-    dataEnvio: '10/03/2025',
-    lidas: 4,
-    total: 5,
-  },
-  {
-    id: 2,
-    titulo: 'Nova funcionalidade: Relatório de Fotos Clínicas',
-    mensagem: 'Temos o prazer de anunciar o lançamento do módulo de Relatório de Fotos Clínicas. Agora é possível exportar comparativos antes/depois em PDF diretamente pela plataforma.',
-    tipo: 'novidade',
-    status: 'enviado',
-    destinatarios: 'todas',
-    dataEnvio: '05/03/2025',
-    lidas: 5,
-    total: 5,
-  },
-  {
-    id: 3,
-    titulo: 'Fatura vencida — regularize seu acesso',
-    mensagem: 'Identificamos que sua fatura do mês de janeiro está em atraso. Para evitar a suspensão do acesso, realize o pagamento até 20/03/2025.',
-    tipo: 'cobranca',
-    status: 'enviado',
-    destinatarios: ['e4'],
-    dataEnvio: '12/03/2025',
-    lidas: 0,
-    total: 1,
-  },
-  {
-    id: 4,
-    titulo: 'Atualização de Termos de Uso — versão 2.1',
-    mensagem: 'Nossos Termos de Uso foram atualizados. A nova versão entrará em vigor em 01/04/2025. Recomendamos a leitura completa antes desta data.',
-    tipo: 'alerta',
-    status: 'agendado',
-    destinatarios: 'todas',
-    dataEnvio: '25/03/2025',
-    lidas: 0,
-    total: 5,
-  },
-  {
-    id: 5,
-    titulo: 'Promoção: upgrade para Enterprise com desconto',
-    mensagem: 'Por tempo limitado, clínicas no plano Pro podem migrar para o Enterprise com 20% de desconto no primeiro trimestre.',
-    tipo: 'novidade',
-    status: 'rascunho',
-    destinatarios: ['e1', 'e5'],
-    dataEnvio: '—',
-    lidas: 0,
-    total: 2,
-  },
-];
 
 const TipoIcon = ({ tipo }: { tipo: Tipo }) => {
   if (tipo === 'manutencao') return (
@@ -202,7 +146,7 @@ function nomeEmpresaById(id: string) {
 export default function Comunicados() {
   const allowed = useRoleRedirect({ superAdminOnly: true });
 
-  const [comunicados,  setComunicados]  = useState<Comunicado[]>(MOCK_COMUNICADOS);
+  const [comunicados,  setComunicados]  = useState<Comunicado[]>([]);
   const [search,       setSearch]       = useState('');
   const [filterTipo,   setFilterTipo]   = useState('Todos');
   const [filterStatus, setFilterStatus] = useState('Todos');
@@ -222,6 +166,33 @@ export default function Comunicados() {
   } = useSequentialValidation<ComunicadoField>(COMUNICADO_VALIDATION);
 
   const [sucessModal, setSucessModal] = useState<{ title: string; message: string } | null>(null);
+
+  useEffect(() => {
+    listarComunicadosAdmin().then((data: ComunicadoAPI[]) => {
+      const mapped: Comunicado[] = data.map(c => ({
+        id:            c.id,
+        titulo:        c.titulo,
+        mensagem:      c.conteudo,
+        tipo:          (['manutencao', 'novidade', 'alerta', 'cobranca'].includes((c.tipo || '').toLowerCase())
+                          ? (c.tipo || '').toLowerCase()
+                          : 'novidade') as Tipo,
+        status:        (['enviado', 'agendado', 'rascunho'].includes((c.status || '').toLowerCase())
+                          ? (c.status || '').toLowerCase()
+                          : 'enviado') as StatusCom,
+        destinatarios: (() => {
+          const d = c.destinatariosJson;
+          if (!d || d === 'todas') return 'todas' as const;
+          try { const arr = JSON.parse(d); return Array.isArray(arr) ? arr as string[] : 'todas' as const; }
+          catch { return 'todas' as const; }
+        })(),
+        dataEnvio:     c.criadoEm ? new Date(c.criadoEm).toLocaleDateString('pt-BR') : '—',
+        lidas:         0,
+        total:         0,
+      }));
+      if (mapped.length > 0) setComunicados(mapped);
+    }).catch(() => {});
+  
+  }, []);
 
   if (!allowed) return null;
 
@@ -291,7 +262,8 @@ export default function Comunicados() {
     setShowConfirmNovo(true);
   }
 
-  function handleConfirmNovo() {
+  async function handleConfirmNovo() {
+    const totalDest = form.destinatario === 'todas' ? EMPRESAS.length : form.empresasSelecionadas.length;
     const novo: Comunicado = {
       id:            Date.now(),
       titulo:        form.titulo,
@@ -303,10 +275,16 @@ export default function Comunicados() {
         ? form.dataAgendamento
         : new Date().toLocaleDateString('pt-BR'),
       lidas: 0,
-      total: form.destinatario === 'todas'
-        ? EMPRESAS.length
-        : form.empresasSelecionadas.length,
+      total: totalDest,
     };
+    try {
+      const criado = await criarComunicado({
+        titulo:   form.titulo,
+        conteudo: form.mensagem,
+        tipo:     form.tipo,
+      });
+      novo.id = criado.id;
+    } catch {}
     setComunicados(prev => [novo, ...prev]);
     setSucessModal({
       title:   form.agendar ? 'Comunicado agendado!' : 'Comunicado enviado!',

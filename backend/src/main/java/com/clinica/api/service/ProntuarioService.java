@@ -14,6 +14,7 @@ import com.clinica.api.repository.ProntuarioRepository;
 import com.clinica.api.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +27,18 @@ public class ProntuarioService {
     private final UsuarioRepository usuarioRepository;
     private final AgendamentoRepository agendamentoRepository;
 
+    private Long getEmpresaId() {
+        Usuario u = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return u.getEmpresaId();
+    }
+
     public PageResponse<ProntuarioResponse> listarPorPaciente(Long pacienteId, Pageable pageable) {
+        Long empresaId = getEmpresaId();
+        if (empresaId != null) {
+            return PageResponse.of(
+                    prontuarioRepository.findByPaciente_EmpresaIdAndPacienteId(empresaId, pacienteId, pageable).map(this::toResponse)
+            );
+        }
         return PageResponse.of(
                 prontuarioRepository.findByPacienteId(pacienteId, pageable).map(this::toResponse)
         );
@@ -61,6 +73,7 @@ public class ProntuarioService {
                 .prescricao(request.getPrescricao())
                 .examesSolicitados(request.getExamesSolicitados())
                 .observacoes(request.getObservacoes())
+                .empresaId(getEmpresaId())
                 .build();
 
         return toResponse(prontuarioRepository.save(prontuario));

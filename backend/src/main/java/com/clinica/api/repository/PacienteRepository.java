@@ -27,4 +27,9 @@ public interface PacienteRepository extends JpaRepository<Paciente, Long> {
     Page<Paciente> buscarPorTermoAtivos(@Param("busca") String busca, Pageable pageable);
 
     Page<Paciente> findByAtivoTrue(Pageable pageable);
+
+    Page<Paciente> findByEmpresaIdAndAtivoTrue(Long empresaId, Pageable pageable);
+
+    @Query("SELECT p FROM Paciente p WHERE p.empresaId = :empresaId AND p.ativo = true AND (LOWER(p.nome) LIKE LOWER(CONCAT('%', :busca, '%')) OR LOWER(p.cpf) LIKE LOWER(CONCAT('%', :busca, '%')) OR LOWER(p.email) LIKE LOWER(CONCAT('%', :busca, '%')))")
+    Page<Paciente> buscarPorTermoAtivosEEmpresa(@Param("busca") String busca, @Param("empresaId") Long empresaId, Pageable pageable);
 }

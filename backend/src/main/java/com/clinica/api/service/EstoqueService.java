@@ -6,6 +6,7 @@ import com.clinica.api.dto.response.LoteResponse;
 import com.clinica.api.entity.AlertaEstoque;
 import com.clinica.api.entity.LoteProduto;
 import com.clinica.api.entity.Produto;
+import com.clinica.api.entity.Usuario;
 import com.clinica.api.enums.StatusLote;
 import com.clinica.api.enums.TipoAlertaEstoque;
 import com.clinica.api.exception.BusinessException;
@@ -16,6 +17,7 @@ import com.clinica.api.repository.LoteProdutoRepository;
 import com.clinica.api.repository.ProdutoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,10 +35,21 @@ public class EstoqueService {
     private final ProdutoRepository produtoRepository;
     private final AlertaEstoqueRepository alertaEstoqueRepository;
 
+    private Long getEmpresaId() {
+        Usuario u = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return u.getEmpresaId();
+    }
+
     public List<LoteResponse> listarLotes(Long produtoId) {
-        List<LoteProduto> lotes = (produtoId != null)
-                ? loteProdutoRepository.findByProdutoId(produtoId)
-                : loteProdutoRepository.findEstoqueAtivo();
+        Long empresaId = getEmpresaId();
+        List<LoteProduto> lotes;
+        if (produtoId != null) {
+            lotes = loteProdutoRepository.findByProdutoId(produtoId);
+        } else if (empresaId != null) {
+            lotes = loteProdutoRepository.findByProduto_EmpresaIdAndAtivoTrue(empresaId);
+        } else {
+            lotes = loteProdutoRepository.findEstoqueAtivo();
+        }
         return lotes.stream().map(this::toResponse).toList();
     }
 

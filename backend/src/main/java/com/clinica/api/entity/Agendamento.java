@@ -46,6 +46,9 @@ public class Agendamento {
     @Column(name = "motivo_cancelamento")
     private String motivoCancelamento;
 
+    @Column(name = "empresa_id")
+    private Long empresaId;
+
     @Column(name = "criado_em", nullable = false, updatable = false)
     private LocalDateTime criadoEm;
 

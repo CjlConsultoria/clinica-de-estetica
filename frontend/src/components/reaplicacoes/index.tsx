@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -21,6 +21,8 @@ import {
   PaginationWrapper, PaginationInfo, PaginationControls,
   PageButton, PageEllipsis, PaginationArrow,
 } from './styles';
+import { listarAplicacoesVencendo, AplicacaoAPI } from '@/services/reaplicacaoService';
+import { listarPacientes, PacienteAPI } from '@/services/pacienteService';
 
 const procedureOptions = [
   { value: 'botox',            label: 'Botox Facial'         },
@@ -78,17 +80,51 @@ function getVisiblePages(currentPage: number, totalPages: number): (number | '..
 }
 
 export default function Reaplicacoes() {
-  const [search,       setSearch]       = useState('');
-  const [filterStat,   setFilterStat]   = useState('Todos');
-  const [filterProc,   setFilterProc]   = useState('Todos');
-  const [openDropStat, setOpenDropStat] = useState(false);
-  const [openDropProc, setOpenDropProc] = useState(false);
-  const [view,         setView]         = useState<'tabela' | 'cards'>('cards');
-  const [isModalOpen,  setIsModalOpen]  = useState(false);
-  const [selected,     setSelected]     = useState<Reap | null>(null);
-  const [currentPage,  setCurrentPage]  = useState(1);
+  const [search,          setSearch]          = useState('');
+  const [filterStat,      setFilterStat]      = useState('Todos');
+  const [filterProc,      setFilterProc]      = useState('Todos');
+  const [openDropStat,    setOpenDropStat]    = useState(false);
+  const [openDropProc,    setOpenDropProc]    = useState(false);
+  const [view,            setView]            = useState<'tabela' | 'cards'>('cards');
+  const [isModalOpen,     setIsModalOpen]     = useState(false);
+  const [selected,        setSelected]        = useState<Reap | null>(null);
+  const [currentPage,     setCurrentPage]     = useState(1);
+  const [reaplicacoes,    setReaplicacoes]    = useState<Reap[]>([]);
 
-  const filtered = mockReaplicacoes.filter(r => {
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [aplicacoes, pacientesRes] = await Promise.all([
+          listarAplicacoesVencendo(60),
+          listarPacientes('', 0, 500),
+        ]);
+        const pacMap = new Map<number, PacienteAPI>();
+        (pacientesRes.content || []).forEach(p => pacMap.set(p.id, p));
+        const mapped: Reap[] = aplicacoes.map((a: AplicacaoAPI, idx: number) => {
+          const pac   = pacMap.get(a.pacienteId);
+          const nome  = pac?.nome || `Paciente #${a.pacienteId}`;
+          const parts = nome.split(' ').slice(0, 2);
+          return {
+            id:            a.id,
+            paciente:      nome,
+            initials:      parts.map((n: string) => n[0]).join('').toUpperCase(),
+            procedimento:  a.lote?.produto?.nome || '—',
+            ultimaData:    a.dataAplicacao ? new Date(a.dataAplicacao).toLocaleDateString('pt-BR') : '—',
+            proximaData:   a.dataProximaAplicacao || new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+            intervaloDias: 30,
+            profissional:  '—',
+            telefone:      pac?.telefone || pac?.celular || '—',
+            email:         pac?.email || '—',
+            agendado:      false,
+          };
+        });
+        setReaplicacoes(mapped);
+      } catch {}
+    };
+    load();
+  }, []);
+
+  const filtered = reaplicacoes.filter(r => {
     const matchSearch = r.paciente.toLowerCase().includes(search.toLowerCase()) || r.procedimento.toLowerCase().includes(search.toLowerCase());
     const dias        = diasRestantes(r.proximaData);
     const matchStat   =
@@ -117,10 +153,10 @@ export default function Reaplicacoes() {
   const startItemTable    = filtered.length === 0 ? 0 : startIdxTable + 1;
   const visiblePagesTable = getVisiblePages(safePageTable, totalPagesTable);
 
-  const urgentes   = mockReaplicacoes.filter(r => diasRestantes(r.proximaData) <= 7).length;
-  const estaSemana = mockReaplicacoes.filter(r => { const d = diasRestantes(r.proximaData); return d > 7  && d <= 14; }).length;
-  const esteMes    = mockReaplicacoes.filter(r => { const d = diasRestantes(r.proximaData); return d > 14 && d <= 30; }).length;
-  const agendados  = mockReaplicacoes.filter(r => r.agendado).length;
+  const urgentes   = reaplicacoes.filter(r => diasRestantes(r.proximaData) <= 7).length;
+  const estaSemana = reaplicacoes.filter(r => { const d = diasRestantes(r.proximaData); return d > 7  && d <= 14; }).length;
+  const esteMes    = reaplicacoes.filter(r => { const d = diasRestantes(r.proximaData); return d > 14 && d <= 30; }).length;
+  const agendados  = reaplicacoes.filter(r => r.agendado).length;
 
   function handleSearchChange(v: string) { setSearch(v);      setCurrentPage(1); }
   function handleFilterStat(v: string)   { setFilterStat(v);  setCurrentPage(1); setOpenDropStat(false); }

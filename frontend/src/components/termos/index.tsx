@@ -4,7 +4,9 @@ import React, {
   useState,
   useRef,
   useLayoutEffect,
+  useEffect,
 } from 'react';
+import { listarTermos } from '@/services/consentimentoService';
 import Button from '@/components/ui/button';
 import CancelModal  from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
@@ -100,6 +102,15 @@ export default function TermosPage() {
     document.addEventListener('mousemove', move);
     document.addEventListener('mouseup', up);
   }
+
+  useEffect(() => {
+    listarTermos(true).then(data => {
+      // First active term is "terms", second is "privacy" (if exists)
+      if (data[0]?.conteudo) setTermsText(data[0].conteudo);
+      if (data[1]?.conteudo) setPrivacyText(data[1].conteudo);
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useLayoutEffect(() => {
     const el   = isEditing ? textareaRef.current : displayRef.current;

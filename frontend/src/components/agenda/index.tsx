@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -10,7 +10,10 @@ import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import { usePermissions } from '@/components/ui/hooks/usePermissions';
+import { useCurrentUser } from '@/components/ui/hooks/useCurrentUser';
 import AccessDenied from '@/components/ui/AccessDenied';
+import { listarAgendamentos, criarAgendamento, AgendamentoAPI } from '@/services/agendaService';
+import { listarPacientes } from '@/services/pacienteService';
 import {
   Container, Header, Title, ActionsRow,
   CalendarNav, CalendarTitle, CalendarGrid, DayHeader,
@@ -85,6 +88,22 @@ const VALIDATION_FIELDS = [
   { key: 'valor'        as AgendamentoField, validate: (v: string) => !v.trim() || v === 'R$ 0,00' ? 'Informe o valor do procedimento' : null },
 ];
 
+function mapAgendamentoToCalEvent(apt: AgendamentoAPI): CalEvent {
+  const date = new Date(apt.dataHora);
+  const proc = (apt.tipoConsulta || '').toLowerCase().replace(/ /g, '-');
+  return {
+    id:        apt.id,
+    weekDay:   date.getDay(),
+    hour:      date.getHours(),
+    year:      date.getFullYear(),
+    month:     date.getMonth(),
+    monthDay:  date.getDate(),
+    name:      apt.pacienteNome,
+    procedure: apt.tipoConsulta || 'Consulta',
+    color:     PROCEDURE_COLOR[proc] ?? '#BBA188',
+  };
+}
+
 function parseHour(h: string)       { return parseInt(h.split(':')[0], 10); }
 function parseDayOfMonth(d: string) { return parseInt(d.split('-')[2], 10); }
 function parseDayOfWeek(d: string)  { return new Date(`${d}T12:00:00`).getDay(); }
@@ -106,12 +125,13 @@ function isFormDirty(form: AgendamentoForm): boolean {
 
 export default function Agenda() {
   const { can, isSuperAdmin } = usePermissions();
+  const { currentUser } = useCurrentUser();
   const today = new Date();
 
   const [view,        setView]        = useState<'semana' | 'mes'>('semana');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form,        setForm]        = useState<AgendamentoForm>(FORM_INITIAL);
-  const [events,      setEvents]      = useState<CalEvent[]>(INITIAL_EVENTS);
+  const [events,      setEvents]      = useState<CalEvent[]>([]);
   const [nextId,      setNextId]      = useState(100);
   const [navYear,     setNavYear]     = useState(today.getFullYear());
   const [navMonth,    setNavMonth]    = useState(today.getMonth());
@@ -123,6 +143,12 @@ export default function Agenda() {
 
   const { errors, validate, clearError, clearAll } =
     useSequentialValidation<AgendamentoField>(VALIDATION_FIELDS);
+
+  useEffect(() => {
+    listarAgendamentos(0, 200).then(res => {
+      setEvents((res.content || []).map(mapAgendamentoToCalEvent));
+    }).catch(() => {});
+  }, []);
 
   if (!isSuperAdmin && !can('agenda.read') && !can('agenda.read_own')) return <AccessDenied />;
 
@@ -171,15 +197,34 @@ export default function Agenda() {
     if (!isValid) return;
     setShowConfirmModal(true);
   }
-  function handleConfirmSave() {
+  async function handleConfirmSave() {
     const procedureLabel = procedureOptions.find(p => p.value === form.procedimento)?.label ?? form.procedimento;
-    const novoEvento: CalEvent = {
-      id: nextId, weekDay: parseDayOfWeek(form.data), hour: parseHour(form.horario),
-      year: parseYear(form.data), month: parseMonth(form.data), monthDay: parseDayOfMonth(form.data),
-      name: form.nome, procedure: procedureLabel, color: PROCEDURE_COLOR[form.procedimento] ?? '#BBA188',
-    };
-    setEvents(prev => [...prev, novoEvento]);
-    setNextId(n => n + 1);
+    let added = false;
+    try {
+      const pacientesResult = await listarPacientes(form.nome, 0, 5);
+      const paciente = (pacientesResult.content || [])[0];
+      if (paciente) {
+        const dataHora = `${form.data}T${form.horario}:00`;
+        const novoAgendamento = await criarAgendamento({
+          pacienteId:   paciente.id,
+          medicoId:     currentUser?.id ?? 1,
+          dataHora,
+          tipoConsulta: procedureLabel,
+          observacoes:  form.observacoes,
+        });
+        setEvents(prev => [...prev, mapAgendamentoToCalEvent(novoAgendamento)]);
+        added = true;
+      }
+    } catch {}
+    if (!added) {
+      const novoEvento: CalEvent = {
+        id: nextId, weekDay: parseDayOfWeek(form.data), hour: parseHour(form.horario),
+        year: parseYear(form.data), month: parseMonth(form.data), monthDay: parseDayOfMonth(form.data),
+        name: form.nome, procedure: procedureLabel, color: PROCEDURE_COLOR[form.procedimento] ?? '#BBA188',
+      };
+      setEvents(prev => [...prev, novoEvento]);
+      setNextId(n => n + 1);
+    }
     setShowConfirmModal(false);
     setIsModalOpen(false);
     setSuccessMessage('Agendamento salvo com sucesso!');

@@ -29,7 +29,8 @@ import {
   ConsentimentoFooterRow, ConsentimentoLastUpdateWrap, ConsentimentoLastUpdateLabel,
   ConsentimentoLastUpdateDate,
 } from './styles';
-import React, { useRef, useLayoutEffect } from 'react';
+import React, { useRef, useLayoutEffect, useEffect } from 'react';
+import { listarAssinaturas, listarTermos, AssinaturaAPI, TermoAPI } from '@/services/consentimentoService';
 
 type TermoField =
   | 'paciente' | 'cpf' | 'nascimento' | 'procedimento' | 'dataProcedimento' | 'profissional' | 'email';
@@ -149,6 +150,7 @@ export default function Consentimento() {
   const [consentSucessModalOpen,  setConsentSucessModalOpen]  = useState(false);
   const [consentErrorModalOpen,   setConsentErrorModalOpen]   = useState(false);
   const [consentErrorMessage,     setConsentErrorMessage]     = useState('');
+  const [termos, setTermos] = useState<Termo[]>(mockTermos);
 
   const consentTextareaRef  = useRef<HTMLTextAreaElement>(null);
   const consentDisplayRef   = useRef<HTMLDivElement>(null);
@@ -195,6 +197,42 @@ export default function Consentimento() {
     document.addEventListener('mouseup', up);
   }
 
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [assinaturas, termosAPI] = await Promise.all([
+          listarAssinaturas(),
+          listarTermos(true),
+        ]);
+        
+        if (termosAPI.length > 0) {
+          const latest = termosAPI[termosAPI.length - 1] as TermoAPI;
+          if (latest.conteudo) setConsentimentoText(latest.conteudo);
+        }
+       
+        if (assinaturas.length > 0) {
+          const mapped = assinaturas.map((a: AssinaturaAPI) => ({
+            id:           a.id,
+            paciente:     a.pacienteNome || `Paciente #${a.pacienteId}`,
+            procedimento: a.termoTitulo  || 'Consentimento',
+            dataCriacao:  a.criadoEm ? new Date(a.criadoEm).toLocaleDateString('pt-BR') : '—',
+            dataValidade: a.dataAssinatura
+              ? new Date(new Date(a.dataAssinatura).setFullYear(new Date(a.dataAssinatura).getFullYear() + 1)).toLocaleDateString('pt-BR')
+              : '—',
+            status:       'assinado',
+            assinadoEm:   a.dataAssinatura ? new Date(a.dataAssinatura).toLocaleString('pt-BR') : null as string | null,
+            ip:           (a.ipOrigem || null) as string | null,
+            profissional: '—',
+            versao:       'v2.1',
+          })) as Termo[];
+          setTermos(mapped);
+        }
+      } catch {}
+    };
+    load();
+
+  }, []);
+
   useLayoutEffect(() => {
     const el   = isEditingConsent ? consentTextareaRef.current : consentDisplayRef.current;
     const tRef = isEditingConsent ? consentThumbRefEdit.current : consentThumbRef.current;
@@ -238,7 +276,7 @@ export default function Consentimento() {
     setConsentSucessModalOpen(true);
   }
 
-  const filtered = mockTermos.filter(t => {
+  const filtered = termos.filter(t => {
     const matchSearch = t.paciente.toLowerCase().includes(search.toLowerCase()) || t.procedimento.toLowerCase().includes(search.toLowerCase());
     const matchStat   = filterStat === 'Todos' || t.status === filterStat.toLowerCase();
     return matchSearch && matchStat;
@@ -249,10 +287,10 @@ export default function Consentimento() {
   const safePage      = Math.min(currentPage, totalPages);
   const paginatedData = filtered.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
 
-  const totalTermos = mockTermos.length;
-  const assinados   = mockTermos.filter(t => t.status === 'assinado').length;
-  const pendentes   = mockTermos.filter(t => t.status === 'pendente').length;
-  const expirados   = mockTermos.filter(t => t.status === 'expirado').length;
+  const totalTermos = termos.length;
+  const assinados   = termos.filter(t => t.status === 'assinado').length;
+  const pendentes   = termos.filter(t => t.status === 'pendente').length;
+  const expirados   = termos.filter(t => t.status === 'expirado').length;
 
   function handleSearchChange(value: string) { setSearch(value); setCurrentPage(1); }
   function handleFilterStatChange(value: string) { setFilterStat(value); setCurrentPage(1); setOpenDropStat(false); }

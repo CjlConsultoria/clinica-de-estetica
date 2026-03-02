@@ -16,4 +16,6 @@ public interface ProntuarioRepository extends JpaRepository<Prontuario, Long> {
     Page<Prontuario> findByMedicoId(Long medicoId, Pageable pageable);
 
     Optional<Prontuario> findByAgendamentoId(Long agendamentoId);
+
+    Page<Prontuario> findByPaciente_EmpresaIdAndPacienteId(Long empresaId, Long pacienteId, Pageable pageable);
 }

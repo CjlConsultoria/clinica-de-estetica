@@ -3,8 +3,10 @@ package com.clinica.api.service;
 import com.clinica.api.dto.request.ProcedimentoRequest;
 import com.clinica.api.dto.response.ProcedimentoResponse;
 import com.clinica.api.entity.Procedimento;
+import com.clinica.api.entity.Usuario;
 import com.clinica.api.repository.ProcedimentoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,10 +18,23 @@ public class ProcedimentoService {
 
     private final ProcedimentoRepository procedimentoRepository;
 
+    private Long getEmpresaId() {
+        Usuario u = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return u.getEmpresaId();
+    }
+
     public List<ProcedimentoResponse> listar(boolean apenasAtivos) {
-        List<Procedimento> lista = apenasAtivos
-                ? procedimentoRepository.findByAtivoTrueOrderByNomeAsc()
-                : procedimentoRepository.findAll();
+        Long empresaId = getEmpresaId();
+        List<Procedimento> lista;
+        if (empresaId != null) {
+            lista = apenasAtivos
+                    ? procedimentoRepository.findByEmpresaIdAndAtivoTrue(empresaId)
+                    : procedimentoRepository.findByEmpresaIdAndAtivoTrue(empresaId);
+        } else {
+            lista = apenasAtivos
+                    ? procedimentoRepository.findByAtivoTrueOrderByNomeAsc()
+                    : procedimentoRepository.findAll();
+        }
         return lista.stream().map(this::toResponse).toList();
     }
 
@@ -40,6 +55,7 @@ public class ProcedimentoService {
                 .duracaoMinutos(request.getDuracaoMinutos())
                 .percentualComissao(request.getPercentualComissao())
                 .descricao(request.getDescricao())
+                .empresaId(getEmpresaId())
                 .ativo(true)
                 .build();
         return toResponse(procedimentoRepository.save(proc));

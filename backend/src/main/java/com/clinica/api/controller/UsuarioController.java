@@ -2,6 +2,7 @@ package com.clinica.api.controller;
 
 import com.clinica.api.dto.request.UsuarioRequest;
 import com.clinica.api.dto.response.UsuarioResponse;
+import com.clinica.api.entity.Usuario;
 import com.clinica.api.enums.AreaProfissional;
 import com.clinica.api.enums.Cargo;
 import com.clinica.api.service.UsuarioService;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,23 +23,26 @@ public class UsuarioController {
 
     private final UsuarioService usuarioService;
 
+    @GetMapping("/me")
+    public ResponseEntity<UsuarioResponse> perfil(Authentication auth) {
+        Usuario usuario = (Usuario) auth.getPrincipal();
+        return ResponseEntity.ok(usuarioService.buscarPorId(usuario.getId()));
+    }
+
     @GetMapping
     public ResponseEntity<List<UsuarioResponse>> listarTodos() {
         return ResponseEntity.ok(usuarioService.listarTodos());
     }
-
 
     @GetMapping("/medicos")
     public ResponseEntity<List<UsuarioResponse>> listarMedicos() {
         return ResponseEntity.ok(usuarioService.listarMedicos());
     }
 
-
     @GetMapping("/area/tecnica")
     public ResponseEntity<List<UsuarioResponse>> listarAreaTecnica() {
         return ResponseEntity.ok(usuarioService.listarAreaTecnica());
     }
-
 
     @GetMapping("/area/administrativa")
     public ResponseEntity<List<UsuarioResponse>> listarAreaAdministrativa() {
@@ -48,7 +53,6 @@ public class UsuarioController {
     public ResponseEntity<List<UsuarioResponse>> listarPorArea(@PathVariable AreaProfissional area) {
         return ResponseEntity.ok(usuarioService.listarPorArea(area));
     }
-
 
     @GetMapping("/cargo/{cargo}")
     public ResponseEntity<List<UsuarioResponse>> listarPorCargo(@PathVariable Cargo cargo) {

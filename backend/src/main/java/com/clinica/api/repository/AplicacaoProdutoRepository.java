@@ -30,4 +30,8 @@ public interface AplicacaoProdutoRepository extends JpaRepository<AplicacaoProdu
     Integer somarQuantidadePorProduto(
             @Param("produtoId") Long produtoId,
             @Param("desde") LocalDate desde);
+
+    List<AplicacaoProduto> findByPaciente_EmpresaIdAndDataProximaAplicacaoBefore(Long empresaId, LocalDate data);
+
+    List<AplicacaoProduto> findByPaciente_EmpresaIdAndPacienteId(Long empresaId, Long pacienteId);
 }

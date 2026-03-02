@@ -28,4 +28,6 @@ public interface ComissaoRepository extends JpaRepository<Comissao, Long> {
     BigDecimal somarPendentesPorUsuario(@Param("usuarioId") Long usuarioId);
 
     boolean existsByLancamentoId(Long lancamentoId);
+
+    List<Comissao> findByUsuario_EmpresaId(Long empresaId);
 }

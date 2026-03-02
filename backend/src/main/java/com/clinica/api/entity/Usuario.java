@@ -61,6 +61,9 @@ public class Usuario implements UserDetails {
     @Column(columnDefinition = "TEXT", nullable = true)
     private String observacoes;
 
+    @Column(name = "empresa_id")
+    private Long empresaId;
+
     @Builder.Default
     @Column(nullable = false)
     private boolean ativo = true;

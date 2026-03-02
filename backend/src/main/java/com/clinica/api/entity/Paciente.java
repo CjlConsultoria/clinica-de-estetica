@@ -60,6 +60,9 @@ public class Paciente {
     @Column(columnDefinition = "TEXT")
     private String observacoes;
 
+    @Column(name = "empresa_id")
+    private Long empresaId;
+
     @Column(nullable = false)
     private boolean ativo = true;
 

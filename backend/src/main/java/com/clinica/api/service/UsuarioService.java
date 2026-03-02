@@ -12,6 +12,7 @@ import com.clinica.api.exception.ResourceNotFoundException;
 import com.clinica.api.repository.AgendamentoRepository;
 import com.clinica.api.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +27,22 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
     private final AgendamentoRepository agendamentoRepository;
 
+    private Long getEmpresaId() {
+        try {
+            Usuario u = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            return u.getEmpresaId();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public List<UsuarioResponse> listarTodos() {
+        Long empresaId = getEmpresaId();
+        if (empresaId != null) {
+            return usuarioRepository.findByEmpresaIdAndCargoNotNull(empresaId).stream()
+                    .map(this::toResponse)
+                    .toList();
+        }
         return usuarioRepository.findAll().stream()
                 .filter(u -> u.getCargo() != null)
                 .map(this::toResponse)
@@ -34,32 +50,60 @@ public class UsuarioService {
     }
 
     public List<UsuarioResponse> listarMedicos() {
+        Long empresaId = getEmpresaId();
+        if (empresaId != null) {
+            return usuarioRepository.findByEmpresaIdAndCargoAndAtivoTrue(empresaId, Cargo.MEDICO).stream()
+                    .map(this::toResponse)
+                    .toList();
+        }
         return usuarioRepository.findByCargoAndAtivoTrue(Cargo.MEDICO).stream()
                 .map(this::toResponse)
                 .toList();
     }
 
     public List<UsuarioResponse> listarAreaTecnica() {
+        Long empresaId = getEmpresaId();
+        if (empresaId != null) {
+            return usuarioRepository.findByEmpresaIdAndAreaProfissionalAndAtivoTrue(empresaId, AreaProfissional.TECNICA).stream()
+                    .map(this::toResponse)
+                    .toList();
+        }
         return usuarioRepository.findByAreaProfissionalAndAtivoTrue(AreaProfissional.TECNICA).stream()
                 .map(this::toResponse)
                 .toList();
     }
 
-
     public List<UsuarioResponse> listarAreaAdministrativa() {
+        Long empresaId = getEmpresaId();
+        if (empresaId != null) {
+            return usuarioRepository.findByEmpresaIdAndAreaProfissionalAndAtivoTrue(empresaId, AreaProfissional.ADMINISTRATIVA).stream()
+                    .map(this::toResponse)
+                    .toList();
+        }
         return usuarioRepository.findByAreaProfissionalAndAtivoTrue(AreaProfissional.ADMINISTRATIVA).stream()
                 .map(this::toResponse)
                 .toList();
     }
 
     public List<UsuarioResponse> listarPorCargo(Cargo cargo) {
+        Long empresaId = getEmpresaId();
+        if (empresaId != null) {
+            return usuarioRepository.findByEmpresaIdAndCargoAndAtivoTrue(empresaId, cargo).stream()
+                    .map(this::toResponse)
+                    .toList();
+        }
         return usuarioRepository.findByCargoAndAtivoTrue(cargo).stream()
                 .map(this::toResponse)
                 .toList();
     }
 
-
     public List<UsuarioResponse> listarPorArea(AreaProfissional area) {
+        Long empresaId = getEmpresaId();
+        if (empresaId != null) {
+            return usuarioRepository.findByEmpresaIdAndAreaProfissionalAndAtivoTrue(empresaId, area).stream()
+                    .map(this::toResponse)
+                    .toList();
+        }
         return usuarioRepository.findByAreaProfissionalAndAtivoTrue(area).stream()
                 .map(this::toResponse)
                 .toList();
@@ -80,6 +124,9 @@ public class UsuarioService {
 
         Role role = resolverRole(request);
         AreaProfissional area = request.getCargo() != null ? request.getCargo().getArea() : null;
+        Long empresaId = getEmpresaId() != null
+                ? getEmpresaId()
+                : request.getEmpresaId();
 
         Usuario usuario = Usuario.builder()
                 .nome(request.getNome())
@@ -92,6 +139,7 @@ public class UsuarioService {
                 .especialidade(request.getEspecialidade())
                 .registro(request.getRegistro())
                 .observacoes(request.getObservacoes())
+                .empresaId(empresaId)
                 .build();
 
         return toResponse(usuarioRepository.save(usuario));

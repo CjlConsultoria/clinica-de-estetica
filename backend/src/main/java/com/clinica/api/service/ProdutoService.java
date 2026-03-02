@@ -4,10 +4,12 @@ import com.clinica.api.dto.request.ProdutoRequest;
 import com.clinica.api.dto.response.AnvisaProdutoResponse;
 import com.clinica.api.dto.response.ProdutoResponse;
 import com.clinica.api.entity.Produto;
+import com.clinica.api.entity.Usuario;
 import com.clinica.api.exception.ResourceNotFoundException;
 import com.clinica.api.repository.LoteProdutoRepository;
 import com.clinica.api.repository.ProdutoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,10 +24,25 @@ public class ProdutoService {
     private final LoteProdutoRepository loteProdutoRepository;
     private final AnvisaService anvisaService;
 
+    private Long getEmpresaId() {
+        Usuario u = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return u.getEmpresaId();
+    }
+
     public List<ProdutoResponse> listar(String busca) {
-        List<Produto> produtos = (busca != null && !busca.isBlank())
-                ? produtoRepository.buscar(busca)
-                : produtoRepository.findByAtivoTrue();
+        Long empresaId = getEmpresaId();
+        List<Produto> produtos;
+        if (empresaId != null) {
+            if (busca != null && !busca.isBlank()) {
+                produtos = produtoRepository.findByEmpresaIdAndAtivoTrueAndNomeContainingIgnoreCase(empresaId, busca);
+            } else {
+                produtos = produtoRepository.findByEmpresaIdAndAtivoTrue(empresaId);
+            }
+        } else {
+            produtos = (busca != null && !busca.isBlank())
+                    ? produtoRepository.buscar(busca)
+                    : produtoRepository.findByAtivoTrue();
+        }
         return produtos.stream().map(this::toResponse).toList();
     }
 
@@ -42,6 +59,7 @@ public class ProdutoService {
                 .unidade(request.getUnidade())
                 .registroAnvisa(request.getRegistroAnvisa())
                 .descricao(request.getDescricao())
+                .empresaId(getEmpresaId())
                 .build();
         return toResponse(produtoRepository.save(produto));
     }

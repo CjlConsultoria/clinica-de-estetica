@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -10,6 +10,7 @@ import CancelModal from '@/components/modals/cancelModal';
 import ConfirmModal from '@/components/modals/confirmModal';
 import SucessModal from '@/components/modals/sucessModal';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
+import { listarProcedimentos, criarProcedimento, atualizarProcedimento, inativarProcedimento, ProcedimentoAPI } from '@/services/procedimentoService';
 import {
   Container, Header, Title, Controls, SearchBarWrapper, SearchIconWrap, SearchInputStyled,
   FilterRow, DropdownWrapper, DropdownBtn, DropdownList, DropdownItem, ClearFilterBtn,
@@ -58,17 +59,6 @@ const categoryOptions = [
 
 const filterCategories = ['Todas', 'Toxina Botulínica', 'Preenchimento', 'Bioestimulador', 'Fio de PDO', 'Skincare/Pele'];
 
-const INITIAL_PROCEDURES = [
-  { id: 1, code: 'BTX-001', name: 'Botox Facial Completo',   category: 'Toxina Botulínica', price: 800,  duration: 45, commission: 20, status: 'ativo',   sessions: 142, descricao: '' },
-  { id: 2, code: 'PRE-001', name: 'Preenchimento Labial',    category: 'Preenchimento',     price: 1200, duration: 60, commission: 20, status: 'ativo',   sessions: 98,  descricao: '' },
-  { id: 3, code: 'BIO-001', name: 'Bioestimulador Sculptra', category: 'Bioestimulador',    price: 2500, duration: 90, commission: 15, status: 'ativo',   sessions: 34,  descricao: '' },
-  { id: 4, code: 'FIO-001', name: 'Fio de PDO Tensor',       category: 'Fio de PDO',        price: 1800, duration: 75, commission: 18, status: 'ativo',   sessions: 56,  descricao: '' },
-  { id: 5, code: 'BTX-002', name: 'Toxina para Bruxismo',    category: 'Toxina Botulínica', price: 600,  duration: 30, commission: 20, status: 'ativo',   sessions: 67,  descricao: '' },
-  { id: 6, code: 'SKN-001', name: 'Microagulhamento',        category: 'Skincare/Pele',     price: 450,  duration: 60, commission: 25, status: 'ativo',   sessions: 89,  descricao: '' },
-  { id: 7, code: 'PRE-002', name: 'Preenchimento Malar',     category: 'Preenchimento',     price: 1400, duration: 60, commission: 20, status: 'inativo', sessions: 23,  descricao: '' },
-  { id: 8, code: 'SKN-002', name: 'Peelings Químicos',       category: 'Skincare/Pele',     price: 300,  duration: 45, commission: 25, status: 'ativo',   sessions: 110, descricao: '' },
-];
-
 const catColors: Record<string, string> = {
   'Toxina Botulínica': '#BBA188',
   'Preenchimento':     '#EBD5B0',
@@ -86,7 +76,33 @@ function getCategoryLabel(value: string): string {
   return categoryOptions.find(c => c.value === value)?.label ?? value;
 }
 
-type Procedure = typeof INITIAL_PROCEDURES[0];
+interface Procedure {
+  id: number;
+  code: string;
+  name: string;
+  category: string;
+  price: number;
+  duration: number;
+  commission: number;
+  status: string;
+  sessions: number;
+  descricao: string;
+}
+
+function mapApiToProcedure(p: ProcedimentoAPI): Procedure {
+  return {
+    id:         p.id,
+    name:       p.nome,
+    code:       p.codigo,
+    category:   p.categoria,
+    price:      p.valor,
+    duration:   p.duracaoMinutos,
+    commission: p.percentualComissao,
+    status:     p.ativo ? 'ativo' : 'inativo',
+    sessions:   0,
+    descricao:  p.descricao || '',
+  };
+}
 
 const CARDS_PER_PAGE = 6;
 const TABLE_PER_PAGE = 10;
@@ -120,7 +136,8 @@ function isFormDirty(form: ProcedimentoForm): boolean {
 }
 
 export default function Procedures() {
-  const [procedures,   setProcedures]   = useState<Procedure[]>(INITIAL_PROCEDURES);
+  const [procedures,   setProcedures]   = useState<Procedure[]>([]);
+  const [loading,      setLoading]      = useState(false);
 
   const [view,         setView]         = useState<'cards' | 'tabela'>('cards');
   const [search,       setSearch]       = useState('');
@@ -139,6 +156,22 @@ export default function Procedures() {
 
   const { errors, validate, clearError, clearAll } =
     useSequentialValidation<ProcedimentoField>(VALIDATION_FIELDS);
+
+  async function fetchProcedimentos() {
+    setLoading(true);
+    try {
+      const data = await listarProcedimentos(false);
+      setProcedures(data.map(mapApiToProcedure));
+    } catch {
+      setProcedures([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchProcedimentos();
+  }, []);
 
   const totalSessions = procedures.reduce((a, p) => a + p.sessions, 0);
   const avgPrice      = procedures.length > 0
@@ -230,39 +263,29 @@ export default function Procedures() {
     setShowConfirmModal(true);
   }
 
-  function handleConfirmSave() {
-    if (isEditing && selected) {
-      setProcedures(prev => prev.map(p =>
-        p.id === selected.id
-          ? {
-              ...p,
-              name:       form.nome,
-              code:       form.codigo,
-              category:   getCategoryLabel(form.categoria),
-              price:      parseMoeda(form.valor),
-              duration:   parseInt(form.duracao, 10) || 0,
-              commission: parseInt(form.comissao, 10) || 0,
-              descricao:  form.descricao,
-            }
-          : p
-      ));
-      setSuccessMessage('Procedimento atualizado com sucesso!');
-    } else {
-      const newProc: Procedure = {
-        id:         Date.now(),
-        code:       form.codigo,
-        name:       form.nome,
-        category:   getCategoryLabel(form.categoria),
-        price:      parseMoeda(form.valor),
-        duration:   parseInt(form.duracao, 10) || 0,
-        commission: parseInt(form.comissao, 10) || 0,
-        status:     'ativo',
-        sessions:   0,
-        descricao:  form.descricao,
-      };
-      setProcedures(prev => [newProc, ...prev]);
-      setCurrentPage(1); 
-      setSuccessMessage('Procedimento cadastrado com sucesso!');
+  async function handleConfirmSave() {
+    const procedimentoRequest = {
+      nome:               form.nome,
+      codigo:             form.codigo,
+      categoria:          getCategoryLabel(form.categoria),
+      valor:              parseMoeda(form.valor),
+      duracaoMinutos:     parseInt(form.duracao, 10) || 0,
+      percentualComissao: parseFloat(form.comissao) || 0,
+      descricao:          form.descricao,
+    };
+
+    try {
+      if (isEditing && selected) {
+        await atualizarProcedimento(selected.id, procedimentoRequest);
+        setSuccessMessage('Procedimento atualizado com sucesso!');
+      } else {
+        await criarProcedimento(procedimentoRequest);
+        setCurrentPage(1);
+        setSuccessMessage('Procedimento cadastrado com sucesso!');
+      }
+      await fetchProcedimentos();
+    } catch {
+      // keep existing list on error
     }
 
     setShowConfirmModal(false);
@@ -348,7 +371,11 @@ export default function Procedures() {
       {view === 'cards' ? (
         <CardsContainer>
           <div style={{ padding: 20, flex: 1, overflow: 'hidden' }}>
-            {filtered.length === 0 ? (
+            {loading ? (
+              <EmptyState>
+                <p>Carregando procedimentos...</p>
+              </EmptyState>
+            ) : filtered.length === 0 ? (
               <EmptyState>
                 <h3>Nenhum procedimento encontrado</h3>
                 <p>Tente ajustar os filtros ou a busca.</p>
@@ -439,7 +466,13 @@ export default function Procedures() {
                 </tr>
               </Thead>
               <Tbody>
-                {filtered.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <Td colSpan={8} style={{ textAlign: 'center', padding: '48px 0', color: '#bbb' }}>
+                      Carregando procedimentos...
+                    </Td>
+                  </tr>
+                ) : filtered.length === 0 ? (
                   <tr>
                     <Td colSpan={8} style={{ textAlign: 'center', padding: '48px 0', color: '#bbb' }}>
                       Nenhum procedimento encontrado.

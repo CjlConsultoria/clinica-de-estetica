@@ -142,7 +142,6 @@ async function generateComissoesPDF(body: RequestBody): Promise<ArrayBuffer> {
     const cx = MARGIN + i * (statW + 3);
     doc.setFillColor(...WHITE);
     doc.roundedRect(cx, y, statW, statH, 3, 3, 'F');
-    // Thinner accent line: width reduced from 2.5 to 1.2
     doc.setFillColor(...s.accent);
     doc.roundedRect(cx, y, 1.2, statH, 0.6, 0.6, 'F');
     doc.setFont('helvetica', 'normal');
