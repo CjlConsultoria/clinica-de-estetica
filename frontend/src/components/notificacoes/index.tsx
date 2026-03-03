@@ -155,7 +155,6 @@ export default function Notificacoes() {
   const [confirmLimpar,       setConfirmLimpar]      = useState(false);
   const [sucessModal,         setSucessModal]        = useState<{ title: string; message: string } | null>(null);
 
-  // Sempre que notifs mudar, sincroniza o contador global do navbar
   useEffect(() => {
     const count = notifs.filter(n => !n.lida).length;
     setUnreadCount(count);
@@ -177,7 +176,6 @@ export default function Notificacoes() {
       }));
       setNotifs(mapped);
     }).catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!allowed) return null;

@@ -29,11 +29,9 @@ export function NotificacoesProvider({ children }: { children: ReactNode }) {
       const { total } = await contarNaoLidas();
       setUnreadCount(total ?? 0);
     } catch {
-      // silencioso
     }
   }, []);
 
-  // Busca assim que o user estiver disponível; zera ao sair
   useEffect(() => {
     if (!user) {
       setUnreadCount(0);

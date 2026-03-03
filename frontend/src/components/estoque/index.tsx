@@ -13,7 +13,7 @@ import SucessModal from '@/components/modals/sucessModal';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import { usePermissions } from '@/components/ui/hooks/usePermissions';
 import AccessDenied from '@/components/ui/AccessDenied';
-import { criarProduto, atualizarProduto, listarLotes, criarLote, LoteAPI } from '@/services/estoqueService';
+import { criarProduto, atualizarProduto, inativarProduto, listarLotes, criarLote, LoteAPI } from '@/services/estoqueService';
 import {
   Container, Header, Title, Controls, SearchBarWrapper, SearchIconWrap, SearchInputStyled,
   FilterRow, DropdownWrapper, DropdownBtn, DropdownList, DropdownItem, ClearFilterBtn,
@@ -48,6 +48,13 @@ const unitOptions = [
   { value: 'amp',  label: 'Ampola'  },
   { value: 'ser',  label: 'Seringa' },
   { value: 'par',  label: 'Par'     },
+];
+
+const statusLoteOptions = [
+  { value: 'ativo',      label: 'Ativo'      },
+  { value: 'esgotado',   label: 'Esgotado'   },
+  { value: 'vencido',    label: 'Vencido'    },
+  { value: 'descartado', label: 'Descartado' },
 ];
 
 const movTypeOptions = [
@@ -95,13 +102,14 @@ function isExpiringSoon(dateStr: string) {
 }
 
 type ItemField =
-  | 'nome' | 'codigo' | 'categoria' | 'unidade'
-  | 'quantidade' | 'minimo' | 'maximo' | 'preco' | 'fornecedor' | 'validade';
+  | 'nome' | 'codigo' | 'registroAnvisa' | 'categoria' | 'unidade'
+  | 'quantidade' | 'minimo' | 'maximo' | 'preco' | 'fabricante'
+  | 'fornecedor' | 'dataFabricacao' | 'validade' | 'dataEntrada' | 'statusLote';
 
 interface ItemForm {
-  nome: string; codigo: string; categoria: string; unidade: string;
-  quantidade: string; minimo: string; maximo: string; preco: string;
-  fornecedor: string; validade: string;
+  nome: string; codigo: string; registroAnvisa: string; categoria: string; unidade: string;
+  quantidade: string; minimo: string; maximo: string; preco: string; fabricante: string;
+  fornecedor: string; dataFabricacao: string; validade: string; dataEntrada: string; statusLote: string;
 }
 
 type MovField = 'tipoMov' | 'quantidadeMov' | 'observacaoMov';
@@ -111,8 +119,9 @@ interface MovForm {
 }
 
 const ITEM_INITIAL: ItemForm = {
-  nome: '', codigo: '', categoria: '', unidade: '',
-  quantidade: '', minimo: '', maximo: '', preco: '', fornecedor: '', validade: '',
+  nome: '', codigo: '', registroAnvisa: '', categoria: '', unidade: '',
+  quantidade: '', minimo: '', maximo: '', preco: '', fabricante: '',
+  fornecedor: '', dataFabricacao: '', validade: '', dataEntrada: '', statusLote: '',
 };
 
 const MOV_INITIAL: MovForm = {
@@ -120,16 +129,21 @@ const MOV_INITIAL: MovForm = {
 };
 
 const ITEM_VALIDATION_FIELDS = [
-  { key: 'nome'       as ItemField, validate: (v: string) => !v.trim()                      ? 'Nome do item é obrigatório'   : null },
-  { key: 'codigo'     as ItemField, validate: (v: string) => !v.trim()                      ? 'Código é obrigatório'         : null },
-  { key: 'categoria'  as ItemField, validate: (v: string) => !v                             ? 'Selecione uma categoria'      : null },
-  { key: 'unidade'    as ItemField, validate: (v: string) => !v                             ? 'Selecione uma unidade'        : null },
-  { key: 'quantidade' as ItemField, validate: (v: string) => !v.trim() || isNaN(Number(v)) ? 'Quantidade é obrigatória'     : null },
-  { key: 'minimo'     as ItemField, validate: (v: string) => !v.trim() || isNaN(Number(v)) ? 'Estoque mínimo é obrigatório' : null },
-  { key: 'maximo'     as ItemField, validate: (v: string) => !v.trim() || isNaN(Number(v)) ? 'Estoque máximo é obrigatório' : null },
-  { key: 'preco'      as ItemField, validate: (v: string) => !v.trim() || isNaN(Number(v)) ? 'Preço unitário é obrigatório' : null },
-  { key: 'fornecedor' as ItemField, validate: (v: string) => !v.trim()                      ? 'Fornecedor é obrigatório'     : null },
-  { key: 'validade'   as ItemField, validate: (v: string) => !v                             ? 'Validade é obrigatória'       : null },
+  { key: 'nome'           as ItemField, validate: (v: string) => !v.trim()                      ? 'Nome do item é obrigatório'        : null },
+  { key: 'codigo'         as ItemField, validate: (v: string) => !v.trim()                      ? 'Número do lote é obrigatório'      : null },
+  { key: 'registroAnvisa' as ItemField, validate: (v: string) => !v.trim()                      ? 'Registro ANVISA é obrigatório'     : null },
+  { key: 'categoria'      as ItemField, validate: (v: string) => !v                             ? 'Selecione uma categoria'           : null },
+  { key: 'unidade'        as ItemField, validate: (v: string) => !v                             ? 'Selecione uma unidade'             : null },
+  { key: 'quantidade'     as ItemField, validate: (v: string) => !v.trim() || isNaN(Number(v)) ? 'Quantidade é obrigatória'          : null },
+  { key: 'minimo'         as ItemField, validate: (v: string) => !v.trim() || isNaN(Number(v)) ? 'Estoque mínimo é obrigatório'      : null },
+  { key: 'maximo'         as ItemField, validate: (v: string) => !v.trim() || isNaN(Number(v)) ? 'Estoque máximo é obrigatório'      : null },
+  { key: 'preco'          as ItemField, validate: (v: string) => !v.trim() || isNaN(Number(v)) ? 'Preço unitário é obrigatório'      : null },
+  { key: 'fabricante'     as ItemField, validate: (v: string) => !v.trim()                      ? 'Fabricante é obrigatório'          : null },
+  { key: 'fornecedor'     as ItemField, validate: (v: string) => !v.trim()                      ? 'Fornecedor é obrigatório'          : null },
+  { key: 'dataFabricacao' as ItemField, validate: (v: string) => !v                             ? 'Data de fabricação é obrigatória'  : null },
+  { key: 'validade'       as ItemField, validate: (v: string) => !v                             ? 'Data de validade é obrigatória'    : null },
+  { key: 'dataEntrada'    as ItemField, validate: (v: string) => !v                             ? 'Data de entrada é obrigatória'     : null },
+  { key: 'statusLote'     as ItemField, validate: (v: string) => !v                             ? 'Selecione o status do lote'        : null },
 ];
 
 const MOV_VALIDATION_FIELDS = [
@@ -145,6 +159,8 @@ interface StockItem {
   id: number; code: string; name: string; category: string;
   quantity: number; minStock: number; maxStock: number; unit: string;
   price: number; expiryDate: string; supplier: string; status: string;
+  registroAnvisa: string; fabricante: string; dataFabricacao: string;
+  dataEntrada: string; statusLote: string;
 }
 
 function mapLoteToStockItem(lote: LoteAPI): StockItem {
@@ -161,32 +177,48 @@ function mapLoteToStockItem(lote: LoteAPI): StockItem {
     status = ratio <= 0.2 ? 'critico' : ratio <= 0.5 ? 'baixo' : 'normal';
   }
   return {
-    id:         lote.id,
-    code:       lote.numeroLote           || `L${lote.id}`,
-    name:       lote.produtoNome          || '—',
-    category:   lote.produtoCategoria     || '—',
-    quantity:   qty,
-    minStock:   minQty,
-    maxStock:   maxQty,
-    unit:       lote.produtoUnidade       || 'unid',
-    price:      lote.produtoPrecoUnitario ?? 0,
-    expiryDate: lote.dataValidade         || '',
-    supplier:   lote.fornecedor           || '',
+    id:             lote.id,
+    code:           lote.numeroLote                || `L${lote.id}`,
+    name:           lote.produtoNome               || '—',
+    category:       lote.produtoCategoria          || '—',
+    quantity:       qty,
+    minStock:       minQty,
+    maxStock:       maxQty,
+    unit:           lote.produtoUnidade            || 'unid',
+    price:          lote.produtoPrecoUnitario      ?? 0,
+    expiryDate:     lote.dataValidade              || '',
+    supplier:       lote.fornecedor                || '',
     status,
+    registroAnvisa: lote.produtoRegistroAnvisa     || '',
+    fabricante:     lote.produtoFabricante         || '',
+    dataFabricacao: lote.dataFabricacao            || '',
+    dataEntrada:    lote.criadoEm ? new Date(lote.criadoEm).toISOString().substring(0, 10) : '',
+    statusLote:     lote.statusLote                || 'ativo',
   };
 }
 
 function isItemFormDirty(form: ItemForm): boolean {
   return (
-    form.nome.trim() !== '' || form.codigo.trim() !== '' || form.categoria !== '' ||
-    form.unidade !== '' || form.quantidade.trim() !== '' || form.minimo.trim() !== '' ||
-    form.maximo.trim() !== '' || form.preco.trim() !== '' || form.fornecedor.trim() !== '' ||
-    form.validade !== ''
+    (form.nome           ?? '').trim() !== '' ||
+    (form.codigo         ?? '').trim() !== '' ||
+    (form.registroAnvisa ?? '').trim() !== '' ||
+    form.categoria    !== ''                  ||
+    form.unidade      !== ''                  ||
+    (form.quantidade     ?? '').trim() !== '' ||
+    (form.minimo         ?? '').trim() !== '' ||
+    (form.maximo         ?? '').trim() !== '' ||
+    (form.preco          ?? '').trim() !== '' ||
+    (form.fabricante     ?? '').trim() !== '' ||
+    (form.fornecedor     ?? '').trim() !== '' ||
+    form.dataFabricacao !== ''                ||
+    form.validade       !== ''                ||
+    form.dataEntrada    !== ''                ||
+    form.statusLote     !== ''
   );
 }
 
 function isMovFormDirty(form: MovForm): boolean {
-  return form.tipoMov !== '' || form.quantidadeMov.trim() !== '' || form.observacaoMov.trim() !== '';
+  return form.tipoMov !== '' || (form.quantidadeMov ?? '').trim() !== '' || (form.observacaoMov ?? '').trim() !== '';
 }
 
 export default function Estoque() {
@@ -202,6 +234,10 @@ export default function Estoque() {
   const [isModalOpen,      setIsModalOpen]      = useState(false);
   const [isMovModal,       setIsMovModal]       = useState(false);
   const [isDetailOpen,     setIsDetailOpen]     = useState(false);
+  const [isDeleteOpen,     setIsDeleteOpen]     = useState(false);
+  const [itemToDelete,     setItemToDelete]     = useState<StockItem | null>(null);
+  const [deleteLoading,    setDeleteLoading]    = useState(false);
+  const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [estoque,          setEstoque]          = useState<StockItem[]>([]);
   const [loading,          setLoading]          = useState(true);
   const [selected,         setSelected]         = useState<StockItem | null>(null);
@@ -233,6 +269,7 @@ export default function Estoque() {
 
   const canCreate = isSuperAdmin || can('estoque.create');
   const canEdit   = isSuperAdmin || can('estoque.edit');
+  const canDelete = isSuperAdmin || can('estoque.edit');
 
   const filtered = estoque.filter(item => {
     const matchSearch = item.name.toLowerCase().includes(search.toLowerCase()) || item.code.toLowerCase().includes(search.toLowerCase());
@@ -259,11 +296,11 @@ export default function Estoque() {
     setItemForm(prev => ({ ...prev, [field]: value }));
     itemClearError(field);
   }
-  function handleItemDataChange(raw: string) {
-    if (!raw) { handleItemChange('validade', ''); return; }
+  function handleItemDateChange(field: 'dataFabricacao' | 'validade' | 'dataEntrada', raw: string) {
+    if (!raw) { handleItemChange(field, ''); return; }
     const [yearStr, month, day] = raw.split('-');
     const safeYear = yearStr ? yearStr.slice(0, 4) : '';
-    handleItemChange('validade', `${safeYear}-${month ?? ''}-${day ?? ''}`);
+    handleItemChange(field, `${safeYear}-${month ?? ''}-${day ?? ''}`);
   }
   function handleItemCancelClick() {
     if (isItemFormDirty(itemForm)) { setShowItemCancelModal(true); } else { forceCloseItemModal(); }
@@ -274,10 +311,12 @@ export default function Estoque() {
   }
   function handleSaveItemClick() {
     const isValid = itemValidate({
-      nome: itemForm.nome, codigo: itemForm.codigo, categoria: itemForm.categoria,
-      unidade: itemForm.unidade, quantidade: itemForm.quantidade, minimo: itemForm.minimo,
-      maximo: itemForm.maximo, preco: itemForm.preco, fornecedor: itemForm.fornecedor,
-      validade: itemForm.validade,
+      nome: itemForm.nome, codigo: itemForm.codigo, registroAnvisa: itemForm.registroAnvisa,
+      categoria: itemForm.categoria, unidade: itemForm.unidade, quantidade: itemForm.quantidade,
+      minimo: itemForm.minimo, maximo: itemForm.maximo, preco: itemForm.preco,
+      fabricante: itemForm.fabricante, fornecedor: itemForm.fornecedor,
+      dataFabricacao: itemForm.dataFabricacao, validade: itemForm.validade,
+      dataEntrada: itemForm.dataEntrada, statusLote: itemForm.statusLote,
     });
     if (!isValid) return;
     setShowItemConfirmModal(true);
@@ -287,13 +326,14 @@ export default function Estoque() {
     setItemSaveError(null);
     try {
       const produtoPayload = {
-        nome:          itemForm.nome,
-        fabricante:    itemForm.fornecedor,
-        categoria:     categoryOptions.find(c => c.value === itemForm.categoria)?.label || itemForm.categoria,
-        unidade:       itemForm.unidade,
-        estoqueMinimo: itemForm.minimo ? Number(itemForm.minimo) : undefined,
-        estoqueMaximo: itemForm.maximo ? Number(itemForm.maximo) : undefined,
-        precoUnitario: itemForm.preco  ? Number(itemForm.preco)  : undefined,
+        nome:           itemForm.nome,
+        fabricante:     itemForm.fabricante,
+        categoria:      categoryOptions.find(c => c.value === itemForm.categoria)?.label || itemForm.categoria,
+        unidade:        itemForm.unidade,
+        estoqueMinimo:  itemForm.minimo     ? Number(itemForm.minimo)     : undefined,
+        estoqueMaximo:  itemForm.maximo     ? Number(itemForm.maximo)     : undefined,
+        precoUnitario:  itemForm.preco      ? Number(itemForm.preco)      : undefined,
+        registroAnvisa: itemForm.registroAnvisa || undefined,
       };
       if (selected) {
         await atualizarProduto(selected.id, produtoPayload);
@@ -303,6 +343,7 @@ export default function Estoque() {
           produtoId:       produto.id,
           numeroLote:      itemForm.codigo,
           dataValidade:    itemForm.validade,
+          dataFabricacao:  itemForm.dataFabricacao || undefined,
           quantidadeTotal: Number(itemForm.quantidade) || 0,
           fornecedor:      itemForm.fornecedor,
         });
@@ -320,7 +361,28 @@ export default function Estoque() {
     }
   }
 
-  // ── Mov form handlers ───────────────────────────────────────────────────────
+  function openDeleteConfirm(item: StockItem) {
+    setItemToDelete(item);
+    setIsDetailOpen(false);
+    setIsDeleteOpen(true);
+  }
+  async function handleConfirmDelete() {
+    if (!itemToDelete) return;
+    try {
+      setDeleteLoading(true);
+      await inativarProduto(itemToDelete.id);
+      const lotes = await listarLotes();
+      setEstoque(lotes.map(mapLoteToStockItem));
+      setIsDeleteOpen(false);
+      setItemToDelete(null);
+      setShowDeleteSuccess(true);
+    } catch (err: unknown) {
+      console.error('Erro ao deletar item:', err);
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
+
   function handleMovChange(field: MovField, value: string) {
     setMovForm(prev => ({ ...prev, [field]: value }));
     movClearError(field);
@@ -350,21 +412,25 @@ export default function Estoque() {
     setShowMovSuccessModal(true);
   }
 
-  // ── Open helpers ────────────────────────────────────────────────────────────
   function openDetail(item: StockItem) { setSelected(item); setIsDetailOpen(true); }
   function openEdit(item: StockItem) {
     setSelected(item);
     setItemForm({
-      nome:       item.name,
-      codigo:     item.code,
-      categoria:  categoryOptions.find(c => c.label === item.category)?.value ?? '',
-      unidade:    item.unit,
-      quantidade: String(item.quantity),
-      minimo:     String(item.minStock),
-      maximo:     String(item.maxStock),
-      preco:      String(item.price),
-      fornecedor: item.supplier,
-      validade:   item.expiryDate,
+      nome:           item.name,
+      codigo:         item.code,
+      registroAnvisa: item.registroAnvisa,
+      categoria:      categoryOptions.find(c => c.label === item.category)?.value ?? '',
+      unidade:        item.unit,
+      quantidade:     String(item.quantity),
+      minimo:         String(item.minStock),
+      maximo:         String(item.maxStock),
+      preco:          String(item.price),
+      fabricante:     item.fabricante,
+      fornecedor:     item.supplier,
+      dataFabricacao: item.dataFabricacao,
+      validade:       item.expiryDate,
+      dataEntrada:    item.dataEntrada,
+      statusLote:     item.statusLote,
     });
     setIsDetailOpen(false);
     setIsModalOpen(true);
@@ -372,8 +438,6 @@ export default function Estoque() {
   function openMov(item: StockItem) {
     setSelected(item); setMovForm(MOV_INITIAL); movClearAll(); setIsMovModal(true);
   }
-
-  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <Container>
       <Header>
@@ -462,8 +526,6 @@ export default function Estoque() {
           </ToggleGroup>
         </FilterRow>
       </Controls>
-
-      {/* ── TABELA ─────────────────────────────────────────────────────────── */}
       {view === 'tabela' ? (
         <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <TableWrapper style={{ minHeight: TABLE_MIN_HEIGHT }}>
@@ -509,8 +571,41 @@ export default function Estoque() {
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                         </IconBtn>
                         {canEdit && (
-                          <IconBtn title="Movimentar estoque" onClick={() => openMov(item)} style={{ borderColor: '#d4a84b', color: '#d4a84b' }}>
+                          <IconBtn
+                            title="Movimentar estoque"
+                            onClick={() => openMov(item)}
+                            style={{ borderColor: '#d4a84b', color: '#d4a84b' }}
+                            onMouseEnter={e => {
+                              (e.currentTarget as HTMLButtonElement).style.background   = '#d4a84b';
+                              (e.currentTarget as HTMLButtonElement).style.borderColor  = '#d4a84b';
+                              (e.currentTarget as HTMLButtonElement).style.color        = 'white';
+                            }}
+                            onMouseLeave={e => {
+                              (e.currentTarget as HTMLButtonElement).style.background   = 'white';
+                              (e.currentTarget as HTMLButtonElement).style.borderColor  = '#d4a84b';
+                              (e.currentTarget as HTMLButtonElement).style.color        = '#d4a84b';
+                            }}
+                          >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
+                          </IconBtn>
+                        )}
+                        {canDelete && (
+                          <IconBtn
+                            title="Excluir item"
+                            onClick={() => openDeleteConfirm(item)}
+                            style={{ color: '#e74c3c', borderColor: '#fde8e8' }}
+                            onMouseEnter={e => {
+                              (e.currentTarget as HTMLButtonElement).style.background    = '#e74c3c';
+                              (e.currentTarget as HTMLButtonElement).style.borderColor  = '#e74c3c';
+                              (e.currentTarget as HTMLButtonElement).style.color        = 'white';
+                            }}
+                            onMouseLeave={e => {
+                              (e.currentTarget as HTMLButtonElement).style.background    = 'white';
+                              (e.currentTarget as HTMLButtonElement).style.borderColor  = '#fde8e8';
+                              (e.currentTarget as HTMLButtonElement).style.color        = '#e74c3c';
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                           </IconBtn>
                         )}
                       </ActionGroup>
@@ -524,7 +619,6 @@ export default function Estoque() {
         </div>
 
       ) : (
-        /* ── CARDS ─────────────────────────────────────────────────────────── */
         <CardsGrid>
           {loading ? (
             <EmptyState><p>Carregando...</p></EmptyState>
@@ -575,13 +669,22 @@ export default function Estoque() {
                 {canEdit && (
                   <Button variant="ghost" size="sm" onClick={() => openMov(item)}>+ Movimentar</Button>
                 )}
+                {canDelete && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openDeleteConfirm(item)}
+                    style={{ color: '#e74c3c' }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                  </Button>
+                )}
               </StockCardFooter>
             </StockCard>
           ))}
         </CardsGrid>
       )}
 
-      {/* ── MODAL DETALHES DO ITEM ─────────────────────────────────────────── */}
       <Modal
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
@@ -606,6 +709,16 @@ export default function Estoque() {
                 >
                   Editar Item
                 </Button>
+                {canDelete && (
+                  <Button
+                    variant="outline"
+                    icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>}
+                    onClick={() => selected && openDeleteConfirm(selected)}
+                    style={{ color: '#e74c3c', borderColor: '#fde8e8' }}
+                  >
+                    Excluir
+                  </Button>
+                )}
               </div>
             )}
             <Button variant="outline" onClick={() => setIsDetailOpen(false)}>Fechar</Button>
@@ -615,7 +728,6 @@ export default function Estoque() {
         {selected && (
           <DetailModal>
             <DetailHeader>
-              {/* Ícone de caixa com cor da categoria — substitui o avatar circular do paciente */}
               <div style={{
                 width: 64, height: 64, borderRadius: 50, flexShrink: 0,
                 background: `${catColors[selected.category] || '#BBA188'}22`,
@@ -696,10 +808,30 @@ export default function Estoque() {
                   </InfoValue>
                 </InfoItem>
                 <InfoItem>
+                  <InfoLabel>Registro ANVISA</InfoLabel>
+                  <InfoValue>{selected.registroAnvisa || '—'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Fabricante</InfoLabel>
+                  <InfoValue>{selected.fabricante || '—'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Data de Fabricação</InfoLabel>
+                  <InfoValue>{selected.dataFabricacao ? formatDate(selected.dataFabricacao) : '—'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
                   <InfoLabel>Validade</InfoLabel>
                   <InfoValue style={{ color: isExpiringSoon(selected.expiryDate) ? '#d68a00' : '#444', fontWeight: isExpiringSoon(selected.expiryDate) ? 600 : 400 }}>
                     {formatDate(selected.expiryDate)}{isExpiringSoon(selected.expiryDate) ? ' ⚠️' : ''}
                   </InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Data de Entrada</InfoLabel>
+                  <InfoValue>{selected.dataEntrada ? formatDate(selected.dataEntrada) : '—'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Status do Lote</InfoLabel>
+                  <InfoValue>{statusLoteOptions.find(s => s.value === selected.statusLote)?.label || selected.statusLote || '—'}</InfoValue>
                 </InfoItem>
                 <InfoItem>
                   <InfoLabel>Fornecedor</InfoLabel>
@@ -745,13 +877,12 @@ export default function Estoque() {
         )}
       </Modal>
 
-      {/* ── MODAL NOVO / EDITAR ITEM ──────────────────────────────────────── */}
       <Modal
         isOpen={isModalOpen}
         onClose={handleItemCancelClick}
         closeOnOverlayClick={false}
         title={selected ? 'Editar Item' : 'Novo Item de Estoque'}
-        size="md"
+        size="lg"
         footer={
           <>
             <Button variant="outline" onClick={handleItemCancelClick}>Cancelar</Button>
@@ -768,19 +899,22 @@ export default function Estoque() {
           <div style={{ gridColumn: 'span 2' }}>
             <Input label="Nome do Item *" placeholder="Ex: Toxina Botulínica Allergan..." value={itemForm.nome} onChange={e => handleItemChange('nome', e.target.value)} maxLength={120} error={itemErrors.nome} />
           </div>
-          <Input  label="Código *"              placeholder="Ex: BTX-001"   value={itemForm.codigo}     onChange={e => handleItemChange('codigo', e.target.value.toUpperCase())} maxLength={30}  error={itemErrors.codigo} />
-          <Select label="Categoria *"           options={categoryOptions}   placeholder="Selecione..."  value={itemForm.categoria}  onChange={v => handleItemChange('categoria', v)}  error={itemErrors.categoria} />
-          <Select label="Unidade *"             options={unitOptions}       placeholder="Selecione..."  value={itemForm.unidade}    onChange={v => handleItemChange('unidade', v)}    error={itemErrors.unidade} />
-          <Input  label="Quantidade *"          type="number" placeholder="0" value={itemForm.quantidade} onChange={e => handleItemChange('quantidade', e.target.value)} error={itemErrors.quantidade} />
-          <Input  label="Estoque Mínimo *"      type="number" placeholder="0" value={itemForm.minimo}     onChange={e => handleItemChange('minimo', e.target.value)}     error={itemErrors.minimo} />
-          <Input  label="Estoque Máximo *"      type="number" placeholder="0" value={itemForm.maximo}     onChange={e => handleItemChange('maximo', e.target.value)}     error={itemErrors.maximo} />
-          <Input  label="Preço Unitário (R$) *" type="number" placeholder="0,00" value={itemForm.preco} onChange={e => handleItemChange('preco', e.target.value)} error={itemErrors.preco} />
-          <Input  label="Fornecedor *"          placeholder="Nome do fornecedor" value={itemForm.fornecedor} onChange={e => handleItemChange('fornecedor', e.target.value)} maxLength={80} error={itemErrors.fornecedor} />
-          <Input  label="Validade *"            type="date"   value={itemForm.validade}   onChange={e => handleItemDataChange(e.target.value)} error={itemErrors.validade} />
+          <Input  label="Número do Lote *"      placeholder="Ex: LOT-2025-BTX-001"    value={itemForm.codigo}         onChange={e => handleItemChange('codigo', e.target.value.toUpperCase())}         maxLength={30}  error={itemErrors.codigo} />
+          <Input  label="Registro ANVISA *"      placeholder="Ex: 1.0309.0198.001-9"   value={itemForm.registroAnvisa} onChange={e => handleItemChange('registroAnvisa', e.target.value)}               maxLength={60}  error={itemErrors.registroAnvisa} />
+          <Select label="Categoria *"            options={categoryOptions}              placeholder="Selecione..."      value={itemForm.categoria}      onChange={v => handleItemChange('categoria', v)}      error={itemErrors.categoria} />
+          <Select label="Unidade *"              options={unitOptions}                  placeholder="Selecione..."      value={itemForm.unidade}        onChange={v => handleItemChange('unidade', v)}        error={itemErrors.unidade} />
+          <Input  label="Quantidade *"           type="number" placeholder="0"          value={itemForm.quantidade}     onChange={e => handleItemChange('quantidade', e.target.value)}                   error={itemErrors.quantidade} />
+          <Input  label="Estoque Mínimo *"       type="number" placeholder="0"          value={itemForm.minimo}         onChange={e => handleItemChange('minimo', e.target.value)}                       error={itemErrors.minimo} />
+          <Input  label="Estoque Máximo *"       type="number" placeholder="0"          value={itemForm.maximo}         onChange={e => handleItemChange('maximo', e.target.value)}                       error={itemErrors.maximo} />
+          <Input  label="Preço Unitário (R$) *"  type="number" placeholder="0,00"       value={itemForm.preco}          onChange={e => handleItemChange('preco', e.target.value)}                        error={itemErrors.preco} />
+          <Input  label="Fabricante *"           placeholder="Nome do fabricante"       value={itemForm.fabricante}     onChange={e => handleItemChange('fabricante', e.target.value)}                   maxLength={80}  error={itemErrors.fabricante} />
+          <Input  label="Fornecedor *"           placeholder="Nome do fornecedor"       value={itemForm.fornecedor}     onChange={e => handleItemChange('fornecedor', e.target.value)}                   maxLength={80}  error={itemErrors.fornecedor} />
+          <Input  label="Data de Fabricação *"   type="date"                            value={itemForm.dataFabricacao} onChange={e => handleItemDateChange('dataFabricacao', e.target.value)}           error={itemErrors.dataFabricacao} />
+          <Input  label="Data de Validade *"     type="date"                            value={itemForm.validade}       onChange={e => handleItemDateChange('validade', e.target.value)}                 error={itemErrors.validade} />
+          <Input  label="Data de Entrada *"      type="date"                            value={itemForm.dataEntrada}    onChange={e => handleItemDateChange('dataEntrada', e.target.value)}              error={itemErrors.dataEntrada} />
+          <Select label="Status do Lote *"       options={statusLoteOptions}            placeholder="Selecione..."      value={itemForm.statusLote}     onChange={v => handleItemChange('statusLote', v)}     error={itemErrors.statusLote} />
         </FormGrid>
       </Modal>
-
-      {/* ── MODAL MOVIMENTAÇÃO ────────────────────────────────────────────── */}
       <Modal
         isOpen={isMovModal}
         onClose={handleMovCancelClick}
@@ -800,8 +934,23 @@ export default function Estoque() {
           <Input  label="Observação *"           placeholder="Ex: NF 1234, Procedimento da paciente Ana..." value={movForm.observacaoMov} onChange={e => handleMovChange('observacaoMov', e.target.value)} maxLength={200} error={movErrors.observacaoMov} />
         </FormGrid>
       </Modal>
-
-      {/* ── MODAIS AUXILIARES ─────────────────────────────────────────────── */}
+      <ConfirmModal
+        isOpen={isDeleteOpen}
+        title="Excluir item do estoque?"
+        message={itemToDelete ? `Tem certeza que deseja excluir "${itemToDelete.name}" do estoque? Esta ação não pode ser desfeita.` : ''}
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => { setIsDeleteOpen(false); setItemToDelete(null); }}
+        loading={deleteLoading}
+      />
+      <SucessModal
+        isOpen={showDeleteSuccess}
+        title="Item excluído!"
+        message="O item foi removido do estoque com sucesso."
+        onClose={() => setShowDeleteSuccess(false)}
+        buttonText="Continuar"
+      />
       <CancelModal  isOpen={showItemCancelModal}  title="Deseja cancelar?"       message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas."  onConfirm={forceCloseItemModal}  onCancel={() => setShowItemCancelModal(false)} />
       <ConfirmModal isOpen={showItemConfirmModal} title={selected ? 'Salvar alterações?' : 'Adicionar item?'} message={selected ? `Deseja salvar as alterações do item "${itemForm.nome || selected.name}"?` : `Deseja adicionar o item "${itemForm.nome}" ao estoque?`} confirmText="Confirmar" cancelText="Voltar" onConfirm={handleConfirmSaveItem} onCancel={() => setShowItemConfirmModal(false)} />
       <SucessModal  isOpen={showItemSuccessModal} title="Sucesso!" message={selected ? 'Item atualizado com sucesso!' : 'Item adicionado ao estoque com sucesso!'} onClose={() => setShowItemSuccessModal(false)} buttonText="Continuar" />

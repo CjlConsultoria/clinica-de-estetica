@@ -532,8 +532,6 @@ export const FormGrid = styled.div`
   }
 `;
 
-/* ─────────────── Paginação ─────────────── */
-
 export const PaginationWrapper = styled.div`
   display: flex;
   align-items: center;

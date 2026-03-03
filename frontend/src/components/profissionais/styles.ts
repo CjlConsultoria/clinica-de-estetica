@@ -398,8 +398,6 @@ export const EmptyState = styled.div`
   p   { font-size: 0.85rem; color: #999; margin: 0; }
 `;
 
-/* ─────────────── Modal / Formulário ─────────────── */
-
 export const FormGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -755,8 +753,6 @@ export const ObsBox = styled.div`
 
   strong { color: #BBA188; }
 `;
-
-/* ─────────────── User Switcher ─────────────── */
 
 export const UserSwitcherBar = styled.div`
   display: flex;

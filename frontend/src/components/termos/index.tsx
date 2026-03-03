@@ -33,14 +33,11 @@ import {
   LastUpdateDate,
 } from './styles';
 
-/* ------------------------------------------------------------------ Types */
 type Tab = 'terms' | 'privacy';
 
-/* -------------------------------------------------------- Main Component */
 export default function TermosPage() {
   const [activeTab, setActiveTab] = useState<Tab>('terms');
 
-  // DEPOIS — texto placeholder para testes locais
   const [termsText,   setTermsText]   = useState('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.');
   const [privacyText, setPrivacyText] = useState('Política de privacidade placeholder. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident.');
   const [backupTerms,   setBackupTerms]   = useState('');
@@ -53,7 +50,6 @@ export default function TermosPage() {
   const [isSaving,   setIsSaving]   = useState(false);
   const [pendingTab, setPendingTab] = useState<Tab | null>(null);
 
-  /* ── Modal states ─────────────────────────────────────────────────────── */
   const [cancelModalOpen,  setCancelModalOpen]  = useState(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [sucessModalOpen,  setSucessModalOpen]  = useState(false);
@@ -61,13 +57,11 @@ export default function TermosPage() {
   const [errorMessage,     setErrorMessage]     = useState('');
   const [sucessMessage,    setSucessMessage]    = useState('');
 
-  /* ── Scroll refs ──────────────────────────────────────────────────────── */
   const textareaRef  = useRef<HTMLTextAreaElement>(null);
   const displayRef   = useRef<HTMLDivElement>(null);
   const thumbRef     = useRef<HTMLDivElement>(null);
   const thumbRefEdit = useRef<HTMLDivElement>(null);
 
-  /* --------------------------------------------------------- Scroll thumb */
   function updateThumb(el: HTMLElement, thumb: HTMLElement) {
     const ratio = el.clientHeight / el.scrollHeight;
     const h     = Math.max(30, ratio * el.clientHeight);
@@ -105,11 +99,9 @@ export default function TermosPage() {
 
   useEffect(() => {
     listarTermos(true).then(data => {
-      // First active term is "terms", second is "privacy" (if exists)
       if (data[0]?.conteudo) setTermsText(data[0].conteudo);
       if (data[1]?.conteudo) setPrivacyText(data[1].conteudo);
     }).catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useLayoutEffect(() => {
@@ -118,7 +110,6 @@ export default function TermosPage() {
     if (el && tRef) setTimeout(() => updateThumb(el, tRef), 50);
   }, [isEditing, activeTab, termsText, privacyText]);
 
-  /* --------------------------------------------------------- Tab switching */
   function handleTabClick(tab: Tab) {
     if (tab === activeTab) return;
     if (isEditing) {
@@ -129,7 +120,6 @@ export default function TermosPage() {
     }
   }
 
-  /* --------------------------------------------------------------- Editing */
   function startEdit() {
     if (activeTab === 'terms') setBackupTerms(termsText);
     else setBackupPrivacy(privacyText);
@@ -141,7 +131,6 @@ export default function TermosPage() {
     else setPrivacyText(value);
   }
 
-  /* ── Cancel flow ──────────────────────────────────────────────────────── */
   function handleCancelClick() {
     setCancelModalOpen(true);
   }
@@ -162,7 +151,6 @@ export default function TermosPage() {
     setPendingTab(null);
   }
 
-  /* ── Save flow ────────────────────────────────────────────────────────── */
   function handleSaveClick() {
     const content = activeTab === 'terms' ? termsText : privacyText;
     if (!content.trim()) {
@@ -180,9 +168,7 @@ export default function TermosPage() {
   async function handleSaveConfirmed() {
     setConfirmModalOpen(false);
     setIsSaving(true);
-
-    /* TODO: chamar API aqui */
-    await new Promise(r => setTimeout(r, 600)); // simulacao temporaria
+    await new Promise(r => setTimeout(r, 600));
 
     const now = new Date();
     const pad = (n: number) => String(n).padStart(2, '0');
@@ -199,11 +185,9 @@ export default function TermosPage() {
     setSucessModalOpen(true);
   }
 
-  /* ------------------------------------------------------------- Computed */
   const currentText = activeTab === 'terms' ? termsText : privacyText;
   const isFirstTab  = activeTab === 'terms';
 
-  /* -------------------------------------------------------------- Render */
   return (
     <PageWrapper>
       <PageTitle>
@@ -222,8 +206,6 @@ export default function TermosPage() {
       <Card $activeFirst={isFirstTab}>
         <ContentArea>
           <ScrollWrapper>
-
-            {/* Editando */}
             {isEditing && (
               <>
                 <EditableTextarea
@@ -240,8 +222,6 @@ export default function TermosPage() {
                 </CustomScrollbar>
               </>
             )}
-
-            {/* Exibindo conteudo */}
             {!isEditing && currentText && (
               <>
                 <TextDisplay
@@ -258,8 +238,6 @@ export default function TermosPage() {
                 </CustomScrollbar>
               </>
             )}
-
-            {/* Vazio — centralizado no card */}
             {!isEditing && !currentText && (
               <EmptyState>
                 <EmptyIconWrap>
@@ -278,8 +256,6 @@ export default function TermosPage() {
 
           </ScrollWrapper>
         </ContentArea>
-
-        {/* Footer: sempre visivel */}
         <FooterRow>
           {(lastDate || isEditing || currentText) && (
             <LastUpdateWrap>
@@ -304,8 +280,6 @@ export default function TermosPage() {
           </Button>
         </FooterRow>
       </Card>
-
-      {/* ── Modais ─────────────────────────────────────────────────────────── */}
 
       <CancelModal
         isOpen={cancelModalOpen}

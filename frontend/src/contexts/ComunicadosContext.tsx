@@ -19,7 +19,6 @@ const ComunicadosContext = createContext<ComunicadosContextValue>({
 });
 
 export function ComunicadosProvider({ children }: { children: ReactNode }) {
-  // IDs que o usuário já marcou como lido nesta sessão
   const [readIds,   setReadIds]   = useState<Set<number>>(new Set());
   const [totalIds,  setTotalIds]  = useState<number[]>([]);
   const { user } = useAuth();
@@ -30,11 +29,9 @@ export function ComunicadosProvider({ children }: { children: ReactNode }) {
       const ativos = (data ?? []).filter(c => c.ativo);
       setTotalIds(ativos.map(c => c.id));
     } catch {
-      // silencioso
     }
   }, []);
 
-  // Busca ao logar; zera ao sair
   useEffect(() => {
     if (!user) {
       setTotalIds([]);

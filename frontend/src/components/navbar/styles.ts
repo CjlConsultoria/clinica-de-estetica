@@ -23,7 +23,7 @@ export const NavbarContainer = styled.div<NavbarContainerProps>`
   left: 0;
   top: 0;
   overflow: hidden;
-  overflow-y: ${({ $collapsed }) => ($collapsed ? 'hidden' : 'auto')};
+  overflow-y: auto;
   z-index: 1000;
   will-change: width;
   transition:
@@ -36,7 +36,7 @@ export const NavbarContainer = styled.div<NavbarContainerProps>`
 
   @media (min-width: 1025px) and (max-width: 1440px) {
     padding: 14px 0;
-    overflow-y: hidden;
+    overflow-y: auto;
   }
 
   @media (max-width: 1024px) {
@@ -365,6 +365,11 @@ export const NavLinkIcon = styled.div<NavProps>`
     transition: color 0.25s ease, transform 0.25s ease;
   }
 
+  @media (min-width: 1025px) and (max-width: 1440px) {
+    width: 52px;
+    min-width: 52px;
+  }
+
   @media (max-width: 1024px) {
     width: 56px;
     min-width: 56px;
@@ -442,7 +447,7 @@ export const NavLink = styled(Link)<NavProps>`
     border-radius 0.25s ease;
 
   @media (min-width: 1025px) and (max-width: 1440px) {
-    padding: 5px 12px 5px 0;
+    padding: 6px 12px 6px 0;
   }
 
   &::before {
@@ -519,8 +524,9 @@ export const LogoutButton = styled.button<{ $collapsed?: boolean }>`
   }
 
   @media (min-width: 1025px) and (max-width: 1440px) {
-    padding: 5px 12px 5px 0;
+    padding: 6px 12px 6px 0;
     font-size: 11px;
+    svg { width: 52px; min-width: 52px; }
   }
 
   @media (max-width: 1024px) {

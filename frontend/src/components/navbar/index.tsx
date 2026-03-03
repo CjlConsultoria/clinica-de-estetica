@@ -137,20 +137,19 @@ function BadgeCount({ count, collapsed, isMobile = false }: {
   );
 }
 
-// superAdmin usa notifUnread; empresa usa comunicadosUnread
 const superAdminSections = (notifUnread: number) => [
   {
     label: 'Visão Geral',
     items: [
-      { label: 'Dashboard',    href: '/dashboard-admin', Icon: LayoutDashboard, badge: 0 },
+      { label: 'Dashboard', href: '/dashboard-admin', Icon: LayoutDashboard, badge: 0 },
     ],
   },
   {
     label: 'Gestão',
     items: [
-      { label: 'Empresas',       href: '/empresas',       Icon: Building2,    badge: 0 },
-      { label: 'Profissionais',  href: '/profissionais',  Icon: Stethoscope,  badge: 0 },
-      { label: 'Financeiro',     href: '/finance',        Icon: CreditCard,   badge: 0 },
+      { label: 'Empresas',      href: '/empresas',      Icon: Building2,   badge: 0 },
+      { label: 'Profissionais', href: '/profissionais', Icon: Stethoscope, badge: 0 },
+      { label: 'Financeiro',    href: '/finance',       Icon: CreditCard,  badge: 0 },
     ],
   },
   {
@@ -159,12 +158,12 @@ const superAdminSections = (notifUnread: number) => [
       { label: 'Suporte',       href: '/suporte',      Icon: HeadphonesIcon, badge: 0           },
       { label: 'Comunicados',   href: '/comunicados',  Icon: IconMegafone,   badge: 0           },
       { label: 'Notificações',  href: '/notificacoes', Icon: IconSino,       badge: notifUnread },
+      { label: 'Termos de Uso', href: '/termos',       Icon: ScrollText,     badge: 0           }, // ✅ adicionado
       { label: 'Configurações', href: '/settings',     Icon: Settings,       badge: 0           },
     ],
   },
 ];
 
-// navSections é uma factory para poder injetar o badge de comunicados dinamicamente
 const buildNavSections = (comunicadosUnread: number) => [
   {
     label: 'Core',
@@ -193,15 +192,15 @@ const buildNavSections = (comunicadosUnread: number) => [
       { label: 'Financeiro',    href: '/finance',       Icon: DollarSign,      permission: 'financeiro.read'       as Permission, permissionAlt: null,                              badge: 0 },
       { label: 'Comissões',     href: '/comissoes',     Icon: BadgeDollarSign, permission: 'comissoes.read'        as Permission, permissionAlt: 'comissoes.read_own' as Permission, badge: 0 },
       { label: 'Relatórios',    href: '/reports',       Icon: BarChart3,       permission: 'relatorios.financeiro' as Permission, permissionAlt: null,                              badge: 0 },
-      { label: 'Termos de Uso', href: '/termos',        Icon: ScrollText,      permission: 'configuracoes.read'    as Permission, permissionAlt: null,                              badge: 0 },
+      { label: 'Termos de Uso', href: '/termos',        Icon: ScrollText,      permission: 'termos.read'           as Permission, permissionAlt: null,                              badge: 0 }, // ✅ permissão atualizada
       { label: 'Configurações', href: '/settings',      Icon: Settings,        permission: 'configuracoes.read'    as Permission, permissionAlt: null,                              badge: 0 },
     ],
   },
   {
     label: 'Ajuda',
     items: [
-      { label: 'Suporte',     href: '/suporte-empresa',                 Icon: HeadphonesIcon, permission: 'suporte.read'     as Permission, permissionAlt: null, badge: 0                  },
-      { label: 'Comunicados', href: '/comunicados/comunicados-empresa', Icon: IconMegafone,   permission: 'comunicados.read' as Permission, permissionAlt: null, badge: comunicadosUnread  },
+      { label: 'Suporte',     href: '/suporte-empresa',                 Icon: HeadphonesIcon, permission: 'suporte.read'     as Permission, permissionAlt: null, badge: 0                 },
+      { label: 'Comunicados', href: '/comunicados/comunicados-empresa', Icon: IconMegafone,   permission: 'comunicados.read' as Permission, permissionAlt: null, badge: comunicadosUnread },
     ],
   },
 ];

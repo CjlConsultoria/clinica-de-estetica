@@ -49,7 +49,6 @@ function mapBackendCargo(cargo: string | null, role: string): string {
     if (role === 'ADMIN') return 'super_admin';
     return role.toLowerCase();
   }
-  // Normalizar cargo backend para lowercase (ESTETICISTA → esteticista)
   const cargoMap: Record<string, string> = {
     MEDICO: 'medico', ENFERMEIRO: 'enfermeiro', FISIOTERAPEUTA: 'fisioterapeuta',
     NUTRICIONISTA: 'nutricionista', PSICOLOGO: 'psicologo', ESTETICISTA: 'esteticista',

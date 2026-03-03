@@ -557,8 +557,6 @@ export const WizardNav = styled.div`
   }
 `;
 
-/* ─── Detail modal components (igual ao pacientes) ───────────────────────── */
-
 export const DetailModal = styled.div`
   max-height: 65vh;
   overflow-y: auto;

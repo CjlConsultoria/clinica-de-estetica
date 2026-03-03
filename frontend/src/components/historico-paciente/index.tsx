@@ -137,7 +137,6 @@ function todayInputDate(): string {
   return new Date().toISOString().split('T')[0];
 }
 
-// Formata CPF: 00000000000 → 000.000.000-00
 function formatCpf(cpf: string): string {
   if (!cpf) return '';
   const digits = cpf.replace(/\D/g, '');
@@ -201,7 +200,6 @@ export default function HistoricoPaciente() {
   const [editErrors,   setEditErrors]   = useState<Partial<Record<NovoPacienteField, string>>>({});
   const [currentPage,  setCurrentPage]  = useState(1);
 
-  // Profissionais do backend
   const [profissionaisOptions, setProfissionaisOptions] = useState<{ value: string; label: string }[]>([]);
 
   const [isAtendimentoOpen,     setIsAtendimentoOpen]     = useState(false);
@@ -227,7 +225,6 @@ export default function HistoricoPaciente() {
     clearError: clearAtendError, clearAll: clearAtendAll,
   } = useSequentialValidation<AtendimentoField>(ATENDIMENTO_VALIDATION);
 
-  // Carrega pacientes
   useEffect(() => {
     setLoading(true);
     listarPacientes('', 0, 500).then(res => {
@@ -240,7 +237,6 @@ export default function HistoricoPaciente() {
     });
   }, []);
 
-  // Carrega profissionais do backend
   useEffect(() => {
     listarProfissionais().then(data => {
       const ativos = data
@@ -352,7 +348,6 @@ export default function HistoricoPaciente() {
     return Object.keys(e).length === 0;
   }
 
-  // Abre edição com TODOS os dados reais do paciente, incluindo CPF formatado
   function openEdit(p: Patient) {
     setEditForm({
       nome:        p.name,
@@ -676,7 +671,6 @@ export default function HistoricoPaciente() {
         </PaginationContainer>
       </CardsContainer>
 
-      {/* ── Modal Detalhes ── */}
       <Modal
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
@@ -800,7 +794,6 @@ export default function HistoricoPaciente() {
         )}
       </Modal>
 
-      {/* ── Modal Novo Atendimento ── */}
       <Modal
         isOpen={isAtendimentoOpen}
         onClose={handleCancelAtendClick}
@@ -900,7 +893,6 @@ export default function HistoricoPaciente() {
         </div>
       </Modal>
 
-      {/* ── Modal Editar Paciente ── */}
       <Modal
         isOpen={isEditOpen}
         onClose={handleCancelEditClick}
@@ -955,7 +947,6 @@ export default function HistoricoPaciente() {
         </div>
       </Modal>
 
-      {/* ── Modal Novo Paciente ── */}
       <Modal
         isOpen={isNewOpen}
         onClose={handleCancelNewClick}
@@ -1015,7 +1006,6 @@ export default function HistoricoPaciente() {
         </div>
       </Modal>
 
-      {/* ── Modais reutilizáveis ── */}
       <CancelModal
         isOpen={showCancelNewModal}
         title="Deseja cancelar?"

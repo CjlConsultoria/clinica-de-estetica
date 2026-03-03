@@ -5,8 +5,6 @@ const fadeUp = keyframes`
   to   { opacity: 1; transform: translateY(0); }
 `;
 
-// ─── Layout base (idêntico ao Pacientes) ──────────────────────────────────────
-
 export const Container = styled.div`
   padding: 40px;
   width: 100%;
@@ -53,8 +51,6 @@ export const Subtitle = styled.p`
   margin: 5px 0 0;
 `;
 
-// ─── Barra de impersonação ────────────────────────────────────────────────────
-
 export const ImpersonateBar = styled.div`
   display: flex;
   align-items: center;
@@ -91,8 +87,6 @@ export const ImpersonateBtn = styled.button`
   transition: all 0.2s;
   &:hover { background: rgba(59,130,246,0.08); }
 `;
-
-// ─── Stats (idêntico ao Pacientes) ───────────────────────────────────────────
 
 export const StatsRow = styled.div`
   display: grid;
@@ -136,8 +130,6 @@ export const StatBoxLabel = styled.div`
   letter-spacing: 0.4px;
 `;
 
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
-
 export const TabRow = styled.div`
   display: flex;
   align-items: center;
@@ -174,8 +166,6 @@ export const TabBtn = styled.button<{ $active: boolean; $small?: boolean }>`
     text-align: center;
   }
 `;
-
-// ─── Controls / Search / Filtros (idêntico ao Pacientes) ─────────────────────
 
 export const Controls = styled.div`
   display: flex;
@@ -293,8 +283,6 @@ export const DropdownItem = styled.div<{ $active?: boolean }>`
   &:hover { background: rgba(187,161,136,0.08); color: #BBA188; }
 `;
 
-// ─── Tabela (header gradient igual ao Pacientes) ──────────────────────────────
-
 export const TableWrapper = styled.div`
   background: white;
   border-radius: 16px;
@@ -406,8 +394,6 @@ export const Btn = styled.button<{ $variant?: string; $size?: string; $full?: bo
     &:hover { border-color: #BBA188; color: #BBA188; }
   `}
 `;
-
-// ─── Painel de detalhe lateral ────────────────────────────────────────────────
 
 export const DetailPanel = styled.div`
   width: 320px;
@@ -543,8 +529,6 @@ export const EmptyState = styled.div`
   h3  { font-size: 1rem; color: #555; margin: 0 0 5px; }
   p   { font-size: 0.85rem; color: #999; margin: 0; }
 `;
-
-// ─── Tickets ──────────────────────────────────────────────────────────────────
 
 export const TicketCard = styled.div`
   background: white;

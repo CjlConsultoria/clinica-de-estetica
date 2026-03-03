@@ -8,8 +8,8 @@ export interface ComunicadoAPI {
   ativo: boolean;
   criadoPor: number;
   nomeAutor: string;
-  status: string;            // enviado, agendado, rascunho
-  destinatariosJson: string; // "todas" ou JSON array de nomes
+  status: string;
+  destinatariosJson: string;
   dataAgendamento: string | null;
   criadoEm: string;
   atualizadoEm: string;

@@ -619,7 +619,6 @@ export default function Profissionais() {
   }
 
   async function handleSave() {
-    // Evita duplo clique / chamada duplicada
     if (saveLoading) return;
     if (step === 4 && !validateStep(4)) return;
     if (form.senha && form.senha !== form.confirmarSenha) { step4Validation.clearAll(); return; }
@@ -661,13 +660,11 @@ export default function Profissionais() {
       handleClose();
     } catch (err: any) {
       console.error('[Profissionais] Erro ao salvar:', err);
-
-      // Detecta 409 — e-mail já cadastrado
       const is409 = err?.status === 409 || err?.message?.includes('409') || err?.message?.toLowerCase().includes('duplicado') || err?.message?.toLowerCase().includes('integridade');
       if (is409) {
         setEmailConflictError('Este e-mail já está cadastrado no sistema. Use outro e-mail.');
         setApiError(null);
-        setStep(1); // Volta para step 1 onde está o campo e-mail
+        setStep(1); 
       } else {
         const msg = err?.response?.data?.mensagem || err?.message || 'Erro ao salvar profissional.';
         setApiError(msg);
@@ -966,7 +963,6 @@ export default function Profissionais() {
     }
   }
 
-  // ── Wizard nav — sem setas nos botões de texto ──
   const modalFooter = (
     <WizardNav>
       {step > 1
@@ -1143,17 +1139,14 @@ export default function Profissionais() {
                   </Td>
                   <Td>
                     <ActionGroup>
-                      {/* Ver detalhes */}
                       <IconBtn title="Ver detalhes" onClick={() => openDetail(p)}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                       </IconBtn>
-                      {/* Editar */}
                       {canEdit && (
                         <IconBtn title="Editar" onClick={() => openEdit(p)}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </IconBtn>
                       )}
-                      {/* Excluir */}
                       {canEdit && (
                         <IconBtn
                           title="Excluir"
@@ -1183,7 +1176,6 @@ export default function Profissionais() {
         <Pagination currentPage={safePage} totalItems={totalFiltered} itemsPerPage={ITEMS_PER_PAGE} onPageChange={setCurrentPage} />
       </div>
 
-      {/* ── Modal de Detalhes ── */}
       <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} closeOnOverlayClick={false} title="Ficha do Profissional" size="lg"
         footer={
           <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'space-between' }}>
@@ -1284,8 +1276,6 @@ export default function Profissionais() {
         )}
       </Modal>
 
-
-            {/* ── Modal de Confirmação de Exclusão ── */}
       <ConfirmModal
         isOpen={isDeleteOpen}
         onClose={() => { setIsDeleteOpen(false); setProfissionalToDelete(null); }}
@@ -1294,16 +1284,12 @@ export default function Profissionais() {
         title="Excluir Profissional"
         message={profissionalToDelete ? `Tem certeza que deseja excluir o profissional "${profissionalToDelete.name}"? Esta ação irá desativar o acesso ao sistema e não pode ser desfeita.` : ''}
       />
-
-      {/* ── Modal de Sucesso de Exclusão ── */}
       <SucessModal
         isOpen={isSuccessOpen}
         title="Profissional excluído"
         message="O profissional foi excluído com sucesso."
         onClose={() => setIsSuccessOpen(false)}
       />
-
-      {/* ── Modal de Cadastro / Edição ── */}
       <PermissionGuard anyOf={['profissionais.create', 'profissionais.edit']}>
         <Modal isOpen={isModalOpen} onClose={handleClose} closeOnOverlayClick={false}
           title={isEditing ? 'Editar Profissional' : 'Cadastrar Profissional'} size="lg" footer={modalFooter}

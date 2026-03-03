@@ -108,8 +108,6 @@ interface Patient {
   numeroCarteirinha: string;
 }
 
-// Converte o valor de sexo que vem do backend (MASCULINO, FEMININO, OUTRO)
-// para o valor usado nos selects do frontend (masculino, feminino, nao_binario)
 function mapSexoFromBackend(sexo: string | undefined | null): string {
   if (!sexo) return '';
   switch (sexo.toUpperCase()) {
@@ -117,7 +115,6 @@ function mapSexoFromBackend(sexo: string | undefined | null): string {
     case 'FEMININO':  return 'feminino';
     case 'OUTRO':     return 'nao_binario';
     default:
-      // Caso já venha em lowercase (fallback seguro)
       return sexo.toLowerCase();
   }
 }
@@ -314,15 +311,6 @@ export default function Patients() {
       step2Validation.clearError(field as Step2Field);
   }
 
-  // FIX CEP: usa proxy interno Next.js para evitar bloqueio de rede/CORS.
-  // Crie o arquivo app/api/cep/[cep]/route.ts com o conteúdo abaixo:
-  //
-  //   export async function GET(_: Request, { params }: { params: { cep: string } }) {
-  //     const res = await fetch(`https://viacep.com.br/ws/${params.cep}/json/`);
-  //     const data = await res.json();
-  //     return Response.json(data);
-  //   }
-  //
   async function handleCEPChange(raw: string) {
     const masked = maskCEP(raw);
     handleChange('cep', masked);
@@ -519,11 +507,6 @@ export default function Patients() {
                 onChange={e => handleChange('telefone', maskPhone(e.target.value))}
                 error={errors1.telefone}
               />
-              {/*
-                FIX DATA: removido o onKeyDown que travava o campo de ano.
-                O browser nativo gerencia os blocos dd/mm/yyyy corretamente.
-                min/max são suficientes para limitar o intervalo permitido.
-              */}
               <Input
                 label="Data de Nascimento *"
                 type="date"

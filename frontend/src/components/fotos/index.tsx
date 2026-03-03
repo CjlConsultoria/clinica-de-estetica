@@ -142,7 +142,6 @@ function isUploadFormDirty(form: UploadForm): boolean {
   );
 }
 
-/* ── FotoThumb: renders the square thumbnail correctly ── */
 function FotoThumb({ foto, color }: { foto: Foto; color: string }) {
   const tipo = tipoColors[foto.tipo] ?? { bg: '#f5f5f5', color: '#999', label: foto.tipo };
   return (
@@ -577,7 +576,6 @@ export default function Fotos() {
         </PaginationWrapper>
       </div>
 
-      {/* ── Modal Upload ── */}
       <Modal isOpen={isUploadOpen} onClose={handleCancelUploadClick} closeOnOverlayClick={false} title="Adicionar Foto" size="lg"
         footer={
           <WizardNav>
@@ -638,7 +636,6 @@ export default function Fotos() {
         </div>
       </Modal>
 
-      {/* ── Modal Comparar ── */}
       <Modal isOpen={isCompareOpen} onClose={handleCloseCompare} closeOnOverlayClick={false} title="Comparativo Antes / Depois" size="xl"
         footer={
           <WizardNav>

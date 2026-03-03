@@ -38,8 +38,6 @@ import {
   EmptyState, EmptyIcon,
 } from './styles';
 
-// ─── Tipos ────────────────────────────────────────────────────────────────────
-
 type TicketStatus     = 'aberto' | 'em_andamento' | 'resolvido';
 type TicketPrioridade = 'alta' | 'media' | 'baixa';
 type TicketCategoria  = 'financeiro' | 'tecnico' | 'duvida' | 'bug' | 'outro';
@@ -64,8 +62,6 @@ interface Ticket {
   mensagens: Mensagem[];
 }
 
-// ─── Validações sequenciais ───────────────────────────────────────────────────
-
 const TICKET_VALIDATION = [
   {
     key:      'assunto' as NovoTicketField,
@@ -76,8 +72,6 @@ const TICKET_VALIDATION = [
     validate: (v: string) => !v.trim() ? 'Descrição detalhada é obrigatória' : null,
   },
 ];
-
-// ─── Configs visuais ──────────────────────────────────────────────────────────
 
 const statusConfig: Record<TicketStatus, { bg: string; color: string; label: string }> = {
   aberto:       { bg: 'rgba(231,76,60,0.1)',   color: '#e74c3c', label: 'Aberto'       },
@@ -113,8 +107,6 @@ const prioridadeOptions = [
   { value: 'alta',  label: 'Alta'  },
 ];
 
-// ─── Form inicial ─────────────────────────────────────────────────────────────
-
 interface NovoTicketForm {
   assunto:    string;
   categoria:  TicketCategoria;
@@ -132,8 +124,6 @@ const FORM_INITIAL: NovoTicketForm = {
 function isFormDirty(form: NovoTicketForm): boolean {
   return form.assunto.trim() !== '' || form.descricao.trim() !== '';
 }
-
-// ─── Helper: mapeia SuporteTicketAPI → Ticket ─────────────────────────────────
 
 function mapApiToTicket(t: SuporteTicketAPI): Ticket {
   const rawStatus = (t.status || 'aberto').toLowerCase().replace(/\s+/g, '_');
@@ -169,8 +159,6 @@ function mapApiToTicket(t: SuporteTicketAPI): Ticket {
   };
 }
 
-// ─── Componente principal ─────────────────────────────────────────────────────
-
 export default function SuporteEmpresa() {
   const allowed = useRoleRedirect({ permission: 'suporte.read', blockSuperAdmin: true });
   const { currentUser } = useAuth();
@@ -195,14 +183,6 @@ export default function SuporteEmpresa() {
     clearAll:   clearTicketAll,
   } = useSequentialValidation<NovoTicketField>(TICKET_VALIDATION);
 
-  // ── Carrega tickets do backend ─────────────────────────────────────────────
-  //
-  // Estratégia dupla para cobrir variações de backend:
-  //   1. Tenta buscar por usuário  → /api/suporte/usuario/:id
-  //   2. Se retornar vazio, tenta por empresa → /api/suporte/empresa/:empresaId
-  //
-  // Isso resolve casos onde o backend associa tickets à empresa e não ao usuário.
-
   const carregarTickets = useCallback(async (usuarioId: number, empresaId?: number) => {
     setLoadingTickets(true);
     try {
@@ -214,7 +194,6 @@ export default function SuporteEmpresa() {
         data = [];
       }
 
-      // Fallback por empresa se a busca por usuário veio vazia
       if ((!data || data.length === 0) && empresaId) {
         try {
           data = await listarTicketsPorEmpresa(empresaId);
@@ -229,8 +208,6 @@ export default function SuporteEmpresa() {
     }
   }, []);
 
-  // Reage à mudança de currentUser (null → objeto populado pelo AuthContext)
-  // Isso garante que o carregamento acontece mesmo quando o auth é assíncrono
   useEffect(() => {
     if (!currentUser) return;
 
@@ -241,8 +218,6 @@ export default function SuporteEmpresa() {
 
     carregarTickets(usuarioId, empresaId);
   }, [currentUser, carregarTickets]);
-
-  // ── Abre detalhe do ticket e carrega mensagens ─────────────────────────────
 
   function abrirTicket(t: Ticket) {
     setTicketAberto(t);
@@ -272,8 +247,6 @@ export default function SuporteEmpresa() {
   const emAndamento = tickets.filter(t => t.status === 'em_andamento').length;
   const resolvidos  = tickets.filter(t => t.status === 'resolvido').length;
 
-  // ── Handlers do formulário ─────────────────────────────────────────────────
-
   function handleFormChange(field: keyof NovoTicketForm, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
     if (field === 'assunto' || field === 'descricao') {
@@ -300,15 +273,12 @@ export default function SuporteEmpresa() {
     setShowConfirmNovo(true);
   }
 
-  // ── Cria ticket e insere na lista via retorno do backend ───────────────────
-
   async function handleConfirmNovo() {
     const remetente      = currentUser?.name  ?? 'Usuário';
     const cargo          = currentUser?.cargo ?? '';
     const empresaId      = currentUser?.companyId ? Number(currentUser.companyId) : undefined;
     const remetenteLabel = cargo ? `${remetente} (${cargo})` : remetente;
 
-    // Captura snapshot antes de limpar o form
     const formSnapshot = { ...form };
 
     setShowConfirmNovo(false);
@@ -317,7 +287,6 @@ export default function SuporteEmpresa() {
     clearTicketAll();
 
     try {
-      // Cria no backend — usa a resposta como fonte da verdade (ID real)
       const criado = await criarTicket({
         titulo:     formSnapshot.assunto,
         descricao:  formSnapshot.descricao,
@@ -325,11 +294,9 @@ export default function SuporteEmpresa() {
         prioridade: formSnapshot.prioridade,
       });
 
-      // Insere na lista local usando o objeto retornado pelo servidor
       const novoTicket = mapApiToTicket(criado);
       setTickets(prev => [novoTicket, ...prev]);
 
-      // Notificação para o super admin (falha silenciosa)
       criarNotificacao({
         tipo:        'ticket',
         prioridade:  formSnapshot.prioridade,
@@ -345,7 +312,6 @@ export default function SuporteEmpresa() {
       });
     } catch (err) {
       console.error('[Suporte] Erro ao criar ticket:', err);
-      // Restaura o form para o usuário tentar novamente
       setForm(formSnapshot);
       setIsNovoOpen(true);
       setSucessModal({
@@ -354,8 +320,6 @@ export default function SuporteEmpresa() {
       });
     }
   }
-
-  // ── Resposta no chat ───────────────────────────────────────────────────────
 
   function handleReply() {
     if (!replyText.trim() || !ticketAberto) return;
@@ -374,8 +338,6 @@ export default function SuporteEmpresa() {
     criarMensagem(ticketAberto.id, { texto, fromSupport: false }).catch(() => {});
   }
 
-  // ── Encerrar ticket ────────────────────────────────────────────────────────
-
   function confirmarFechar() {
     if (!confirmFechar) return;
     const atualizado = { ...confirmFechar, status: 'resolvido' as TicketStatus };
@@ -385,8 +347,6 @@ export default function SuporteEmpresa() {
     setSucessModal({ title: 'Ticket encerrado', message: 'O ticket foi marcado como resolvido.' });
     atualizarStatusTicket(confirmFechar.id, 'resolvido').catch(() => {});
   }
-
-  // ── View: detalhe do ticket (chat) ────────────────────────────────────────
 
   if (ticketAberto) {
     const sc = statusConfig[ticketAberto.status];
@@ -493,8 +453,6 @@ export default function SuporteEmpresa() {
       </Container>
     );
   }
-
-  // ── View: lista de tickets ────────────────────────────────────────────────
 
   return (
     <Container>
@@ -605,8 +563,6 @@ export default function SuporteEmpresa() {
           })}
         </TicketList>
       )}
-
-      {/* ── Modal: Novo Chamado ── */}
       <Modal
         isOpen={isNovoOpen}
         onClose={handleCancelNovoClick}
@@ -683,8 +639,6 @@ export default function SuporteEmpresa() {
           </div>
         </div>
       </Modal>
-
-      {/* ── Modal: Cancelar novo chamado ── */}
       <CancelModal
         isOpen={showCancelNovo}
         title="Deseja cancelar?"
@@ -692,8 +646,6 @@ export default function SuporteEmpresa() {
         onConfirm={forceCloseNovo}
         onCancel={() => setShowCancelNovo(false)}
       />
-
-      {/* ── Modal: Confirmar envio ── */}
       <ConfirmModal
         isOpen={showConfirmNovo}
         title="Enviar chamado?"
@@ -703,8 +655,6 @@ export default function SuporteEmpresa() {
         onConfirm={handleConfirmNovo}
         onCancel={() => setShowConfirmNovo(false)}
       />
-
-      {/* ── Modal: Sucesso ── */}
       <SucessModal
         isOpen={!!sucessModal}
         title={sucessModal?.title ?? ''}

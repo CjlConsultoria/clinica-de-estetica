@@ -137,22 +137,18 @@ export default function Reaplicacoes() {
     return matchSearch && matchStat && matchProc;
   });
 
-  /* paginação cards */
   const totalPagesCards   = Math.max(1, Math.ceil(filtered.length / CARDS_PER_PAGE));
   const safePageCards     = Math.min(currentPage, totalPagesCards);
   const startIdxCards     = (safePageCards - 1) * CARDS_PER_PAGE;
   const paginatedCards    = filtered.slice(startIdxCards, startIdxCards + CARDS_PER_PAGE);
   const startItemCards    = filtered.length === 0 ? 0 : startIdxCards + 1;
   const visiblePagesCards = getVisiblePages(safePageCards, totalPagesCards);
-
-  /* paginação tabela */
   const totalPagesTable   = Math.max(1, Math.ceil(filtered.length / TABLE_PER_PAGE));
   const safePageTable     = Math.min(currentPage, totalPagesTable);
   const startIdxTable     = (safePageTable - 1) * TABLE_PER_PAGE;
   const paginatedTable    = filtered.slice(startIdxTable, startIdxTable + TABLE_PER_PAGE);
   const startItemTable    = filtered.length === 0 ? 0 : startIdxTable + 1;
   const visiblePagesTable = getVisiblePages(safePageTable, totalPagesTable);
-
   const urgentes   = reaplicacoes.filter(r => diasRestantes(r.proximaData) <= 7).length;
   const estaSemana = reaplicacoes.filter(r => { const d = diasRestantes(r.proximaData); return d > 7  && d <= 14; }).length;
   const esteMes    = reaplicacoes.filter(r => { const d = diasRestantes(r.proximaData); return d > 14 && d <= 30; }).length;

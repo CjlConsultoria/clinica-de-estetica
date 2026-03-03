@@ -267,7 +267,6 @@ export default function FinanceEmpresa() {
 
         {showFaturaSection&&(
           <>
-            {/* CSS injetado para o grid responsivo — só afeta mobile */}
             <style>{`
               .fe-fatura-grid {
                 display: grid;

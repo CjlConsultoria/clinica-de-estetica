@@ -22,6 +22,7 @@ export type Permission =
   | 'lotes.read' | 'lotes.create' | 'lotes.edit'
   | 'relatorios.operacional' | 'relatorios.financeiro' | 'relatorios.completo'
   | 'configuracoes.read' | 'configuracoes.edit'
+  | 'termos.read'   
   | 'dashboard.read'
   | 'suporte.read' | 'suporte.create'
   | 'comunicados.read'
@@ -50,7 +51,8 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'relatorios.operacional', 'relatorios.financeiro', 'relatorios.completo',
     'suporte.read', 'suporte.create',
     'comunicados.read',
-    // ❌ 'notificacoes.read' — apenas super_admin via isSuperAdmin
+    'configuracoes.read',
+    'termos.read',
   ],
 
   tecnico: [
@@ -62,11 +64,10 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'fotos.read_own', 'fotos.create',
     'reaplicacoes.read_own', 'reaplicacoes.create',
     'procedimentos.read',
-    'consentimento.read', 'consentimento.read_own', 'consentimento.create', // ✅ adicionado consentimento.read
-    'estoque.read',
+    'consentimento.read', 'consentimento.read_own', 'consentimento.create',
     'comissoes.read_own',
     'comunicados.read',
-    // ❌ 'notificacoes.read' — apenas super_admin via isSuperAdmin
+    'termos.read',
   ],
 
   recepcionista: [
@@ -77,7 +78,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'estoque.read',
     'procedimentos.read',
     'comunicados.read',
-    // ❌ 'notificacoes.read' — apenas super_admin via isSuperAdmin
+    'termos.read',
   ],
 
   financeiro: [
@@ -88,7 +89,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'pacientes.read',
     'relatorios.financeiro', 'relatorios.operacional',
     'comunicados.read',
-    // ❌ 'notificacoes.read' — apenas super_admin via isSuperAdmin
+    'termos.read',
   ],
 };
 

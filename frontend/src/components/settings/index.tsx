@@ -272,7 +272,6 @@ export default function Configuracoes() {
       setPerfil(prev => ({ ...prev, nome: u.nome || prev.nome, email: u.email || prev.email, telefone: u.telefone || prev.telefone }));
       setPerfilSnapshot(prev => ({ ...prev, nome: u.nome || prev.nome, email: u.email || prev.email, telefone: u.telefone || prev.telefone }));
     }).catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [platform,     setPlatform]     = useState({ nome: 'AestheticOS', dominio: 'app.aestheticos.com.br', email: 'suporte@aestheticos.com.br', telefone: '(11) 99999-0000' });
   const [comissao,     setComissao]     = useState({ botox: '20', preenchimento: '20', bioestimulador: '15', fio: '18', skincare: '25', outros: '20', base: 'bruto', periodicidade: 'mensal' });

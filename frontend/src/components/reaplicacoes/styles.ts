@@ -105,8 +105,6 @@ export const StatsGrid = styled.div`
   }
 `;
 
-/* ── Controls (search + filters) ── */
-
 export const Controls = styled.div`
   display: flex;
   gap: 12px;
@@ -424,8 +422,6 @@ export const EmptyState = styled.div`
   p  { font-size: 0.88rem; color: #999; margin: 0; }
 `;
 
-/* ─────────────── Cards ─────────────── */
-
 export const CardsContainer = styled.div`
   background: white;
   border-radius: 16px;
@@ -602,15 +598,11 @@ export const ReapCardFooter = styled.div`
   @media (max-width: 480px) {
     padding: 10px 14px;
     gap: 6px;
-
-    /* Botões ocupam metade cada */
     & > * {
       flex: 1;
     }
   }
 `;
-
-/* ─────────────── Paginação ─────────────── */
 
 export const PaginationWrapper = styled.div`
   display: flex;

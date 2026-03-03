@@ -2,8 +2,8 @@ import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api';
 
 export interface NotificacaoAPI {
   id: number;
-  tipo: string;       // ticket, pagamento, sistema, empresa, seguranca, relatorio
-  prioridade: string; // alta, media, baixa
+  tipo: string;
+  prioridade: string;
   titulo: string;
   descricao: string;
   empresaId: number | null;

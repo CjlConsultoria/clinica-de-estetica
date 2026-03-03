@@ -285,7 +285,6 @@ export default function Procedures() {
       }
       await fetchProcedimentos();
     } catch {
-      // keep existing list on error
     }
 
     setShowConfirmModal(false);

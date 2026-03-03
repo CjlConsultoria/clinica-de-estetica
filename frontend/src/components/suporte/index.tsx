@@ -91,7 +91,6 @@ const planConfig: Record<string, { bg: string; color: string }> = {
   Enterprise:   { bg: 'rgba(27,27,27,0.08)',    color: '#1b1b1b' },
 };
 
-// Fallbacks para planos/status desconhecidos vindos da API
 const PLAN_FALLBACK   = { bg: 'rgba(107,114,128,0.1)', color: '#6b7280' };
 const STATUS_FALLBACK = { bg: 'rgba(107,114,128,0.1)', color: '#6b7280', label: '—' };
 
@@ -167,7 +166,6 @@ export default function Suporte() {
       }));
       if (mapped.length > 0) setEmpresas(mapped);
     }).catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!allowed) return null;

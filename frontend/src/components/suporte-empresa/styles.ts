@@ -5,8 +5,6 @@ const fadeUp = keyframes`
   to   { opacity: 1; transform: translateY(0); }
 `;
 
-// ─── Layout base (idêntico ao Pacientes) ──────────────────────────────────────
-
 export const Container = styled.div`
   padding: 40px;
   width: 100%;
@@ -62,8 +60,6 @@ export const Subtitle = styled.p`
   margin: 5px 0 0;
 `;
 
-// ─── Stats (idêntico ao Pacientes) ───────────────────────────────────────────
-
 export const StatsRow = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -113,8 +109,6 @@ export const StatBoxLabel = styled.div`
   @media (max-width: 480px) { font-size: 0.65rem; }
 `;
 
-// ─── Tabs / Filtros ───────────────────────────────────────────────────────────
-
 export const TabRow = styled.div`
   display: flex;
   align-items: center;
@@ -146,8 +140,6 @@ export const TabBtn = styled.button<{ $active: boolean; $small?: boolean }>`
   }
 `;
 
-// ─── Badges ───────────────────────────────────────────────────────────────────
-
 export const Badge = styled.span<{ $bg: string; $color: string }>`
   display: inline-flex;
   align-items: center;
@@ -169,8 +161,6 @@ export const PrioridadeBadge = styled.span<{ $color: string }>`
   border-radius: 12px;
   white-space: nowrap;
 `;
-
-// ─── Lista de tickets ─────────────────────────────────────────────────────────
 
 export const TicketList = styled.div`
   display: flex;
@@ -226,8 +216,6 @@ export const TicketCardBody = styled.div`
   color: #555;
   line-height: 1.5;
 `;
-
-// ─── Detalhe do ticket (chat) ─────────────────────────────────────────────────
 
 export const DetailWrap = styled.div`
   background: white;
@@ -288,8 +276,6 @@ export const BackBtn = styled.button`
 
   &:hover { border-color: #BBA188; color: #BBA188; }
 `;
-
-// ─── Chat ─────────────────────────────────────────────────────────────────────
 
 export const ChatArea = styled.div`
   padding: 20px 22px;
@@ -376,8 +362,6 @@ export const ReplyFooter = styled.div`
   gap: 10px;
 `;
 
-// ─── Form Modal ───────────────────────────────────────────────────────────────
-
 export const FormGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -388,8 +372,6 @@ export const FormGrid = styled.div`
     & > * { grid-column: 1 !important; }
   }
 `;
-
-// ─── Botão legado ─────────────────────────────────────────────────────────────
 
 export const Btn = styled.button<{ $variant?: 'primary' | 'danger' | 'ghost'; $size?: 'sm'; $full?: boolean }>`
   display: inline-flex;
@@ -420,8 +402,6 @@ export const Btn = styled.button<{ $variant?: 'primary' | 'danger' | 'ghost'; $s
     `;
   }}
 `;
-
-// ─── Empty state ──────────────────────────────────────────────────────────────
 
 export const EmptyState = styled.div`
   display: flex;
