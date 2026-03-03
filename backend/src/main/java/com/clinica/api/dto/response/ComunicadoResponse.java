@@ -23,4 +23,6 @@ public class ComunicadoResponse {
     private LocalDateTime dataAgendamento;
     private LocalDateTime criadoEm;
     private LocalDateTime atualizadoEm;
+    private Integer lidasCount;
+    private Integer totalDestinatarios;
 }

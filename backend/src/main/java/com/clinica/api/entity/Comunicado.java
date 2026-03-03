@@ -48,6 +48,14 @@ public class Comunicado {
     @Column(name = "data_agendamento")
     private LocalDateTime dataAgendamento;
 
+    @Column(name = "lidas_count", nullable = false)
+    @Builder.Default
+    private Integer lidasCount = 0;
+
+    @Column(name = "total_destinatarios", nullable = false)
+    @Builder.Default
+    private Integer totalDestinatarios = 0;
+
     @Column(name = "criado_em", nullable = false, updatable = false)
     private LocalDateTime criadoEm;
 

@@ -17,4 +17,5 @@ public class EmpresaRequest {
     private String observacoes;
     private String adminNome;
     private String adminEmail;
+    private String adminSenha;
 }

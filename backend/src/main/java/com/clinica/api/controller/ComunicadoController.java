@@ -45,4 +45,10 @@ public class ComunicadoController {
         comunicadoService.inativar(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{id}/leitura")
+    public ResponseEntity<Void> marcarLida(@PathVariable Long id) {
+        comunicadoService.marcarLida(id);
+        return ResponseEntity.ok().build();
+    }
 }
