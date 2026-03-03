@@ -48,22 +48,23 @@ const ALERTS = [
   { tipo: 'success', texto: 'Espaço Beleza Premium — upgrade para Pro concluído',    tempo: '2 dias' },
 ];
 
-const PLANO_DIST = [
-  { nome: 'Starter',    count: 1, color: '#3b82f6' },
-  { nome: 'Pro',        count: 3, color: '#BBA188' },
-  { nome: 'Enterprise', count: 1, color: '#1b1b1b' },
-];
-
 const statusConfig: Record<string, { bg: string; color: string; label: string }> = {
   ativo:    { bg: 'rgba(138,117,96,0.12)', color: '#8a7560', label: 'Ativo' },
   suspenso: { bg: 'rgba(231,76,60,0.12)', color: '#e74c3c', label: 'Suspenso' },
 };
 
+// Fallback para planos não mapeados
+const PLAN_CONFIG_FALLBACK = { bg: 'rgba(107,114,128,0.1)', color: '#6b7280' };
+
 const planConfig: Record<string, { bg: string; color: string }> = {
-  Starter:    { bg: 'rgba(59,130,246,0.1)',    color: '#3b82f6' },
-  Pro:        { bg: 'rgba(187,161,136,0.15)',   color: '#8a7560' },
-  Enterprise: { bg: 'rgba(27,27,27,0.08)',      color: '#1b1b1b' },
+  Starter:       { bg: 'rgba(59,130,246,0.1)',    color: '#3b82f6' },
+  Pro:           { bg: 'rgba(187,161,136,0.15)',   color: '#8a7560' },
+  Profissional:  { bg: 'rgba(187,161,136,0.15)',   color: '#8a7560' },
+  Enterprise:    { bg: 'rgba(27,27,27,0.08)',      color: '#1b1b1b' },
 };
+
+const getPlanConfig = (plano: string) => planConfig[plano] ?? PLAN_CONFIG_FALLBACK;
+const getStatusConfig = (status: string) => statusConfig[status] ?? { bg: 'rgba(107,114,128,0.1)', color: '#6b7280', label: status };
 
 const hoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
 const maxMRR = Math.max(...MRR_HISTORY.map(m => m.valor));
@@ -247,30 +248,34 @@ export default function DashboardSuperAdmin() {
                   </tr>
                 </Thead>
                 <Tbody>
-                  {empresas.map(e => (
-                    <Tr key={e.id}>
-                      <Td>
-                        <CompanyRow>
-                          <CompanyAvatar>{e.nome.slice(0, 2).toUpperCase()}</CompanyAvatar>
-                          <CompanyInfo>
-                            <CompanyName>{e.nome}</CompanyName>
-                            <CompanySub>{e.usuarios} usuário{e.usuarios !== 1 ? 's' : ''}</CompanySub>
-                          </CompanyInfo>
-                        </CompanyRow>
-                      </Td>
-                      <Td>
-                        <Badge $bg={planConfig[e.plano].bg} $color={planConfig[e.plano].color}>{e.plano}</Badge>
-                      </Td>
-                      <Td style={{ textAlign: 'center', fontWeight: 600 }}>{e.usuarios}</Td>
-                      <Td style={{ fontWeight: 700, color: '#BBA188' }}>{fmtFull(e.mrr)}</Td>
-                      <Td style={{ color: '#aaa', fontSize: '0.78rem' }}>{e.ingresso}</Td>
-                      <Td>
-                        <Badge $bg={statusConfig[e.status].bg} $color={statusConfig[e.status].color}>
-                          {statusConfig[e.status].label}
-                        </Badge>
-                      </Td>
-                    </Tr>
-                  ))}
+                  {empresas.map(e => {
+                    const pCfg = getPlanConfig(e.plano);
+                    const sCfg = getStatusConfig(e.status);
+                    return (
+                      <Tr key={e.id}>
+                        <Td>
+                          <CompanyRow>
+                            <CompanyAvatar>{e.nome.slice(0, 2).toUpperCase()}</CompanyAvatar>
+                            <CompanyInfo>
+                              <CompanyName>{e.nome}</CompanyName>
+                              <CompanySub>{e.usuarios} usuário{e.usuarios !== 1 ? 's' : ''}</CompanySub>
+                            </CompanyInfo>
+                          </CompanyRow>
+                        </Td>
+                        <Td>
+                          <Badge $bg={pCfg.bg} $color={pCfg.color}>{e.plano}</Badge>
+                        </Td>
+                        <Td style={{ textAlign: 'center', fontWeight: 600 }}>{e.usuarios}</Td>
+                        <Td style={{ fontWeight: 700, color: '#BBA188' }}>{fmtFull(e.mrr)}</Td>
+                        <Td style={{ color: '#aaa', fontSize: '0.78rem' }}>{e.ingresso}</Td>
+                        <Td>
+                          <Badge $bg={sCfg.bg} $color={sCfg.color}>
+                            {sCfg.label}
+                          </Badge>
+                        </Td>
+                      </Tr>
+                    );
+                  })}
                 </Tbody>
               </Table>
             </TableWrapper>

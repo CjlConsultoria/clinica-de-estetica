@@ -29,6 +29,8 @@ import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/components/ui/hooks/usePermissions';
 import { Permission } from '@/types/auth';
+import { useNotificacoesContext } from '@/contexts/NotificacoesContext';
+import { useComunicadosContext } from '@/contexts/ComunicadosContext';
 
 import {
   NavbarContainer,
@@ -52,8 +54,6 @@ import {
   SectionDividerLine,
   SectionDividerLabel,
 } from './styles';
-
-const NOTIF_UNREAD_COUNT = 3;
 
 function IconMegafone({ size = 18 }: { size?: number }) {
   return (
@@ -137,7 +137,8 @@ function BadgeCount({ count, collapsed, isMobile = false }: {
   );
 }
 
-const superAdminSections = [
+// superAdmin usa notifUnread; empresa usa comunicadosUnread
+const superAdminSections = (notifUnread: number) => [
   {
     label: 'Visão Geral',
     items: [
@@ -155,51 +156,52 @@ const superAdminSections = [
   {
     label: 'Operação',
     items: [
-      { label: 'Suporte',       href: '/suporte',      Icon: HeadphonesIcon, badge: 0                 },
-      { label: 'Comunicados',   href: '/comunicados',  Icon: IconMegafone,   badge: 0                 },
-      { label: 'Notificações',  href: '/notificacoes', Icon: IconSino,       badge: NOTIF_UNREAD_COUNT },
-      { label: 'Configurações', href: '/settings',     Icon: Settings,       badge: 0                 },
+      { label: 'Suporte',       href: '/suporte',      Icon: HeadphonesIcon, badge: 0           },
+      { label: 'Comunicados',   href: '/comunicados',  Icon: IconMegafone,   badge: 0           },
+      { label: 'Notificações',  href: '/notificacoes', Icon: IconSino,       badge: notifUnread },
+      { label: 'Configurações', href: '/settings',     Icon: Settings,       badge: 0           },
     ],
   },
 ];
 
-const navSections = [
+// navSections é uma factory para poder injetar o badge de comunicados dinamicamente
+const buildNavSections = (comunicadosUnread: number) => [
   {
     label: 'Core',
     items: [
-      { label: 'Dashboard', href: '/dashboard', Icon: LayoutDashboard, permission: 'dashboard.read' as Permission, permissionAlt: null },
-      { label: 'Agenda',    href: '/agenda',    Icon: CalendarDays,    permission: 'agenda.read'    as Permission, permissionAlt: 'agenda.read_own'    as Permission },
-      { label: 'Pacientes', href: '/patients',  Icon: Users,           permission: 'pacientes.read' as Permission, permissionAlt: 'pacientes.read_own' as Permission },
+      { label: 'Dashboard', href: '/dashboard', Icon: LayoutDashboard, permission: 'dashboard.read' as Permission, permissionAlt: null,                              badge: 0 },
+      { label: 'Agenda',    href: '/agenda',    Icon: CalendarDays,    permission: 'agenda.read'    as Permission, permissionAlt: 'agenda.read_own'    as Permission, badge: 0 },
+      { label: 'Pacientes', href: '/patients',  Icon: Users,           permission: 'pacientes.read' as Permission, permissionAlt: 'pacientes.read_own' as Permission, badge: 0 },
     ],
   },
   {
     label: 'Clínico',
     items: [
-      { label: 'Histórico Pac.', href: '/historico-paciente', Icon: ClipboardList, permission: 'historico.read'     as Permission, permissionAlt: 'historico.read_own'     as Permission },
-      { label: 'Fotos Clínicas', href: '/fotos',              Icon: Camera,        permission: 'fotos.read'         as Permission, permissionAlt: 'fotos.read_own'         as Permission },
-      { label: 'Reaplicações',   href: '/reaplicacoes',       Icon: RefreshCcw,    permission: 'reaplicacoes.read'  as Permission, permissionAlt: 'reaplicacoes.read_own'  as Permission },
-      { label: 'Procedimentos',  href: '/procedures',         Icon: Syringe,       permission: 'procedimentos.read' as Permission, permissionAlt: null },
-      { label: 'Consentimento',  href: '/consentimento',      Icon: FileText,      permission: 'consentimento.read' as Permission, permissionAlt: 'consentimento.read_own' as Permission },
+      { label: 'Histórico Pac.', href: '/historico-paciente', Icon: ClipboardList, permission: 'historico.read'     as Permission, permissionAlt: 'historico.read_own'     as Permission, badge: 0 },
+      { label: 'Fotos Clínicas', href: '/fotos',              Icon: Camera,        permission: 'fotos.read'         as Permission, permissionAlt: 'fotos.read_own'         as Permission, badge: 0 },
+      { label: 'Reaplicações',   href: '/reaplicacoes',       Icon: RefreshCcw,    permission: 'reaplicacoes.read'  as Permission, permissionAlt: 'reaplicacoes.read_own'  as Permission, badge: 0 },
+      { label: 'Procedimentos',  href: '/procedures',         Icon: Syringe,       permission: 'procedimentos.read' as Permission, permissionAlt: null,                                    badge: 0 },
+      { label: 'Consentimento',  href: '/consentimento',      Icon: FileText,      permission: 'consentimento.read' as Permission, permissionAlt: 'consentimento.read_own' as Permission, badge: 0 },
     ],
   },
   {
     label: 'Operacional',
     items: [
-      { label: 'Profissionais', href: '/profissionais', Icon: Stethoscope,     permission: 'profissionais.read'    as Permission, permissionAlt: null },
-      { label: 'Lotes ANVISA',  href: '/lotes',         Icon: FlaskConical,    permission: 'lotes.read'            as Permission, permissionAlt: null },
-      { label: 'Estoque',       href: '/estoque',       Icon: Package,         permission: 'estoque.read'          as Permission, permissionAlt: null },
-      { label: 'Financeiro',    href: '/finance',       Icon: DollarSign,      permission: 'financeiro.read'       as Permission, permissionAlt: null },
-      { label: 'Comissões',     href: '/comissoes',     Icon: BadgeDollarSign, permission: 'comissoes.read'        as Permission, permissionAlt: 'comissoes.read_own' as Permission },
-      { label: 'Relatórios',    href: '/reports',       Icon: BarChart3,       permission: 'relatorios.financeiro' as Permission, permissionAlt: null },
-      { label: 'Termos de Uso', href: '/termos',        Icon: ScrollText,      permission: 'configuracoes.read'    as Permission, permissionAlt: null },
-      { label: 'Configurações', href: '/settings',      Icon: Settings,        permission: 'configuracoes.read'    as Permission, permissionAlt: null },
+      { label: 'Profissionais', href: '/profissionais', Icon: Stethoscope,     permission: 'profissionais.read'    as Permission, permissionAlt: null,                              badge: 0 },
+      { label: 'Lotes ANVISA',  href: '/lotes',         Icon: FlaskConical,    permission: 'lotes.read'            as Permission, permissionAlt: null,                              badge: 0 },
+      { label: 'Estoque',       href: '/estoque',       Icon: Package,         permission: 'estoque.read'          as Permission, permissionAlt: null,                              badge: 0 },
+      { label: 'Financeiro',    href: '/finance',       Icon: DollarSign,      permission: 'financeiro.read'       as Permission, permissionAlt: null,                              badge: 0 },
+      { label: 'Comissões',     href: '/comissoes',     Icon: BadgeDollarSign, permission: 'comissoes.read'        as Permission, permissionAlt: 'comissoes.read_own' as Permission, badge: 0 },
+      { label: 'Relatórios',    href: '/reports',       Icon: BarChart3,       permission: 'relatorios.financeiro' as Permission, permissionAlt: null,                              badge: 0 },
+      { label: 'Termos de Uso', href: '/termos',        Icon: ScrollText,      permission: 'configuracoes.read'    as Permission, permissionAlt: null,                              badge: 0 },
+      { label: 'Configurações', href: '/settings',      Icon: Settings,        permission: 'configuracoes.read'    as Permission, permissionAlt: null,                              badge: 0 },
     ],
   },
   {
     label: 'Ajuda',
     items: [
-      { label: 'Suporte',     href: '/suporte-empresa',                 Icon: HeadphonesIcon, permission: 'suporte.read'     as Permission, permissionAlt: null },
-      { label: 'Comunicados', href: '/comunicados/comunicados-empresa', Icon: IconMegafone,   permission: 'comunicados.read' as Permission, permissionAlt: null },
+      { label: 'Suporte',     href: '/suporte-empresa',                 Icon: HeadphonesIcon, permission: 'suporte.read'     as Permission, permissionAlt: null, badge: 0                  },
+      { label: 'Comunicados', href: '/comunicados/comunicados-empresa', Icon: IconMegafone,   permission: 'comunicados.read' as Permission, permissionAlt: null, badge: comunicadosUnread  },
     ],
   },
 ];
@@ -209,10 +211,12 @@ export default function Navbar() {
   const router                = useRouter();
   const { user, logout }      = useAuth();
   const { can, isSuperAdmin } = usePermissions();
+  const { unreadCount }       = useNotificacoesContext();
+  const { unreadComunicados } = useComunicadosContext();
+
   const [isOpen,    setIsOpen]    = useState(false);
   const [collapsed, setCollapsed] = useState(true);
-
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile,  setIsMobile]  = useState(false);
   const navbarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -243,15 +247,12 @@ export default function Navbar() {
   };
 
   const sectionsToRender = isSuperAdmin
-    ? superAdminSections
-    : navSections
+    ? superAdminSections(unreadCount)
+    : buildNavSections(unreadComunicados)
         .map(section => ({
           ...section,
           items: section.items.filter(item =>
-            canSeeItem(
-              (item as any).permission,
-              (item as any).permissionAlt,
-            )
+            canSeeItem(item.permission, item.permissionAlt)
           ),
         }))
         .filter(section => section.items.length > 0);
@@ -353,7 +354,7 @@ export default function Navbar() {
                       </NavLinkText>
                       <NavTooltip>
                         {label}
-                        {badge > 0 ? ` · ${badge} não lida${badge !== 1 ? 's' : ''}` : ''}
+                        {badge > 0 ? ` · ${badge} não lido${badge !== 1 ? 's' : ''}` : ''}
                       </NavTooltip>
                     </NavLink>
                   );

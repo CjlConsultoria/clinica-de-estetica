@@ -96,73 +96,6 @@ type Patient = {
   observations: string; history: HistoryItem[];
 };
 
-const INITIAL_PATIENTS: Patient[] = [
-  {
-    id: 1, name: 'Ana Beatriz Costa', phone: '(11) 99872-3141', email: 'ana@email.com',
-    birthdate: '1990-03-14', since: 'Mar 2023', status: 'ativo',
-    totalSpent: 8400, totalSessions: 12, lastVisit: '18/02/2025', nextVisit: '18/05/2025',
-    observations: 'Paciente VIP. Alergia a lidocaína em pomada. Prefere horários matinais.',
-    history: [
-      { id: 1, date: '18/02/2025', procedure: 'Botox Facial',         units: '40U',      value: 980,  professional: 'Maria Oliveira', lote: 'BTX-2025-003', status: 'realizado' },
-      { id: 2, date: '18/11/2024', procedure: 'Botox Facial',         units: '40U',      value: 980,  professional: 'Maria Oliveira', lote: 'BTX-2024-087', status: 'realizado' },
-      { id: 3, date: '15/08/2024', procedure: 'Preenchimento Labial', units: '1ml',      value: 1200, professional: 'Clara Andrade',  lote: 'PRE-2024-042', status: 'realizado' },
-      { id: 4, date: '10/05/2024', procedure: 'Bioestimulador',       units: '1 frasco', value: 1800, professional: 'Maria Oliveira', lote: 'BIO-2024-011', status: 'realizado' },
-      { id: 5, date: '20/02/2024', procedure: 'Botox Facial',         units: '40U',      value: 980,  professional: 'Maria Oliveira', lote: 'BTX-2024-015', status: 'realizado' },
-    ],
-  },
-  {
-    id: 2, name: 'Carla Mendonça', phone: '(11) 97654-2211', email: 'carla@email.com',
-    birthdate: '1985-07-22', since: 'Jun 2023', status: 'ativo',
-    totalSpent: 4500, totalSessions: 6, lastVisit: '15/02/2025', nextVisit: '15/05/2025',
-    observations: 'Tende a apresentar hematomas. Usar técnica retrógrada.',
-    history: [
-      { id: 1, date: '15/02/2025', procedure: 'Preenchimento Labial', units: '1ml', value: 1200, professional: 'Maria Oliveira', lote: 'PRE-2025-007', status: 'realizado' },
-      { id: 2, date: '20/09/2024', procedure: 'Botox Facial',         units: '30U', value: 750,  professional: 'Beatriz Santos', lote: 'BTX-2024-062', status: 'realizado' },
-      { id: 3, date: '10/04/2024', procedure: 'Preenchimento Labial', units: '1ml', value: 1200, professional: 'Maria Oliveira', lote: 'PRE-2024-029', status: 'realizado' },
-    ],
-  },
-  {
-    id: 3, name: 'Fernanda Lima', phone: '(11) 98877-5544', email: 'fernanda@email.com',
-    birthdate: '1992-11-08', since: 'Jan 2024', status: 'ativo',
-    totalSpent: 3600, totalSessions: 4, lastVisit: '10/02/2025', nextVisit: null,
-    observations: '',
-    history: [
-      { id: 1, date: '10/02/2025', procedure: 'Bioestimulador', units: '1 frasco', value: 1800, professional: 'Clara Andrade', lote: 'BIO-2025-003', status: 'realizado' },
-      { id: 2, date: '10/08/2024', procedure: 'Bioestimulador', units: '1 frasco', value: 1800, professional: 'Clara Andrade', lote: 'BIO-2024-049', status: 'realizado' },
-    ],
-  },
-  {
-    id: 4, name: 'Marina Souza', phone: '(21) 99123-7788', email: 'marina@email.com',
-    birthdate: '1988-04-30', since: 'Set 2022', status: 'ativo',
-    totalSpent: 12800, totalSessions: 18, lastVisit: '05/01/2025', nextVisit: '05/04/2025',
-    observations: 'Paciente antiga. Protocolo personalizado de manutenção trimestral.',
-    history: [
-      { id: 1, date: '05/01/2025', procedure: 'Fio de PDO',           units: '10 fios', value: 2500, professional: 'Beatriz Santos', lote: 'FIO-2025-001', status: 'realizado' },
-      { id: 2, date: '05/10/2024', procedure: 'Botox Facial',         units: '50U',     value: 1200, professional: 'Maria Oliveira', lote: 'BTX-2024-081', status: 'realizado' },
-      { id: 3, date: '05/07/2024', procedure: 'Preenchimento Labial', units: '2ml',     value: 2400, professional: 'Clara Andrade',  lote: 'PRE-2024-055', status: 'realizado' },
-    ],
-  },
-  {
-    id: 5, name: 'Juliana Rocha', phone: '(11) 91234-5678', email: 'juliana@email.com',
-    birthdate: '1995-09-15', since: 'Nov 2024', status: 'ativo',
-    totalSpent: 980, totalSessions: 1, lastVisit: '10/01/2025', nextVisit: '10/04/2025',
-    observations: 'Primeira sessão. Orientada sobre protocolo inicial.',
-    history: [
-      { id: 1, date: '10/01/2025', procedure: 'Toxina Botulínica', units: '20U', value: 980, professional: 'Maria Oliveira', lote: 'BTX-2025-001', status: 'realizado' },
-    ],
-  },
-  {
-    id: 6, name: 'Patrícia Alves', phone: '(11) 97788-1122', email: 'patricia@email.com',
-    birthdate: '1978-12-01', since: 'Dez 2022', status: 'inativo',
-    totalSpent: 5600, totalSessions: 7, lastVisit: '20/12/2024', nextVisit: null,
-    observations: 'Última sessão foi de microagulhamento. Sem retorno agendado.',
-    history: [
-      { id: 1, date: '20/12/2024', procedure: 'Microagulhamento', units: '1 sessão', value: 800, professional: 'Beatriz Santos', lote: 'MIC-2024-019', status: 'realizado' },
-      { id: 2, date: '20/09/2024', procedure: 'Microagulhamento', units: '1 sessão', value: 800, professional: 'Beatriz Santos', lote: 'MIC-2024-010', status: 'realizado' },
-    ],
-  },
-];
-
 const procedureColors: Record<string, string> = {
   'Botox Facial':         '#BBA188',
   'Preenchimento Labial': '#EBD5B0',
@@ -178,6 +111,7 @@ function getInitials(name: string) {
 }
 
 function getAge(birthdate: string) {
+  if (!birthdate) return 0;
   const diff = Date.now() - new Date(birthdate).getTime();
   return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
 }
@@ -247,7 +181,8 @@ function mapPacienteToPatient(p: PacienteAPI, history: HistoryItem[] = []): Pati
 }
 
 export default function HistoricoPaciente() {
-  const [patients,     setPatients]     = useState<Patient[]>(INITIAL_PATIENTS);
+  const [patients,     setPatients]     = useState<Patient[]>([]);
+  const [loading,      setLoading]      = useState(true);
   const [search,       setSearch]       = useState('');
   const [filter,       setFilter]       = useState('Todos');
   const [openDropdown, setOpenDropdown] = useState(false);
@@ -284,10 +219,15 @@ export default function HistoricoPaciente() {
   } = useSequentialValidation<AtendimentoField>(ATENDIMENTO_VALIDATION);
 
   useEffect(() => {
+    setLoading(true);
     listarPacientes('', 0, 500).then(res => {
       const pacs = res.content || [];
       setPatients(pacs.map(p => mapPacienteToPatient(p)));
-    }).catch(() => {});
+    }).catch(() => {
+      setPatients([]);
+    }).finally(() => {
+      setLoading(false);
+    });
   }, []);
 
   const filtered = patients.filter(p => {
@@ -334,12 +274,6 @@ export default function HistoricoPaciente() {
     clearPacienteError(field as NovoPacienteField);
   }
 
-  function handleDateChange(field: 'nascimento', raw: string) {
-    if (!raw) { handleChange(field, ''); return; }
-    const [yearStr, month, day] = raw.split('-');
-    handleChange(field, `${(yearStr ?? '').slice(0, 4)}-${month ?? ''}-${day ?? ''}`);
-  }
-
   function handleCancelNewClick() {
     if (isNewFormDirty(form)) setShowCancelNewModal(true);
     else forceCloseNew();
@@ -382,12 +316,6 @@ export default function HistoricoPaciente() {
   function handleEditChange(field: keyof NovoPacienteForm, value: string) {
     setEditForm(prev => ({ ...prev, [field]: value }));
     setEditErrors(prev => ({ ...prev, [field]: undefined }));
-  }
-
-  function handleEditDateChange(raw: string) {
-    if (!raw) { handleEditChange('nascimento', ''); return; }
-    const [yearStr, month, day] = raw.split('-');
-    handleEditChange('nascimento', `${(yearStr ?? '').slice(0, 4)}-${month ?? ''}-${day ?? ''}`);
   }
 
   function validateEditForm(): boolean {
@@ -578,14 +506,13 @@ export default function HistoricoPaciente() {
         />
         <StatCard label="Pacientes Ativos" value={ativos} color="#8a7560"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>}
-          trend={{ value: `${Math.round((ativos / totalPacientes) * 100)}% retorno`, positive: true }}
+          trend={{ value: `${totalPacientes > 0 ? Math.round((ativos / totalPacientes) * 100) : 0}% retorno`, positive: true }}
         />
         <StatCard label="Total de Sessões" value={totalSessoes} color="#a8906f"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>}
         />
         <StatCard label="Receita Total" value={`R$ ${totalReceita.toLocaleString('pt-BR')}`} color="#BBA188"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>}
-          trend={{ value: '+R$ 6.800 vs mês', positive: true }}
         />
       </StatsGrid>
 
@@ -633,7 +560,15 @@ export default function HistoricoPaciente() {
 
       <CardsContainer>
         <CardsWrapper>
-          {filtered.length === 0 ? (
+          {loading ? (
+            <EmptyState>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
+                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+              </svg>
+              <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+              <p>Carregando pacientes...</p>
+            </EmptyState>
+          ) : filtered.length === 0 ? (
             <EmptyState>
               <h3>Nenhum paciente encontrado</h3>
               <p>Tente ajustar os filtros ou a busca.</p>
@@ -648,7 +583,7 @@ export default function HistoricoPaciente() {
                     </PatientAvatar>
                     <PatientInfo>
                       <PatientName>{patient.name}</PatientName>
-                      <PatientSub>{getAge(patient.birthdate)} anos · Cliente desde {patient.since}</PatientSub>
+                      <PatientSub>{getAge(patient.birthdate)} anos · Cliente desde {patient.since || '—'}</PatientSub>
                       <StatsRow>
                         <StatPill $color="#BBA188">{patient.totalSessions} sessões</StatPill>
                         <StatPill $color="#8a7560">R$ {patient.totalSpent.toLocaleString('pt-BR')}</StatPill>
@@ -767,7 +702,7 @@ export default function HistoricoPaciente() {
                   </DetailMetaItem>
                   <DetailMetaItem>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                    {getAge(selected.birthdate)} anos · Nascimento: {formatDate(selected.birthdate)} · Cliente desde {selected.since}
+                    {getAge(selected.birthdate)} anos · Nascimento: {formatDate(selected.birthdate)} · Cliente desde {selected.since || '—'}
                   </DetailMetaItem>
                 </DetailMeta>
                 <StatsRow style={{ marginTop: 12 }}>
@@ -956,7 +891,7 @@ export default function HistoricoPaciente() {
               </div>
               <Input label="E-mail *" type="email" placeholder="Digite o e-mail" value={editForm.email} onChange={e => handleEditChange('email', e.target.value)} error={editErrors.email} />
               <Input label="Telefone *" mask="telefone" placeholder="Digite o telefone" value={editForm.telefone} inputMode="numeric" maxLength={15} onValueChange={v => handleEditChange('telefone', v)} error={editErrors.telefone} />
-              <Input label="Data de Nascimento *" type="date" value={editForm.nascimento} onChange={e => handleEditDateChange(e.target.value)} error={editErrors.nascimento} />
+              <Input label="Data de Nascimento *" type="date" value={editForm.nascimento} onChange={e => handleEditChange('nascimento', e.target.value)} error={editErrors.nascimento} />
               <Input label="CPF *" mask="cpf" placeholder="Digite o CPF" value={editForm.cpf} inputMode="numeric" maxLength={14} onValueChange={v => handleEditChange('cpf', v)} error={editErrors.cpf} />
             </FormGrid>
           </div>
@@ -1010,7 +945,7 @@ export default function HistoricoPaciente() {
               </div>
               <Input label="E-mail *" type="email" placeholder="Digite o e-mail" value={form.email} onChange={e => handleChange('email', e.target.value)} error={pacienteErrors.email} />
               <Input label="Telefone *" mask="telefone" placeholder="Digite o telefone" value={form.telefone} inputMode="numeric" maxLength={15} onValueChange={v => handleMaskedChange('telefone', v)} error={pacienteErrors.telefone} />
-              <Input label="Data de Nascimento *" type="date" value={form.nascimento} onChange={e => handleDateChange('nascimento', e.target.value)} error={pacienteErrors.nascimento} />
+              <Input label="Data de Nascimento *" type="date" value={form.nascimento} onChange={e => handleChange('nascimento', e.target.value)} error={pacienteErrors.nascimento} />
               <Input label="CPF *" mask="cpf" placeholder="Digite o CPF" value={form.cpf} inputMode="numeric" maxLength={14} onValueChange={v => handleMaskedChange('cpf', v)} error={pacienteErrors.cpf} />
             </FormGrid>
           </div>

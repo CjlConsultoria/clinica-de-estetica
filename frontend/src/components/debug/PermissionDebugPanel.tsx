@@ -1,14 +1,5 @@
 'use client';
 
-/**
- * PAINEL DE DEBUG MULTI-TENANT
- *
- * 1. Copie para: src/components/debug/PermissionDebugPanel.tsx
- * 2. No layout.tsx, dentro de <AuthProvider>:
- *
- *    {process.env.NODE_ENV === 'development' && <PermissionDebugPanel />}
- */
-
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -21,7 +12,6 @@ import {
   type Permission,
   type CurrentUser,
 } from '@/types/auth';
-=
 
 function hasPermission(role: Role, permission: Permission): boolean {
   const perms = ROLE_PERMISSIONS[role];

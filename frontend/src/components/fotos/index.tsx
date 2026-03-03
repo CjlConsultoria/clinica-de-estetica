@@ -14,7 +14,7 @@ import {
   SearchBarWrapper, SearchIconWrap, SearchInputStyled,
   FilterRow, DropdownWrapper, DropdownBtn, DropdownList, DropdownItem, ClearFilterBtn,
   PatientsGrid, PatientFotoCard, PatientCardHeader, PatientAvatar, PatientName, PatientSub,
-  PatientCardBody, PatientCardFooter, FotoGrid, FotoItem, FotoImg, FotoLabel, FotoDate, FotoEmpty,
+  PatientCardBody, PatientCardFooter, FotoGrid, FotoItem, FotoLabel, FotoDate, FotoEmpty,
   CompareSection, CompareGrid, CompareSide, CompareSideLabel, CompareImg,
   UploadZone, UploadIcon, UploadText, UploadHint, UploadPreview,
   FormGrid, SectionLabel, WizardNav, Badge, SavedBanner,
@@ -87,114 +87,6 @@ const momentoOptions = [
 ];
 
 const filterProcedures = ['Todos', 'Botox', 'Preenchimento', 'Bioestimulador', 'Fio PDO', 'Microagulhamento'];
-
-const INITIAL_PATIENTS: PatientData[] = [
-  {
-    id: 1, name: 'Ana Beatriz Costa', initials: 'AB', color: '#BBA188',
-    lastProcedure: 'Botox Facial',
-    fotos: [
-      { id: 1,  tipo: 'antes',   procedimento: 'Botox Facial',    data: '10/01/2025' },
-      { id: 2,  tipo: 'depois',  procedimento: 'Botox Facial',    data: '10/01/2025' },
-      { id: 3,  tipo: 'retorno', procedimento: 'Botox Facial',    data: '24/01/2025' },
-      { id: 4,  tipo: 'antes',   procedimento: 'Botox Facial',    data: '18/02/2025' },
-      { id: 5,  tipo: 'depois',  procedimento: 'Botox Facial',    data: '18/02/2025' },
-      { id: 6,  tipo: 'retorno', procedimento: 'Botox Facial',    data: '05/03/2025' },
-      { id: 7,  tipo: 'antes',   procedimento: 'Bioestimulador',  data: '12/03/2025' },
-      { id: 8,  tipo: 'depois',  procedimento: 'Bioestimulador',  data: '12/03/2025' },
-      { id: 9,  tipo: 'retorno', procedimento: 'Bioestimulador',  data: '26/03/2025' },
-    ],
-  },
-  {
-    id: 2, name: 'Carla Mendonça', initials: 'CM', color: '#a8906f',
-    lastProcedure: 'Preenchimento Labial',
-    fotos: [
-      { id: 1, tipo: 'antes',   procedimento: 'Preenchimento Labial', data: '15/01/2025' },
-      { id: 2, tipo: 'depois',  procedimento: 'Preenchimento Labial', data: '15/01/2025' },
-      { id: 3, tipo: 'retorno', procedimento: 'Preenchimento Labial', data: '01/02/2025' },
-      { id: 4, tipo: 'antes',   procedimento: 'Botox Facial',         data: '10/02/2025' },
-      { id: 5, tipo: 'depois',  procedimento: 'Botox Facial',         data: '10/02/2025' },
-      { id: 6, tipo: 'retorno', procedimento: 'Botox Facial',         data: '24/02/2025' },
-      { id: 7, tipo: 'antes',   procedimento: 'Bioestimulador',       data: '10/03/2025' },
-      { id: 8, tipo: 'depois',  procedimento: 'Bioestimulador',       data: '10/03/2025' },
-      { id: 9, tipo: 'retorno', procedimento: 'Bioestimulador',       data: '24/03/2025' },
-    ],
-  },
-  {
-    id: 3, name: 'Fernanda Lima', initials: 'FL', color: '#1b1b1b',
-    lastProcedure: 'Bioestimulador',
-    fotos: [
-      { id: 1, tipo: 'antes',   procedimento: 'Bioestimulador',  data: '05/01/2025' },
-      { id: 2, tipo: 'depois',  procedimento: 'Bioestimulador',  data: '05/01/2025' },
-      { id: 3, tipo: 'retorno', procedimento: 'Bioestimulador',  data: '20/01/2025' },
-      { id: 4, tipo: 'antes',   procedimento: 'Peeling Químico', data: '05/02/2025' },
-      { id: 5, tipo: 'depois',  procedimento: 'Peeling Químico', data: '05/02/2025' },
-      { id: 6, tipo: 'retorno', procedimento: 'Peeling Químico', data: '19/02/2025' },
-      { id: 7, tipo: 'antes',   procedimento: 'Fio de PDO',      data: '05/03/2025' },
-      { id: 8, tipo: 'depois',  procedimento: 'Fio de PDO',      data: '05/03/2025' },
-      { id: 9, tipo: 'retorno', procedimento: 'Fio de PDO',      data: '19/03/2025' },
-    ],
-  },
-  {
-    id: 4, name: 'Marina Souza', initials: 'MS', color: '#BBA188',
-    lastProcedure: 'Fio PDO',
-    fotos: [
-      { id: 1, tipo: 'antes',   procedimento: 'Fio de PDO',   data: '08/01/2025' },
-      { id: 2, tipo: 'depois',  procedimento: 'Fio de PDO',   data: '08/01/2025' },
-      { id: 3, tipo: 'retorno', procedimento: 'Fio de PDO',   data: '22/01/2025' },
-      { id: 4, tipo: 'antes',   procedimento: 'Botox Facial', data: '05/02/2025' },
-      { id: 5, tipo: 'depois',  procedimento: 'Botox Facial', data: '05/02/2025' },
-      { id: 6, tipo: 'retorno', procedimento: 'Botox Facial', data: '19/02/2025' },
-      { id: 7, tipo: 'antes',   procedimento: 'Fio de PDO',   data: '05/03/2025' },
-      { id: 8, tipo: 'depois',  procedimento: 'Fio de PDO',   data: '05/03/2025' },
-      { id: 9, tipo: 'retorno', procedimento: 'Fio de PDO',   data: '19/03/2025' },
-    ],
-  },
-  {
-    id: 5, name: 'Juliana Rocha', initials: 'JR', color: '#8a7560',
-    lastProcedure: 'Botox Facial',
-    fotos: [
-      { id: 1, tipo: 'antes',   procedimento: 'Botox Facial', data: '02/01/2025' },
-      { id: 2, tipo: 'depois',  procedimento: 'Botox Facial', data: '02/01/2025' },
-      { id: 3, tipo: 'retorno', procedimento: 'Botox Facial', data: '16/01/2025' },
-      { id: 4, tipo: 'antes',   procedimento: 'Fio de PDO',   data: '05/02/2025' },
-      { id: 5, tipo: 'depois',  procedimento: 'Fio de PDO',   data: '05/02/2025' },
-      { id: 6, tipo: 'retorno', procedimento: 'Fio de PDO',   data: '19/02/2025' },
-      { id: 7, tipo: 'antes',   procedimento: 'Botox Facial', data: '05/03/2025' },
-      { id: 8, tipo: 'depois',  procedimento: 'Botox Facial', data: '05/03/2025' },
-      { id: 9, tipo: 'retorno', procedimento: 'Botox Facial', data: '19/03/2025' },
-    ],
-  },
-  {
-    id: 6, name: 'Patrícia Alves', initials: 'PA', color: '#c9a882',
-    lastProcedure: 'Microagulhamento',
-    fotos: [
-      { id: 1, tipo: 'antes',   procedimento: 'Microagulhamento', data: '20/11/2024' },
-      { id: 2, tipo: 'depois',  procedimento: 'Microagulhamento', data: '20/11/2024' },
-      { id: 3, tipo: 'retorno', procedimento: 'Microagulhamento', data: '04/12/2024' },
-      { id: 4, tipo: 'antes',   procedimento: 'Microagulhamento', data: '20/12/2024' },
-      { id: 5, tipo: 'depois',  procedimento: 'Microagulhamento', data: '20/12/2024' },
-      { id: 6, tipo: 'retorno', procedimento: 'Microagulhamento', data: '15/01/2025' },
-      { id: 7, tipo: 'antes',   procedimento: 'Peeling Químico',  data: '05/02/2025' },
-      { id: 8, tipo: 'depois',  procedimento: 'Peeling Químico',  data: '05/02/2025' },
-      { id: 9, tipo: 'retorno', procedimento: 'Peeling Químico',  data: '19/02/2025' },
-    ],
-  },
-  {
-    id: 7, name: 'Roberta Gomes', initials: 'RG', color: '#917255',
-    lastProcedure: 'Preenchimento Labial',
-    fotos: [
-      { id: 1, tipo: 'antes',   procedimento: 'Preenchimento Labial', data: '15/11/2024' },
-      { id: 2, tipo: 'depois',  procedimento: 'Preenchimento Labial', data: '15/11/2024' },
-      { id: 3, tipo: 'retorno', procedimento: 'Preenchimento Labial', data: '29/11/2024' },
-      { id: 4, tipo: 'antes',   procedimento: 'Botox Facial',         data: '15/12/2024' },
-      { id: 5, tipo: 'depois',  procedimento: 'Botox Facial',         data: '15/12/2024' },
-      { id: 6, tipo: 'retorno', procedimento: 'Botox Facial',         data: '29/12/2024' },
-      { id: 7, tipo: 'antes',   procedimento: 'Bioestimulador',       data: '15/01/2025' },
-      { id: 8, tipo: 'depois',  procedimento: 'Bioestimulador',       data: '15/01/2025' },
-      { id: 9, tipo: 'retorno', procedimento: 'Bioestimulador',       data: '29/01/2025' },
-    ],
-  },
-];
 
 import { listarFotosPorPaciente, FotoAPI, urlFoto } from '@/services/fotoService';
 import { listarPacientes } from '@/services/pacienteService';
@@ -310,7 +202,8 @@ function FotoThumb({ foto, color }: { foto: Foto; color: string }) {
 }
 
 export default function Fotos() {
-  const [patients, setPatients] = useState<PatientData[]>(INITIAL_PATIENTS);
+  const [patients, setPatients] = useState<PatientData[]>([]);
+  const [loading,  setLoading]  = useState(true);
 
   const [search,        setSearch]        = useState('');
   const [filterProc,    setFilterProc]    = useState('Todos');
@@ -344,6 +237,7 @@ export default function Fotos() {
 
   useEffect(() => {
     const load = async () => {
+      setLoading(true);
       try {
         const pacientesRes = await listarPacientes('', 0, 100);
         const pacs = pacientesRes.content || [];
@@ -362,14 +256,18 @@ export default function Fotos() {
           return {
             id:            p.id,
             name:          p.nome,
-            initials:      p.nome.split(' ').slice(0,2).map((n: string) => n[0]).join('').toUpperCase(),
+            initials:      p.nome.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase(),
             color:         colors[idx % colors.length],
             lastProcedure: fotos[fotos.length - 1]?.procedimento || '—',
             fotos,
           };
         });
         setPatients(mapped);
-      } catch {}
+      } catch {
+        setPatients([]);
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, []);
@@ -402,12 +300,6 @@ export default function Fotos() {
   function handleUploadChange(field: keyof UploadForm, value: string) {
     setUploadForm(prev => ({ ...prev, [field]: value }));
     clearUploadError(field as UploadField);
-  }
-
-  function handleUploadDateChange(raw: string) {
-    if (!raw) { handleUploadChange('dataFoto', ''); return; }
-    const [yearStr, month, day] = raw.split('-');
-    handleUploadChange('dataFoto', `${(yearStr ?? '').slice(0, 4)}-${month ?? ''}-${day ?? ''}`);
   }
 
   function handleCancelUploadClick() {
@@ -608,7 +500,15 @@ export default function Fotos() {
 
       <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '20px 20px 0', flex: 1 }}>
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', color: '#ccc', gap: 12, minHeight: 400 }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
+                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+              </svg>
+              <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+              <span style={{ fontSize: '0.9rem' }}>Carregando pacientes...</span>
+            </div>
+          ) : filtered.length === 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', color: '#ccc', gap: 12, minHeight: 400 }}>
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               <span style={{ fontSize: '0.9rem' }}>Nenhum paciente encontrado</span>
@@ -725,7 +625,7 @@ export default function Fotos() {
               <div style={{ gridColumn: 'span 2' }}>
                 <Select label="Paciente *" options={patientOptions} placeholder="Selecione o paciente" value={uploadForm.pacienteId} onChange={v => handleUploadChange('pacienteId', v)} error={uploadErrors.pacienteId} />
               </div>
-              <Input label="Data da Foto *" type="date" value={uploadForm.dataFoto} onChange={e => handleUploadDateChange(e.target.value)} error={uploadErrors.dataFoto} />
+              <Input label="Data da Foto *" type="date" value={uploadForm.dataFoto} onChange={e => handleUploadChange('dataFoto', e.target.value)} error={uploadErrors.dataFoto} />
               <Select label="Procedimento *" options={procedureOptions} placeholder="Selecione o procedimento" value={uploadForm.procedimento} onChange={v => handleUploadChange('procedimento', v)} error={uploadErrors.procedimento} />
               <div style={{ gridColumn: 'span 2' }}>
                 <Select label="Momento *" options={momentoOptions} placeholder="Selecione o momento" value={uploadForm.momento} onChange={v => handleUploadChange('momento', v)} error={uploadErrors.momento} />

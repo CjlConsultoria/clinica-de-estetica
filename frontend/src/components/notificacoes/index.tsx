@@ -6,6 +6,7 @@ import { listarNotificacoes, marcarComoLida as marcarComoLidaAPI, marcarTodasCom
 import Button from '@/components/ui/button';
 import SucessModal from '@/components/modals/sucessModal';
 import ConfirmModal from '@/components/modals/confirmModal';
+import { useNotificacoesContext } from '@/contexts/NotificacoesContext';
 
 import {
   Container, Header, Title, Subtitle, HeaderActions,
@@ -141,6 +142,7 @@ const TAB_OPTIONS: { key: TabTipo; label: string }[] = [
 
 export default function Notificacoes() {
   const allowed = useRoleRedirect({ superAdminOnly: true });
+  const { setUnreadCount } = useNotificacoesContext();
 
   const [notifs,              setNotifs]             = useState<Notificacao[]>([]);
   const [tabTipo,             setTabTipo]            = useState<TabTipo>('todas');
@@ -152,6 +154,12 @@ export default function Notificacoes() {
   const [confirmMarcarTodas,  setConfirmMarcarTodas] = useState(false);
   const [confirmLimpar,       setConfirmLimpar]      = useState(false);
   const [sucessModal,         setSucessModal]        = useState<{ title: string; message: string } | null>(null);
+
+  // Sempre que notifs mudar, sincroniza o contador global do navbar
+  useEffect(() => {
+    const count = notifs.filter(n => !n.lida).length;
+    setUnreadCount(count);
+  }, [notifs, setUnreadCount]);
 
   useEffect(() => {
     listarNotificacoes().then((data: NotificacaoAPI[]) => {

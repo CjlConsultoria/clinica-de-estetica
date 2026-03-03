@@ -48,8 +48,8 @@ interface PacienteForm {
   status: string;
 }
 
-type Step1Field = 'nome' | 'email' | 'telefone' | 'nascimento' | 'cpf';
-type Step2Field = 'cep' | 'logradouro' | 'numero';
+type Step1Field = 'nome' | 'email' | 'telefone' | 'nascimento' | 'cpf' | 'sexo';
+type Step2Field = 'cep' | 'logradouro' | 'numero' | 'bairro' | 'cidade' | 'estado';
 type Step3Field = never;
 
 const FORM_INITIAL: PacienteForm = {
@@ -236,12 +236,22 @@ export default function Patients() {
     { key: 'telefone',   validate: (v) => !v.trim() ? 'Telefone é obrigatório'           : null },
     { key: 'nascimento', validate: (v) => !v        ? 'Data de nascimento é obrigatória' : null },
     { key: 'cpf',        validate: (v) => !v.trim() ? 'CPF é obrigatório'                : null },
+    { key: 'sexo',       validate: (v) => !v.trim() ? 'Sexo é obrigatório'               : null },
   ]);
 
   const step2Validation = useSequentialValidation<Step2Field>([
-    { key: 'cep',        validate: (v) => (v && v.replace(/\D/g,'').length > 0 && v.replace(/\D/g,'').length < 8) ? 'CEP inválido' : null },
-    { key: 'logradouro', validate: () => null },
-    { key: 'numero',     validate: () => null },
+    { key: 'cep',        validate: (v) => {
+        const digits = (v || '').replace(/\D/g, '');
+        if (!digits) return 'CEP é obrigatório';
+        if (digits.length < 8) return 'CEP inválido';
+        return null;
+      }
+    },
+    { key: 'logradouro', validate: (v) => !v?.trim() ? 'Logradouro é obrigatório' : null },
+    { key: 'numero',     validate: (v) => !v?.trim() ? 'Número é obrigatório'     : null },
+    { key: 'bairro',     validate: (v) => !v?.trim() ? 'Bairro é obrigatório'     : null },
+    { key: 'cidade',     validate: (v) => !v?.trim() ? 'Cidade é obrigatória'     : null },
+    { key: 'estado',     validate: (v) => !v?.trim() ? 'Estado é obrigatório'     : null },
   ]);
 
   async function fetchPatients() {
@@ -283,27 +293,39 @@ export default function Patients() {
 
   function handleChange(field: keyof PacienteForm, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
-    if (['nome','email','telefone','nascimento','cpf'].includes(field))
+    if (['nome','email','telefone','nascimento','cpf','sexo'].includes(field))
       step1Validation.clearError(field as Step1Field);
-    if (['cep','logradouro','numero'].includes(field))
+    if (['cep','logradouro','numero','bairro','cidade','estado'].includes(field))
       step2Validation.clearError(field as Step2Field);
   }
 
-  /* busca CEP */
+  // FIX CEP: usa proxy interno Next.js para evitar bloqueio de rede/CORS.
+  // Crie o arquivo app/api/cep/[cep]/route.ts com o conteúdo abaixo:
+  //
+  //   export async function GET(_: Request, { params }: { params: { cep: string } }) {
+  //     const res = await fetch(`https://viacep.com.br/ws/${params.cep}/json/`);
+  //     const data = await res.json();
+  //     return Response.json(data);
+  //   }
+  //
   async function handleCEPChange(raw: string) {
     const masked = maskCEP(raw);
     handleChange('cep', masked);
     setCepError('');
+    step2Validation.clearError('cep');
+
     const digits = masked.replace(/\D/g, '');
     if (digits.length === 8) {
       setCepLoading(true);
       try {
-        const res  = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+        const res  = await fetch(`/api/cep/${digits}`);
         const data = await res.json();
         if (data.erro) {
           setCepError('CEP não encontrado');
           setForm(prev => ({ ...prev, logradouro: '', bairro: '', cidade: '', estado: '' }));
         } else {
+          setCepError('');
+          step2Validation.clearError('cep');
           setForm(prev => ({
             ...prev,
             logradouro: data.logradouro || '',
@@ -321,8 +343,22 @@ export default function Patients() {
   }
 
   function validateStep(s: number): boolean {
-    if (s === 1) return step1Validation.validate({ nome: form.nome, email: form.email, telefone: form.telefone, nascimento: form.nascimento, cpf: form.cpf });
-    if (s === 2) return step2Validation.validate({ cep: form.cep, logradouro: form.logradouro, numero: form.numero });
+    if (s === 1) return step1Validation.validate({
+      nome: form.nome,
+      email: form.email,
+      telefone: form.telefone,
+      nascimento: form.nascimento,
+      cpf: form.cpf,
+      sexo: form.sexo,
+    });
+    if (s === 2) return step2Validation.validate({
+      cep: form.cep,
+      logradouro: form.logradouro,
+      numero: form.numero,
+      bairro: form.bairro,
+      cidade: form.cidade,
+      estado: form.estado,
+    });
     return true;
   }
 
@@ -374,6 +410,7 @@ export default function Patients() {
 
   async function handleConfirmSave() {
     setShowConfirmModal(false);
+
     const pacienteRequest = {
       nome:              form.nome,
       email:             form.email,
@@ -395,16 +432,22 @@ export default function Patients() {
 
     try {
       if (isEditing && selectedPatient) {
-        await atualizarPaciente(selectedPatient.id, pacienteRequest);
+        const updated = await atualizarPaciente(selectedPatient.id, pacienteRequest);
+        setPatients(prev =>
+          prev.map(p => p.id === selectedPatient.id ? mapApiToPatient(updated) : p)
+        );
       } else {
-        await criarPaciente(pacienteRequest);
+        const created = await criarPaciente(pacienteRequest);
+        setPatients(prev => [mapApiToPatient(created), ...prev]);
       }
       await fetchPatients();
-    } catch {
-      // keep existing list on error
+    } catch (err) {
+      console.error('Erro ao salvar paciente:', err);
+      try { await fetchPatients(); } catch {}
     }
 
-    setIsModalOpen(false); setShowSuccessModal(true);
+    setIsModalOpen(false);
+    setShowSuccessModal(true);
   }
 
   function handleSuccessClose() {
@@ -449,11 +492,18 @@ export default function Patients() {
                 onChange={e => handleChange('telefone', maskPhone(e.target.value))}
                 error={errors1.telefone}
               />
+              {/*
+                FIX DATA: removido o onKeyDown que travava o campo de ano.
+                O browser nativo gerencia os blocos dd/mm/yyyy corretamente.
+                min/max são suficientes para limitar o intervalo permitido.
+              */}
               <Input
                 label="Data de Nascimento *"
                 type="date"
                 value={form.nascimento}
                 onChange={e => handleChange('nascimento', e.target.value)}
+                max="2099-12-31"
+                min="1900-01-01"
                 error={errors1.nascimento}
               />
               <Input
@@ -467,11 +517,12 @@ export default function Patients() {
               />
               <div style={{ gridColumn: isEditing ? 'auto' : 'auto' }}>
                 <Select
-                  label="Sexo"
+                  label="Sexo *"
                   options={sexoOptions}
                   placeholder="Selecione..."
                   value={form.sexo}
                   onChange={v => handleChange('sexo', v)}
+                  error={errors1.sexo}
                 />
               </div>
               {isEditing && (
@@ -494,13 +545,13 @@ export default function Patients() {
             <FormGrid>
               <div style={{ position: 'relative' }}>
                 <Input
-                  label="CEP"
+                  label="CEP *"
                   placeholder="00000-000"
                   value={form.cep}
                   inputMode="numeric"
                   maxLength={9}
                   onChange={e => handleCEPChange(e.target.value)}
-                  error={cepError || errors2.cep}
+                  error={cepError || (errors2.cep && form.cep.replace(/\D/g,'').length < 8 ? errors2.cep : cepError)}
                 />
                 {cepLoading && (
                   <div style={{
@@ -518,20 +569,22 @@ export default function Patients() {
               </div>
               <div style={{ gridColumn: 'auto' }}>
                 <Input
-                  label="Logradouro"
+                  label="Logradouro *"
                   placeholder="Rua, Avenida..."
                   value={form.logradouro}
                   onChange={e => handleChange('logradouro', e.target.value)}
                   maxLength={120}
+                  error={errors2.logradouro}
                 />
               </div>
               <Input
-                label="Número"
+                label="Número *"
                 placeholder="Ex: 123"
                 value={form.numero}
                 inputMode="numeric"
                 maxLength={10}
                 onChange={e => handleChange('numero', e.target.value.replace(/\D/g, ''))}
+                error={errors2.numero}
               />
               <Input
                 label="Complemento"
@@ -541,25 +594,28 @@ export default function Patients() {
                 maxLength={60}
               />
               <Input
-                label="Bairro"
+                label="Bairro *"
                 placeholder="Bairro"
                 value={form.bairro}
                 onChange={e => handleChange('bairro', e.target.value)}
                 maxLength={80}
+                error={errors2.bairro}
               />
               <Input
-                label="Cidade"
+                label="Cidade *"
                 placeholder="Cidade"
                 value={form.cidade}
                 onChange={e => handleChange('cidade', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))}
                 maxLength={80}
+                error={errors2.cidade}
               />
               <Select
-                label="Estado (UF)"
+                label="Estado (UF) *"
                 options={UF_OPTIONS}
                 placeholder="UF"
                 value={form.estado}
                 onChange={v => handleChange('estado', v)}
+                error={errors2.estado}
               />
             </FormGrid>
           </StepSection>

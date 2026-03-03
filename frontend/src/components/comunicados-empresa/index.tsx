@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRoleRedirect } from '@/components/ui/hooks/useRoleRedirect';
 import { listarComunicados, ComunicadoAPI } from '@/services/comunicadoService';
+import { useComunicadosContext } from '@/contexts/ComunicadosContext';
 import {
   Container, Header, Title, Subtitle,
   StatsRow, StatBox, StatBoxValue, StatBoxLabel,
@@ -61,12 +62,13 @@ const tipoConfig: Record<Tipo, { label: string }> = {
   cobranca:   { label: 'Cobrança'   },
 };
 
-
 export default function ComunicadosEmpresa() {
   const allowed = useRoleRedirect({
     permission: 'comunicados.read',
     blockSuperAdmin: true,
   });
+
+  const { markOneRead, markAllRead } = useComunicadosContext();
 
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [filtro, setFiltro]           = useState<'todos' | 'nao_lidos' | 'lidos'>('todos');
@@ -85,7 +87,6 @@ export default function ComunicadosEmpresa() {
       }));
       if (mapped.length > 0) setComunicados(mapped);
     }).catch(() => {});
-
   }, []);
 
   if (!allowed) return null;
@@ -100,10 +101,12 @@ export default function ComunicadosEmpresa() {
 
   function marcarComoLido(id: number) {
     setComunicados(prev => prev.map(c => c.id === id ? { ...c, lido: true } : c));
+    markOneRead(id); // sincroniza o badge do navbar
   }
 
   function marcarTodosComoLidos() {
     setComunicados(prev => prev.map(c => ({ ...c, lido: true })));
+    markAllRead(); // zera o badge do navbar
   }
 
   return (

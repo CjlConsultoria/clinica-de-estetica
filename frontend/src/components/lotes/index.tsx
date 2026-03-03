@@ -69,20 +69,6 @@ const statusOptions = [
 const filterStatus     = ['Todos', 'Ativo', 'Esgotado', 'Vencido', 'Descartado'];
 const filterCategories = ['Todas', 'Toxina Botulínica', 'Preenchimento', 'Bioestimulador', 'Fio de PDO', 'Skincare/Pele'];
 
-const mockLotes = [
-  { id: 1, lote: 'LOT-2024-BTX-001', produto: 'Toxina Botulínica Allergan 100U', categoria: 'Toxina Botulínica', fabricante: 'Allergan', fornecedor: 'Biolab', dataEntrada: '10/01/2025', dataFabricacao: '01/06/2024', dataValidade: '2025-06-15', quantidadeEntrada: 10, quantidadeAtual: 8, unidade: 'fr', registroAnvisa: '1.0309.0198.001-9', status: 'ativo', usos: [{ data: '18/02/2025', paciente: 'Ana Beatriz Costa', procedimento: 'Botox Facial', profissional: 'Maria Oliveira', quantidade: 1 }, { data: '15/02/2025', paciente: 'Carla Mendonça', procedimento: 'Botox Testa', profissional: 'Maria Oliveira', quantidade: 1 }] },
-  { id: 2, lote: 'LOT-2024-BTX-002', produto: 'Toxina Botulínica Medytoxin 200U', categoria: 'Toxina Botulínica', fabricante: 'Hugel', fornecedor: 'MedEsthetics', dataEntrada: '20/01/2025', dataFabricacao: '01/09/2024', dataValidade: '2025-04-20', quantidadeEntrada: 5, quantidadeAtual: 2, unidade: 'fr', registroAnvisa: '1.0309.0230.001-1', status: 'critico', usos: [{ data: '10/02/2025', paciente: 'Fernanda Lima', procedimento: 'Botox Facial', profissional: 'Clara Andrade', quantidade: 2 }, { data: '05/02/2025', paciente: 'Marina Souza', procedimento: 'Toxina Bruxismo', profissional: 'Clara Andrade', quantidade: 1 }] },
-  { id: 3, lote: 'LOT-2024-PRE-001', produto: 'Ácido Hialurônico Juvederm 1ml', categoria: 'Preenchimento', fabricante: 'Allergan', fornecedor: 'Allergan Brasil', dataEntrada: '05/12/2024', dataFabricacao: '01/07/2024', dataValidade: '2025-08-10', quantidadeEntrada: 8, quantidadeAtual: 3, unidade: 'ser', registroAnvisa: '1.0309.0198.003-5', status: 'ativo', usos: [{ data: '18/02/2025', paciente: 'Carla Mendonça', procedimento: 'Preenchimento Labial', profissional: 'Maria Oliveira', quantidade: 1 }, { data: '12/02/2025', paciente: 'Juliana Rocha', procedimento: 'Preenchimento Malar', profissional: 'Maria Oliveira', quantidade: 2 }] },
-  { id: 4, lote: 'LOT-2024-BIO-001', produto: 'Sculptra 150mg', categoria: 'Bioestimulador', fabricante: 'Galderma', fornecedor: 'Galderma Brasil', dataEntrada: '15/11/2024', dataFabricacao: '01/05/2024', dataValidade: '2025-07-22', quantidadeEntrada: 4, quantidadeAtual: 0, unidade: 'fr', registroAnvisa: '1.0309.0312.001-7', status: 'esgotado', usos: [{ data: '20/01/2025', paciente: 'Roberta Gomes', procedimento: 'Bioestimulador Facial', profissional: 'Clara Andrade', quantidade: 2 }, { data: '05/01/2025', paciente: 'Sandra Oliveira', procedimento: 'Bioestimulador', profissional: 'Clara Andrade', quantidade: 2 }] },
-  { id: 5, lote: 'LOT-2024-FIO-001', produto: 'Fio PDO Tensor Espiral 19G', categoria: 'Fio de PDO', fabricante: 'Aesthetic', fornecedor: 'Aesthetic Brasil', dataEntrada: '01/12/2024', dataFabricacao: '01/06/2024', dataValidade: '2026-01-10', quantidadeEntrada: 10, quantidadeAtual: 4, unidade: 'cx', registroAnvisa: '1.0309.0400.001-2', status: 'ativo', usos: [{ data: '14/02/2025', paciente: 'Marina Souza', procedimento: 'Fio PDO Facial', profissional: 'Beatriz Santos', quantidade: 2 }] },
-  { id: 6, lote: 'LOT-2024-BTX-001', produto: 'Toxina Botulínica Allergan 100U', categoria: 'Toxina Botulínica', fabricante: 'Allergan', fornecedor: 'Biolab', dataEntrada: '10/01/2025', dataFabricacao: '01/06/2024', dataValidade: '2025-06-15', quantidadeEntrada: 10, quantidadeAtual: 8, unidade: 'fr', registroAnvisa: '1.0309.0198.001-9', status: 'ativo', usos: [{ data: '18/02/2025', paciente: 'Ana Beatriz Costa', procedimento: 'Botox Facial', profissional: 'Maria Oliveira', quantidade: 1 }, { data: '15/02/2025', paciente: 'Carla Mendonça', procedimento: 'Botox Testa', profissional: 'Maria Oliveira', quantidade: 1 }] },
-  { id: 7, lote: 'LOT-2024-BTX-002', produto: 'Toxina Botulínica Medytoxin 200U', categoria: 'Toxina Botulínica', fabricante: 'Hugel', fornecedor: 'MedEsthetics', dataEntrada: '20/01/2025', dataFabricacao: '01/09/2024', dataValidade: '2025-04-20', quantidadeEntrada: 5, quantidadeAtual: 2, unidade: 'fr', registroAnvisa: '1.0309.0230.001-1', status: 'critico', usos: [{ data: '10/02/2025', paciente: 'Fernanda Lima', procedimento: 'Botox Facial', profissional: 'Clara Andrade', quantidade: 2 }, { data: '05/02/2025', paciente: 'Marina Souza', procedimento: 'Toxina Bruxismo', profissional: 'Clara Andrade', quantidade: 1 }] },
-  { id: 8, lote: 'LOT-2024-PRE-001', produto: 'Ácido Hialurônico Juvederm 1ml', categoria: 'Preenchimento', fabricante: 'Allergan', fornecedor: 'Allergan Brasil', dataEntrada: '05/12/2024', dataFabricacao: '01/07/2024', dataValidade: '2025-08-10', quantidadeEntrada: 8, quantidadeAtual: 3, unidade: 'ser', registroAnvisa: '1.0309.0198.003-5', status: 'ativo', usos: [{ data: '18/02/2025', paciente: 'Carla Mendonça', procedimento: 'Preenchimento Labial', profissional: 'Maria Oliveira', quantidade: 1 }, { data: '12/02/2025', paciente: 'Juliana Rocha', procedimento: 'Preenchimento Malar', profissional: 'Maria Oliveira', quantidade: 2 }] },
-  { id: 9, lote: 'LOT-2024-BIO-001', produto: 'Sculptra 150mg', categoria: 'Bioestimulador', fabricante: 'Galderma', fornecedor: 'Galderma Brasil', dataEntrada: '15/11/2024', dataFabricacao: '01/05/2024', dataValidade: '2025-07-22', quantidadeEntrada: 4, quantidadeAtual: 0, unidade: 'fr', registroAnvisa: '1.0309.0312.001-7', status: 'esgotado', usos: [{ data: '20/01/2025', paciente: 'Roberta Gomes', procedimento: 'Bioestimulador Facial', profissional: 'Clara Andrade', quantidade: 2 }, { data: '05/01/2025', paciente: 'Sandra Oliveira', procedimento: 'Bioestimulador', profissional: 'Clara Andrade', quantidade: 2 }] },
-  { id: 10, lote: 'LOT-2024-FIO-001', produto: 'Fio PDO Tensor Espiral 19G', categoria: 'Fio de PDO', fabricante: 'Aesthetic', fornecedor: 'Aesthetic Brasil', dataEntrada: '01/12/2024', dataFabricacao: '01/06/2024', dataValidade: '2026-01-10', quantidadeEntrada: 10, quantidadeAtual: 4, unidade: 'cx', registroAnvisa: '1.0309.0400.001-2', status: 'ativo', usos: [{ data: '14/02/2025', paciente: 'Marina Souza', procedimento: 'Fio PDO Facial', profissional: 'Beatriz Santos', quantidade: 2 }] },
-  { id: 11, lote: 'LOT-2024-BTX-001', produto: 'Toxina Botulínica Allergan 100U', categoria: 'Toxina Botulínica', fabricante: 'Allergan', fornecedor: 'Biolab', dataEntrada: '10/01/2025', dataFabricacao: '01/06/2024', dataValidade: '2025-06-15', quantidadeEntrada: 10, quantidadeAtual: 8, unidade: 'fr', registroAnvisa: '1.0309.0198.001-9', status: 'ativo', usos: [{ data: '18/02/2025', paciente: 'Ana Beatriz Costa', procedimento: 'Botox Facial', profissional: 'Maria Oliveira', quantidade: 1 }, { data: '15/02/2025', paciente: 'Carla Mendonça', procedimento: 'Botox Testa', profissional: 'Maria Oliveira', quantidade: 1 }] },
-];
-
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   ativo:      { label: 'Ativo',      color: '#8a7560', bg: '#f0ebe4' },
   critico:    { label: 'Crítico',    color: '#c0392b', bg: '#fdecea' },
@@ -100,10 +86,61 @@ function formatDate(d: string) { const [y, m, day] = d.split('-'); return `${day
 function isExpiringSoon(d: string) { const diff = (new Date(d).getTime() - Date.now()) / 86400000; return diff <= 30 && diff > 0; }
 function isExpired(d: string) { return new Date(d).getTime() < Date.now(); }
 
-type Lote = typeof mockLotes[0];
+interface LoteUso {
+  data: string;
+  paciente: string;
+  procedimento: string;
+  profissional: string;
+  quantidade: number;
+}
+
+interface Lote {
+  id: number;
+  lote: string;
+  produto: string;
+  categoria: string;
+  fabricante: string;
+  fornecedor: string;
+  dataEntrada: string;
+  dataFabricacao: string;
+  dataValidade: string;
+  quantidadeEntrada: number;
+  quantidadeAtual: number;
+  unidade: string;
+  registroAnvisa: string;
+  status: string;
+  usos: LoteUso[];
+}
 
 const ITEMS_PER_PAGE   = 10;
 const TABLE_MIN_HEIGHT = 540;
+
+function mapApiToLote(l: LoteAPI): Lote {
+  const qty    = l.quantidadeAtual  ?? 0;
+  const maxQty = l.quantidadeTotal  ?? 1;
+  const ratio  = qty / Math.max(maxQty, 1);
+  const status = l.dataValidade && isExpired(l.dataValidade)
+    ? 'vencido'
+    : qty === 0 ? 'esgotado'
+    : ratio <= 0.2 ? 'critico' : 'ativo';
+  return {
+    id:                l.id,
+    lote:              l.numeroLote   || `L${l.id}`,
+    produto:           l.produto?.nome || '—',
+    categoria:         l.produto?.categoria || '—',
+    fabricante:        '—',
+    fornecedor:        l.fornecedor   || '—',
+    dataEntrada:       l.criadoEm ? new Date(l.criadoEm).toLocaleDateString('pt-BR') : '—',
+    dataFabricacao:    '—',
+    dataValidade:      l.dataValidade || '2099-12-31',
+    quantidadeEntrada: maxQty,
+    quantidadeAtual:   qty,
+    unidade:           l.produto?.unidade || 'unid',
+    registroAnvisa:    '—',
+    status,
+    usos: [],
+  };
+}
 
 function isFormDirty(form: LoteForm): boolean {
   return (
@@ -128,41 +165,18 @@ export default function Lotes() {
   const [showCancelModal,  setShowCancelModal]  = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [lotes,            setLotes]            = useState<Lote[]>([]);
 
   const { errors, validate, clearError, clearAll } = useSequentialValidation<LoteField>(VALIDATION_FIELDS);
 
-  const [lotes, setLotes] = useState<Lote[]>(mockLotes as Lote[]);
+  function fetchLotes() {
+    listarLotes().then((data: LoteAPI[]) => {
+      setLotes(data.map(mapApiToLote));
+    }).catch(() => {});
+  }
 
   useEffect(() => {
-    listarLotes().then((data: LoteAPI[]) => {
-      const mapped: Lote[] = data.map(l => {
-        const qty    = l.quantidadeAtual  ?? 0;
-        const maxQty = l.quantidadeTotal  ?? 1;
-        const ratio  = qty / Math.max(maxQty, 1);
-        const status = l.dataValidade && isExpired(l.dataValidade)
-          ? 'vencido'
-          : qty === 0 ? 'esgotado'
-          : ratio <= 0.2 ? 'critico' : 'ativo';
-        return {
-          id:                l.id,
-          lote:              l.numeroLote   || `L${l.id}`,
-          produto:           l.produto?.nome || '—',
-          categoria:         l.produto?.categoria || '—',
-          fabricante:        '—',
-          fornecedor:        l.fornecedor   || '—',
-          dataEntrada:       l.criadoEm ? new Date(l.criadoEm).toLocaleDateString('pt-BR') : '—',
-          dataFabricacao:    '—',
-          dataValidade:      l.dataValidade || '2099-12-31',
-          quantidadeEntrada: maxQty,
-          quantidadeAtual:   qty,
-          unidade:           l.produto?.unidade || 'unid',
-          registroAnvisa:    '—',
-          status,
-          usos: [],
-        } as Lote;
-      });
-      if (mapped.length > 0) setLotes(mapped);
-    }).catch(() => {});
+    fetchLotes();
   }, []);
 
   const filtered = lotes.filter(l => {
@@ -245,14 +259,7 @@ export default function Lotes() {
           dataValidade:     form.dataValidade,
           fornecedor:       form.fornecedor,
         });
-        const updated = await listarLotes();
-        setLotes(updated.map((l: LoteAPI) => {
-          const qty = l.quantidadeAtual ?? 0;
-          const maxQty = l.quantidadeTotal ?? 1;
-          const ratio = qty / Math.max(maxQty, 1);
-          const status = l.dataValidade && isExpired(l.dataValidade) ? 'vencido' : qty === 0 ? 'esgotado' : ratio <= 0.2 ? 'critico' : 'ativo';
-          return { id: l.id, lote: l.numeroLote || `L${l.id}`, produto: l.produto?.nome || '—', categoria: l.produto?.categoria || '—', fabricante: '—', fornecedor: l.fornecedor || '—', dataEntrada: l.criadoEm ? new Date(l.criadoEm).toLocaleDateString('pt-BR') : '—', dataFabricacao: '—', dataValidade: l.dataValidade || '2099-12-31', quantidadeEntrada: maxQty, quantidadeAtual: qty, unidade: l.produto?.unidade || 'unid', registroAnvisa: '—', status, usos: [] } as Lote;
-        }));
+        fetchLotes();
       }
     } catch {}
     setIsModalOpen(false);
@@ -443,41 +450,47 @@ export default function Lotes() {
             </DetailSection>
             <DetailSection>
               <DetailSectionTitle>Rastreabilidade de Uso</DetailSectionTitle>
-              <TimelineList>
-                {selected.usos.map((uso, i) => (
-                  <TimelineItem key={i}>
-                    <TimelineDot />
-                    <TimelineContent>
-                      <TimelineDate>{uso.data}</TimelineDate>
-                      <TimelineText>
-                        <strong>{uso.paciente}</strong> — {uso.procedimento}
-                        <span style={{ marginLeft: 8, color: '#BBA188', fontSize: '0.8rem' }}>Prof: {uso.profissional}</span>
-                        <span style={{ marginLeft: 8, color: '#999', fontSize: '0.8rem' }}>{uso.quantidade} {selected.unidade} utilizado(s)</span>
-                      </TimelineText>
-                    </TimelineContent>
-                  </TimelineItem>
-                ))}
-              </TimelineList>
-              <div style={{ marginTop: 20, overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.86rem' }}>
-                  <thead>
-                    <tr style={{ background: 'linear-gradient(135deg, #BBA188, #a8906f)' }}>
-                      <UsageTh>Data</UsageTh><UsageTh>Paciente</UsageTh><UsageTh>Procedimento</UsageTh><UsageTh>Profissional</UsageTh><UsageTh>Qtd Usada</UsageTh>
-                    </tr>
-                  </thead>
-                  <tbody>
+              {selected.usos.length === 0 ? (
+                <p style={{ color: '#bbb', fontSize: '0.88rem', padding: '16px 0' }}>Nenhum uso registrado para este lote.</p>
+              ) : (
+                <>
+                  <TimelineList>
                     {selected.usos.map((uso, i) => (
-                      <UsageTr key={i}>
-                        <UsageTd>{uso.data}</UsageTd>
-                        <UsageTd style={{ fontWeight: 600 }}>{uso.paciente}</UsageTd>
-                        <UsageTd>{uso.procedimento}</UsageTd>
-                        <UsageTd>{uso.profissional}</UsageTd>
-                        <UsageTd>{uso.quantidade} {selected.unidade}</UsageTd>
-                      </UsageTr>
+                      <TimelineItem key={i}>
+                        <TimelineDot />
+                        <TimelineContent>
+                          <TimelineDate>{uso.data}</TimelineDate>
+                          <TimelineText>
+                            <strong>{uso.paciente}</strong> — {uso.procedimento}
+                            <span style={{ marginLeft: 8, color: '#BBA188', fontSize: '0.8rem' }}>Prof: {uso.profissional}</span>
+                            <span style={{ marginLeft: 8, color: '#999', fontSize: '0.8rem' }}>{uso.quantidade} {selected.unidade} utilizado(s)</span>
+                          </TimelineText>
+                        </TimelineContent>
+                      </TimelineItem>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </TimelineList>
+                  <div style={{ marginTop: 20, overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.86rem' }}>
+                      <thead>
+                        <tr style={{ background: 'linear-gradient(135deg, #BBA188, #a8906f)' }}>
+                          <UsageTh>Data</UsageTh><UsageTh>Paciente</UsageTh><UsageTh>Procedimento</UsageTh><UsageTh>Profissional</UsageTh><UsageTh>Qtd Usada</UsageTh>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selected.usos.map((uso, i) => (
+                          <UsageTr key={i}>
+                            <UsageTd>{uso.data}</UsageTd>
+                            <UsageTd style={{ fontWeight: 600 }}>{uso.paciente}</UsageTd>
+                            <UsageTd>{uso.procedimento}</UsageTd>
+                            <UsageTd>{uso.profissional}</UsageTd>
+                            <UsageTd>{uso.quantidade} {selected.unidade}</UsageTd>
+                          </UsageTr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </DetailSection>
           </>
         )}

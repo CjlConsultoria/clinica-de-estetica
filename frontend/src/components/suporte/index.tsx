@@ -78,25 +78,33 @@ const LOGS_POR_EMPRESA: Record<string, { acao: string; tempo: string; tipo: stri
   ],
 };
 
-const statusConfig = {
+const statusConfig: Record<string, { bg: string; color: string; label: string }> = {
   ativo:    { bg: 'rgba(138,117,96,0.12)',  color: '#8a7560',  label: 'Ativo'    },
   trial:    { bg: 'rgba(59,130,246,0.1)',   color: '#3b82f6',  label: 'Trial'    },
   suspenso: { bg: 'rgba(231,76,60,0.12)',   color: '#e74c3c',  label: 'Suspenso' },
 };
 
-const planConfig = {
-  Starter:    { bg: 'rgba(59,130,246,0.1)',   color: '#3b82f6' },
-  Pro:        { bg: 'rgba(187,161,136,0.15)', color: '#8a7560' },
-  Enterprise: { bg: 'rgba(27,27,27,0.08)',    color: '#1b1b1b' },
+const planConfig: Record<string, { bg: string; color: string }> = {
+  Starter:      { bg: 'rgba(59,130,246,0.1)',   color: '#3b82f6' },
+  Pro:          { bg: 'rgba(187,161,136,0.15)', color: '#8a7560' },
+  Profissional: { bg: 'rgba(187,161,136,0.15)', color: '#8a7560' },
+  Enterprise:   { bg: 'rgba(27,27,27,0.08)',    color: '#1b1b1b' },
 };
 
-const ticketStatusConfig = {
+// Fallbacks para planos/status desconhecidos vindos da API
+const PLAN_FALLBACK   = { bg: 'rgba(107,114,128,0.1)', color: '#6b7280' };
+const STATUS_FALLBACK = { bg: 'rgba(107,114,128,0.1)', color: '#6b7280', label: '—' };
+
+const getPlanCfg   = (plano: string)  => planConfig[plano]   ?? PLAN_FALLBACK;
+const getStatusCfg = (status: string) => statusConfig[status] ?? STATUS_FALLBACK;
+
+const ticketStatusConfig: Record<string, { bg: string; color: string; label: string }> = {
   aberto:       { bg: 'rgba(231,76,60,0.1)',    color: '#e74c3c', label: 'Aberto'        },
   em_andamento: { bg: 'rgba(214,138,0,0.1)',    color: '#d68a00', label: 'Em andamento'  },
   resolvido:    { bg: 'rgba(138,117,96,0.12)',  color: '#8a7560', label: 'Resolvido'     },
 };
 
-const prioridadeConfig = {
+const prioridadeConfig: Record<string, { color: string; label: string }> = {
   alta:  { color: '#e74c3c', label: 'Alta'  },
   media: { color: '#d68a00', label: 'Média' },
   baixa: { color: '#8a7560', label: 'Baixa' },
@@ -107,18 +115,18 @@ const fmt = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigi
 export default function Suporte() {
   const allowed = useRoleRedirect({ superAdminOnly: true });
 
-  const [search, setSearch]           = useState('');
-  const [filterStatus, setFilterStatus] = useState('Todos');
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [selected, setSelected]       = useState<Empresa | null>(null);
+  const [search,        setSearch]        = useState('');
+  const [filterStatus,  setFilterStatus]  = useState('Todos');
+  const [openDropdown,  setOpenDropdown]  = useState<string | null>(null);
+  const [selected,      setSelected]      = useState<Empresa | null>(null);
   const [impersonating, setImpersonating] = useState<Empresa | null>(null);
-  const [confirmImp, setConfirmImp]   = useState<Empresa | null>(null);
-  const [confirmExit, setConfirmExit] = useState(false);
-  const [sucessModal, setSucessModal] = useState<{ title: string; message: string } | null>(null);
-  const [tab, setTab]                 = useState<'empresas' | 'tickets'>('empresas');
-  const [ticketTab, setTicketTab]     = useState<'aberto' | 'em_andamento' | 'resolvido' | 'todos'>('todos');
-  const [allTickets, setAllTickets]   = useState<Ticket[]>([]);
-  const [empresas,   setEmpresas]     = useState<Empresa[]>([]);
+  const [confirmImp,    setConfirmImp]    = useState<Empresa | null>(null);
+  const [confirmExit,   setConfirmExit]   = useState(false);
+  const [sucessModal,   setSucessModal]   = useState<{ title: string; message: string } | null>(null);
+  const [tab,           setTab]           = useState<'empresas' | 'tickets'>('empresas');
+  const [ticketTab,     setTicketTab]     = useState<'aberto' | 'em_andamento' | 'resolvido' | 'todos'>('todos');
+  const [allTickets,    setAllTickets]    = useState<Ticket[]>([]);
+  const [empresas,      setEmpresas]      = useState<Empresa[]>([]);
 
   useEffect(() => {
     listarTickets().then((data: SuporteTicketAPI[]) => {
@@ -283,80 +291,88 @@ export default function Suporte() {
                   <Tbody>
                     {filtered.length === 0 ? (
                       <tr><Td colSpan={5} style={{ textAlign: 'center', color: '#bbb', padding: 32 }}>Nenhuma empresa encontrada</Td></tr>
-                    ) : filtered.map(e => (
-                      <Tr key={e.id} onClick={() => setSelected(e)} style={{ cursor: 'pointer', background: selected?.id === e.id ? 'rgba(187,161,136,0.05)' : undefined }}>
-                        <Td>
-                          <div style={{ fontWeight: 600, color: '#1a1a1a', fontSize: '0.85rem' }}>{e.nome}</div>
-                          <div style={{ fontSize: '0.72rem', color: '#aaa' }}>{e.adminEmail}</div>
-                        </Td>
-                        <Td>
-                          <Badge $bg={planConfig[e.plano as keyof typeof planConfig].bg} $color={planConfig[e.plano as keyof typeof planConfig].color}>{e.plano}</Badge>
-                        </Td>
-                        <Td>
-                          <Badge $bg={statusConfig[e.status].bg} $color={statusConfig[e.status].color}>{statusConfig[e.status].label}</Badge>
-                        </Td>
-                        <Td style={{ fontSize: '0.78rem', color: '#888' }}>{e.ultimoAcesso}</Td>
-                        <Td>
-                          <ActionGroup>
-                            <IconBtn title="Ver detalhes" onClick={(ev: any) => { ev.stopPropagation(); setSelected(e); }}>
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                            </IconBtn>
-                            <IconBtn title="Entrar como suporte" onClick={(ev: any) => { ev.stopPropagation(); handleImpersonate(e); }} style={{ color: '#3b82f6', borderColor: 'rgba(59,130,246,0.3)' }}>
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-                            </IconBtn>
-                          </ActionGroup>
-                        </Td>
-                      </Tr>
-                    ))}
+                    ) : filtered.map(e => {
+                      const pCfg = getPlanCfg(e.plano);
+                      const sCfg = getStatusCfg(e.status);
+                      return (
+                        <Tr key={e.id} onClick={() => setSelected(e)} style={{ cursor: 'pointer', background: selected?.id === e.id ? 'rgba(187,161,136,0.05)' : undefined }}>
+                          <Td>
+                            <div style={{ fontWeight: 600, color: '#1a1a1a', fontSize: '0.85rem' }}>{e.nome}</div>
+                            <div style={{ fontSize: '0.72rem', color: '#aaa' }}>{e.adminEmail}</div>
+                          </Td>
+                          <Td>
+                            <Badge $bg={pCfg.bg} $color={pCfg.color}>{e.plano}</Badge>
+                          </Td>
+                          <Td>
+                            <Badge $bg={sCfg.bg} $color={sCfg.color}>{sCfg.label}</Badge>
+                          </Td>
+                          <Td style={{ fontSize: '0.78rem', color: '#888' }}>{e.ultimoAcesso}</Td>
+                          <Td>
+                            <ActionGroup>
+                              <IconBtn title="Ver detalhes" onClick={(ev: any) => { ev.stopPropagation(); setSelected(e); }}>
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                              </IconBtn>
+                              <IconBtn title="Entrar como suporte" onClick={(ev: any) => { ev.stopPropagation(); handleImpersonate(e); }} style={{ color: '#3b82f6', borderColor: 'rgba(59,130,246,0.3)' }}>
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                              </IconBtn>
+                            </ActionGroup>
+                          </Td>
+                        </Tr>
+                      );
+                    })}
                   </Tbody>
                 </Table>
               </TableWrapper>
             </div>
 
-            {selected && (
-              <DetailPanel>
-                <DetailHeader>
-                  <div>
-                    <DetailTitle>{selected.nome}</DetailTitle>
-                    <DetailSub>{selected.adminEmail}</DetailSub>
+            {selected && (() => {
+              const pCfg = getPlanCfg(selected.plano);
+              const sCfg = getStatusCfg(selected.status);
+              return (
+                <DetailPanel>
+                  <DetailHeader>
+                    <div>
+                      <DetailTitle>{selected.nome}</DetailTitle>
+                      <DetailSub>{selected.adminEmail}</DetailSub>
+                    </div>
+                    <DetailClose onClick={() => setSelected(null)}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    </DetailClose>
+                  </DetailHeader>
+
+                  <DetailSection>
+                    <DetailSectionTitle>Informações</DetailSectionTitle>
+                    <InfoRow><InfoLabel>Plano</InfoLabel><InfoValue><Badge $bg={pCfg.bg} $color={pCfg.color}>{selected.plano}</Badge></InfoValue></InfoRow>
+                    <InfoRow><InfoLabel>Status</InfoLabel><InfoValue><Badge $bg={sCfg.bg} $color={sCfg.color}>{sCfg.label}</Badge></InfoValue></InfoRow>
+                    <InfoRow><InfoLabel>Administrador</InfoLabel><InfoValue>{selected.adminNome}</InfoValue></InfoRow>
+                    <InfoRow><InfoLabel>Usuários</InfoLabel><InfoValue>{selected.usuarios}</InfoValue></InfoRow>
+                    <InfoRow><InfoLabel>MRR</InfoLabel><InfoValue style={{ color: '#BBA188', fontWeight: 700 }}>{fmt(selected.mrr)}</InfoValue></InfoRow>
+                    <InfoRow><InfoLabel>Cadastro</InfoLabel><InfoValue>{selected.dataCadastro}</InfoValue></InfoRow>
+                    <InfoRow><InfoLabel>Último acesso</InfoLabel><InfoValue>{selected.ultimoAcesso}</InfoValue></InfoRow>
+                  </DetailSection>
+
+                  <DetailSection>
+                    <DetailSectionTitle>Log de Atividades</DetailSectionTitle>
+                    <LogList>
+                      {(LOGS_POR_EMPRESA[selected.id] ?? []).map((log, i) => (
+                        <LogItem key={i}>
+                          <LogDot $tipo={log.tipo} />
+                          <LogText>{log.acao}</LogText>
+                          <LogTime>{log.tempo}</LogTime>
+                        </LogItem>
+                      ))}
+                    </LogList>
+                  </DetailSection>
+
+                  <div style={{ padding: '0 20px 20px' }}>
+                    <Btn $variant="primary" $full onClick={() => handleImpersonate(selected)}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                      Entrar como Suporte
+                    </Btn>
                   </div>
-                  <DetailClose onClick={() => setSelected(null)}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                  </DetailClose>
-                </DetailHeader>
-
-                <DetailSection>
-                  <DetailSectionTitle>Informações</DetailSectionTitle>
-                  <InfoRow><InfoLabel>Plano</InfoLabel><InfoValue><Badge $bg={planConfig[selected.plano as keyof typeof planConfig].bg} $color={planConfig[selected.plano as keyof typeof planConfig].color}>{selected.plano}</Badge></InfoValue></InfoRow>
-                  <InfoRow><InfoLabel>Status</InfoLabel><InfoValue><Badge $bg={statusConfig[selected.status].bg} $color={statusConfig[selected.status].color}>{statusConfig[selected.status].label}</Badge></InfoValue></InfoRow>
-                  <InfoRow><InfoLabel>Administrador</InfoLabel><InfoValue>{selected.adminNome}</InfoValue></InfoRow>
-                  <InfoRow><InfoLabel>Usuários</InfoLabel><InfoValue>{selected.usuarios}</InfoValue></InfoRow>
-                  <InfoRow><InfoLabel>MRR</InfoLabel><InfoValue style={{ color: '#BBA188', fontWeight: 700 }}>{fmt(selected.mrr)}</InfoValue></InfoRow>
-                  <InfoRow><InfoLabel>Cadastro</InfoLabel><InfoValue>{selected.dataCadastro}</InfoValue></InfoRow>
-                  <InfoRow><InfoLabel>Último acesso</InfoLabel><InfoValue>{selected.ultimoAcesso}</InfoValue></InfoRow>
-                </DetailSection>
-
-                <DetailSection>
-                  <DetailSectionTitle>Log de Atividades</DetailSectionTitle>
-                  <LogList>
-                    {(LOGS_POR_EMPRESA[selected.id] ?? []).map((log, i) => (
-                      <LogItem key={i}>
-                        <LogDot $tipo={log.tipo} />
-                        <LogText>{log.acao}</LogText>
-                        <LogTime>{log.tempo}</LogTime>
-                      </LogItem>
-                    ))}
-                  </LogList>
-                </DetailSection>
-
-                <div style={{ padding: '0 20px 20px' }}>
-                  <Btn $variant="primary" $full onClick={() => handleImpersonate(selected)}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-                    Entrar como Suporte
-                  </Btn>
-                </div>
-              </DetailPanel>
-            )}
+                </DetailPanel>
+              );
+            })()}
           </div>
         </>
       )}
@@ -380,11 +396,11 @@ export default function Suporte() {
                   <TicketHeader>
                     <TicketTitle>{t.assunto}</TicketTitle>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      <TicketBadge $color={prioridadeConfig[t.prioridade].color}>
-                        {prioridadeConfig[t.prioridade].label}
+                      <TicketBadge $color={prioridadeConfig[t.prioridade]?.color ?? '#6b7280'}>
+                        {prioridadeConfig[t.prioridade]?.label ?? t.prioridade}
                       </TicketBadge>
-                      <Badge $bg={ticketStatusConfig[t.status].bg} $color={ticketStatusConfig[t.status].color}>
-                        {ticketStatusConfig[t.status].label}
+                      <Badge $bg={ticketStatusConfig[t.status]?.bg ?? 'rgba(107,114,128,0.1)'} $color={ticketStatusConfig[t.status]?.color ?? '#6b7280'}>
+                        {ticketStatusConfig[t.status]?.label ?? t.status}
                       </Badge>
                     </div>
                   </TicketHeader>
