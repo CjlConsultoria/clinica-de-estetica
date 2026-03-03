@@ -59,6 +59,9 @@ public class ProdutoService {
                 .unidade(request.getUnidade())
                 .registroAnvisa(request.getRegistroAnvisa())
                 .descricao(request.getDescricao())
+                .estoqueMinimo(request.getEstoqueMinimo())
+                .estoqueMaximo(request.getEstoqueMaximo())
+                .precoUnitario(request.getPrecoUnitario())
                 .empresaId(getEmpresaId())
                 .build();
         return toResponse(produtoRepository.save(produto));
@@ -73,6 +76,9 @@ public class ProdutoService {
         produto.setUnidade(request.getUnidade());
         produto.setRegistroAnvisa(request.getRegistroAnvisa());
         produto.setDescricao(request.getDescricao());
+        produto.setEstoqueMinimo(request.getEstoqueMinimo());
+        produto.setEstoqueMaximo(request.getEstoqueMaximo());
+        produto.setPrecoUnitario(request.getPrecoUnitario());
         return toResponse(produtoRepository.save(produto));
     }
 

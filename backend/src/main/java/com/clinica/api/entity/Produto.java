@@ -3,6 +3,7 @@ package com.clinica.api.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,15 @@ public class Produto {
 
     @Column(columnDefinition = "TEXT")
     private String descricao;
+
+    @Column(name = "estoque_minimo")
+    private Integer estoqueMinimo;
+
+    @Column(name = "estoque_maximo")
+    private Integer estoqueMaximo;
+
+    @Column(name = "preco_unitario", precision = 10, scale = 2)
+    private BigDecimal precoUnitario;
 
     @Column(name = "empresa_id")
     private Long empresaId;
