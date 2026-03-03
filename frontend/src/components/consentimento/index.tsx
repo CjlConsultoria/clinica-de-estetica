@@ -46,13 +46,13 @@ const FORM_INITIAL: TermoForm = {
 };
 
 const VALIDATION_FIELDS = [
-  { key: 'paciente'         as TermoField, validate: (v: string) => !v.trim() ? 'Nome do paciente é obrigatório'       : null },
-  { key: 'cpf'              as TermoField, validate: (v: string) => !v.trim() ? 'CPF é obrigatório'                     : null },
-  { key: 'nascimento'       as TermoField, validate: (v: string) => !v        ? 'Data de nascimento é obrigatória'      : null },
-  { key: 'procedimento'     as TermoField, validate: (v: string) => !v        ? 'Selecione o procedimento'              : null },
-  { key: 'dataProcedimento' as TermoField, validate: (v: string) => !v        ? 'Data do procedimento é obrigatória'   : null },
-  { key: 'profissional'     as TermoField, validate: (v: string) => !v.trim() ? 'Informe o profissional responsável'   : null },
-  { key: 'email'            as TermoField, validate: (v: string) => !v.trim() ? 'E-mail do paciente é obrigatório'     : null },
+  { key: 'paciente'         as TermoField, validate: (v: string) => !v.trim() ? 'Nome do paciente é obrigatório'      : null },
+  { key: 'cpf'              as TermoField, validate: (v: string) => !v.trim() ? 'CPF é obrigatório'                    : null },
+  { key: 'nascimento'       as TermoField, validate: (v: string) => !v        ? 'Data de nascimento é obrigatória'     : null },
+  { key: 'procedimento'     as TermoField, validate: (v: string) => !v        ? 'Selecione o procedimento'             : null },
+  { key: 'dataProcedimento' as TermoField, validate: (v: string) => !v        ? 'Data do procedimento é obrigatória'  : null },
+  { key: 'profissional'     as TermoField, validate: (v: string) => !v.trim() ? 'Informe o profissional responsável'  : null },
+  { key: 'email'            as TermoField, validate: (v: string) => !v.trim() ? 'E-mail do paciente é obrigatório'    : null },
 ];
 
 const procedureOptions = [
@@ -67,31 +67,26 @@ const procedureOptions = [
 
 const filterStatus = ['Todos', 'Assinado', 'Pendente', 'Expirado'];
 
-const mockTermos = [
-  { id: 1,  paciente: 'Ana Beatriz Costa', procedimento: 'Botox Facial',        dataCriacao: '18/02/2025', dataValidade: '18/02/2026', status: 'assinado', assinadoEm: '18/02/2025 10:32', ip: '177.84.12.45', profissional: 'Maria Oliveira', versao: 'v2.1' },
-  { id: 2,  paciente: 'Carla Mendonça',    procedimento: 'Preenchimento Labial', dataCriacao: '15/02/2025', dataValidade: '15/02/2026', status: 'assinado', assinadoEm: '15/02/2025 14:10', ip: '189.90.34.21', profissional: 'Maria Oliveira', versao: 'v2.1' },
-  { id: 3,  paciente: 'Fernanda Lima',     procedimento: 'Bioestimulador',       dataCriacao: '10/02/2025', dataValidade: '10/02/2026', status: 'pendente', assinadoEm: null,               ip: null,           profissional: 'Clara Andrade',  versao: 'v2.1' },
-  { id: 4,  paciente: 'Marina Souza',      procedimento: 'Fio de PDO',           dataCriacao: '05/01/2025', dataValidade: '05/01/2026', status: 'assinado', assinadoEm: '05/01/2025 09:55', ip: '201.45.67.88', profissional: 'Beatriz Santos', versao: 'v2.0' },
-  { id: 5,  paciente: 'Juliana Rocha',     procedimento: 'Toxina Botulínica',    dataCriacao: '10/01/2025', dataValidade: '10/01/2026', status: 'pendente', assinadoEm: null,               ip: null,           profissional: 'Maria Oliveira', versao: 'v2.1' },
-  { id: 6,  paciente: 'Patrícia Alves',    procedimento: 'Microagulhamento',     dataCriacao: '20/12/2024', dataValidade: '20/12/2025', status: 'assinado', assinadoEm: '20/12/2024 16:20', ip: '177.84.98.10', profissional: 'Beatriz Santos', versao: 'v2.0' },
-  { id: 7,  paciente: 'Ana Beatriz Costa', procedimento: 'Botox Facial',         dataCriacao: '18/02/2025', dataValidade: '18/02/2026', status: 'assinado', assinadoEm: '18/02/2025 10:32', ip: '177.84.12.45', profissional: 'Maria Oliveira', versao: 'v2.1' },
-  { id: 8,  paciente: 'Carla Mendonça',    procedimento: 'Preenchimento Labial', dataCriacao: '15/02/2025', dataValidade: '15/02/2026', status: 'assinado', assinadoEm: '15/02/2025 14:10', ip: '189.90.34.21', profissional: 'Maria Oliveira', versao: 'v2.1' },
-  { id: 9,  paciente: 'Fernanda Lima',     procedimento: 'Bioestimulador',       dataCriacao: '10/02/2025', dataValidade: '10/02/2026', status: 'pendente', assinadoEm: null,               ip: null,           profissional: 'Clara Andrade',  versao: 'v2.1' },
-  { id: 10, paciente: 'Marina Souza',      procedimento: 'Fio de PDO',           dataCriacao: '05/01/2025', dataValidade: '05/01/2026', status: 'assinado', assinadoEm: '05/01/2025 09:55', ip: '201.45.67.88', profissional: 'Beatriz Santos', versao: 'v2.0' },
-  { id: 11, paciente: 'Juliana Rocha',     procedimento: 'Toxina Botulínica',    dataCriacao: '10/01/2025', dataValidade: '10/01/2026', status: 'pendente', assinadoEm: null,               ip: null,           profissional: 'Maria Oliveira', versao: 'v2.1' },
-  { id: 12, paciente: 'Patrícia Alves',    procedimento: 'Microagulhamento',     dataCriacao: '20/12/2024', dataValidade: '20/12/2025', status: 'assinado', assinadoEm: '20/12/2024 16:20', ip: '177.84.98.10', profissional: 'Beatriz Santos', versao: 'v2.0' },
-];
-
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   assinado: { label: 'Assinado', color: '#8a7560', bg: '#f0ebe4' },
   pendente: { label: 'Pendente', color: '#856404', bg: '#fff3cd' },
   expirado: { label: 'Expirado', color: '#7f8c8d', bg: '#f0f0f0' },
 };
 
-type Termo = typeof mockTermos[0];
+interface Termo {
+  id: number;
+  paciente: string;
+  procedimento: string;
+  dataCriacao: string;
+  dataValidade: string;
+  status: string;
+  assinadoEm: string | null;
+  ip: string | null;
+  profissional: string;
+  versao: string;
+}
 
-const ITEMS_PER_PAGE   = 10;
-const TABLE_MIN_HEIGHT = 540;
+const ITEMS_PER_PAGE = 10;
 
 const DEFAULT_CONSENTIMENTO_TEXT =
 `1. Descrição do Procedimento e Consentimento
@@ -138,7 +133,7 @@ export default function Consentimento() {
   const [showCancelModal,  setShowCancelModal]  = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [consentimentoText,    setConsentimentoText]    = useState(DEFAULT_CONSENTIMENTO_TEXT);
+  const [consentimentoText,    setConsentimentoText]    = useState('');
   const [backupConsentimento,  setBackupConsentimento]  = useState('');
   const [isEditingConsent,     setIsEditingConsent]     = useState(false);
   const [isSavingConsent,      setIsSavingConsent]      = useState(false);
@@ -150,9 +145,10 @@ export default function Consentimento() {
   const [consentSucessModalOpen,  setConsentSucessModalOpen]  = useState(false);
   const [consentErrorModalOpen,   setConsentErrorModalOpen]   = useState(false);
   const [consentErrorMessage,     setConsentErrorMessage]     = useState('');
-  const [termos, setTermos] = useState<Termo[]>(mockTermos);
-  const [currentTermoId,  setCurrentTermoId]  = useState<number | null>(null);
-  const [novoTermoError,  setNovoTermoError]  = useState<string | null>(null);
+  const [termos,         setTermos]         = useState<Termo[]>([]);
+  const [currentTermoId, setCurrentTermoId] = useState<number | null>(null);
+  const [novoTermoError, setNovoTermoError] = useState<string | null>(null);
+  const [loading,        setLoading]        = useState(true);
 
   const consentTextareaRef  = useRef<HTMLTextAreaElement>(null);
   const consentDisplayRef   = useRef<HTMLDivElement>(null);
@@ -201,18 +197,27 @@ export default function Consentimento() {
 
   useEffect(() => {
     const load = async () => {
+      setLoading(true);
       try {
         const [assinaturas, termosAPI] = await Promise.all([
           listarAssinaturas(),
           listarTermos(true),
         ]);
-        
+
         if (termosAPI.length > 0) {
           const latest = termosAPI[termosAPI.length - 1] as TermoAPI;
           if (latest.conteudo) setConsentimentoText(latest.conteudo);
           setCurrentTermoId(latest.id);
+          if (latest.atualizadoEm) {
+            const d = new Date(latest.atualizadoEm);
+            const pad = (n: number) => String(n).padStart(2, '0');
+            setConsentLastDate(pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear());
+            setConsentLastTime(pad(d.getHours()) + ':' + pad(d.getMinutes()));
+          }
+        } else {
+          setConsentimentoText(DEFAULT_CONSENTIMENTO_TEXT);
         }
-       
+
         if (assinaturas.length > 0) {
           const mapped = assinaturas.map((a: AssinaturaAPI) => ({
             id:           a.id,
@@ -223,17 +228,22 @@ export default function Consentimento() {
               ? new Date(new Date(a.dataAssinatura).setFullYear(new Date(a.dataAssinatura).getFullYear() + 1)).toLocaleDateString('pt-BR')
               : '—',
             status:       'assinado',
-            assinadoEm:   a.dataAssinatura ? new Date(a.dataAssinatura).toLocaleString('pt-BR') : null as string | null,
-            ip:           (a.ipOrigem || null) as string | null,
+            assinadoEm:   a.dataAssinatura ? new Date(a.dataAssinatura).toLocaleString('pt-BR') : null,
+            ip:           a.ipOrigem || null,
             profissional: '—',
             versao:       'v2.1',
           })) as Termo[];
           setTermos(mapped);
+        } else {
+          setTermos([]);
         }
-      } catch {}
+      } catch {
+        setTermos([]);
+      } finally {
+        setLoading(false);
+      }
     };
     load();
-
   }, []);
 
   useLayoutEffect(() => {
@@ -454,29 +464,43 @@ export default function Consentimento() {
                   </tr>
                 </Thead>
                 <Tbody>
-                  {paginatedData.map(termo => (
-                    <Tr key={termo.id}>
-                      <Td style={{ fontWeight: 600, color: '#1a1a1a' }}>{termo.paciente}</Td>
-                      <Td><Badge $bg="rgba(187,161,136,0.15)" $color="#BBA188">{termo.procedimento}</Badge></Td>
-                      <Td style={{ color: '#777' }}>{termo.dataCriacao}</Td>
-                      <Td style={{ color: '#555' }}>{termo.assinadoEm ?? <span style={{ color: '#ccc' }}>—</span>}</Td>
-                      <Td>{termo.profissional}</Td>
-                      <Td><code style={{ fontSize: '0.71rem', color: '#999', background: '#f5f5f5', padding: '2px 5px', borderRadius: 4 }}>{termo.versao}</code></Td>
-                      <Td><Badge $bg={statusConfig[termo.status]?.bg} $color={statusConfig[termo.status]?.color}>{statusConfig[termo.status]?.label}</Badge></Td>
-                      <Td>
-                        <ActionGroup>
-                          <IconBtn title="Ver termo" onClick={() => { setSelectedTermo(termo); setIsViewOpen(true); }}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                          </IconBtn>
-                          {canCreate && termo.status === 'pendente' && (
-                            <IconBtn title="Coletar assinatura" onClick={() => { setSelectedTermo(termo); setSigned(false); setIsSignOpen(true); }} style={{ borderColor: '#d4a84b', color: '#d4a84b' }}>
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                            </IconBtn>
-                          )}
-                        </ActionGroup>
+                  {loading ? (
+                    <Tr>
+                      <Td colSpan={8} style={{ textAlign: 'center', color: '#aaa', padding: '40px 0' }}>
+                        Carregando...
                       </Td>
                     </Tr>
-                  ))}
+                  ) : paginatedData.length === 0 ? (
+                    <Tr>
+                      <Td colSpan={8} style={{ textAlign: 'center', color: '#aaa', padding: '40px 0' }}>
+                        Nenhum termo encontrado.
+                      </Td>
+                    </Tr>
+                  ) : (
+                    paginatedData.map(termo => (
+                      <Tr key={termo.id}>
+                        <Td style={{ fontWeight: 600, color: '#1a1a1a' }}>{termo.paciente}</Td>
+                        <Td><Badge $bg="rgba(187,161,136,0.15)" $color="#BBA188">{termo.procedimento}</Badge></Td>
+                        <Td style={{ color: '#777' }}>{termo.dataCriacao}</Td>
+                        <Td style={{ color: '#555' }}>{termo.assinadoEm ?? <span style={{ color: '#ccc' }}>—</span>}</Td>
+                        <Td>{termo.profissional}</Td>
+                        <Td><code style={{ fontSize: '0.71rem', color: '#999', background: '#f5f5f5', padding: '2px 5px', borderRadius: 4 }}>{termo.versao}</code></Td>
+                        <Td><Badge $bg={statusConfig[termo.status]?.bg} $color={statusConfig[termo.status]?.color}>{statusConfig[termo.status]?.label}</Badge></Td>
+                        <Td>
+                          <ActionGroup>
+                            <IconBtn title="Ver termo" onClick={() => { setSelectedTermo(termo); setIsViewOpen(true); }}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </IconBtn>
+                            {canCreate && termo.status === 'pendente' && (
+                              <IconBtn title="Coletar assinatura" onClick={() => { setSelectedTermo(termo); setSigned(false); setIsSignOpen(true); }} style={{ borderColor: '#d4a84b', color: '#d4a84b' }}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                              </IconBtn>
+                            )}
+                          </ActionGroup>
+                        </Td>
+                      </Tr>
+                    ))
+                  )}
                 </Tbody>
               </Table>
             </TableWrapper>

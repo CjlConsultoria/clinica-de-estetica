@@ -40,15 +40,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={fontVars} style={{ margin: 0, padding: 0 }}>
         <StyledComponentsRegistry>
           <AuthProvider>
-            {process.env.NODE_ENV === 'development' && <PermissionDebugPanel />}
-            <LayoutWrapper>
-              <PaymentGuard>
-                {children}
-              </PaymentGuard>
-            </LayoutWrapper>
-
-            {/* Debug de permissões — aparece só em desenvolvimento */}
-            {process.env.NODE_ENV === 'development' && <PermissionDebugPanel />}
+            <NotificacoesProvider>
+              <ComunicadosProvider>
+                {process.env.NODE_ENV === 'development' && <PermissionDebugPanel />}
+                <LayoutWrapper>
+                  <PaymentGuard>
+                    {children}
+                  </PaymentGuard>
+                </LayoutWrapper>
+                {process.env.NODE_ENV === 'development' && <PermissionDebugPanel />}
+              </ComunicadosProvider>
+            </NotificacoesProvider>
           </AuthProvider>
         </StyledComponentsRegistry>
       </body>

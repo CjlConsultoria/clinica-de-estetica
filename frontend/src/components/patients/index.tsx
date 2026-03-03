@@ -61,10 +61,10 @@ const FORM_INITIAL: PacienteForm = {
 const STEP_LABELS = ['Dados Pessoais', 'Endereço', 'Convênio & Extras'];
 
 const sexoOptions = [
-  { value: 'feminino',     label: 'Feminino'     },
-  { value: 'masculino',    label: 'Masculino'     },
-  { value: 'nao_binario',  label: 'Não-binário'   },
-  { value: 'prefiro_nao',  label: 'Prefiro não dizer' },
+  { value: 'feminino',     label: 'Feminino'          },
+  { value: 'masculino',    label: 'Masculino'          },
+  { value: 'nao_binario',  label: 'Não-binário'        },
+  { value: 'prefiro_nao',  label: 'Prefiro não dizer'  },
 ];
 
 const statusOptions   = [{ value: 'ativo', label: 'Ativo' }, { value: 'inativo', label: 'Inativo' }];
@@ -108,6 +108,20 @@ interface Patient {
   numeroCarteirinha: string;
 }
 
+// Converte o valor de sexo que vem do backend (MASCULINO, FEMININO, OUTRO)
+// para o valor usado nos selects do frontend (masculino, feminino, nao_binario)
+function mapSexoFromBackend(sexo: string | undefined | null): string {
+  if (!sexo) return '';
+  switch (sexo.toUpperCase()) {
+    case 'MASCULINO': return 'masculino';
+    case 'FEMININO':  return 'feminino';
+    case 'OUTRO':     return 'nao_binario';
+    default:
+      // Caso já venha em lowercase (fallback seguro)
+      return sexo.toLowerCase();
+  }
+}
+
 function mapApiToPatient(p: PacienteAPI): Patient {
   return {
     id:                p.id,
@@ -120,17 +134,17 @@ function mapApiToPatient(p: PacienteAPI): Patient {
     procedure:         '',
     status:            p.ativo ? 'ativo' : 'inativo',
     visits:            0,
-    indicacao:         '',
-    observacoes:       p.observacoes || '',
-    sexo:              p.sexo?.toLowerCase() || '',
-    cep:               p.cep || '',
-    logradouro:        p.logradouro || '',
-    numero:            p.numero || '',
-    complemento:       p.complemento || '',
-    bairro:            p.bairro || '',
-    cidade:            p.cidade || '',
-    estado:            p.estado || '',
-    convenio:          p.convenio || '',
+    indicacao:         p.indicacao        || '',
+    observacoes:       p.observacoes      || '',
+    sexo:              mapSexoFromBackend(p.sexo),
+    cep:               p.cep              || '',
+    logradouro:        p.logradouro       || '',
+    numero:            p.numero           || '',
+    complemento:       p.complemento      || '',
+    bairro:            p.bairro           || '',
+    cidade:            p.cidade           || '',
+    estado:            p.estado           || '',
+    convenio:          p.convenio         || '',
     numeroCarteirinha: p.numeroCarteirinha || '',
   };
 }
@@ -378,16 +392,27 @@ export default function Patients() {
   }
 
   function openEdit(p: Patient) {
-    setIsEditing(true); setSelectedPatient(p);
+    setIsEditing(true);
+    setSelectedPatient(p);
     setForm({
-      nome: p.name, email: p.email, telefone: p.phone,
-      nascimento: toInputDate(p.birthdate), cpf: p.cpf,
-      sexo: p.sexo || '', status: p.status,
-      cep: p.cep || '', logradouro: p.logradouro || '',
-      numero: p.numero || '', complemento: p.complemento || '',
-      bairro: p.bairro || '', cidade: p.cidade || '', estado: p.estado || '',
-      convenio: p.convenio || '', numeroCarteirinha: p.numeroCarteirinha || '',
-      indicacao: p.indicacao, observacoes: p.observacoes,
+      nome:              p.name,
+      email:             p.email,
+      telefone:          p.phone,
+      nascimento:        toInputDate(p.birthdate),
+      cpf:               p.cpf,
+      sexo:              p.sexo              || '',
+      status:            p.status,
+      cep:               p.cep              || '',
+      logradouro:        p.logradouro        || '',
+      numero:            p.numero           || '',
+      complemento:       p.complemento      || '',
+      bairro:            p.bairro           || '',
+      cidade:            p.cidade           || '',
+      estado:            p.estado           || '',
+      convenio:          p.convenio         || '',
+      numeroCarteirinha: p.numeroCarteirinha || '',
+      indicacao:         p.indicacao        || '',
+      observacoes:       p.observacoes      || '',
     });
     clearAllErrors(); setCepError(''); setStep(1); setIsDetailOpen(false); setIsModalOpen(true);
   }
@@ -420,16 +445,17 @@ export default function Patients() {
       dataNascimento:    form.nascimento,
       cpf:               form.cpf.replace(/\D/g, ''),
       sexo:              mapSexoToBackend(form.sexo),
-      cep:               form.cep || undefined,
-      logradouro:        form.logradouro || undefined,
-      numero:            form.numero || undefined,
-      complemento:       form.complemento || undefined,
-      bairro:            form.bairro || undefined,
-      cidade:            form.cidade || undefined,
-      estado:            form.estado || undefined,
-      convenio:          form.convenio || undefined,
-      numeroCarteirinha: form.numeroCarteirinha || undefined,
-      observacoes:       form.observacoes || undefined,
+      cep:               form.cep               || undefined,
+      logradouro:        form.logradouro         || undefined,
+      numero:            form.numero             || undefined,
+      complemento:       form.complemento        || undefined,
+      bairro:            form.bairro             || undefined,
+      cidade:            form.cidade             || undefined,
+      estado:            form.estado             || undefined,
+      convenio:          form.convenio           || undefined,
+      numeroCarteirinha: form.numeroCarteirinha   || undefined,
+      indicacao:         form.indicacao          || undefined,
+      observacoes:       form.observacoes        || undefined,
     };
 
     try {

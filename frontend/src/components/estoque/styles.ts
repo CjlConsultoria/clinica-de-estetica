@@ -556,3 +556,127 @@ export const WizardNav = styled.div`
     }
   }
 `;
+
+/* ─── Detail modal components (igual ao pacientes) ───────────────────────── */
+
+export const DetailModal = styled.div`
+  max-height: 65vh;
+  overflow-y: auto;
+  padding-right: 4px;
+`;
+
+export const DetailHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f0ebe4;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+  }
+`;
+
+export const DetailName = styled.h2`
+  font-size: 1.2rem;
+  font-family: var(--font-cabourg-bold), 'Cabourg', serif;
+  color: #1a1a1a;
+  margin: 0 0 8px;
+
+  @media (max-width: 480px) {
+    font-size: 1.05rem;
+  }
+`;
+
+export const DetailMeta = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  @media (max-width: 480px) {
+    align-items: center;
+  }
+`;
+
+export const DetailMetaItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.83rem;
+  color: #666;
+
+  svg { color: #BBA188; flex-shrink: 0; }
+`;
+
+export const DetailSection = styled.div`
+  margin-top: 4px;
+`;
+
+export const DetailSectionTitle = styled.h3`
+  font-size: 0.9rem;
+  color: #BBA188;
+  margin: 0 0 14px;
+  font-weight: 700;
+  border-bottom: 1px solid #f0ebe4;
+  padding-bottom: 8px;
+`;
+
+export const StatsRow = styled.div`
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+
+  @media (max-width: 480px) {
+    justify-content: center;
+  }
+`;
+
+export const StatPill = styled.span<{ $color: string }>`
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: ${({ $color }) => $color}18;
+  color: ${({ $color }) => $color};
+`;
+
+export const InfoGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  background: #fdf9f5;
+  border-radius: 14px;
+  padding: 20px;
+  border: 1px solid #f0ebe4;
+
+  @media (max-width: 520px) {
+    grid-template-columns: 1fr;
+    padding: 14px;
+    gap: 12px;
+  }
+`;
+
+export const InfoItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+export const InfoLabel = styled.span`
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #BBA188;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+`;
+
+export const InfoValue = styled.span`
+  font-size: 0.88rem;
+  color: #444;
+  font-weight: 500;
+`;

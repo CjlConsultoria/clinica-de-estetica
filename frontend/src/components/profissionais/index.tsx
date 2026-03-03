@@ -35,6 +35,8 @@ import {
 } from '@/services/profissionalService';
 import { listarEmpresas, EmpresaAPI } from '@/services/empresaService';
 import { useAuth } from '@/contexts/AuthContext';
+import ConfirmModal from '@/components/modals/confirmModal';
+import SucessModal from '@/components/modals/sucessModal';
 
 type AreaType = 'tecnica' | 'administrativa' | '';
 type CargoTecnico = 'esteticista' | 'biomedico' | 'enfermeiro' | 'dermatologista' | 'fisioterapeuta';
@@ -155,7 +157,6 @@ const CARGO_TO_ROLE: Record<string, 'tecnico' | 'recepcionista' | 'gerente' | 'f
   financeiro:     'financeiro',
 };
 
-// Map frontend cargo values to backend Cargo enum values
 const CARGO_TO_BACKEND: Record<string, string> = {
   esteticista:    'ESTETICISTA',
   biomedico:      'BIOMEDICO',
@@ -167,7 +168,6 @@ const CARGO_TO_BACKEND: Record<string, string> = {
   financeiro:     'FINANCEIRO',
 };
 
-// Map backend cargo values back to frontend keys
 const BACKEND_TO_CARGO: Record<string, string> = {
   ESTETICISTA:    'esteticista',
   BIOMEDICO:      'biomedico',
@@ -179,7 +179,6 @@ const BACKEND_TO_CARGO: Record<string, string> = {
   FINANCEIRO:     'financeiro',
 };
 
-// Map backend areaProfissional to frontend area
 const BACKEND_TO_AREA: Record<string, AreaType> = {
   TECNICA:        'tecnica',
   ADMINISTRATIVA: 'administrativa',
@@ -379,19 +378,25 @@ export default function Profissionais() {
   const canCreate    = can('profissionais.create');
   const canEdit      = can('profissionais.edit');
   const canRead      = can('profissionais.read');
+  const canDelete    = can('profissionais.delete');
   const isSuperAdmin = currentUser?.role === 'super_admin';
 
   const [profissionais,        setProfissionais]        = useState<Profissional[]>([]);
   const [empresas,             setEmpresas]             = useState<EmpresaAPI[]>([]);
   const [loading,              setLoading]              = useState(true);
   const [saveLoading,          setSaveLoading]          = useState(false);
+  const [deleteLoading,        setDeleteLoading]        = useState(false);
   const [apiError,             setApiError]             = useState<string | null>(null);
+  const [emailConflictError,   setEmailConflictError]   = useState<string | null>(null);
   const [search,               setSearch]               = useState('');
   const [filterStat,           setFilterStat]           = useState('Todos');
   const [filterArea,           setFilterArea]           = useState('Todos');
   const [openDrop,             setOpenDrop]             = useState<string | null>(null);
   const [isModalOpen,          setIsModalOpen]          = useState(false);
   const [isDetailOpen,         setIsDetailOpen]         = useState(false);
+  const [isDeleteOpen,         setIsDeleteOpen]         = useState(false);
+  const [isSuccessOpen,        setIsSuccessOpen]        = useState(false);
+  const [profissionalToDelete, setProfissionalToDelete] = useState<Profissional | null>(null);
   const [selectedProfissional, setSelectedProfissional] = useState<Profissional | null>(null);
   const [form,                 setForm]                 = useState<ProfissionalForm>(FORM_INITIAL);
   const [step,                 setStep]                 = useState(1);
@@ -400,7 +405,6 @@ export default function Profissionais() {
   const [isEditing,            setIsEditing]            = useState(false);
   const [currentPage,          setCurrentPage]          = useState(1);
 
-  // Fetch professionals from API on mount
   useEffect(() => {
     fetchProfissionais();
     if (isSuperAdmin) {
@@ -535,6 +539,7 @@ export default function Profissionais() {
       return next;
     });
     if (field === 'nome' || field === 'email' || field === 'telefone' || field === 'empresaId') step1Validation.clearError(field as Step1Field);
+    if (field === 'email') setEmailConflictError(null);
     if (field === 'area')                                                         step2Validation.clearError('area');
     if (field === 'cargo' || field === 'registro' || field === 'especialidade')  step3Validation.clearError(field as Step3Field);
     if (field === 'senha' || field === 'confirmarSenha')                         step4Validation.clearError(field as Step4Field);
@@ -584,14 +589,38 @@ export default function Profissionais() {
 
   function openDetail(p: Profissional) { setSelectedProfissional(p); setIsDetailOpen(true); }
 
+  function openDeleteConfirm(p: Profissional) {
+    setProfissionalToDelete(p);
+    setIsDetailOpen(false);
+    setIsDeleteOpen(true);
+  }
+
   function handleClose() {
     setForm(FORM_INITIAL); clearAllErrors(); setIsModalOpen(false);
     setSelectedProfissional(null); setStep(1);
     setShowSenha(false); setShowConfirm(false); setIsEditing(false);
-    setApiError(null);
+    setApiError(null); setEmailConflictError(null);
+  }
+
+  async function handleDelete() {
+    if (!profissionalToDelete) return;
+    try {
+      setDeleteLoading(true);
+      await inativarProfissional(profissionalToDelete.id);
+      await fetchProfissionais();
+      setIsDeleteOpen(false);
+      setProfissionalToDelete(null);
+      setIsSuccessOpen(true);
+    } catch (err: any) {
+      console.error('[Profissionais] Erro ao excluir:', err);
+    } finally {
+      setDeleteLoading(false);
+    }
   }
 
   async function handleSave() {
+    // Evita duplo clique / chamada duplicada
+    if (saveLoading) return;
     if (step === 4 && !validateStep(4)) return;
     if (form.senha && form.senha !== form.confirmarSenha) { step4Validation.clearAll(); return; }
 
@@ -603,28 +632,28 @@ export default function Profissionais() {
 
       if (isEditing && selectedProfissional) {
         const payload: Record<string, unknown> = {
-          nome:         form.nome,
-          email:        form.email,
-          cargo:        backendCargo,
-          telefone:     form.telefone,
+          nome:          form.nome,
+          email:         form.email,
+          cargo:         backendCargo,
+          telefone:      form.telefone,
           especialidade: form.especialidade || undefined,
-          registro:     form.registro || undefined,
-          observacoes:  form.observacoes || undefined,
+          registro:      form.registro || undefined,
+          observacoes:   form.observacoes || undefined,
         };
         if (form.senha) payload.senha = form.senha;
 
         await atualizarProfissional(selectedProfissional.id, payload as any);
       } else {
         await criarProfissional({
-          nome:         form.nome,
-          email:        form.email,
-          senha:        form.senha,
-          cargo:        backendCargo,
-          telefone:     form.telefone,
+          nome:          form.nome,
+          email:         form.email,
+          senha:         form.senha,
+          cargo:         backendCargo,
+          telefone:      form.telefone,
           especialidade: form.especialidade || undefined,
-          registro:     form.registro || undefined,
-          observacoes:  form.observacoes || undefined,
-          empresaId:    form.empresaId ? Number(form.empresaId) : undefined,
+          registro:      form.registro || undefined,
+          observacoes:   form.observacoes || undefined,
+          empresaId:     form.empresaId ? Number(form.empresaId) : undefined,
         });
       }
 
@@ -632,8 +661,17 @@ export default function Profissionais() {
       handleClose();
     } catch (err: any) {
       console.error('[Profissionais] Erro ao salvar:', err);
-      const msg = err?.response?.data?.mensagem || err?.message || 'Erro ao salvar profissional.';
-      setApiError(msg);
+
+      // Detecta 409 — e-mail já cadastrado
+      const is409 = err?.status === 409 || err?.message?.includes('409') || err?.message?.toLowerCase().includes('duplicado') || err?.message?.toLowerCase().includes('integridade');
+      if (is409) {
+        setEmailConflictError('Este e-mail já está cadastrado no sistema. Use outro e-mail.');
+        setApiError(null);
+        setStep(1); // Volta para step 1 onde está o campo e-mail
+      } else {
+        const msg = err?.response?.data?.mensagem || err?.message || 'Erro ao salvar profissional.';
+        setApiError(msg);
+      }
     } finally {
       setSaveLoading(false);
     }
@@ -657,7 +695,7 @@ export default function Profissionais() {
                   maxLength={80} error={errors1.nome} />
               </div>
               <Input label="E-mail de Acesso *" type="email" placeholder="Digite seu e-mail"
-                value={form.email} onChange={e => handleChange('email', e.target.value)} error={errors1.email} />
+                value={form.email} onChange={e => handleChange('email', e.target.value)} error={emailConflictError || errors1.email} />
               <Input label="Telefone *" mask="telefone" value={form.telefone} inputMode="numeric"
                 maxLength={15} onValueChange={v => handleChange('telefone', v)} error={errors1.telefone} />
               {isSuperAdmin && !isEditing && (
@@ -928,14 +966,15 @@ export default function Profissionais() {
     }
   }
 
+  // ── Wizard nav — sem setas nos botões de texto ──
   const modalFooter = (
     <WizardNav>
       {step > 1
-        ? <Button variant="outline" onClick={prevStep}>← Voltar</Button>
+        ? <Button variant="outline" onClick={prevStep}>Voltar</Button>
         : <Button variant="outline" onClick={handleClose}>Cancelar</Button>
       }
       {step < 5
-        ? <Button variant="primary" onClick={nextStep}>Continuar →</Button>
+        ? <Button variant="primary" onClick={nextStep}>Continuar</Button>
         : <Button variant="primary" loading={saveLoading} onClick={handleSave}>{isEditing ? 'Salvar Alterações' : 'Cadastrar Profissional'}</Button>
       }
     </WizardNav>
@@ -1024,15 +1063,15 @@ export default function Profissionais() {
             <Thead>
               <tr>
                 <Th $width="22%">Profissional</Th>
-                <Th $width="12%">Telefone</Th>
+                <Th $width="11%">Telefone</Th>
                 <Th $width="7%">Área</Th>
                 <Th $width="11%">Cargo</Th>
                 <Th $width="11%">Especialidade</Th>
-                <Th $width="11%">Registro</Th>
+                <Th $width="10%">Registro</Th>
                 <Th $width="5%" $center>Atend.</Th>
-                <Th $width="9%">Últ. Acesso</Th>
+                <Th $width="8%">Últ. Acesso</Th>
                 <Th $width="5%">Status</Th>
-                <Th $width="7%">Ações</Th>
+                <Th $width="10%">Ações</Th>
               </tr>
             </Thead>
             <Tbody>
@@ -1104,12 +1143,34 @@ export default function Profissionais() {
                   </Td>
                   <Td>
                     <ActionGroup>
+                      {/* Ver detalhes */}
                       <IconBtn title="Ver detalhes" onClick={() => openDetail(p)}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                       </IconBtn>
+                      {/* Editar */}
                       {canEdit && (
                         <IconBtn title="Editar" onClick={() => openEdit(p)}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </IconBtn>
+                      )}
+                      {/* Excluir */}
+                      {canEdit && (
+                        <IconBtn
+                          title="Excluir"
+                          onClick={() => openDeleteConfirm(p)}
+                          style={{ color: '#e74c3c', borderColor: '#fde8e8' }}
+                          onMouseEnter={e => {
+                            (e.currentTarget as HTMLButtonElement).style.background = '#e74c3c';
+                            (e.currentTarget as HTMLButtonElement).style.borderColor = '#e74c3c';
+                            (e.currentTarget as HTMLButtonElement).style.color = 'white';
+                          }}
+                          onMouseLeave={e => {
+                            (e.currentTarget as HTMLButtonElement).style.background = 'white';
+                            (e.currentTarget as HTMLButtonElement).style.borderColor = '#fde8e8';
+                            (e.currentTarget as HTMLButtonElement).style.color = '#e74c3c';
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                         </IconBtn>
                       )}
                     </ActionGroup>
@@ -1122,6 +1183,7 @@ export default function Profissionais() {
         <Pagination currentPage={safePage} totalItems={totalFiltered} itemsPerPage={ITEMS_PER_PAGE} onPageChange={setCurrentPage} />
       </div>
 
+      {/* ── Modal de Detalhes ── */}
       <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} closeOnOverlayClick={false} title="Ficha do Profissional" size="lg"
         footer={
           <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'space-between' }}>
@@ -1222,6 +1284,26 @@ export default function Profissionais() {
         )}
       </Modal>
 
+
+            {/* ── Modal de Confirmação de Exclusão ── */}
+      <ConfirmModal
+        isOpen={isDeleteOpen}
+        onClose={() => { setIsDeleteOpen(false); setProfissionalToDelete(null); }}
+        onConfirm={handleDelete}
+        loading={deleteLoading}
+        title="Excluir Profissional"
+        message={profissionalToDelete ? `Tem certeza que deseja excluir o profissional "${profissionalToDelete.name}"? Esta ação irá desativar o acesso ao sistema e não pode ser desfeita.` : ''}
+      />
+
+      {/* ── Modal de Sucesso de Exclusão ── */}
+      <SucessModal
+        isOpen={isSuccessOpen}
+        title="Profissional excluído"
+        message="O profissional foi excluído com sucesso."
+        onClose={() => setIsSuccessOpen(false)}
+      />
+
+      {/* ── Modal de Cadastro / Edição ── */}
       <PermissionGuard anyOf={['profissionais.create', 'profissionais.edit']}>
         <Modal isOpen={isModalOpen} onClose={handleClose} closeOnOverlayClick={false}
           title={isEditing ? 'Editar Profissional' : 'Cadastrar Profissional'} size="lg" footer={modalFooter}
@@ -1246,7 +1328,7 @@ export default function Profissionais() {
                 );
               })}
             </WizardSteps>
-            {apiError && step === 5 && (
+            {apiError && (
               <div style={{ margin: '0 0 12px', padding: '10px 14px', background: '#fde8e8', borderRadius: 8, border: '1px solid #f5c0c0', color: '#c93a3a', fontSize: '0.82rem' }}>
                 {apiError}
               </div>

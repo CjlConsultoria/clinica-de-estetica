@@ -77,25 +77,6 @@ const procedureOptions = [
   { value: 'Outro',                label: 'Outro'                },
 ];
 
-const professionalOptions = [
-  { value: 'Maria Oliveira', label: 'Maria Oliveira' },
-  { value: 'Clara Andrade',  label: 'Clara Andrade'  },
-  { value: 'Beatriz Santos', label: 'Beatriz Santos' },
-];
-
-type HistoryItem = {
-  id: number; date: string; procedure: string; units: string;
-  value: number; professional: string; lote: string; status: string;
-};
-
-type Patient = {
-  id: number; name: string; phone: string; email: string;
-  birthdate: string; since: string; status: string;
-  totalSpent: number; totalSessions: number;
-  lastVisit: string; nextVisit: string | null;
-  observations: string; history: HistoryItem[];
-};
-
 const procedureColors: Record<string, string> = {
   'Botox Facial':         '#BBA188',
   'Preenchimento Labial': '#EBD5B0',
@@ -104,6 +85,20 @@ const procedureColors: Record<string, string> = {
   'Microagulhamento':     '#8a7560',
   'Toxina Botulínica':    '#BBA188',
   'Outro':                '#BBA188',
+};
+
+type HistoryItem = {
+  id: number; date: string; procedure: string; units: string;
+  value: number; professional: string; lote: string; status: string;
+};
+
+type Patient = {
+  id: number; name: string; phone: string; email: string;
+  cpf: string;
+  birthdate: string; since: string; status: string;
+  totalSpent: number; totalSessions: number;
+  lastVisit: string; nextVisit: string | null;
+  observations: string; history: HistoryItem[];
 };
 
 function getInitials(name: string) {
@@ -142,8 +137,17 @@ function todayInputDate(): string {
   return new Date().toISOString().split('T')[0];
 }
 
+// Formata CPF: 00000000000 → 000.000.000-00
+function formatCpf(cpf: string): string {
+  if (!cpf) return '';
+  const digits = cpf.replace(/\D/g, '');
+  if (digits.length !== 11) return cpf;
+  return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+}
+
 import { listarPacientes, criarPaciente, PacienteAPI } from '@/services/pacienteService';
 import { listarProntuariosPorPaciente, ProntuarioAPI } from '@/services/prontuarioService';
+import { listarProfissionais } from '@/services/profissionalService';
 
 const CARDS_PER_PAGE = 4;
 
@@ -168,6 +172,7 @@ function mapPacienteToPatient(p: PacienteAPI, history: HistoryItem[] = []): Pati
     name:          p.nome,
     phone:         p.telefone || p.celular || '',
     email:         p.email,
+    cpf:           p.cpf || '',
     birthdate:     p.dataNascimento || '',
     since:         p.criadoEm ? new Date(p.criadoEm).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) : '',
     status:        p.ativo ? 'ativo' : 'inativo',
@@ -196,6 +201,9 @@ export default function HistoricoPaciente() {
   const [editErrors,   setEditErrors]   = useState<Partial<Record<NovoPacienteField, string>>>({});
   const [currentPage,  setCurrentPage]  = useState(1);
 
+  // Profissionais do backend
+  const [profissionaisOptions, setProfissionaisOptions] = useState<{ value: string; label: string }[]>([]);
+
   const [isAtendimentoOpen,     setIsAtendimentoOpen]     = useState(false);
   const [atendimentoForm,       setAtendimentoForm]       = useState<AtendimentoForm>(ATENDIMENTO_INITIAL);
   const [showCancelAtend,       setShowCancelAtend]       = useState(false);
@@ -219,6 +227,7 @@ export default function HistoricoPaciente() {
     clearError: clearAtendError, clearAll: clearAtendAll,
   } = useSequentialValidation<AtendimentoField>(ATENDIMENTO_VALIDATION);
 
+  // Carrega pacientes
   useEffect(() => {
     setLoading(true);
     listarPacientes('', 0, 500).then(res => {
@@ -228,6 +237,18 @@ export default function HistoricoPaciente() {
       setPatients([]);
     }).finally(() => {
       setLoading(false);
+    });
+  }, []);
+
+  // Carrega profissionais do backend
+  useEffect(() => {
+    listarProfissionais().then(data => {
+      const ativos = data
+        .filter(p => p.ativo !== false)
+        .map(p => ({ value: p.nome, label: p.nome }));
+      setProfissionaisOptions(ativos);
+    }).catch(() => {
+      setProfissionaisOptions([]);
     });
   }, []);
 
@@ -331,8 +352,16 @@ export default function HistoricoPaciente() {
     return Object.keys(e).length === 0;
   }
 
+  // Abre edição com TODOS os dados reais do paciente, incluindo CPF formatado
   function openEdit(p: Patient) {
-    setEditForm({ nome: p.name, cpf: '', nascimento: toInputDate(p.birthdate), telefone: p.phone, email: p.email, observacoes: p.observations });
+    setEditForm({
+      nome:        p.name,
+      cpf:         formatCpf(p.cpf),
+      nascimento:  toInputDate(p.birthdate),
+      telefone:    p.phone,
+      email:       p.email,
+      observacoes: p.observations,
+    });
     setEditErrors({});
     setIsDetailOpen(false);
     setIsEditOpen(true);
@@ -360,6 +389,7 @@ export default function HistoricoPaciente() {
       name:         editForm.nome,
       phone:        editForm.telefone,
       email:        editForm.email,
+      cpf:          editForm.cpf.replace(/\D/g, ''),
       birthdate:    editForm.nascimento,
       observations: editForm.observacoes,
     };
@@ -646,6 +676,7 @@ export default function HistoricoPaciente() {
         </PaginationContainer>
       </CardsContainer>
 
+      {/* ── Modal Detalhes ── */}
       <Modal
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
@@ -702,6 +733,12 @@ export default function HistoricoPaciente() {
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                     {selected.email}
                   </DetailMetaItem>
+                  {selected.cpf && (
+                    <DetailMetaItem>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+                      CPF: {formatCpf(selected.cpf)}
+                    </DetailMetaItem>
+                  )}
                   <DetailMetaItem>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
                     {getAge(selected.birthdate)} anos · Nascimento: {formatDate(selected.birthdate)} · Cliente desde {selected.since || '—'}
@@ -763,6 +800,7 @@ export default function HistoricoPaciente() {
         )}
       </Modal>
 
+      {/* ── Modal Novo Atendimento ── */}
       <Modal
         isOpen={isAtendimentoOpen}
         onClose={handleCancelAtendClick}
@@ -821,7 +859,7 @@ export default function HistoricoPaciente() {
               />
               <Select
                 label="Profissional Responsável *"
-                options={professionalOptions}
+                options={profissionaisOptions.length > 0 ? profissionaisOptions : [{ value: '', label: 'Carregando...' }]}
                 placeholder="Selecione..."
                 value={atendimentoForm.professional}
                 onChange={v => handleAtendChange('professional', v)}
@@ -862,6 +900,7 @@ export default function HistoricoPaciente() {
         </div>
       </Modal>
 
+      {/* ── Modal Editar Paciente ── */}
       <Modal
         isOpen={isEditOpen}
         onClose={handleCancelEditClick}
@@ -916,6 +955,7 @@ export default function HistoricoPaciente() {
         </div>
       </Modal>
 
+      {/* ── Modal Novo Paciente ── */}
       <Modal
         isOpen={isNewOpen}
         onClose={handleCancelNewClick}
@@ -975,6 +1015,7 @@ export default function HistoricoPaciente() {
         </div>
       </Modal>
 
+      {/* ── Modais reutilizáveis ── */}
       <CancelModal
         isOpen={showCancelNewModal}
         title="Deseja cancelar?"

@@ -62,7 +62,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'fotos.read_own', 'fotos.create',
     'reaplicacoes.read_own', 'reaplicacoes.create',
     'procedimentos.read',
-    'consentimento.read_own', 'consentimento.create',
+    'consentimento.read', 'consentimento.read_own', 'consentimento.create', // ✅ adicionado consentimento.read
     'estoque.read',
     'comissoes.read_own',
     'comunicados.read',
