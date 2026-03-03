@@ -287,15 +287,17 @@ export default function SuporteEmpresa() {
     clearTicketAll();
 
     try {
-      const criado = await criarTicket({
+      await criarTicket({
         titulo:     formSnapshot.assunto,
         descricao:  formSnapshot.descricao,
         categoria:  formSnapshot.categoria,
         prioridade: formSnapshot.prioridade,
       });
 
-      const novoTicket = mapApiToTicket(criado);
-      setTickets(prev => [novoTicket, ...prev]);
+      // Recarrega a lista completa do backend para garantir persistência
+      const usuarioId = currentUser ? Number(currentUser.id) : 0;
+      const empresaId = currentUser?.companyId ? Number(currentUser.companyId) : undefined;
+      if (usuarioId) carregarTickets(usuarioId, empresaId);
 
       criarNotificacao({
         tipo:        'ticket',
@@ -461,7 +463,7 @@ export default function SuporteEmpresa() {
           <Title>Suporte</Title>
           <Subtitle>Abra chamados e acompanhe o status das suas solicitações</Subtitle>
         </div>
-        {currentUser && (currentUser.role === 'company_admin' || currentUser.role === 'gerente') && (
+        {currentUser && currentUser.role !== 'super_admin' && (
           <Button
             type="button"
             variant="primary"

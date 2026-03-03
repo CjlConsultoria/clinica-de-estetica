@@ -186,8 +186,8 @@ export default function Comunicados() {
           catch { return 'todas' as const; }
         })(),
         dataEnvio:     c.criadoEm ? new Date(c.criadoEm).toLocaleDateString('pt-BR') : '—',
-        lidas:         0,
-        total:         0,
+        lidas:         c.lidasCount ?? 0,
+        total:         c.totalDestinatarios ?? 0,
       }));
       if (mapped.length > 0) setComunicados(mapped);
     }).catch(() => {});
@@ -278,12 +278,19 @@ export default function Comunicados() {
       total: totalDest,
     };
     try {
+      const destinatariosJson = form.destinatario === 'todas'
+        ? 'todas'
+        : JSON.stringify(form.empresasSelecionadas);
       const criado = await criarComunicado({
-        titulo:   form.titulo,
-        conteudo: form.mensagem,
-        tipo:     form.tipo,
+        titulo:            form.titulo,
+        conteudo:          form.mensagem,
+        tipo:              form.tipo,
+        status:            form.agendar ? 'agendado' : 'enviado',
+        destinatariosJson,
+        dataAgendamento:   form.agendar ? form.dataAgendamento || null : null,
       });
-      novo.id = criado.id;
+      novo.id    = criado.id;
+      novo.total = criado.totalDestinatarios ?? novo.total;
     } catch {}
     setComunicados(prev => [novo, ...prev]);
     setSucessModal({

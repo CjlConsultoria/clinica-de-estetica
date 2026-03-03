@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
+import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from '@/lib/api';
 
 export interface ComunicadoAPI {
   id: number;
@@ -13,6 +13,8 @@ export interface ComunicadoAPI {
   dataAgendamento: string | null;
   criadoEm: string;
   atualizadoEm: string;
+  lidasCount: number;
+  totalDestinatarios: number;
 }
 
 export interface ComunicadoRequest {
@@ -42,4 +44,8 @@ export async function atualizarComunicado(id: number, data: ComunicadoRequest): 
 
 export async function inativarComunicado(id: number): Promise<void> {
   return apiDelete(`/api/comunicados/${id}`);
+}
+
+export async function marcarComunicadoLido(id: number): Promise<void> {
+  return apiPatch(`/api/comunicados/${id}/leitura`);
 }

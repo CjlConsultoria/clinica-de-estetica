@@ -145,8 +145,9 @@ function formatCpf(cpf: string): string {
 }
 
 import { listarPacientes, criarPaciente, PacienteAPI } from '@/services/pacienteService';
-import { listarProntuariosPorPaciente, ProntuarioAPI } from '@/services/prontuarioService';
-import { listarProfissionais } from '@/services/profissionalService';
+import { listarProntuariosPorPaciente, criarProntuario, ProntuarioAPI } from '@/services/prontuarioService';
+import { listarProfissionais, ProfissionalAPI } from '@/services/profissionalService';
+import { useAuth } from '@/contexts/AuthContext';
 
 const CARDS_PER_PAGE = 4;
 
@@ -185,6 +186,7 @@ function mapPacienteToPatient(p: PacienteAPI, history: HistoryItem[] = []): Pati
 }
 
 export default function HistoricoPaciente() {
+  const { currentUser } = useAuth();
   const [patients,     setPatients]     = useState<Patient[]>([]);
   const [loading,      setLoading]      = useState(true);
   const [search,       setSearch]       = useState('');
@@ -201,6 +203,7 @@ export default function HistoricoPaciente() {
   const [currentPage,  setCurrentPage]  = useState(1);
 
   const [profissionaisOptions, setProfissionaisOptions] = useState<{ value: string; label: string }[]>([]);
+  const [profissionaisMap,    setProfissionaisMap]    = useState<Record<string, string>>({});
 
   const [isAtendimentoOpen,     setIsAtendimentoOpen]     = useState(false);
   const [atendimentoForm,       setAtendimentoForm]       = useState<AtendimentoForm>(ATENDIMENTO_INITIAL);
@@ -238,11 +241,12 @@ export default function HistoricoPaciente() {
   }, []);
 
   useEffect(() => {
-    listarProfissionais().then(data => {
-      const ativos = data
-        .filter(p => p.ativo !== false)
-        .map(p => ({ value: p.nome, label: p.nome }));
-      setProfissionaisOptions(ativos);
+    listarProfissionais().then((data: ProfissionalAPI[]) => {
+      const ativos = data.filter(p => p.ativo !== false);
+      setProfissionaisOptions(ativos.map(p => ({ value: String(p.id), label: p.nome })));
+      const map: Record<string, string> = {};
+      ativos.forEach(p => { map[String(p.id)] = p.nome; });
+      setProfissionaisMap(map);
     }).catch(() => {
       setProfissionaisOptions([]);
     });
@@ -431,10 +435,12 @@ export default function HistoricoPaciente() {
     setShowConfirmAtend(true);
   }
 
-  function handleConfirmAtend() {
+  async function handleConfirmAtend() {
     if (!selected) return;
 
-    const valor = parseMoeda(atendimentoForm.value);
+    const valor         = parseMoeda(atendimentoForm.value);
+    const profNome      = profissionaisMap[atendimentoForm.professional] ?? atendimentoForm.professional;
+    const medicoId      = Number(atendimentoForm.professional) || (currentUser ? Number(currentUser.id) : 0);
 
     const newItem: HistoryItem = {
       id:           Date.now(),
@@ -442,7 +448,7 @@ export default function HistoricoPaciente() {
       procedure:    atendimentoForm.procedure,
       units:        atendimentoForm.units,
       value:        valor,
-      professional: atendimentoForm.professional,
+      professional: profNome,
       lote:         atendimentoForm.lote,
       status:       'realizado',
     };
@@ -467,6 +473,14 @@ export default function HistoricoPaciente() {
     clearAtendAll();
     setSuccessMessage('Atendimento registrado com sucesso!');
     setShowSuccessModal(true);
+
+    // Persiste no backend como prontuário
+    criarProntuario({
+      pacienteId: selected.id,
+      medicoId,
+      anamnese: `Procedimento: ${atendimentoForm.procedure}. Profissional: ${profNome}. Quantidade: ${atendimentoForm.units}. Valor: ${atendimentoForm.value}. Lote ANVISA: ${atendimentoForm.lote}.`,
+      observacoes: atendimentoForm.observacoes || undefined,
+    }).catch(() => {});
   }
 
   const handleExportFicha = async (e: React.MouseEvent<HTMLButtonElement>) => {

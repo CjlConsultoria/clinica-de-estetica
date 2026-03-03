@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRoleRedirect } from '@/components/ui/hooks/useRoleRedirect';
-import { listarComunicados, ComunicadoAPI } from '@/services/comunicadoService';
+import { listarComunicados, marcarComunicadoLido, ComunicadoAPI } from '@/services/comunicadoService';
 import { useComunicadosContext } from '@/contexts/ComunicadosContext';
 import {
   Container, Header, Title, Subtitle,
@@ -100,13 +100,19 @@ export default function ComunicadosEmpresa() {
                              comunicados.filter(c =>  c.lido);
 
   function marcarComoLido(id: number) {
+    const jaLido = comunicados.find(c => c.id === id)?.lido;
     setComunicados(prev => prev.map(c => c.id === id ? { ...c, lido: true } : c));
-    markOneRead(id); // sincroniza o badge do navbar
+    markOneRead(id);
+    if (!jaLido) {
+      marcarComunicadoLido(id).catch(() => {});
+    }
   }
 
   function marcarTodosComoLidos() {
+    const naoLidosIds = comunicados.filter(c => !c.lido).map(c => c.id);
     setComunicados(prev => prev.map(c => ({ ...c, lido: true })));
-    markAllRead(); // zera o badge do navbar
+    markAllRead();
+    naoLidosIds.forEach(id => marcarComunicadoLido(id).catch(() => {}));
   }
 
   return (

@@ -88,7 +88,7 @@ const momentoOptions = [
 
 const filterProcedures = ['Todos', 'Botox', 'Preenchimento', 'Bioestimulador', 'Fio PDO', 'Microagulhamento'];
 
-import { listarFotosPorPaciente, FotoAPI, urlFoto } from '@/services/fotoService';
+import { listarFotosPorPaciente, uploadFoto, FotoAPI, urlFoto } from '@/services/fotoService';
 import { listarPacientes } from '@/services/pacienteService';
 
 const tipoColors: Record<string, { bg: string; color: string; label: string }> = {
@@ -213,11 +213,15 @@ export default function Fotos() {
 
   const [uploadForm,    setUploadForm]    = useState<UploadForm>(UPLOAD_INITIAL);
   const [uploadPreview, setUploadPreview] = useState<string | null>(null);
+  const [uploadFile,    setUploadFile]    = useState<File | null>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
 
-  const [compareForm,   setCompareForm]   = useState<CompareForm>(COMPARE_INITIAL);
-  const [compareAntes,  setCompareAntes]  = useState<string | null>(null);
-  const [compareDepois, setCompareDepois] = useState<string | null>(null);
+  const [compareForm,        setCompareForm]        = useState<CompareForm>(COMPARE_INITIAL);
+  const [compareAntes,       setCompareAntes]       = useState<string | null>(null);
+  const [compareDepois,      setCompareDepois]      = useState<string | null>(null);
+  const [compareAntesFile,   setCompareAntesFile]   = useState<File | null>(null);
+  const [compareDepoisFile,  setCompareDepoisFile]  = useState<File | null>(null);
+  const [uploadingSave,      setUploadingSave]      = useState(false);
   const compareAntesRef  = useRef<HTMLInputElement>(null);
   const compareDepoisRef = useRef<HTMLInputElement>(null);
 
@@ -292,6 +296,7 @@ export default function Fotos() {
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setUploadFile(file);
     const dataUrl = await readFileAsDataURL(file);
     setUploadPreview(dataUrl);
   }
@@ -312,6 +317,7 @@ export default function Fotos() {
   function forceCloseUpload() {
     setUploadForm(UPLOAD_INITIAL);
     setUploadPreview(null);
+    setUploadFile(null);
     if (uploadInputRef.current) uploadInputRef.current.value = '';
     clearUploadAll();
     setIsUploadOpen(false);
@@ -330,36 +336,57 @@ export default function Fotos() {
     setShowConfirmUploadModal(true);
   }
 
-  function handleConfirmUpload() {
+  async function handleConfirmUpload() {
     const patient = patients.find(p => String(p.id) === uploadForm.pacienteId);
-    if (!patient) return;
+    if (!patient || !uploadFile) return;
 
     const procedimentoLabel =
       procedureOptions.find(o => o.value === uploadForm.procedimento)?.label ?? uploadForm.procedimento;
 
-    const novaFoto: Foto = {
-      id:           nextFotoId++,
-      tipo:         uploadForm.momento,
-      procedimento: procedimentoLabel,
-      data:         formatDateDisplay(uploadForm.dataFoto),
-      imgUrl:       uploadPreview ?? undefined,
+    const tipoMap: Record<string, string> = {
+      antes: 'ANTES', depois: 'DEPOIS', retorno: 'EVOLUCAO',
     };
+    const tipoFoto = tipoMap[uploadForm.momento] ?? 'ANTES';
 
-    setPatients(prev =>
-      prev.map(p =>
-        p.id === patient.id
-          ? { ...p, fotos: [...p.fotos, novaFoto], lastProcedure: procedimentoLabel }
-          : p
-      )
-    );
+    setUploadingSave(true);
+    try {
+      const fotoSalva = await uploadFoto(
+        patient.id,
+        tipoFoto,
+        uploadForm.observacoes || procedimentoLabel,
+        uploadFile,
+      );
 
-    setShowConfirmUploadModal(false);
-    setIsUploadOpen(false);
-    setUploadForm(UPLOAD_INITIAL);
-    setUploadPreview(null);
-    if (uploadInputRef.current) uploadInputRef.current.value = '';
-    clearUploadAll();
-    setShowSuccessModal(true);
+      const novaFoto: Foto = {
+        id:           fotoSalva.id,
+        tipo:         uploadForm.momento,
+        procedimento: procedimentoLabel,
+        data:         formatDateDisplay(uploadForm.dataFoto),
+        imgUrl:       urlFoto(fotoSalva.id),
+      };
+
+      setPatients(prev =>
+        prev.map(p =>
+          p.id === patient.id
+            ? { ...p, fotos: [...p.fotos, novaFoto], lastProcedure: procedimentoLabel }
+            : p
+        )
+      );
+
+      setShowConfirmUploadModal(false);
+      setIsUploadOpen(false);
+      setUploadForm(UPLOAD_INITIAL);
+      setUploadPreview(null);
+      setUploadFile(null);
+      if (uploadInputRef.current) uploadInputRef.current.value = '';
+      clearUploadAll();
+      setShowSuccessModal(true);
+    } catch {
+      setShowConfirmUploadModal(false);
+      alert('Erro ao salvar a foto. Verifique sua conexão e tente novamente.');
+    } finally {
+      setUploadingSave(false);
+    }
   }
 
   function openUpload(patient?: PatientData) {
@@ -376,12 +403,14 @@ export default function Fotos() {
   async function handleCompareAntesSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setCompareAntesFile(file);
     setCompareAntes(await readFileAsDataURL(file));
   }
 
   async function handleCompareDepoisSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setCompareDepoisFile(file);
     setCompareDepois(await readFileAsDataURL(file));
   }
 
@@ -390,45 +419,59 @@ export default function Fotos() {
     setShowConfirmCompareModal(true);
   }
 
-  function handleConfirmComparativo() {
+  async function handleConfirmComparativo() {
     const patient = patients.find(p => String(p.id) === compareForm.pacienteId);
     if (!patient) return;
+    if (!compareAntesFile && !compareDepoisFile) return;
 
     const procedimentoLabel =
       procedureOptions.find(o => o.value === compareForm.procedimento)?.label ?? 'Procedimento';
 
-    const novasFotos: Foto[] = [];
+    setUploadingSave(true);
+    try {
+      const novasFotos: Foto[] = [];
 
-    if (compareAntes) {
-      novasFotos.push({
-        id: nextFotoId++, tipo: 'antes', procedimento: procedimentoLabel,
-        data: formatDateDisplay(compareForm.dataAntes) || '—', imgUrl: compareAntes,
-      });
+      if (compareAntesFile) {
+        const fotoAntes = await uploadFoto(patient.id, 'ANTES', procedimentoLabel, compareAntesFile);
+        novasFotos.push({
+          id: fotoAntes.id, tipo: 'antes', procedimento: procedimentoLabel,
+          data: formatDateDisplay(compareForm.dataAntes) || '—', imgUrl: urlFoto(fotoAntes.id),
+        });
+      }
+      if (compareDepoisFile) {
+        const fotoDepois = await uploadFoto(patient.id, 'DEPOIS', procedimentoLabel, compareDepoisFile);
+        novasFotos.push({
+          id: fotoDepois.id, tipo: 'depois', procedimento: procedimentoLabel,
+          data: formatDateDisplay(compareForm.dataDepois) || '—', imgUrl: urlFoto(fotoDepois.id),
+        });
+      }
+
+      if (novasFotos.length === 0) return;
+
+      setPatients(prev =>
+        prev.map(p =>
+          p.id === patient.id
+            ? { ...p, fotos: [...p.fotos, ...novasFotos], lastProcedure: procedimentoLabel }
+            : p
+        )
+      );
+
+      setShowConfirmCompareModal(false);
+      setIsCompareOpen(false);
+      setCompareAntes(null);
+      setCompareDepois(null);
+      setCompareAntesFile(null);
+      setCompareDepoisFile(null);
+      setCompareForm(COMPARE_INITIAL);
+      if (compareAntesRef.current)  compareAntesRef.current.value  = '';
+      if (compareDepoisRef.current) compareDepoisRef.current.value = '';
+      setShowSuccessCompareModal(true);
+    } catch {
+      setShowConfirmCompareModal(false);
+      alert('Erro ao salvar as fotos comparativas. Verifique sua conexão e tente novamente.');
+    } finally {
+      setUploadingSave(false);
     }
-    if (compareDepois) {
-      novasFotos.push({
-        id: nextFotoId++, tipo: 'depois', procedimento: procedimentoLabel,
-        data: formatDateDisplay(compareForm.dataDepois) || '—', imgUrl: compareDepois,
-      });
-    }
-    if (novasFotos.length === 0) return;
-
-    setPatients(prev =>
-      prev.map(p =>
-        p.id === patient.id
-          ? { ...p, fotos: [...p.fotos, ...novasFotos], lastProcedure: procedimentoLabel }
-          : p
-      )
-    );
-
-    setShowConfirmCompareModal(false);
-    setIsCompareOpen(false);
-    setCompareAntes(null);
-    setCompareDepois(null);
-    setCompareForm(COMPARE_INITIAL);
-    if (compareAntesRef.current)  compareAntesRef.current.value  = '';
-    if (compareDepoisRef.current) compareDepoisRef.current.value = '';
-    setShowSuccessCompareModal(true);
   }
 
   function openCompare(patient?: PatientData) {
@@ -442,6 +485,8 @@ export default function Fotos() {
     setIsCompareOpen(false);
     setCompareAntes(null);
     setCompareDepois(null);
+    setCompareAntesFile(null);
+    setCompareDepoisFile(null);
     setCompareForm(COMPARE_INITIAL);
     if (compareAntesRef.current)  compareAntesRef.current.value  = '';
     if (compareDepoisRef.current) compareDepoisRef.current.value = '';

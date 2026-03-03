@@ -11,6 +11,7 @@ import {
   getModalTitle
 } from './validation';
 import ErrorModal from '@/components/modals/errorModal';
+import TermosModal from '@/components/modals/termosModal';
 import { useAuth } from '@/contexts/AuthContext';
 
 const ROLE_ROUTES: Record<string, string> = {
@@ -38,6 +39,9 @@ export default function Login() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
+
+  const [termosOpen, setTermosOpen] = useState(false);
+  const [pendingRoute, setPendingRoute] = useState('');
 
   useEffect(() => {
     if (isAuthenticated && currentUser?.role) {
@@ -101,7 +105,16 @@ export default function Login() {
     setLoading(false);
 
     if (result.success) {
-      router.replace(ROLE_ROUTES[result.role ?? ''] ?? '/agenda');
+      const route = ROLE_ROUTES[result.role ?? ''] ?? '/agenda';
+      const storedUser = localStorage.getItem('clinica_user');
+      const userId = storedUser ? JSON.parse(storedUser).id : '';
+      const key = `termos_aceitos_${userId}`;
+      if (!localStorage.getItem(key)) {
+        setPendingRoute(route);
+        setTermosOpen(true);
+      } else {
+        router.replace(route);
+      }
     } else {
       setModalTitle('Falha no login');
       setModalMessage(result.error || 'E-mail ou senha incorretos. Tente novamente.');
@@ -109,8 +122,17 @@ export default function Login() {
     }
   }
 
+  function handleTermosAccept() {
+    const storedUser = localStorage.getItem('clinica_user');
+    const userId = storedUser ? JSON.parse(storedUser).id : '';
+    localStorage.setItem(`termos_aceitos_${userId}`, 'true');
+    setTermosOpen(false);
+    router.replace(pendingRoute || '/agenda');
+  }
+
   return (
     <>
+      <TermosModal isOpen={termosOpen} onAccept={handleTermosAccept} />
       <S.Container>
         <S.LeftPanel>
           <S.PatternOverlay />

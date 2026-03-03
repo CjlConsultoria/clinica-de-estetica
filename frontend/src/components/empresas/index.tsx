@@ -170,6 +170,7 @@ export default function Empresas() {
   const [form,            setForm]            = useState<EmpresaForm>(FORM_INITIAL);
   const [step,            setStep]            = useState(1);
   const [errors,          setErrors]          = useState<Partial<Record<keyof EmpresaForm, string>>>({});
+  const [saveError,       setSaveError]       = useState<string | null>(null);
   const [activeTab,       setActiveTab]       = useState<'lista' | 'suspensas'>('lista');
 
   if (!isSuperAdmin) return <AccessDenied />;
@@ -217,9 +218,9 @@ export default function Empresas() {
 
   function validateStep2(): boolean {
     const e: Partial<Record<keyof EmpresaForm, string>> = {};
-    if (!form.adminNome.trim())        e.adminNome        = 'Nome do administrador é obrigatório';
-    if (!form.adminEmail.trim())       e.adminEmail       = 'E-mail do administrador é obrigatório';
-    if (!form.adminSenha.trim())       e.adminSenha       = 'Senha é obrigatória';
+    if (!form.adminNome.trim())  e.adminNome  = 'Nome do administrador é obrigatório';
+    if (!form.adminEmail.trim()) e.adminEmail = 'E-mail do administrador é obrigatório';
+    if (!isEditing && !form.adminSenha.trim()) e.adminSenha = 'Senha é obrigatória';
     if (form.adminSenha.length > 0 && form.adminSenha.length < 8) e.adminSenha = 'Senha deve ter no mínimo 8 caracteres';
     if (form.adminSenha !== form.adminSenhaConfirm) e.adminSenhaConfirm = 'As senhas não coincidem';
     setErrors(e);
@@ -250,6 +251,7 @@ export default function Empresas() {
     setSelectedEmpresa(null);
     setForm(FORM_INITIAL);
     setErrors({});
+    setSaveError(null);
     setStep(1);
     setIsModalOpen(true);
   }
@@ -265,6 +267,7 @@ export default function Empresas() {
       adminTelefone: '', adminSenha: '', adminSenhaConfirm: '', enviarConvite: false,
     });
     setErrors({});
+    setSaveError(null);
     setStep(1);
     setIsDetailOpen(false);
     setIsModalOpen(true);
@@ -279,12 +282,14 @@ export default function Empresas() {
     setIsModalOpen(false);
     setForm(FORM_INITIAL);
     setErrors({});
+    setSaveError(null);
     setStep(1);
     setIsEditing(false);
     setSelectedEmpresa(null);
   }
 
   async function handleSave() {
+    setSaveError(null);
     const planoSelecionado = form.plano as PlanType;
     const requestData = {
       nome: form.nome, email: form.email, telefone: form.telefone,
@@ -292,6 +297,7 @@ export default function Empresas() {
       plano: planoSelecionado, valor: PLANO_VALOR[planoSelecionado],
       status: form.status, observacoes: form.observacoes,
       adminNome: form.adminNome, adminEmail: form.adminEmail,
+      ...(form.adminSenha ? { adminSenha: form.adminSenha } : {}),
     };
 
     if (isEditing && selectedEmpresa) {
@@ -312,13 +318,9 @@ export default function Empresas() {
               }
             : e
         ));
-      } catch {
-       
-        setEmpresas(prev => prev.map(e =>
-          e.id === selectedEmpresa.id
-            ? { ...e, nome: form.nome, email: form.email, telefone: form.telefone, cnpj: form.cnpj, responsavel: form.responsavel, plano: planoSelecionado, valor: PLANO_VALOR[planoSelecionado], status: form.status, observacoes: form.observacoes, adminNome: form.adminNome, adminEmail: form.adminEmail }
-            : e
-        ));
+        handleClose();
+      } catch (err) {
+        setSaveError(err instanceof Error ? err.message : 'Erro ao salvar alterações. Tente novamente.');
       }
     } else {
       try {
@@ -339,20 +341,11 @@ export default function Empresas() {
           adminNome: created.adminNome || form.adminNome,
           adminEmail: created.adminEmail || form.adminEmail,
         }]);
-      } catch {
-        
-        setEmpresas(prev => [...prev, {
-          id: `empresa_${Date.now()}`,
-          nome: form.nome, email: form.email, telefone: form.telefone,
-          cnpj: form.cnpj, responsavel: form.responsavel,
-          plano: planoSelecionado, valor: PLANO_VALOR[planoSelecionado],
-          status: form.status, dataInicio: hoje(), vencimento: vencimento30(),
-          usuarios: 1, observacoes: form.observacoes,
-          adminNome: form.adminNome, adminEmail: form.adminEmail,
-        }]);
+        handleClose();
+      } catch (err) {
+        setSaveError(err instanceof Error ? err.message : 'Erro ao cadastrar empresa. Tente novamente.');
       }
     }
-    handleClose();
   }
 
   async function handleSuspender(e: Empresa) {
@@ -563,6 +556,11 @@ export default function Empresas() {
 
   const modalFooter = (
     <WizardNav>
+      {saveError && (
+        <div style={{ color: '#e53e3e', fontSize: '0.78rem', flex: 1, paddingRight: 12 }}>
+          {saveError}
+        </div>
+      )}
       {step > 1
         ? <Button variant="outline" onClick={prevStep}>← Voltar</Button>
         : <Button variant="outline" onClick={handleClose}>Cancelar</Button>

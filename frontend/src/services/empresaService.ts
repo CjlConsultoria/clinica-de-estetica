@@ -34,6 +34,7 @@ export interface EmpresaRequest {
   observacoes?: string;
   adminNome?: string;
   adminEmail?: string;
+  adminSenha?: string;
 }
 
 export async function listarEmpresas(): Promise<EmpresaAPI[]> {
