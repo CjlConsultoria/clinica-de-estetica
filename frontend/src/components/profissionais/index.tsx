@@ -1278,7 +1278,7 @@ export default function Profissionais() {
 
       <ConfirmModal
         isOpen={isDeleteOpen}
-        onClose={() => { setIsDeleteOpen(false); setProfissionalToDelete(null); }}
+        onCancel={() => { setIsDeleteOpen(false); setProfissionalToDelete(null); }}
         onConfirm={handleDelete}
         loading={deleteLoading}
         title="Excluir Profissional"

@@ -193,7 +193,7 @@ function mapLoteToStockItem(lote: LoteAPI): StockItem {
     fabricante:     lote.produtoFabricante         || '',
     dataFabricacao: lote.dataFabricacao            || '',
     dataEntrada:    lote.criadoEm ? new Date(lote.criadoEm).toISOString().substring(0, 10) : '',
-    statusLote:     lote.statusLote                || 'ativo',
+    statusLote:     lote.status                    || 'ativo',
   };
 }
 

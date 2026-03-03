@@ -18,6 +18,7 @@ export interface PacienteAPI {
   estado: string;
   convenio: string;
   numeroCarteirinha: string;
+  indicacao: string;        // ← adicionar
   observacoes: string;
   ativo: boolean;
   criadoEm: string;
@@ -40,6 +41,7 @@ export interface PacienteRequest {
   estado?: string;
   convenio?: string;
   numeroCarteirinha?: string;
+  indicacao?: string; 
   observacoes?: string;
 }
 

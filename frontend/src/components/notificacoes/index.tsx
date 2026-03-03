@@ -144,6 +144,8 @@ export default function Notificacoes() {
   const allowed = useRoleRedirect({ superAdminOnly: true });
   const { setUnreadCount } = useNotificacoesContext();
 
+  // ── Todos os hooks ANTES de qualquer return condicional ──────────────────────
+
   const [notifs,              setNotifs]             = useState<Notificacao[]>([]);
   const [tabTipo,             setTabTipo]            = useState<TabTipo>('todas');
   const [tabLida,             setTabLida]            = useState<'todas' | 'nao_lidas' | 'lidas'>('todas');
@@ -178,8 +180,6 @@ export default function Notificacoes() {
     }).catch(() => {});
   }, []);
 
-  if (!allowed) return null;
-
   const totalNaoLidas   = notifs.filter(n => !n.lida).length;
   const totalAlta       = notifs.filter(n => n.prioridade === 'alta' && !n.lida).length;
   const totalHoje       = notifs.filter(n => n.data.startsWith('Hoje')).length;
@@ -203,6 +203,11 @@ export default function Notificacoes() {
       return true;
     });
   }, [notifs, tabTipo, tabLida, filterPrioridade, search]);
+
+  // ── Guard condicional APÓS todos os hooks ────────────────────────────────────
+  if (!allowed) return null;
+
+  // ── Funções ──────────────────────────────────────────────────────────────────
 
   function marcarLida(id: number) {
     setNotifs(prev => prev.map(n => n.id === id ? { ...n, lida: true } : n));

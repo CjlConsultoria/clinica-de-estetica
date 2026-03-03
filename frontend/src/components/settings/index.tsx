@@ -231,6 +231,8 @@ function Modal({ open, title, children, onClose, footer }: any) {
 export default function Configuracoes() {
   const allowed = useRoleRedirect({ permission: 'configuracoes.read' });
 
+  // ── Todos os hooks ANTES de qualquer return condicional ──────────────────────
+
   const [active,      setActive]      = useState('plataforma');
   const [accentColor, setAccentColor] = useState('#BBA188');
   const [toast,       setToast]       = useState('');
@@ -257,8 +259,6 @@ export default function Configuracoes() {
 
   const [secToggles, setSecToggles] = useState({ twoFa: false, timeout: true, alertLogin: true, audit: true, twoFaAdmin: false });
 
-  if (!allowed) return null;
-
   const [editPlan,     setEditPlan]     = useState<{ name: string; price: string } | null>(null);
   const [confirmModal, setConfirmModal] = useState<{ title: string; msg: string; onConfirm: () => void } | null>(null);
   const [cancelModal,  setCancelModal]  = useState(false);
@@ -267,17 +267,12 @@ export default function Configuracoes() {
   const [perfil,       setPerfil]       = useState({ nome: 'Super Administrador', email: 'super.admin@aestheticos.com.br', telefone: '(11) 99999-0000', senha: '', senhaConfirm: '' });
   const [perfilErrors, setPerfilErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    buscarPerfil().then(u => {
-      setPerfil(prev => ({ ...prev, nome: u.nome || prev.nome, email: u.email || prev.email, telefone: u.telefone || prev.telefone }));
-      setPerfilSnapshot(prev => ({ ...prev, nome: u.nome || prev.nome, email: u.email || prev.email, telefone: u.telefone || prev.telefone }));
-    }).catch(() => {});
-  }, []);
   const [platform,     setPlatform]     = useState({ nome: 'AestheticOS', dominio: 'app.aestheticos.com.br', email: 'suporte@aestheticos.com.br', telefone: '(11) 99999-0000' });
   const [comissao,     setComissao]     = useState({ botox: '20', preenchimento: '20', bioestimulador: '15', fio: '18', skincare: '25', outros: '20', base: 'bruto', periodicidade: 'mensal' });
 
   const [isDirty,    setIsDirty]    = useState(false);
   const [pendingNav, setPendingNav] = useState<string | null>(null);
+
   const [platformSnapshot,     setPlatformSnapshot]     = useState({ nome: 'AestheticOS', dominio: 'app.aestheticos.com.br', email: 'suporte@aestheticos.com.br', telefone: '(11) 99999-0000' });
   const [accentColorSnapshot,  setAccentColorSnapshot]  = useState('#BBA188');
   const [perfilSnapshot,       setPerfilSnapshot]       = useState({ nome: 'Super Administrador', email: 'super.admin@aestheticos.com.br', telefone: '(11) 99999-0000', senha: '', senhaConfirm: '' });
@@ -287,7 +282,17 @@ export default function Configuracoes() {
   const [permsSnapshot,        setPermsSnapshot]        = useState<Record<string, string[]>>(() => Object.fromEntries(Object.entries(CARGO_PERMS).map(([k, v]) => [k, [...v]])));
   const [secSnapshot,          setSecSnapshot]          = useState({ twoFa: false, timeout: true, alertLogin: true, audit: true, twoFaAdmin: false });
 
-  function markDirty() { setIsDirty(true); }
+  useEffect(() => {
+    buscarPerfil().then(u => {
+      setPerfil(prev => ({ ...prev, nome: u.nome || prev.nome, email: u.email || prev.email, telefone: u.telefone || prev.telefone }));
+      setPerfilSnapshot(prev => ({ ...prev, nome: u.nome || prev.nome, email: u.email || prev.email, telefone: u.telefone || prev.telefone }));
+    }).catch(() => {});
+  }, []);
+
+  // ── Guard condicional APÓS todos os hooks ────────────────────────────────────
+  if (!allowed) return null;
+
+  // ── Funções ──────────────────────────────────────────────────────────────────
 
   function showToast(msg: string) {
     setToast(msg);
