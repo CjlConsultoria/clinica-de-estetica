@@ -30,7 +30,7 @@ import {
   ConsentimentoLastUpdateDate,
 } from './styles';
 import React, { useRef, useLayoutEffect, useEffect } from 'react';
-import { listarAssinaturas, listarTermos, AssinaturaAPI, TermoAPI } from '@/services/consentimentoService';
+import { listarAssinaturas, listarTermos, criarTermo, atualizarTermo, AssinaturaAPI, TermoAPI } from '@/services/consentimentoService';
 
 type TermoField =
   | 'paciente' | 'cpf' | 'nascimento' | 'procedimento' | 'dataProcedimento' | 'profissional' | 'email';
@@ -151,6 +151,8 @@ export default function Consentimento() {
   const [consentErrorModalOpen,   setConsentErrorModalOpen]   = useState(false);
   const [consentErrorMessage,     setConsentErrorMessage]     = useState('');
   const [termos, setTermos] = useState<Termo[]>(mockTermos);
+  const [currentTermoId,  setCurrentTermoId]  = useState<number | null>(null);
+  const [novoTermoError,  setNovoTermoError]  = useState<string | null>(null);
 
   const consentTextareaRef  = useRef<HTMLTextAreaElement>(null);
   const consentDisplayRef   = useRef<HTMLDivElement>(null);
@@ -208,6 +210,7 @@ export default function Consentimento() {
         if (termosAPI.length > 0) {
           const latest = termosAPI[termosAPI.length - 1] as TermoAPI;
           if (latest.conteudo) setConsentimentoText(latest.conteudo);
+          setCurrentTermoId(latest.id);
         }
        
         if (assinaturas.length > 0) {
@@ -264,16 +267,35 @@ export default function Consentimento() {
   async function handleConsentSaveConfirmed() {
     setConsentConfirmModalOpen(false);
     setIsSavingConsent(true);
-
-    await new Promise(r => setTimeout(r, 600));
-
-    const now = new Date();
-    const pad = (n: number) => String(n).padStart(2, '0');
-    setConsentLastDate(pad(now.getDate()) + '/' + pad(now.getMonth() + 1) + '/' + now.getFullYear());
-    setConsentLastTime(pad(now.getHours()) + ':' + pad(now.getMinutes()));
-    setIsEditingConsent(false);
-    setIsSavingConsent(false);
-    setConsentSucessModalOpen(true);
+    try {
+      let saved: TermoAPI;
+      if (currentTermoId) {
+        saved = await atualizarTermo(currentTermoId, {
+          titulo: 'Termo de Consentimento',
+          conteudo: consentimentoText,
+          versao: 'v2.1',
+        });
+      } else {
+        saved = await criarTermo({
+          titulo: 'Termo de Consentimento',
+          conteudo: consentimentoText,
+          versao: 'v2.1',
+        });
+      }
+      setCurrentTermoId(saved.id);
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      setConsentLastDate(pad(now.getDate()) + '/' + pad(now.getMonth() + 1) + '/' + now.getFullYear());
+      setConsentLastTime(pad(now.getHours()) + ':' + pad(now.getMinutes()));
+      setIsEditingConsent(false);
+      setConsentSucessModalOpen(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao salvar consentimento. Tente novamente.';
+      setConsentErrorMessage(msg);
+      setConsentErrorModalOpen(true);
+    } finally {
+      setIsSavingConsent(false);
+    }
   }
 
   const filtered = termos.filter(t => {
@@ -302,13 +324,48 @@ export default function Consentimento() {
     handleChange(field, `${(yearStr || '').slice(0, 4)}-${month ?? ''}-${day ?? ''}`);
   }
   function handleCancelClick() { isFormDirty(form) ? setShowCancelModal(true) : forceClose(); }
-  function forceClose() { setForm(FORM_INITIAL); clearAll(); setIsNovoOpen(false); setShowCancelModal(false); setShowConfirmModal(false); }
+  function forceClose() { setForm(FORM_INITIAL); clearAll(); setIsNovoOpen(false); setShowCancelModal(false); setShowConfirmModal(false); setNovoTermoError(null); }
   function handleSaveNovoClick() {
     const isValid = validate({ paciente: form.paciente, cpf: form.cpf, nascimento: form.nascimento, procedimento: form.procedimento, dataProcedimento: form.dataProcedimento, profissional: form.profissional, email: form.email });
     if (!isValid) return;
     setShowConfirmModal(true);
   }
-  function handleConfirmSave() { setShowConfirmModal(false); setIsNovoOpen(false); setForm(FORM_INITIAL); clearAll(); setShowSuccessModal(true); }
+  async function handleConfirmSave() {
+    setShowConfirmModal(false);
+    setNovoTermoError(null);
+    try {
+      const procedureLabel = procedureOptions.find(p => p.value === form.procedimento)?.label || form.procedimento;
+      const created = await criarTermo({
+        titulo: procedureLabel,
+        conteudo: consentimentoText,
+        versao: 'v2.1',
+      });
+      const now = new Date();
+      const formatBR = (d: Date) => d.toLocaleDateString('pt-BR');
+      const validadeDate = new Date(now);
+      validadeDate.setFullYear(validadeDate.getFullYear() + 1);
+      const novoTermo: Termo = {
+        id:           created.id,
+        paciente:     form.paciente,
+        procedimento: procedureLabel,
+        dataCriacao:  formatBR(now),
+        dataValidade: formatBR(validadeDate),
+        status:       'pendente',
+        assinadoEm:   null,
+        ip:           null,
+        profissional: form.profissional,
+        versao:       created.versao || 'v2.1',
+      };
+      setTermos(prev => [novoTermo, ...prev]);
+      setIsNovoOpen(false);
+      setForm(FORM_INITIAL);
+      clearAll();
+      setShowSuccessModal(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao gerar termo. Tente novamente.';
+      setNovoTermoError(msg);
+    }
+  }
 
   const handleBaixarPDF = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -538,6 +595,11 @@ export default function Consentimento() {
       />
 
       <Modal isOpen={isNovoOpen} onClose={handleCancelClick} closeOnOverlayClick={false} title="Novo Termo de Consentimento" size="md" footer={<><Button variant="outline" onClick={handleCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveNovoClick}>Gerar Termo</Button></>}>
+        {novoTermoError && (
+          <div style={{ margin: '0 0 14px', padding: '10px 14px', background: '#fdecea', border: '1px solid #f5c6cb', borderRadius: 8, color: '#c0392b', fontSize: '0.85rem' }}>
+            {novoTermoError}
+          </div>
+        )}
         <FormGrid>
           <div style={{ gridColumn: 'span 2' }}><Input label="Nome do Paciente *" placeholder="Nome completo do paciente..." value={form.paciente} onChange={e => handleChange('paciente', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))} maxLength={80} error={errors.paciente} /></div>
           <Input label="CPF *" mask="cpf" value={form.cpf} inputMode="numeric" maxLength={14} onValueChange={v => handleMaskedChange('cpf', v)} error={errors.cpf} />

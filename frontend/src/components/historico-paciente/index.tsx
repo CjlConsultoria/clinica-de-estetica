@@ -142,7 +142,7 @@ function todayInputDate(): string {
   return new Date().toISOString().split('T')[0];
 }
 
-import { listarPacientes, PacienteAPI } from '@/services/pacienteService';
+import { listarPacientes, criarPaciente, PacienteAPI } from '@/services/pacienteService';
 import { listarProntuariosPorPaciente, ProntuarioAPI } from '@/services/prontuarioService';
 
 const CARDS_PER_PAGE = 4;
@@ -207,6 +207,7 @@ export default function HistoricoPaciente() {
   const [showConfirmEditModal, setShowConfirmEditModal] = useState(false);
   const [showSuccessModal,     setShowSuccessModal]     = useState(false);
   const [successMessage,       setSuccessMessage]       = useState('');
+  const [saveNewError,         setSaveNewError]         = useState<string | null>(null);
 
   const {
     errors: pacienteErrors, validate: validatePaciente,
@@ -280,7 +281,7 @@ export default function HistoricoPaciente() {
   }
 
   function forceCloseNew() {
-    setForm(PACIENTE_INITIAL); clearPacienteAll();
+    setForm(PACIENTE_INITIAL); clearPacienteAll(); setSaveNewError(null);
     setIsNewOpen(false); setShowCancelNewModal(false); setShowConfirmNewModal(false);
   }
 
@@ -290,27 +291,28 @@ export default function HistoricoPaciente() {
     setShowConfirmNewModal(true);
   }
 
-  function handleConfirmNew() {
-    const newPatient: Patient = {
-      id:            Date.now(),
-      name:          form.nome,
-      phone:         form.telefone,
-      email:         form.email,
-      birthdate:     form.nascimento,
-      since:         new Date().toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }),
-      status:        'ativo',
-      totalSpent:    0,
-      totalSessions: 0,
-      lastVisit:     '—',
-      nextVisit:     null,
-      observations:  form.observacoes,
-      history:       [],
-    };
-    setPatients(prev => [newPatient, ...prev]);
+  async function handleConfirmNew() {
     setShowConfirmNewModal(false);
-    setIsNewOpen(false);
-    setSuccessMessage('Paciente cadastrado com sucesso!');
-    setShowSuccessModal(true);
+    setSaveNewError(null);
+    try {
+      const created = await criarPaciente({
+        nome:           form.nome,
+        cpf:            form.cpf.replace(/\D/g, ''),
+        dataNascimento: form.nascimento,
+        sexo:           'OUTRO',
+        telefone:       form.telefone,
+        email:          form.email,
+        observacoes:    form.observacoes || undefined,
+      });
+      setPatients(prev => [mapPacienteToPatient(created), ...prev]);
+      setIsNewOpen(false);
+      setSaveNewError(null);
+      setSuccessMessage('Paciente cadastrado com sucesso!');
+      setShowSuccessModal(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao cadastrar paciente. Tente novamente.';
+      setSaveNewError(msg);
+    }
   }
 
   function handleEditChange(field: keyof NovoPacienteForm, value: string) {
@@ -927,6 +929,11 @@ export default function HistoricoPaciente() {
           </div>
         }
       >
+        {saveNewError && (
+          <div style={{ marginBottom: 12, padding: '10px 14px', background: '#fdecea', border: '1px solid #f5c6cb', borderRadius: 8, color: '#c0392b', fontSize: '0.85rem' }}>
+            {saveNewError}
+          </div>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24, overflowY: 'auto', maxHeight: '65vh', paddingRight: 4 }}>
           <div>
             <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#BBA188', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '1px solid #f0ebe4', paddingBottom: 6, marginBottom: 12 }}>

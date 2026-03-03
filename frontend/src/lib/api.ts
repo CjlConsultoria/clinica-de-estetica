@@ -31,7 +31,14 @@ export async function apiFetch<T>(
     let errorMsg = `Erro ${response.status}`;
     try {
       const errorData = await response.json();
-      errorMsg = errorData.mensagem || errorData.message || errorMsg;
+      if (errorData.erros && typeof errorData.erros === 'object') {
+        const fieldErrors = Object.entries(errorData.erros as Record<string, string>)
+          .map(([field, msg]) => `${field}: ${msg}`)
+          .join(' | ');
+        errorMsg = fieldErrors || errorData.mensagem || errorMsg;
+      } else {
+        errorMsg = errorData.mensagem || errorData.message || errorMsg;
+      }
     } catch {}
     throw new Error(errorMsg);
   }

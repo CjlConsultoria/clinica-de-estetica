@@ -125,18 +125,18 @@ function mapApiToLote(l: LoteAPI): Lote {
     : ratio <= 0.2 ? 'critico' : 'ativo';
   return {
     id:                l.id,
-    lote:              l.numeroLote   || `L${l.id}`,
-    produto:           l.produto?.nome || '—',
-    categoria:         l.produto?.categoria || '—',
-    fabricante:        '—',
-    fornecedor:        l.fornecedor   || '—',
+    lote:              l.numeroLote          || `L${l.id}`,
+    produto:           l.produtoNome         || '—',
+    categoria:         l.produtoCategoria    || '—',
+    fabricante:        l.produtoFabricante   || '—',
+    fornecedor:        l.fornecedor          || '—',
     dataEntrada:       l.criadoEm ? new Date(l.criadoEm).toLocaleDateString('pt-BR') : '—',
-    dataFabricacao:    '—',
-    dataValidade:      l.dataValidade || '2099-12-31',
+    dataFabricacao:    l.dataFabricacao ? l.dataFabricacao.substring(0, 10) : '',
+    dataValidade:      l.dataValidade        || '2099-12-31',
     quantidadeEntrada: maxQty,
     quantidadeAtual:   qty,
-    unidade:           l.produto?.unidade || 'unid',
-    registroAnvisa:    '—',
+    unidade:           l.produtoUnidade      || 'unid',
+    registroAnvisa:    l.produtoRegistroAnvisa || '—',
     status,
     usos: [],
   };
@@ -251,19 +251,29 @@ export default function Lotes() {
     try {
       if (!selected) {
         const catLabel = categoryOptions.find(c => c.value === form.categoria)?.label ?? form.categoria;
-        const produto  = await criarProduto({ nome: form.produto, fabricante: form.fabricante || '—', categoria: catLabel, unidade: 'unid', descricao: form.produto });
+        const produto  = await criarProduto({
+          nome:           form.produto,
+          fabricante:     form.fabricante || '—',
+          categoria:      catLabel,
+          unidade:        'unid',
+          descricao:      form.produto,
+          registroAnvisa: form.registroAnvisa || undefined,
+        });
         await criarLote({
-          produtoId:        produto.id,
-          numeroLote:       form.lote,
-          quantidadeTotal:  parseInt(form.quantidadeEntrada, 10) || 1,
-          dataValidade:     form.dataValidade,
-          fornecedor:       form.fornecedor,
+          produtoId:       produto.id,
+          numeroLote:      form.lote,
+          quantidadeTotal: parseInt(form.quantidadeEntrada, 10) || 1,
+          dataValidade:    form.dataValidade,
+          dataFabricacao:  form.dataFabricacao || undefined,
+          fornecedor:      form.fornecedor,
         });
         fetchLotes();
       }
-    } catch {}
-    setIsModalOpen(false);
-    setForm(FORM_INITIAL); clearAll(); setSelected(null); setShowSuccessModal(true);
+      setIsModalOpen(false);
+      setForm(FORM_INITIAL); clearAll(); setSelected(null); setShowSuccessModal(true);
+    } catch (err: unknown) {
+      console.error('Erro ao salvar lote:', err);
+    }
   }
 
   return (
@@ -442,7 +452,7 @@ export default function Lotes() {
                 <DetailItem><DetailLabel>Categoria</DetailLabel><DetailValue>{selected.categoria}</DetailValue></DetailItem>
                 <DetailItem><DetailLabel>Fabricante</DetailLabel><DetailValue>{selected.fabricante}</DetailValue></DetailItem>
                 <DetailItem><DetailLabel>Fornecedor</DetailLabel><DetailValue>{selected.fornecedor}</DetailValue></DetailItem>
-                <DetailItem><DetailLabel>Data de Fabricação</DetailLabel><DetailValue>{selected.dataFabricacao}</DetailValue></DetailItem>
+                <DetailItem><DetailLabel>Data de Fabricação</DetailLabel><DetailValue>{selected.dataFabricacao ? formatDate(selected.dataFabricacao) : '—'}</DetailValue></DetailItem>
                 <DetailItem><DetailLabel>Data de Validade</DetailLabel><DetailValue $warn={isExpiringSoon(selected.dataValidade)}>{formatDate(selected.dataValidade)}</DetailValue></DetailItem>
                 <DetailItem><DetailLabel>Qtd. Entrada</DetailLabel><DetailValue>{selected.quantidadeEntrada} {selected.unidade}</DetailValue></DetailItem>
                 <DetailItem><DetailLabel>Qtd. Atual</DetailLabel><DetailValue $highlight>{selected.quantidadeAtual} {selected.unidade}</DetailValue></DetailItem>

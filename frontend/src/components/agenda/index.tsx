@@ -140,6 +140,7 @@ export default function Agenda() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage,   setSuccessMessage]   = useState('');
+  const [agendaError,      setAgendaError]      = useState<string | null>(null);
 
   const { errors, validate, clearError, clearAll } =
     useSequentialValidation<AgendamentoField>(VALIDATION_FIELDS);
@@ -191,46 +192,41 @@ export default function Agenda() {
     handleChange('data', `${(yearStr || '').slice(0, 4)}-${month ?? ''}-${day ?? ''}`);
   }
   function handleCancelClick() { isFormDirty(form) ? setShowCancelModal(true) : forceClose(); }
-  function forceClose() { setForm(FORM_INITIAL); clearAll(); setIsModalOpen(false); setShowCancelModal(false); setShowConfirmModal(false); }
+  function forceClose() { setForm(FORM_INITIAL); clearAll(); setAgendaError(null); setIsModalOpen(false); setShowCancelModal(false); setShowConfirmModal(false); }
   function handleSaveClick() {
     const isValid = validate({ nome: form.nome, telefone: form.telefone, data: form.data, horario: form.horario, procedimento: form.procedimento, status: form.status, valor: form.valor });
     if (!isValid) return;
     setShowConfirmModal(true);
   }
   async function handleConfirmSave() {
+    setShowConfirmModal(false);
+    setAgendaError(null);
     const procedureLabel = procedureOptions.find(p => p.value === form.procedimento)?.label ?? form.procedimento;
-    let added = false;
     try {
       const pacientesResult = await listarPacientes(form.nome, 0, 5);
       const paciente = (pacientesResult.content || [])[0];
-      if (paciente) {
-        const dataHora = `${form.data}T${form.horario}:00`;
-        const novoAgendamento = await criarAgendamento({
-          pacienteId:   paciente.id,
-          medicoId:     currentUser?.id ?? 1,
-          dataHora,
-          tipoConsulta: procedureLabel,
-          observacoes:  form.observacoes,
-        });
-        setEvents(prev => [...prev, mapAgendamentoToCalEvent(novoAgendamento)]);
-        added = true;
+      if (!paciente) {
+        setAgendaError(`Paciente "${form.nome}" não encontrado. Cadastre-o primeiro na tela de Pacientes.`);
+        return;
       }
-    } catch {}
-    if (!added) {
-      const novoEvento: CalEvent = {
-        id: nextId, weekDay: parseDayOfWeek(form.data), hour: parseHour(form.horario),
-        year: parseYear(form.data), month: parseMonth(form.data), monthDay: parseDayOfMonth(form.data),
-        name: form.nome, procedure: procedureLabel, color: PROCEDURE_COLOR[form.procedimento] ?? '#BBA188',
-      };
-      setEvents(prev => [...prev, novoEvento]);
-      setNextId(n => n + 1);
+      const dataHora = `${form.data}T${form.horario}:00`;
+      const novoAgendamento = await criarAgendamento({
+        pacienteId:   paciente.id,
+        medicoId:     currentUser?.id ?? 1,
+        dataHora,
+        tipoConsulta: procedureLabel,
+        observacoes:  form.observacoes,
+      });
+      setEvents(prev => [...prev, mapAgendamentoToCalEvent(novoAgendamento)]);
+      setIsModalOpen(false);
+      setSuccessMessage('Agendamento salvo com sucesso!');
+      setShowSuccessModal(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao salvar agendamento. Tente novamente.';
+      setAgendaError(msg);
     }
-    setShowConfirmModal(false);
-    setIsModalOpen(false);
-    setSuccessMessage('Agendamento salvo com sucesso!');
-    setShowSuccessModal(true);
   }
-  function handleSuccessClose() { setShowSuccessModal(false); setSuccessMessage(''); setForm(FORM_INITIAL); clearAll(); }
+  function handleSuccessClose() { setShowSuccessModal(false); setSuccessMessage(''); setAgendaError(null); setForm(FORM_INITIAL); clearAll(); }
 
   return (
     <Container>
@@ -308,6 +304,11 @@ export default function Agenda() {
       <Modal isOpen={isModalOpen} onClose={handleCancelClick} closeOnOverlayClick={false} title="Novo Agendamento" size="md"
         footer={<><Button variant="outline" onClick={handleCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveClick}>Salvar Agendamento</Button></>}
       >
+        {agendaError && (
+          <div style={{ marginBottom: 14, padding: '10px 14px', background: '#fdecea', border: '1px solid #f5c6cb', borderRadius: 8, color: '#c0392b', fontSize: '0.85rem' }}>
+            {agendaError}
+          </div>
+        )}
         <FormGrid>
           <Input label="Nome do Paciente *" placeholder="Digite o nome..." value={form.nome} onChange={e => handleChange('nome', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))} maxLength={80} error={errors.nome} />
           <Input label="Telefone *" mask="telefone" value={form.telefone} inputMode="numeric" maxLength={15} onValueChange={v => handleMaskedChange('telefone', v)} error={errors.telefone} />

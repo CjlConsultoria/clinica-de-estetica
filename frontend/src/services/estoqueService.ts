@@ -14,7 +14,15 @@ export interface ProdutoAPI {
 
 export interface LoteAPI {
   id: number;
-  produto: ProdutoAPI;
+  produtoId: number;
+  produtoNome: string;
+  produtoCategoria: string;
+  produtoUnidade: string;
+  produtoFabricante: string;
+  produtoRegistroAnvisa: string;
+  produtoEstoqueMinimo: number | null;
+  produtoEstoqueMaximo: number | null;
+  produtoPrecoUnitario: number | null;
   numeroLote: string;
   dataFabricacao: string;
   dataValidade: string;
@@ -34,6 +42,9 @@ export interface ProdutoRequest {
   unidade: string;
   registroAnvisa?: string;
   descricao?: string;
+  estoqueMinimo?: number;
+  estoqueMaximo?: number;
+  precoUnitario?: number;
 }
 
 export interface LoteRequest {

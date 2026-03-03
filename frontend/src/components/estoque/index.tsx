@@ -157,21 +157,29 @@ interface StockItem {
 
 function mapLoteToStockItem(lote: LoteAPI): StockItem {
   const qty    = lote.quantidadeAtual ?? 0;
-  const maxQty = lote.quantidadeTotal ?? 1;
-  const ratio  = qty / Math.max(maxQty, 1);
-  const status = qty === 0 ? 'esgotado' : ratio <= 0.2 ? 'critico' : ratio <= 0.5 ? 'baixo' : 'normal';
+  const minQty = lote.produtoEstoqueMinimo ?? 0;
+  const maxQty = lote.produtoEstoqueMaximo ?? lote.quantidadeTotal ?? 1;
+  let status: string;
+  if (qty === 0) {
+    status = 'esgotado';
+  } else if (minQty > 0) {
+    status = qty <= Math.floor(minQty / 2) ? 'critico' : qty <= minQty ? 'baixo' : 'normal';
+  } else {
+    const ratio = qty / Math.max(lote.quantidadeTotal ?? 1, 1);
+    status = ratio <= 0.2 ? 'critico' : ratio <= 0.5 ? 'baixo' : 'normal';
+  }
   return {
     id:         lote.id,
-    code:       lote.numeroLote || `L${lote.id}`,
-    name:       lote.produto?.nome || '—',
-    category:   lote.produto?.categoria || '—',
+    code:       lote.numeroLote                   || `L${lote.id}`,
+    name:       lote.produtoNome                  || '—',
+    category:   lote.produtoCategoria             || '—',
     quantity:   qty,
-    minStock:   0,
+    minStock:   minQty,
     maxStock:   maxQty,
-    unit:       lote.produto?.unidade || 'unid',
-    price:      0,
-    expiryDate: lote.dataValidade || '',
-    supplier:   lote.fornecedor || '',
+    unit:       lote.produtoUnidade               || 'unid',
+    price:      lote.produtoPrecoUnitario         ?? 0,
+    expiryDate: lote.dataValidade                 || '',
+    supplier:   lote.fornecedor                   || '',
     status,
   };
 }
@@ -211,6 +219,7 @@ export default function Estoque() {
   const [showMovConfirmModal,  setShowMovConfirmModal]  = useState(false);
   const [showMovSuccessModal,  setShowMovSuccessModal]  = useState(false);
   const [itemForm, setItemForm] = useState<ItemForm>(ITEM_INITIAL);
+  const [itemSaveError, setItemSaveError] = useState<string | null>(null);
   const { errors: itemErrors, validate: itemValidate, clearError: itemClearError, clearAll: itemClearAll } = useSequentialValidation<ItemField>(ITEM_VALIDATION_FIELDS);
   const [movForm, setMovForm] = useState<MovForm>(MOV_INITIAL);
   const { errors: movErrors, validate: movValidate, clearError: movClearError, clearAll: movClearAll } = useSequentialValidation<MovField>(MOV_VALIDATION_FIELDS);
@@ -253,7 +262,7 @@ export default function Estoque() {
     if (isItemFormDirty(itemForm)) { setShowItemCancelModal(true); } else { forceCloseItemModal(); }
   }
   function forceCloseItemModal() {
-    setItemForm(ITEM_INITIAL); itemClearAll(); setIsModalOpen(false); setSelected(null); setShowItemCancelModal(false);
+    setItemForm(ITEM_INITIAL); itemClearAll(); setIsModalOpen(false); setSelected(null); setShowItemCancelModal(false); setItemSaveError(null);
   }
   function handleSaveItemClick() {
     const isValid = itemValidate({ nome: itemForm.nome, codigo: itemForm.codigo, categoria: itemForm.categoria, unidade: itemForm.unidade, quantidade: itemForm.quantidade, minimo: itemForm.minimo, maximo: itemForm.maximo, preco: itemForm.preco, fornecedor: itemForm.fornecedor, validade: itemForm.validade });
@@ -262,19 +271,21 @@ export default function Estoque() {
   }
   async function handleConfirmSaveItem() {
     setShowItemConfirmModal(false);
+    setItemSaveError(null);
     try {
+      const produtoPayload = {
+        nome:          itemForm.nome,
+        fabricante:    itemForm.fornecedor,
+        categoria:     categoryOptions.find(c => c.value === itemForm.categoria)?.label || itemForm.categoria,
+        unidade:       itemForm.unidade,
+        estoqueMinimo: itemForm.minimo  ? Number(itemForm.minimo)  : undefined,
+        estoqueMaximo: itemForm.maximo  ? Number(itemForm.maximo)  : undefined,
+        precoUnitario: itemForm.preco   ? Number(itemForm.preco)   : undefined,
+      };
       if (selected) {
-        await atualizarProduto(selected.id, {
-          nome: itemForm.nome, fabricante: itemForm.fornecedor,
-          categoria: categoryOptions.find(c => c.value === itemForm.categoria)?.label || itemForm.categoria,
-          unidade: itemForm.unidade,
-        });
+        await atualizarProduto(selected.id, produtoPayload);
       } else {
-        const produto = await criarProduto({
-          nome: itemForm.nome, fabricante: itemForm.fornecedor,
-          categoria: categoryOptions.find(c => c.value === itemForm.categoria)?.label || itemForm.categoria,
-          unidade: itemForm.unidade,
-        });
+        const produto = await criarProduto(produtoPayload);
         await criarLote({
           produtoId:       produto.id,
           numeroLote:      itemForm.codigo,
@@ -285,8 +296,15 @@ export default function Estoque() {
       }
       const lotes = await listarLotes();
       setEstoque(lotes.map(mapLoteToStockItem));
-    } catch {}
-    setIsModalOpen(false); setItemForm(ITEM_INITIAL); itemClearAll(); setSelected(null); setShowItemSuccessModal(true);
+      setIsModalOpen(false);
+      setItemForm(ITEM_INITIAL);
+      itemClearAll();
+      setSelected(null);
+      setShowItemSuccessModal(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao salvar item. Tente novamente.';
+      setItemSaveError(msg);
+    }
   }
 
   function handleMovChange(field: MovField, value: string) { setMovForm(prev => ({ ...prev, [field]: value })); movClearError(field); }
@@ -431,6 +449,11 @@ export default function Estoque() {
       )}
 
       <Modal isOpen={isModalOpen} onClose={handleItemCancelClick} closeOnOverlayClick={false} title={selected ? 'Editar Item' : 'Novo Item de Estoque'} size="md" footer={<><Button variant="outline" onClick={handleItemCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveItemClick}>Salvar</Button></>}>
+        {itemSaveError && (
+          <div style={{ margin: '0 0 14px', padding: '10px 14px', background: '#fdecea', border: '1px solid #f5c6cb', borderRadius: 8, color: '#c0392b', fontSize: '0.85rem' }}>
+            {itemSaveError}
+          </div>
+        )}
         <FormGrid>
           <div style={{ gridColumn: 'span 2' }}><Input label="Nome do Item *" placeholder="Ex: Toxina Botulínica Allergan..." value={itemForm.nome} onChange={e => handleItemChange('nome', e.target.value)} maxLength={120} error={itemErrors.nome} /></div>
           <Input label="Código *" placeholder="Ex: BTX-001" value={itemForm.codigo} onChange={e => handleItemChange('codigo', e.target.value.toUpperCase())} maxLength={30} error={itemErrors.codigo} />

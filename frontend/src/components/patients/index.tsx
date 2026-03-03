@@ -229,6 +229,7 @@ export default function Patients() {
   const [showCancelModal,  setShowCancelModal]  = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [saveError,        setSaveError]        = useState<string | null>(null);
 
   const step1Validation = useSequentialValidation<Step1Field>([
     { key: 'nome',       validate: (v) => !v.trim() ? 'Nome completo é obrigatório'      : null },
@@ -398,7 +399,7 @@ export default function Patients() {
   }
 
   function forceClose() {
-    setForm(FORM_INITIAL); clearAllErrors(); setCepError('');
+    setForm(FORM_INITIAL); clearAllErrors(); setCepError(''); setSaveError(null);
     setIsModalOpen(false); setSelectedPatient(null); setIsEditing(false);
     setStep(1); setShowCancelModal(false); setShowConfirmModal(false);
   }
@@ -410,13 +411,14 @@ export default function Patients() {
 
   async function handleConfirmSave() {
     setShowConfirmModal(false);
+    setSaveError(null);
 
     const pacienteRequest = {
       nome:              form.nome,
       email:             form.email,
       telefone:          form.telefone,
       dataNascimento:    form.nascimento,
-      cpf:               form.cpf,
+      cpf:               form.cpf.replace(/\D/g, ''),
       sexo:              mapSexoToBackend(form.sexo),
       cep:               form.cep || undefined,
       logradouro:        form.logradouro || undefined,
@@ -441,17 +443,16 @@ export default function Patients() {
         setPatients(prev => [mapApiToPatient(created), ...prev]);
       }
       await fetchPatients();
-    } catch (err) {
-      console.error('Erro ao salvar paciente:', err);
-      try { await fetchPatients(); } catch {}
+      setIsModalOpen(false);
+      setShowSuccessModal(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao salvar paciente. Tente novamente.';
+      setSaveError(msg);
     }
-
-    setIsModalOpen(false);
-    setShowSuccessModal(true);
   }
 
   function handleSuccessClose() {
-    setShowSuccessModal(false); setForm(FORM_INITIAL);
+    setShowSuccessModal(false); setSaveError(null); setForm(FORM_INITIAL);
     clearAllErrors(); setCepError(''); setSelectedPatient(null); setIsEditing(false); setStep(1);
   }
 
@@ -961,6 +962,11 @@ export default function Patients() {
           })}
         </WizardSteps>
 
+        {saveError && (
+          <div style={{ margin: '0 0 12px', padding: '10px 14px', background: '#fdecea', border: '1px solid #f5c6cb', borderRadius: 8, color: '#c0392b', fontSize: '0.85rem' }}>
+            {saveError}
+          </div>
+        )}
         <div style={{ overflowY: 'auto', maxHeight: '60vh', paddingRight: 4 }}>
           {renderStepContent()}
         </div>
