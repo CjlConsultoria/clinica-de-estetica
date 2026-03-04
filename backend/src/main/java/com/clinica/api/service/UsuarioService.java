@@ -39,12 +39,12 @@ public class UsuarioService {
     public List<UsuarioResponse> listarTodos() {
         Long empresaId = getEmpresaId();
         if (empresaId != null) {
-            return usuarioRepository.findByEmpresaIdAndCargoNotNull(empresaId).stream()
+            return usuarioRepository.findByEmpresaIdAndCargoNotNullAndAtivoTrue(empresaId).stream()
                     .map(this::toResponse)
                     .toList();
         }
         return usuarioRepository.findAll().stream()
-                .filter(u -> u.getCargo() != null)
+                .filter(u -> u.getCargo() != null && u.isAtivo())
                 .map(this::toResponse)
                 .toList();
     }
@@ -175,9 +175,22 @@ public class UsuarioService {
     }
 
     @Transactional
+    public void deletar(Long id) {
+        findById(id);
+        usuarioRepository.deleteById(id);
+    }
+
+    @Transactional
     public void inativar(Long id) {
         Usuario usuario = findById(id);
         usuario.setAtivo(false);
+        usuarioRepository.save(usuario);
+    }
+
+    @Transactional
+    public void ativar(Long id) {
+        Usuario usuario = findById(id);
+        usuario.setAtivo(true);
         usuarioRepository.save(usuario);
     }
 

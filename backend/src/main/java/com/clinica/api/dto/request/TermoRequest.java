@@ -14,4 +14,8 @@ public class TermoRequest {
 
     @NotBlank(message = "Versão é obrigatória")
     private String versao;
+
+    private String pacienteNome;
+
+    private String profissionalNome;
 }

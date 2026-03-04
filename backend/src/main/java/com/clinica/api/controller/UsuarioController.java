@@ -77,8 +77,20 @@ public class UsuarioController {
     }
 
     @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+        usuarioService.deletar(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/inativar")
     public ResponseEntity<Void> inativar(@PathVariable Long id) {
         usuarioService.inativar(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/ativar")
+    public ResponseEntity<Void> ativar(@PathVariable Long id) {
+        usuarioService.ativar(id);
         return ResponseEntity.noContent().build();
     }
 }

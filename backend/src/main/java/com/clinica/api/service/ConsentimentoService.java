@@ -67,6 +67,8 @@ public class ConsentimentoService {
                 .conteudo(request.getConteudo())
                 .versao(request.getVersao())
                 .empresaId(getEmpresaId())
+                .pacienteNome(request.getPacienteNome())
+                .profissionalNome(request.getProfissionalNome())
                 .build();
         return toTermoResponse(termoRepository.save(termo));
     }
@@ -164,7 +166,11 @@ public class ConsentimentoService {
                 .conteudo(t.getConteudo())
                 .versao(t.getVersao())
                 .ativo(t.isAtivo())
+                .pacienteNome(t.getPacienteNome())
+                .profissionalNome(t.getProfissionalNome())
+                .assinado(!t.getAssinaturas().isEmpty())
                 .criadoEm(t.getCriadoEm())
+                .atualizadoEm(t.getAtualizadoEm())
                 .build();
     }
 
