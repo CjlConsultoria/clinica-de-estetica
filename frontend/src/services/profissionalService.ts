@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
+import { apiGet, apiPost, apiPut, apiPatch, apiDelete } from '@/lib/api';
 
 export interface ProfissionalAPI {
   id: number;
@@ -29,6 +29,7 @@ export interface ProfissionalRequest {
   registro?: string;
   observacoes?: string;
   empresaId?: number;
+  ativo?: boolean;
 }
 
 export async function listarProfissionais(): Promise<ProfissionalAPI[]> {
@@ -56,7 +57,15 @@ export async function atualizarProfissional(id: number, data: ProfissionalReques
 }
 
 export async function inativarProfissional(id: number): Promise<void> {
+  return apiPatch<void>(`/api/usuarios/${id}/inativar`);
+}
+
+export async function deletarProfissional(id: number): Promise<void> {
   return apiDelete(`/api/usuarios/${id}`);
+}
+
+export async function ativarProfissional(id: number): Promise<void> {
+  return apiPatch<void>(`/api/usuarios/${id}/ativar`);
 }
 
 export async function buscarPerfil(): Promise<ProfissionalAPI> {

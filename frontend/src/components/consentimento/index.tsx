@@ -239,8 +239,10 @@ export default function Consentimento() {
           listarTermos(true),
         ]);
 
-        if (termosAPI.length > 0) {
-          const latest = termosAPI[termosAPI.length - 1] as TermoAPI;
+        // Template terms (no pacienteNome) — use latest for consent text editor
+        const templateTermos = termosAPI.filter((t: TermoAPI) => !t.pacienteNome);
+        if (templateTermos.length > 0) {
+          const latest = templateTermos[templateTermos.length - 1];
           if (latest.conteudo) setConsentimentoText(latest.conteudo);
           setCurrentTermoId(latest.id);
           if (latest.atualizadoEm) {
@@ -253,25 +255,30 @@ export default function Consentimento() {
           setConsentimentoText(DEFAULT_CONSENTIMENTO_TEXT);
         }
 
-        if (assinaturas.length > 0) {
-          const mapped = assinaturas.map((a: AssinaturaAPI) => ({
-            id:           a.id,
-            paciente:     a.pacienteNome || `Paciente #${a.pacienteId}`,
-            procedimento: a.termoTitulo  || 'Consentimento',
-            dataCriacao:  a.criadoEm ? new Date(a.criadoEm).toLocaleDateString('pt-BR') : '—',
-            dataValidade: a.dataAssinatura
-              ? new Date(new Date(a.dataAssinatura).setFullYear(new Date(a.dataAssinatura).getFullYear() + 1)).toLocaleDateString('pt-BR')
-              : '—',
-            status:       'assinado',
-            assinadoEm:   a.dataAssinatura ? new Date(a.dataAssinatura).toLocaleString('pt-BR') : null,
-            ip:           a.ipOrigem || null,
-            profissional: '—',
-            versao:       'v2.1',
-          })) as Termo[];
-          setTermos(mapped);
-        } else {
-          setTermos([]);
-        }
+        // Patient-specific terms → populate the table
+        const patientTermos = termosAPI.filter((t: TermoAPI) => !!t.pacienteNome);
+        const assinaturaMap = new Map<number, AssinaturaAPI>();
+        assinaturas.forEach((a: AssinaturaAPI) => assinaturaMap.set(a.termoId, a));
+
+        const mapped: Termo[] = patientTermos.map((t: TermoAPI) => {
+          const assinatura = assinaturaMap.get(t.id);
+          const criadoDate = t.criadoEm ? new Date(t.criadoEm) : new Date();
+          const validadeDate = new Date(criadoDate);
+          validadeDate.setFullYear(validadeDate.getFullYear() + 1);
+          return {
+            id:           t.id,
+            paciente:     t.pacienteNome || '—',
+            procedimento: t.titulo,
+            dataCriacao:  criadoDate.toLocaleDateString('pt-BR'),
+            dataValidade: validadeDate.toLocaleDateString('pt-BR'),
+            status:       assinatura ? 'assinado' : 'pendente',
+            assinadoEm:   assinatura ? new Date(assinatura.dataAssinatura).toLocaleString('pt-BR') : null,
+            ip:           assinatura?.ipOrigem || null,
+            profissional: t.profissionalNome || '—',
+            versao:       t.versao || 'v2.1',
+          };
+        });
+        setTermos(mapped);
       } catch {
         setTermos([]);
       } finally {
@@ -425,6 +432,8 @@ export default function Consentimento() {
         titulo: procedureLabel,
         conteudo: consentimentoText,
         versao: 'v2.1',
+        pacienteNome: form.paciente,
+        profissionalNome: form.profissional,
       });
       const now = new Date();
       const formatBR = (d: Date) => d.toLocaleDateString('pt-BR');

@@ -150,7 +150,7 @@ function prontuarioToHistoryItem(p: ProntuarioAPI): HistoryItem {
 
   const procedureMatch  = anamnese.match(/Procedimento:\s*([^.]+)\./);
   const quantidadeMatch = anamnese.match(/Quantidade:\s*([^.]+)\./);
-  const valorMatch      = anamnese.match(/Valor:\s*([^.]+)\./);
+  const valorMatch      = anamnese.match(/Valor:\s*(R\$\s*[\d.,]+)\./);
   const loteMatch       = anamnese.match(/Lote ANVISA:\s*([^.]+)\./);
 
   const procedure = procedureMatch?.[1]?.trim()  || 'Procedimento';

@@ -32,7 +32,10 @@ import {
   criarProfissional,
   atualizarProfissional,
   inativarProfissional,
+  ativarProfissional,
+  deletarProfissional,
 } from '@/services/profissionalService';
+import { buscarComissaoConfig, salvarComissaoConfig } from '@/services/comissaoService';
 import { listarEmpresas, EmpresaAPI } from '@/services/empresaService';
 import { useAuth } from '@/contexts/AuthContext';
 import ConfirmModal from '@/components/modals/confirmModal';
@@ -288,6 +291,7 @@ interface ProfissionalForm {
   useCustomPermissions: boolean;
   customPermissions: Permission[];
   empresaId: string;
+  percentualComissao: string;
 }
 
 const FORM_INITIAL: ProfissionalForm = {
@@ -297,6 +301,7 @@ const FORM_INITIAL: ProfissionalForm = {
   useCustomPermissions: false,
   customPermissions: [],
   empresaId: '',
+  percentualComissao: '',
 };
 
 type Step1Field = 'nome' | 'email' | 'telefone' | 'empresaId';
@@ -395,6 +400,7 @@ export default function Profissionais() {
   const [isModalOpen,          setIsModalOpen]          = useState(false);
   const [isDetailOpen,         setIsDetailOpen]         = useState(false);
   const [isDeleteOpen,         setIsDeleteOpen]         = useState(false);
+  const [deleteError,          setDeleteError]          = useState<string | null>(null);
   const [isSuccessOpen,        setIsSuccessOpen]        = useState(false);
   const [profissionalToDelete, setProfissionalToDelete] = useState<Profissional | null>(null);
   const [selectedProfissional, setSelectedProfissional] = useState<Profissional | null>(null);
@@ -571,9 +577,14 @@ export default function Profissionais() {
     setForm(FORM_INITIAL); clearAllErrors(); setStep(1); setIsModalOpen(true);
   }
 
-  function openEdit(p: Profissional) {
+  async function openEdit(p: Profissional) {
     if (!canEdit) return;
     setIsEditing(true); setSelectedProfissional(p);
+    let percentualComissao = '';
+    if (p.area === 'tecnica') {
+      const config = await buscarComissaoConfig(p.id);
+      if (config?.percentualPadrao != null) percentualComissao = String(config.percentualPadrao);
+    }
     setForm({
       nome: p.name, email: p.email, telefone: p.phone,
       area: p.area as AreaType, cargo: p.cargo as Cargo,
@@ -583,6 +594,7 @@ export default function Profissionais() {
       useCustomPermissions: p.customPermissions !== null,
       customPermissions: p.customPermissions ?? [],
       empresaId: '',
+      percentualComissao,
     });
     clearAllErrors(); setStep(1); setIsDetailOpen(false); setIsModalOpen(true);
   }
@@ -606,13 +618,16 @@ export default function Profissionais() {
     if (!profissionalToDelete) return;
     try {
       setDeleteLoading(true);
-      await inativarProfissional(profissionalToDelete.id);
+      setDeleteError(null);
+      await deletarProfissional(profissionalToDelete.id);
       await fetchProfissionais();
       setIsDeleteOpen(false);
       setProfissionalToDelete(null);
+      setDeleteError(null);
       setIsSuccessOpen(true);
     } catch (err: any) {
-      console.error('[Profissionais] Erro ao excluir:', err);
+      const msg = err?.message || 'Erro ao excluir profissional. Tente novamente.';
+      setDeleteError(msg);
     } finally {
       setDeleteLoading(false);
     }
@@ -642,8 +657,18 @@ export default function Profissionais() {
         if (form.senha) payload.senha = form.senha;
 
         await atualizarProfissional(selectedProfissional.id, payload as any);
+
+        if (form.status === 'ativo' && selectedProfissional.status === 'inativo') {
+          await ativarProfissional(selectedProfissional.id);
+        } else if (form.status === 'inativo' && selectedProfissional.status === 'ativo') {
+          await inativarProfissional(selectedProfissional.id);
+        }
+
+        if (form.area === 'tecnica' && form.percentualComissao) {
+          await salvarComissaoConfig(selectedProfissional.id, parseFloat(form.percentualComissao));
+        }
       } else {
-        await criarProfissional({
+        const created = await criarProfissional({
           nome:          form.nome,
           email:         form.email,
           senha:         form.senha,
@@ -654,6 +679,10 @@ export default function Profissionais() {
           observacoes:   form.observacoes || undefined,
           empresaId:     form.empresaId ? Number(form.empresaId) : undefined,
         });
+
+        if (form.area === 'tecnica' && form.percentualComissao) {
+          await salvarComissaoConfig(created.id, parseFloat(form.percentualComissao));
+        }
       }
 
       await fetchProfissionais();
@@ -774,7 +803,17 @@ export default function Profissionais() {
                   )}
                 </div>
               )}
-              <div style={{ gridColumn: 'span 2' }}>
+              {form.area === 'tecnica' && (
+                <div>
+                  <Input label="% de Comissão" type="number" placeholder="Ex: 20"
+                    inputMode="numeric" value={form.percentualComissao}
+                    onChange={e => {
+                      const v = e.target.value;
+                      if (v === '' || (Number(v) >= 0 && Number(v) <= 100)) handleChange('percentualComissao', v);
+                    }} />
+                </div>
+              )}
+              <div style={{ gridColumn: form.area === 'tecnica' ? 'auto' : 'span 2' }}>
                 <Input label="Observações" placeholder="Informações adicionais sobre o profissional..."
                   maxLength={300} value={form.observacoes} onChange={e => handleChange('observacoes', e.target.value)} />
               </div>
@@ -1147,7 +1186,7 @@ export default function Profissionais() {
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </IconBtn>
                       )}
-                      {canEdit && (
+                      {canDelete && (
                         <IconBtn
                           title="Excluir"
                           onClick={() => openDeleteConfirm(p)}
@@ -1278,11 +1317,17 @@ export default function Profissionais() {
 
       <ConfirmModal
         isOpen={isDeleteOpen}
-        onCancel={() => { setIsDeleteOpen(false); setProfissionalToDelete(null); }}
+        onCancel={() => { setIsDeleteOpen(false); setProfissionalToDelete(null); setDeleteError(null); }}
         onConfirm={handleDelete}
         loading={deleteLoading}
         title="Excluir Profissional"
-        message={profissionalToDelete ? `Tem certeza que deseja excluir o profissional "${profissionalToDelete.name}"? Esta ação irá desativar o acesso ao sistema e não pode ser desfeita.` : ''}
+        message={
+          deleteError
+            ? `Erro: ${deleteError}`
+            : profissionalToDelete
+              ? `Tem certeza que deseja excluir o profissional "${profissionalToDelete.name}"? Esta ação irá desativar o acesso ao sistema e não pode ser desfeita.`
+              : ''
+        }
       />
       <SucessModal
         isOpen={isSuccessOpen}

@@ -35,7 +35,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
 
   gerente: [
     'dashboard.read',
-    'profissionais.read', 'profissionais.create', 'profissionais.edit',
+    'profissionais.read', 'profissionais.create', 'profissionais.edit', 'profissionais.delete',
     'agenda.read', 'agenda.read_own', 'agenda.create', 'agenda.edit', 'agenda.delete',
     'pacientes.read', 'pacientes.create', 'pacientes.edit',
     'prontuario.read', 'prontuario.read_own',

@@ -6,6 +6,9 @@ export interface TermoAPI {
   conteudo: string;
   versao: string;
   ativo: boolean;
+  pacienteNome: string | null;
+  profissionalNome: string | null;
+  assinado: boolean;
   criadoEm: string;
   atualizadoEm: string;
 }
@@ -26,6 +29,8 @@ export interface TermoRequest {
   titulo: string;
   conteudo: string;
   versao: string;
+  pacienteNome?: string;
+  profissionalNome?: string;
 }
 
 export async function listarTermos(apenasAtivos = false): Promise<TermoAPI[]> {
