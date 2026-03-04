@@ -15,6 +15,7 @@ export interface ComunicadoAPI {
   atualizadoEm: string;
   lidasCount: number;
   totalDestinatarios: number;
+  lido: boolean;
 }
 
 export interface ComunicadoRequest {

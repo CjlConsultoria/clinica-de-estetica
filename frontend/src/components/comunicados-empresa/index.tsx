@@ -83,7 +83,7 @@ export default function ComunicadosEmpresa() {
                     ? (c.tipo || '').toLowerCase()
                     : 'novidade') as Tipo,
         dataEnvio: c.criadoEm ? new Date(c.criadoEm).toLocaleDateString('pt-BR') : '—',
-        lido:      false,
+        lido:      c.lido ?? false,
       }));
       if (mapped.length > 0) setComunicados(mapped);
     }).catch(() => {});

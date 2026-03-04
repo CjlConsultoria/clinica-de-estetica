@@ -74,6 +74,21 @@ export async function inativarProduto(id: number): Promise<void> {
   return apiDelete(`/api/produtos/${id}`);
 }
 
+export async function inativarLote(id: number): Promise<void> {
+  return apiDelete(`/api/estoque/lotes/${id}`);
+}
+
+export interface AnvisaResult {
+  valido: boolean;
+  produto?: string;
+  mensagem: string;
+}
+
+export async function consultarAnvisa(registro: string): Promise<AnvisaResult> {
+  const res = await fetch(`/api/anvisa/validar?registro=${encodeURIComponent(registro)}`);
+  return res.json();
+}
+
 export async function listarLotes(produtoId?: number): Promise<LoteAPI[]> {
   const query = produtoId ? `?produtoId=${produtoId}` : '';
   return apiGet<LoteAPI[]>(`/api/estoque/lotes${query}`);

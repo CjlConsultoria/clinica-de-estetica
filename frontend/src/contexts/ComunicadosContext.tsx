@@ -19,8 +19,8 @@ const ComunicadosContext = createContext<ComunicadosContextValue>({
 });
 
 export function ComunicadosProvider({ children }: { children: ReactNode }) {
-  const [readIds,   setReadIds]   = useState<Set<number>>(new Set());
-  const [totalIds,  setTotalIds]  = useState<number[]>([]);
+  const [readIds,  setReadIds]  = useState<Set<number>>(new Set());
+  const [totalIds, setTotalIds] = useState<number[]>([]);
   const { user } = useAuth();
 
   const refreshComunicados = useCallback(async () => {
@@ -28,6 +28,7 @@ export function ComunicadosProvider({ children }: { children: ReactNode }) {
       const data = await listarComunicados();
       const ativos = (data ?? []).filter(c => c.ativo);
       setTotalIds(ativos.map(c => c.id));
+      setReadIds(new Set(ativos.filter(c => c.lido).map(c => c.id)));
     } catch {
     }
   }, []);

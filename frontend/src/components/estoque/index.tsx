@@ -13,7 +13,7 @@ import SucessModal from '@/components/modals/sucessModal';
 import { useSequentialValidation } from '@/components/ui/hooks/useSequentialValidation';
 import { usePermissions } from '@/components/ui/hooks/usePermissions';
 import AccessDenied from '@/components/ui/AccessDenied';
-import { criarProduto, atualizarProduto, inativarProduto, listarLotes, criarLote, LoteAPI } from '@/services/estoqueService';
+import { criarProduto, atualizarProduto, inativarLote, listarLotes, criarLote, LoteAPI } from '@/services/estoqueService';
 import {
   Container, Header, Title, Controls, SearchBarWrapper, SearchIconWrap, SearchInputStyled,
   FilterRow, DropdownWrapper, DropdownBtn, DropdownList, DropdownItem, ClearFilterBtn,
@@ -237,6 +237,7 @@ export default function Estoque() {
   const [isDeleteOpen,     setIsDeleteOpen]     = useState(false);
   const [itemToDelete,     setItemToDelete]     = useState<StockItem | null>(null);
   const [deleteLoading,    setDeleteLoading]    = useState(false);
+  const [deleteError,      setDeleteError]      = useState<string | null>(null);
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [estoque,          setEstoque]          = useState<StockItem[]>([]);
   const [loading,          setLoading]          = useState(true);
@@ -363,21 +364,24 @@ export default function Estoque() {
 
   function openDeleteConfirm(item: StockItem) {
     setItemToDelete(item);
+    setDeleteError(null);
     setIsDetailOpen(false);
     setIsDeleteOpen(true);
   }
   async function handleConfirmDelete() {
     if (!itemToDelete) return;
+    setDeleteError(null);
     try {
       setDeleteLoading(true);
-      await inativarProduto(itemToDelete.id);
+      await inativarLote(itemToDelete.id);
       const lotes = await listarLotes();
       setEstoque(lotes.map(mapLoteToStockItem));
       setIsDeleteOpen(false);
       setItemToDelete(null);
       setShowDeleteSuccess(true);
     } catch (err: unknown) {
-      console.error('Erro ao deletar item:', err);
+      const msg = err instanceof Error ? err.message : 'Erro ao excluir item. Tente novamente.';
+      setDeleteError(msg);
     } finally {
       setDeleteLoading(false);
     }
@@ -937,11 +941,11 @@ export default function Estoque() {
       <ConfirmModal
         isOpen={isDeleteOpen}
         title="Excluir item do estoque?"
-        message={itemToDelete ? `Tem certeza que deseja excluir "${itemToDelete.name}" do estoque? Esta ação não pode ser desfeita.` : ''}
+        message={deleteError ?? (itemToDelete ? `Tem certeza que deseja excluir "${itemToDelete.name}" do estoque? Esta ação não pode ser desfeita.` : '')}
         confirmText="Excluir"
         cancelText="Cancelar"
         onConfirm={handleConfirmDelete}
-        onCancel={() => { setIsDeleteOpen(false); setItemToDelete(null); }}
+        onCancel={() => { setIsDeleteOpen(false); setItemToDelete(null); setDeleteError(null); }}
         loading={deleteLoading}
       />
       <SucessModal
