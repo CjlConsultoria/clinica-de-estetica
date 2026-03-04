@@ -31,6 +31,8 @@ import {
 } from './styles';
 import React, { useRef, useLayoutEffect, useEffect } from 'react';
 import { listarAssinaturas, listarTermos, criarTermo, atualizarTermo, AssinaturaAPI, TermoAPI } from '@/services/consentimentoService';
+import { listarPacientes, PacienteAPI } from '@/services/pacienteService';
+import { listarProfissionais, ProfissionalAPI } from '@/services/profissionalService';
 
 type TermoField =
   | 'paciente' | 'cpf' | 'nascimento' | 'procedimento' | 'dataProcedimento' | 'profissional' | 'email';
@@ -112,6 +114,25 @@ function isFormDirty(form: TermoForm): boolean {
   );
 }
 
+function maskCPF(value: string): string {
+  const d = value.replace(/\D/g, '').slice(0, 11);
+  if (d.length > 9) return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
+  if (d.length > 6) return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6)}`;
+  if (d.length > 3) return `${d.slice(0,3)}.${d.slice(3)}`;
+  return d;
+}
+
+const CARGO_LABEL: Record<string, string> = {
+  ESTETICISTA:    'Esteticista',
+  BIOMEDICO:      'Biomédico',
+  ENFERMEIRO:     'Enfermeiro',
+  DERMATOLOGO:    'Dermatologista',
+  FISIOTERAPEUTA: 'Fisioterapeuta',
+  RECEPCIONISTA:  'Recepcionista',
+  GERENTE:        'Gerente',
+  FINANCEIRO:     'Financeiro',
+};
+
 type ActiveTab = 'termos' | 'consentimento';
 
 export default function Consentimento() {
@@ -149,6 +170,20 @@ export default function Consentimento() {
   const [currentTermoId, setCurrentTermoId] = useState<number | null>(null);
   const [novoTermoError, setNovoTermoError] = useState<string | null>(null);
   const [loading,        setLoading]        = useState(true);
+
+  // ── Patient dropdown state ──────────────────────────────────────────────────
+  const [allPacientes,       setAllPacientes]       = useState<PacienteAPI[]>([]);
+  const [patientDropOpen,    setPatientDropOpen]    = useState(false);
+  const [selectedPacienteId, setSelectedPacienteId] = useState<number | null>(null);
+  const patientDropRef = useRef<HTMLDivElement>(null);
+  // ───────────────────────────────────────────────────────────────────────────
+
+  // ── Professional dropdown state ─────────────────────────────────────────────
+  const [allProfissionais,       setAllProfissionais]       = useState<ProfissionalAPI[]>([]);
+  const [profDropOpen,           setProfDropOpen]           = useState(false);
+  const [selectedProfissionalId, setSelectedProfissionalId] = useState<number | null>(null);
+  const profDropRef = useRef<HTMLDivElement>(null);
+  // ───────────────────────────────────────────────────────────────────────────
 
   const consentTextareaRef  = useRef<HTMLTextAreaElement>(null);
   const consentDisplayRef   = useRef<HTMLDivElement>(null);
@@ -246,6 +281,42 @@ export default function Consentimento() {
     load();
   }, []);
 
+  // Load all patients once for the dropdown
+  useEffect(() => {
+    listarPacientes('', 0, 1000).then(res => {
+      setAllPacientes(res.content || []);
+    }).catch(() => {});
+  }, []);
+
+  // Load all professionals once for the dropdown
+  useEffect(() => {
+    listarProfissionais().then(data => {
+      setAllProfissionais(data || []);
+    }).catch(() => {});
+  }, []);
+
+  // Close patient dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (patientDropRef.current && !patientDropRef.current.contains(e.target as Node)) {
+        setPatientDropOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Close professional dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (profDropRef.current && !profDropRef.current.contains(e.target as Node)) {
+        setProfDropOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   useLayoutEffect(() => {
     const el   = isEditingConsent ? consentTextareaRef.current : consentDisplayRef.current;
     const tRef = isEditingConsent ? consentThumbRefEdit.current : consentThumbRef.current;
@@ -334,7 +405,12 @@ export default function Consentimento() {
     handleChange(field, `${(yearStr || '').slice(0, 4)}-${month ?? ''}-${day ?? ''}`);
   }
   function handleCancelClick() { isFormDirty(form) ? setShowCancelModal(true) : forceClose(); }
-  function forceClose() { setForm(FORM_INITIAL); clearAll(); setIsNovoOpen(false); setShowCancelModal(false); setShowConfirmModal(false); setNovoTermoError(null); }
+  function forceClose() {
+    setForm(FORM_INITIAL); clearAll(); setIsNovoOpen(false);
+    setShowCancelModal(false); setShowConfirmModal(false); setNovoTermoError(null);
+    setPatientDropOpen(false); setSelectedPacienteId(null);
+    setProfDropOpen(false); setSelectedProfissionalId(null);
+  }
   function handleSaveNovoClick() {
     const isValid = validate({ paciente: form.paciente, cpf: form.cpf, nascimento: form.nascimento, procedimento: form.procedimento, dataProcedimento: form.dataProcedimento, profissional: form.profissional, email: form.email });
     if (!isValid) return;
@@ -370,6 +446,8 @@ export default function Consentimento() {
       setIsNovoOpen(false);
       setForm(FORM_INITIAL);
       clearAll();
+      setSelectedPacienteId(null);
+      setSelectedProfissionalId(null);
       setShowSuccessModal(true);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erro ao gerar termo. Tente novamente.';
@@ -398,6 +476,53 @@ export default function Consentimento() {
     } catch (err) { console.error('Erro:', err); alert('Não foi possível gerar o PDF. Tente novamente.'); }
     finally { setExporting(false); if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl!), 1000); }
   };
+
+  // Filtered patients list based on what's typed in the paciente field
+  const filteredPacientes = allPacientes.filter(p =>
+    p.nome.toLowerCase().includes(form.paciente.toLowerCase()) && p.ativo
+  );
+
+  function handlePacienteNomeChange(value: string) {
+    setSelectedPacienteId(null);
+    setForm(prev => ({ ...prev, paciente: value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '') }));
+    clearError('paciente');
+    setPatientDropOpen(value.trim().length > 0);
+  }
+
+  function handleSelectPaciente(paciente: PacienteAPI) {
+    setSelectedPacienteId(paciente.id);
+    setForm(prev => ({
+      ...prev,
+      paciente:   paciente.nome,
+      cpf:        maskCPF(paciente.cpf || ''),
+      nascimento: paciente.dataNascimento || '',
+      email:      paciente.email || prev.email,
+    }));
+    clearError('paciente');
+    clearError('cpf');
+    clearError('nascimento');
+    clearError('email');
+    setPatientDropOpen(false);
+  }
+
+  // Filtered professionals list based on what's typed in the profissional field
+  const filteredProfissionais = allProfissionais.filter(p =>
+    p.nome.toLowerCase().includes(form.profissional.toLowerCase()) && p.ativo
+  );
+
+  function handleProfissionalNomeChange(value: string) {
+    setSelectedProfissionalId(null);
+    setForm(prev => ({ ...prev, profissional: value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '') }));
+    clearError('profissional');
+    setProfDropOpen(value.trim().length > 0);
+  }
+
+  function handleSelectProfissional(prof: ProfissionalAPI) {
+    setSelectedProfissionalId(prof.id);
+    setForm(prev => ({ ...prev, profissional: prof.nome }));
+    clearError('profissional');
+    setProfDropOpen(false);
+  }
 
   return (
     <Container>
@@ -625,12 +750,232 @@ export default function Consentimento() {
           </div>
         )}
         <FormGrid>
-          <div style={{ gridColumn: 'span 2' }}><Input label="Nome do Paciente *" placeholder="Nome completo do paciente..." value={form.paciente} onChange={e => handleChange('paciente', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))} maxLength={80} error={errors.paciente} /></div>
+
+          {/* ── Patient name field with dropdown ─────────────────────────────── */}
+          <div style={{ gridColumn: 'span 2', position: 'relative' }} ref={patientDropRef}>
+            <Input
+              label="Nome do Paciente *"
+              placeholder="Nome completo do paciente..."
+              value={form.paciente}
+              onChange={e => handlePacienteNomeChange(e.target.value)}
+              onFocus={() => { if (form.paciente.trim().length > 0) setPatientDropOpen(true); }}
+              maxLength={80}
+              error={errors.paciente}
+              autoComplete="off"
+            />
+            {patientDropOpen && filteredPacientes.length > 0 && (
+              <div style={{
+                position:     'absolute',
+                top:          '100%',
+                left:         0,
+                right:        0,
+                zIndex:       9999,
+                background:   '#fff',
+                border:       '1.5px solid #e8e0d8',
+                borderRadius: 10,
+                boxShadow:    '0 8px 24px rgba(0,0,0,0.12)',
+                marginTop:    4,
+                overflowY:    'auto',
+                maxHeight:    `${4 * 52}px`,
+              }}>
+                {filteredPacientes.map((paciente, idx) => (
+                  <div
+                    key={paciente.id}
+                    onMouseDown={e => { e.preventDefault(); handleSelectPaciente(paciente); }}
+                    style={{
+                      display:      'flex',
+                      alignItems:   'center',
+                      gap:          10,
+                      padding:      '10px 14px',
+                      cursor:       'pointer',
+                      borderBottom: idx < filteredPacientes.length - 1 ? '1px solid #f5f0eb' : 'none',
+                      background:   'transparent',
+                      transition:   'background 0.15s',
+                      minHeight:    52,
+                      boxSizing:    'border-box',
+                    }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = '#fdf9f5'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
+                  >
+                    <div style={{
+                      width:          32,
+                      height:         32,
+                      borderRadius:   '50%',
+                      background:     '#BBA188',
+                      display:        'flex',
+                      alignItems:     'center',
+                      justifyContent: 'center',
+                      fontSize:       '0.72rem',
+                      fontWeight:     700,
+                      color:          '#fff',
+                      flexShrink:     0,
+                      fontFamily:     'var(--font-metropolis-semibold), Metropolis, sans-serif',
+                    }}>
+                      {paciente.nome.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
+                      <span style={{
+                        fontSize:     '0.85rem',
+                        fontWeight:   600,
+                        color:        '#1a1a1a',
+                        fontFamily:   'var(--font-metropolis-semibold), Metropolis, sans-serif',
+                        whiteSpace:   'nowrap',
+                        overflow:     'hidden',
+                        textOverflow: 'ellipsis',
+                      }}>
+                        {paciente.nome}
+                      </span>
+                      <span style={{
+                        fontSize:   '0.73rem',
+                        color:      '#999',
+                        fontFamily: 'var(--font-roboto-medium), Roboto, sans-serif',
+                      }}>
+                        {paciente.cpf ? maskCPF(paciente.cpf) : paciente.email || '—'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {patientDropOpen && form.paciente.trim().length > 0 && filteredPacientes.length === 0 && (
+              <div style={{
+                position:     'absolute',
+                top:          '100%',
+                left:         0,
+                right:        0,
+                zIndex:       9999,
+                background:   '#fff',
+                border:       '1.5px solid #e8e0d8',
+                borderRadius: 10,
+                boxShadow:    '0 8px 24px rgba(0,0,0,0.12)',
+                marginTop:    4,
+                padding:      '14px',
+                textAlign:    'center',
+                fontSize:     '0.82rem',
+                color:        '#aaa',
+                fontFamily:   'var(--font-metropolis-regular), Metropolis, sans-serif',
+              }}>
+                Nenhum paciente encontrado
+              </div>
+            )}
+          </div>
+          {/* ─────────────────────────────────────────────────────────────────── */}
+
           <Input label="CPF *" mask="cpf" value={form.cpf} inputMode="numeric" maxLength={14} onValueChange={v => handleMaskedChange('cpf', v)} error={errors.cpf} />
           <Input label="Data de Nascimento *" type="date" value={form.nascimento} onChange={e => handleDateChange('nascimento', e.target.value)} error={errors.nascimento} />
           <div style={{ gridColumn: 'span 2' }}><Select label="Procedimento *" options={procedureOptions} placeholder="Selecione o procedimento..." value={form.procedimento} onChange={v => handleChange('procedimento', v)} error={errors.procedimento} /></div>
           <Input label="Data do Procedimento *" type="date" value={form.dataProcedimento} onChange={e => handleDateChange('dataProcedimento', e.target.value)} error={errors.dataProcedimento} />
-          <Input label="Profissional Responsável *" placeholder="Nome do profissional..." value={form.profissional} onChange={e => handleChange('profissional', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))} maxLength={80} error={errors.profissional} />
+
+          {/* ── Professional name field with dropdown ─────────────────────────── */}
+          <div style={{ position: 'relative' }} ref={profDropRef}>
+            <Input
+              label="Profissional Responsável *"
+              placeholder="Nome do profissional..."
+              value={form.profissional}
+              onChange={e => handleProfissionalNomeChange(e.target.value)}
+              onFocus={() => { if (form.profissional.trim().length > 0) setProfDropOpen(true); }}
+              maxLength={80}
+              error={errors.profissional}
+              autoComplete="off"
+            />
+            {profDropOpen && filteredProfissionais.length > 0 && (
+              <div style={{
+                position:     'absolute',
+                top:          '100%',
+                left:         0,
+                right:        0,
+                zIndex:       9999,
+                background:   '#fff',
+                border:       '1.5px solid #e8e0d8',
+                borderRadius: 10,
+                boxShadow:    '0 8px 24px rgba(0,0,0,0.12)',
+                marginTop:    4,
+                overflowY:    'auto',
+                maxHeight:    `${4 * 52}px`,
+              }}>
+                {filteredProfissionais.map((prof, idx) => (
+                  <div
+                    key={prof.id}
+                    onMouseDown={e => { e.preventDefault(); handleSelectProfissional(prof); }}
+                    style={{
+                      display:      'flex',
+                      alignItems:   'center',
+                      gap:          10,
+                      padding:      '10px 14px',
+                      cursor:       'pointer',
+                      borderBottom: idx < filteredProfissionais.length - 1 ? '1px solid #f5f0eb' : 'none',
+                      background:   'transparent',
+                      transition:   'background 0.15s',
+                      minHeight:    52,
+                      boxSizing:    'border-box',
+                    }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = '#fdf9f5'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
+                  >
+                    <div style={{
+                      width:          32,
+                      height:         32,
+                      borderRadius:   '50%',
+                      background:     '#8a7560',
+                      display:        'flex',
+                      alignItems:     'center',
+                      justifyContent: 'center',
+                      fontSize:       '0.72rem',
+                      fontWeight:     700,
+                      color:          '#fff',
+                      flexShrink:     0,
+                      fontFamily:     'var(--font-metropolis-semibold), Metropolis, sans-serif',
+                    }}>
+                      {prof.nome.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
+                      <span style={{
+                        fontSize:     '0.85rem',
+                        fontWeight:   600,
+                        color:        '#1a1a1a',
+                        fontFamily:   'var(--font-metropolis-semibold), Metropolis, sans-serif',
+                        whiteSpace:   'nowrap',
+                        overflow:     'hidden',
+                        textOverflow: 'ellipsis',
+                      }}>
+                        {prof.nome}
+                      </span>
+                      <span style={{
+                        fontSize:   '0.73rem',
+                        color:      '#999',
+                        fontFamily: 'var(--font-roboto-medium), Roboto, sans-serif',
+                      }}>
+                        {CARGO_LABEL[prof.cargo] || prof.cargoDescricao || prof.cargo || '—'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {profDropOpen && form.profissional.trim().length > 0 && filteredProfissionais.length === 0 && (
+              <div style={{
+                position:     'absolute',
+                top:          '100%',
+                left:         0,
+                right:        0,
+                zIndex:       9999,
+                background:   '#fff',
+                border:       '1.5px solid #e8e0d8',
+                borderRadius: 10,
+                boxShadow:    '0 8px 24px rgba(0,0,0,0.12)',
+                marginTop:    4,
+                padding:      '14px',
+                textAlign:    'center',
+                fontSize:     '0.82rem',
+                color:        '#aaa',
+                fontFamily:   'var(--font-metropolis-regular), Metropolis, sans-serif',
+              }}>
+                Nenhum profissional encontrado
+              </div>
+            )}
+          </div>
+          {/* ─────────────────────────────────────────────────────────────────── */}
+
           <div style={{ gridColumn: 'span 2' }}><Input label="E-mail do Paciente *" type="email" placeholder="email@exemplo.com" value={form.email} onChange={e => handleChange('email', e.target.value)} error={errors.email} /></div>
         </FormGrid>
       </Modal>

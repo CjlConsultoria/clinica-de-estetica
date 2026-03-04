@@ -144,6 +144,38 @@ function formatCpf(cpf: string): string {
   return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
 }
 
+// Reconstrói um HistoryItem a partir dos dados salvos no prontuário
+function prontuarioToHistoryItem(p: ProntuarioAPI): HistoryItem {
+  const anamnese = p.anamnese || '';
+
+  const procedureMatch  = anamnese.match(/Procedimento:\s*([^.]+)\./);
+  const quantidadeMatch = anamnese.match(/Quantidade:\s*([^.]+)\./);
+  const valorMatch      = anamnese.match(/Valor:\s*([^.]+)\./);
+  const loteMatch       = anamnese.match(/Lote ANVISA:\s*([^.]+)\./);
+
+  const procedure = procedureMatch?.[1]?.trim()  || 'Procedimento';
+  const units     = quantidadeMatch?.[1]?.trim() || '—';
+  const valorStr  = valorMatch?.[1]?.trim()      || '0';
+  const lote      = loteMatch?.[1]?.trim()       || '—';
+  const value     = parseMoeda(valorStr);
+  const profNome  = p.medicoNome                 || '—';
+
+  const dateStr = p.criadoEm
+    ? formatDate(new Date(p.criadoEm).toISOString().split('T')[0])
+    : '—';
+
+  return {
+    id:           p.id,
+    date:         dateStr,
+    procedure,
+    units,
+    value,
+    professional: profNome,
+    lote,
+    status:       'realizado',
+  };
+}
+
 import { listarPacientes, criarPaciente, PacienteAPI } from '@/services/pacienteService';
 import { listarProntuariosPorPaciente, criarProntuario, ProntuarioAPI } from '@/services/prontuarioService';
 import { listarProfissionais, ProfissionalAPI } from '@/services/profissionalService';
@@ -205,10 +237,11 @@ export default function HistoricoPaciente() {
   const [profissionaisOptions, setProfissionaisOptions] = useState<{ value: string; label: string }[]>([]);
   const [profissionaisMap,    setProfissionaisMap]    = useState<Record<string, string>>({});
 
-  const [isAtendimentoOpen,     setIsAtendimentoOpen]     = useState(false);
-  const [atendimentoForm,       setAtendimentoForm]       = useState<AtendimentoForm>(ATENDIMENTO_INITIAL);
-  const [showCancelAtend,       setShowCancelAtend]       = useState(false);
-  const [showConfirmAtend,      setShowConfirmAtend]      = useState(false);
+  const [isAtendimentoOpen,  setIsAtendimentoOpen]  = useState(false);
+  const [atendimentoForm,    setAtendimentoForm]    = useState<AtendimentoForm>(ATENDIMENTO_INITIAL);
+  const [showCancelAtend,    setShowCancelAtend]    = useState(false);
+  const [showConfirmAtend,   setShowConfirmAtend]   = useState(false);
+  const [atendimentoError,   setAtendimentoError]   = useState<string | null>(null);
 
   const [showCancelNewModal,   setShowCancelNewModal]   = useState(false);
   const [showCancelEditModal,  setShowCancelEditModal]  = useState(false);
@@ -217,6 +250,7 @@ export default function HistoricoPaciente() {
   const [showSuccessModal,     setShowSuccessModal]     = useState(false);
   const [successMessage,       setSuccessMessage]       = useState('');
   const [saveNewError,         setSaveNewError]         = useState<string | null>(null);
+  const [successFromAtend,     setSuccessFromAtend]     = useState(false);
 
   const {
     errors: pacienteErrors, validate: validatePaciente,
@@ -228,11 +262,25 @@ export default function HistoricoPaciente() {
     clearError: clearAtendError, clearAll: clearAtendAll,
   } = useSequentialValidation<AtendimentoField>(ATENDIMENTO_VALIDATION);
 
+  // Carrega pacientes e seus históricos (prontuários) do backend
   useEffect(() => {
     setLoading(true);
-    listarPacientes('', 0, 500).then(res => {
+    listarPacientes('', 0, 500).then(async res => {
       const pacs = res.content || [];
-      setPatients(pacs.map(p => mapPacienteToPatient(p)));
+      const patientsWithHistory = await Promise.all(
+        pacs.map(async p => {
+          try {
+            const prontuarios = await listarProntuariosPorPaciente(p.id, 0, 100);
+            const history = (prontuarios.content || [])
+              .sort((a, b) => new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime())
+              .map(pr => prontuarioToHistoryItem(pr));
+            return mapPacienteToPatient(p, history);
+          } catch {
+            return mapPacienteToPatient(p, []);
+          }
+        })
+      );
+      setPatients(patientsWithHistory);
     }).catch(() => {
       setPatients([]);
     }).finally(() => {
@@ -402,6 +450,7 @@ export default function HistoricoPaciente() {
   function openAtendimento() {
     setAtendimentoForm({ ...ATENDIMENTO_INITIAL, date: todayInputDate() });
     clearAtendAll();
+    setAtendimentoError(null);
     setIsDetailOpen(false);
     setIsAtendimentoOpen(true);
   }
@@ -419,6 +468,7 @@ export default function HistoricoPaciente() {
   function forceCloseAtend() {
     setAtendimentoForm(ATENDIMENTO_INITIAL); clearAtendAll();
     setIsAtendimentoOpen(false); setShowCancelAtend(false); setShowConfirmAtend(false);
+    setAtendimentoError(null);
     if (selected) setIsDetailOpen(true);
   }
 
@@ -438,49 +488,60 @@ export default function HistoricoPaciente() {
   async function handleConfirmAtend() {
     if (!selected) return;
 
-    const valor         = parseMoeda(atendimentoForm.value);
-    const profNome      = profissionaisMap[atendimentoForm.professional] ?? atendimentoForm.professional;
-    const medicoId      = Number(atendimentoForm.professional) || (currentUser ? Number(currentUser.id) : 0);
+    const valor    = parseMoeda(atendimentoForm.value);
+    const profNome = profissionaisMap[atendimentoForm.professional] ?? atendimentoForm.professional;
+    const medicoId = Number(atendimentoForm.professional) || (currentUser ? Number(currentUser.id) : 0);
 
-    const newItem: HistoryItem = {
-      id:           Date.now(),
-      date:         formatDate(atendimentoForm.date),
-      procedure:    atendimentoForm.procedure,
-      units:        atendimentoForm.units,
-      value:        valor,
-      professional: profNome,
-      lote:         atendimentoForm.lote,
-      status:       'realizado',
-    };
-
-    const nextVisit = atendimentoForm.nextVisit
-      ? formatDate(atendimentoForm.nextVisit)
-      : selected.nextVisit;
-
-    const updated: Patient = {
-      ...selected,
-      history:       [newItem, ...selected.history],
-      totalSessions: selected.totalSessions + 1,
-      totalSpent:    selected.totalSpent + valor,
-      lastVisit:     formatDate(atendimentoForm.date),
-      nextVisit,
-      status:        'ativo',
-    };
-
-    syncSelected(updated);
     setShowConfirmAtend(false);
-    setIsAtendimentoOpen(false);
-    clearAtendAll();
-    setSuccessMessage('Atendimento registrado com sucesso!');
-    setShowSuccessModal(true);
+    setAtendimentoError(null);
 
-    // Persiste no backend como prontuário
-    criarProntuario({
-      pacienteId: selected.id,
-      medicoId,
-      anamnese: `Procedimento: ${atendimentoForm.procedure}. Profissional: ${profNome}. Quantidade: ${atendimentoForm.units}. Valor: ${atendimentoForm.value}. Lote ANVISA: ${atendimentoForm.lote}.`,
-      observacoes: atendimentoForm.observacoes || undefined,
-    }).catch(() => {});
+    try {
+      // Aguarda a persistência no backend antes de atualizar o estado local
+      const prontuarioCriado = await criarProntuario({
+        pacienteId:  selected.id,
+        medicoId,
+        anamnese:    `Procedimento: ${atendimentoForm.procedure}. Profissional: ${profNome}. Quantidade: ${atendimentoForm.units}. Valor: ${atendimentoForm.value}. Lote ANVISA: ${atendimentoForm.lote}.`,
+        observacoes: atendimentoForm.observacoes || undefined,
+      });
+
+      // Monta o HistoryItem com o id real retornado pelo backend
+      const newItem: HistoryItem = {
+        id:           prontuarioCriado.id,
+        date:         formatDate(atendimentoForm.date),
+        procedure:    atendimentoForm.procedure,
+        units:        atendimentoForm.units,
+        value:        valor,
+        professional: profNome,
+        lote:         atendimentoForm.lote,
+        status:       'realizado',
+      };
+
+      const nextVisit = atendimentoForm.nextVisit
+        ? formatDate(atendimentoForm.nextVisit)
+        : selected.nextVisit;
+
+      const updated: Patient = {
+        ...selected,
+        history:       [newItem, ...selected.history],
+        totalSessions: selected.totalSessions + 1,
+        totalSpent:    selected.totalSpent + valor,
+        lastVisit:     formatDate(atendimentoForm.date),
+        nextVisit,
+        status:        'ativo',
+      };
+
+      syncSelected(updated);
+      setIsAtendimentoOpen(false);
+      clearAtendAll();
+      setSuccessFromAtend(true);
+      setSuccessMessage('Atendimento registrado com sucesso!');
+      setShowSuccessModal(true);
+
+    } catch (err: unknown) {
+      // Exibe o erro no modal em vez de sumir silenciosamente
+      const msg = err instanceof Error ? err.message : 'Erro ao registrar atendimento. Tente novamente.';
+      setAtendimentoError(msg);
+    }
   }
 
   const handleExportFicha = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -522,7 +583,9 @@ export default function HistoricoPaciente() {
     setSuccessMessage('');
     setForm(PACIENTE_INITIAL);
     clearPacienteAll();
-    if (selected && !isDetailOpen && !isNewOpen && !isEditOpen) {
+    if (successFromAtend) {
+      setSuccessFromAtend(false);
+    } else if (selected && !isDetailOpen && !isNewOpen && !isEditOpen) {
       setIsDetailOpen(true);
     }
   }
@@ -822,6 +885,12 @@ export default function HistoricoPaciente() {
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24, overflowY: 'auto', maxHeight: '65vh', paddingRight: 4 }}>
+          {atendimentoError && (
+            <div style={{ padding: '10px 14px', background: '#fdecea', border: '1px solid #f5c6cb', borderRadius: 8, color: '#c0392b', fontSize: '0.85rem' }}>
+              {atendimentoError}
+            </div>
+          )}
+
           {selected?.observations && (
             <div style={{ background: '#fff8f0', borderRadius: 10, padding: '10px 14px', border: '1px solid #f0ebe4', fontSize: '0.83rem', color: '#666', lineHeight: 1.5 }}>
               <strong style={{ color: '#BBA188' }}>⚠ Atenção: </strong>{selected.observations}

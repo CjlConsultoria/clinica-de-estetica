@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Button from '@/components/ui/button';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
@@ -13,7 +13,7 @@ import { usePermissions } from '@/components/ui/hooks/usePermissions';
 import { useCurrentUser } from '@/components/ui/hooks/useCurrentUser';
 import AccessDenied from '@/components/ui/AccessDenied';
 import { listarAgendamentos, criarAgendamento, AgendamentoAPI } from '@/services/agendaService';
-import { listarPacientes } from '@/services/pacienteService';
+import { listarPacientes, PacienteAPI } from '@/services/pacienteService';
 import {
   Container, Header, Title, ActionsRow,
   CalendarNav, CalendarTitle, CalendarGrid, DayHeader,
@@ -142,6 +142,11 @@ export default function Agenda() {
   const [successMessage,   setSuccessMessage]   = useState('');
   const [agendaError,      setAgendaError]      = useState<string | null>(null);
 
+  const [allPacientes,       setAllPacientes]       = useState<PacienteAPI[]>([]);
+  const [patientDropOpen,    setPatientDropOpen]    = useState(false);
+  const [selectedPacienteId, setSelectedPacienteId] = useState<number | null>(null);
+  const patientDropRef = useRef<HTMLDivElement>(null);
+
   const { errors, validate, clearError, clearAll } =
     useSequentialValidation<AgendamentoField>(VALIDATION_FIELDS);
 
@@ -149,6 +154,22 @@ export default function Agenda() {
     listarAgendamentos(0, 200).then(res => {
       setEvents((res.content || []).map(mapAgendamentoToCalEvent));
     }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    listarPacientes('', 0, 1000).then(res => {
+      setAllPacientes(res.content || []);
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (patientDropRef.current && !patientDropRef.current.contains(e.target as Node)) {
+        setPatientDropOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   if (!isSuperAdmin && !can('agenda.read') && !can('agenda.read_own')) return <AccessDenied />;
@@ -192,7 +213,11 @@ export default function Agenda() {
     handleChange('data', `${(yearStr || '').slice(0, 4)}-${month ?? ''}-${day ?? ''}`);
   }
   function handleCancelClick() { isFormDirty(form) ? setShowCancelModal(true) : forceClose(); }
-  function forceClose() { setForm(FORM_INITIAL); clearAll(); setAgendaError(null); setIsModalOpen(false); setShowCancelModal(false); setShowConfirmModal(false); }
+  function forceClose() {
+    setForm(FORM_INITIAL); clearAll(); setAgendaError(null);
+    setIsModalOpen(false); setShowCancelModal(false); setShowConfirmModal(false);
+    setPatientDropOpen(false); setSelectedPacienteId(null);
+  }
   function handleSaveClick() {
     const isValid = validate({ nome: form.nome, telefone: form.telefone, data: form.data, horario: form.horario, procedimento: form.procedimento, status: form.status, valor: form.valor });
     if (!isValid) return;
@@ -203,15 +228,21 @@ export default function Agenda() {
     setAgendaError(null);
     const procedureLabel = procedureOptions.find(p => p.value === form.procedimento)?.label ?? form.procedimento;
     try {
-      const pacientesResult = await listarPacientes(form.nome, 0, 5);
-      const paciente = (pacientesResult.content || [])[0];
-      if (!paciente) {
-        setAgendaError(`Paciente "${form.nome}" não encontrado. Cadastre-o primeiro na tela de Pacientes.`);
-        return;
+      let pacienteId: number | undefined = selectedPacienteId ?? undefined;
+
+      if (!pacienteId) {
+        const pacientesResult = await listarPacientes(form.nome, 0, 5);
+        const paciente = (pacientesResult.content || [])[0];
+        if (!paciente) {
+          setAgendaError(`Paciente "${form.nome}" não encontrado. Cadastre-o primeiro na tela de Pacientes.`);
+          return;
+        }
+        pacienteId = paciente.id;
       }
+
       const dataHora = `${form.data}T${form.horario}:00`;
       const novoAgendamento = await criarAgendamento({
-        pacienteId:   paciente.id,
+        pacienteId,
         medicoId:     currentUser?.id ?? 1,
         dataHora,
         tipoConsulta: procedureLabel,
@@ -226,7 +257,30 @@ export default function Agenda() {
       setAgendaError(msg);
     }
   }
-  function handleSuccessClose() { setShowSuccessModal(false); setSuccessMessage(''); setAgendaError(null); setForm(FORM_INITIAL); clearAll(); }
+  function handleSuccessClose() { setShowSuccessModal(false); setSuccessMessage(''); setAgendaError(null); setForm(FORM_INITIAL); clearAll(); setSelectedPacienteId(null); }
+
+  const filteredPacientes = allPacientes.filter(p =>
+    p.nome.toLowerCase().includes(form.nome.toLowerCase()) && p.ativo
+  );
+
+  function handleNomeChange(value: string) {
+    setSelectedPacienteId(null);
+    setForm(prev => ({ ...prev, nome: value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '') }));
+    clearError('nome');
+    setPatientDropOpen(value.trim().length > 0);
+  }
+
+  function handleSelectPaciente(paciente: PacienteAPI) {
+    setSelectedPacienteId(paciente.id);
+    setForm(prev => ({
+      ...prev,
+      nome:     paciente.nome,
+      telefone: paciente.telefone || paciente.celular || prev.telefone,
+    }));
+    clearError('nome');
+    clearError('telefone');
+    setPatientDropOpen(false);
+  }
 
   return (
     <Container>
@@ -310,7 +364,114 @@ export default function Agenda() {
           </div>
         )}
         <FormGrid>
-          <Input label="Nome do Paciente *" placeholder="Digite o nome..." value={form.nome} onChange={e => handleChange('nome', e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, ''))} maxLength={80} error={errors.nome} />
+          <div style={{ position: 'relative' }} ref={patientDropRef}>
+            <Input
+              label="Nome do Paciente *"
+              placeholder="Digite o nome..."
+              value={form.nome}
+              onChange={e => handleNomeChange(e.target.value)}
+              onFocus={() => { if (form.nome.trim().length > 0) setPatientDropOpen(true); }}
+              maxLength={80}
+              error={errors.nome}
+              autoComplete="off"
+            />
+            {patientDropOpen && filteredPacientes.length > 0 && (
+              <div style={{
+                position:        'absolute',
+                top:             '100%',
+                left:            0,
+                right:           0,
+                zIndex:          9999,
+                background:      '#fff',
+                border:          '1.5px solid #e8e0d8',
+                borderRadius:    10,
+                boxShadow:       '0 8px 24px rgba(0,0,0,0.12)',
+                marginTop:       4,
+                overflowY:       'auto',
+                maxHeight:       `${4 * 52}px`,
+              }}>
+                {filteredPacientes.map((paciente, idx) => (
+                  <div
+                    key={paciente.id}
+                    onMouseDown={e => { e.preventDefault(); handleSelectPaciente(paciente); }}
+                    style={{
+                      display:       'flex',
+                      alignItems:    'center',
+                      gap:           10,
+                      padding:       '10px 14px',
+                      cursor:        'pointer',
+                      borderBottom:  idx < filteredPacientes.length - 1 ? '1px solid #f5f0eb' : 'none',
+                      background:    'transparent',
+                      transition:    'background 0.15s',
+                      minHeight:     52,
+                      boxSizing:     'border-box',
+                    }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = '#fdf9f5'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
+                  >
+                    <div style={{
+                      width:           32,
+                      height:          32,
+                      borderRadius:    '50%',
+                      background:      '#BBA188',
+                      display:         'flex',
+                      alignItems:      'center',
+                      justifyContent:  'center',
+                      fontSize:        '0.72rem',
+                      fontWeight:      700,
+                      color:           '#fff',
+                      flexShrink:      0,
+                      fontFamily:      'var(--font-metropolis-semibold), Metropolis, sans-serif',
+                    }}>
+                      {paciente.nome.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
+                      <span style={{
+                        fontSize:     '0.85rem',
+                        fontWeight:   600,
+                        color:        '#1a1a1a',
+                        fontFamily:   'var(--font-metropolis-semibold), Metropolis, sans-serif',
+                        whiteSpace:   'nowrap',
+                        overflow:     'hidden',
+                        textOverflow: 'ellipsis',
+                      }}>
+                        {paciente.nome}
+                      </span>
+                      <span style={{
+                        fontSize:   '0.73rem',
+                        color:      '#999',
+                        fontFamily: 'var(--font-roboto-medium), Roboto, sans-serif',
+                      }}>
+                        {paciente.telefone || paciente.celular || paciente.email || '—'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {patientDropOpen && form.nome.trim().length > 0 && filteredPacientes.length === 0 && (
+              <div style={{
+                position:     'absolute',
+                top:          '100%',
+                left:         0,
+                right:        0,
+                zIndex:       9999,
+                background:   '#fff',
+                border:       '1.5px solid #e8e0d8',
+                borderRadius: 10,
+                boxShadow:    '0 8px 24px rgba(0,0,0,0.12)',
+                marginTop:    4,
+                padding:      '14px',
+                textAlign:    'center',
+                fontSize:     '0.82rem',
+                color:        '#aaa',
+                fontFamily:   'var(--font-metropolis-regular), Metropolis, sans-serif',
+              }}>
+                Nenhum paciente encontrado
+              </div>
+            )}
+          </div>
+
           <Input label="Telefone *" mask="telefone" value={form.telefone} inputMode="numeric" maxLength={15} onValueChange={v => handleMaskedChange('telefone', v)} error={errors.telefone} />
           <Input label="Data *" type="date" value={form.data} onChange={e => handleDataChange(e.target.value)} error={errors.data} />
           <Input label="Horário *" type="time" value={form.horario} onChange={e => handleChange('horario', e.target.value)} error={errors.horario} />
