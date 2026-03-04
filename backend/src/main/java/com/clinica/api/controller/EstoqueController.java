@@ -42,6 +42,12 @@ public class EstoqueController {
         return ResponseEntity.ok(estoqueService.darBaixa(id, request.getQuantidade()));
     }
 
+    @DeleteMapping("/lotes/{id}")
+    public ResponseEntity<Void> inativarLote(@PathVariable Long id) {
+        estoqueService.inativarLote(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/alertas")
     public ResponseEntity<List<AlertaEstoqueResponse>> listarAlertas(
             @RequestParam(defaultValue = "true") boolean apenasNaoLidos) {

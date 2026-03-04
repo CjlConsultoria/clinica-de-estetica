@@ -188,6 +188,14 @@ public class EstoqueService {
         alertaEstoqueRepository.save(alerta);
     }
 
+    @Transactional
+    public void inativarLote(Long id) {
+        LoteProduto lote = findLoteById(id);
+        lote.setAtivo(false);
+        lote.setStatus(StatusLote.DESCARTADO);
+        loteProdutoRepository.save(lote);
+    }
+
     private LoteProduto findLoteById(Long id) {
         return loteProdutoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lote", id));

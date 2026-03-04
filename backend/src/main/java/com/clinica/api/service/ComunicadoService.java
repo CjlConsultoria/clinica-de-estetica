@@ -3,8 +3,10 @@ package com.clinica.api.service;
 import com.clinica.api.dto.request.ComunicadoRequest;
 import com.clinica.api.dto.response.ComunicadoResponse;
 import com.clinica.api.entity.Comunicado;
+import com.clinica.api.entity.ComunicadoLeitura;
 import com.clinica.api.entity.Usuario;
 import com.clinica.api.exception.ResourceNotFoundException;
+import com.clinica.api.repository.ComunicadoLeituraRepository;
 import com.clinica.api.repository.ComunicadoRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -13,22 +15,26 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class ComunicadoService {
 
     private final ComunicadoRepository comunicadoRepository;
+    private final ComunicadoLeituraRepository comunicadoLeituraRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public List<ComunicadoResponse> listarTodos() {
+        Long usuarioId = getUsuarioLogado().getId();
+        Set<Long> lidos = comunicadoLeituraRepository.findComunicadoIdsByUsuarioId(usuarioId);
         return comunicadoRepository.findByAtivoTrueOrderByCriadoEmDesc()
-                .stream().map(this::toResponse).toList();
+                .stream().map(c -> toResponse(c, lidos.contains(c.getId()))).toList();
     }
 
     public List<ComunicadoResponse> listarAdmin() {
         return comunicadoRepository.findAllByOrderByCriadoEmDesc()
-                .stream().map(this::toResponse).toList();
+                .stream().map(c -> toResponse(c, false)).toList();
     }
 
     @Transactional
@@ -49,7 +55,7 @@ public class ComunicadoService {
                 .lidasCount(0)
                 .totalDestinatarios(total)
                 .build();
-        return toResponse(comunicadoRepository.save(comunicado));
+        return toResponse(comunicadoRepository.save(comunicado), false);
     }
 
     @Transactional
@@ -64,7 +70,7 @@ public class ComunicadoService {
             comunicado.setTotalDestinatarios(calcularTotal(request.getDestinatariosJson()));
         }
         comunicado.setDataAgendamento(request.getDataAgendamento());
-        return toResponse(comunicadoRepository.save(comunicado));
+        return toResponse(comunicadoRepository.save(comunicado), false);
     }
 
     @Transactional
@@ -76,9 +82,19 @@ public class ComunicadoService {
 
     @Transactional
     public void marcarLida(Long id) {
+        Usuario usuario = getUsuarioLogado();
         Comunicado comunicado = findById(id);
-        comunicado.setLidasCount(comunicado.getLidasCount() + 1);
-        comunicadoRepository.save(comunicado);
+
+        if (!comunicadoLeituraRepository.existsByComunicadoIdAndUsuarioId(id, usuario.getId())) {
+            comunicadoLeituraRepository.save(
+                ComunicadoLeitura.builder()
+                    .comunicadoId(id)
+                    .usuarioId(usuario.getId())
+                    .build()
+            );
+            comunicado.setLidasCount(comunicado.getLidasCount() + 1);
+            comunicadoRepository.save(comunicado);
+        }
     }
 
     private int calcularTotal(String destinatariosJson) {
@@ -102,7 +118,7 @@ public class ComunicadoService {
         return (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
-    private ComunicadoResponse toResponse(Comunicado c) {
+    private ComunicadoResponse toResponse(Comunicado c, boolean lido) {
         return ComunicadoResponse.builder()
                 .id(c.getId()).titulo(c.getTitulo()).conteudo(c.getConteudo())
                 .tipo(c.getTipo()).ativo(c.getAtivo()).criadoPor(c.getCriadoPor())
@@ -111,6 +127,7 @@ public class ComunicadoService {
                 .criadoEm(c.getCriadoEm()).atualizadoEm(c.getAtualizadoEm())
                 .lidasCount(c.getLidasCount() != null ? c.getLidasCount() : 0)
                 .totalDestinatarios(c.getTotalDestinatarios() != null ? c.getTotalDestinatarios() : 0)
+                .lido(lido)
                 .build();
     }
 }

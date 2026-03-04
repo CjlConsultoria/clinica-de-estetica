@@ -25,4 +25,5 @@ public class ComunicadoResponse {
     private LocalDateTime atualizadoEm;
     private Integer lidasCount;
     private Integer totalDestinatarios;
+    private Boolean lido;
 }
