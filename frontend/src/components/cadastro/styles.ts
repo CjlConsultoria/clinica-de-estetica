@@ -10,6 +10,8 @@ const fadeIn = keyframes`
   to   { opacity: 1; }
 `;
 
+/* ─── Layout ─────────────────────────────────────────────────── */
+
 export const Container = styled.div`
   display: flex;
   height: 100vh;
@@ -110,6 +112,7 @@ export const TrialBadge = styled.div`
   backdrop-filter: blur(8px);
 `;
 
+/* RightPanel: centralizado verticalmente, scroll interno apenas se necessário */
 export const RightPanel = styled.div`
   width: 55%;
   background-color: #1b1b1b;
@@ -142,6 +145,8 @@ export const FormWrapper = styled.div`
     max-width: 100%;
   }
 `;
+
+/* ─── Header ─────────────────────────────────────────────────── */
 
 export const LogoWrapper = styled.div`
   display: flex;
@@ -187,6 +192,8 @@ export const Subtitle = styled.p`
     font-size: clamp(0.7rem, 2.5vw, 0.85rem);
   }
 `;
+
+/* ─── Wizard Steps ───────────────────────────────────────────── */
 
 export const WizardSteps = styled.div`
   display: flex;
@@ -254,6 +261,8 @@ export const WizardStepLabel = styled.span<{ $current?: boolean }>`
     display: none;
   }
 `;
+
+/* ─── Step content ───────────────────────────────────────────── */
 
 export const StepSection = styled.div`
   display: flex;
@@ -363,6 +372,7 @@ export const InfoBox = styled.div`
   line-height: 1.6;
   svg { flex-shrink: 0; margin-top: 2px; }
   strong { font-weight: 700; }
+  /* o conteúdo de texto fica em um parágrafo contínuo */
   & > span {
     flex: 1;
     min-width: 0;
@@ -374,6 +384,8 @@ export const WarningBox = styled(InfoBox)`
   border-color: rgba(234,179,8,0.25);
   color: #ca8a04;
 `;
+
+/* ─── Resumo (step 4) ────────────────────────────────────────── */
 
 export const ResumoBox = styled.div`
   background: #252525;
@@ -401,6 +413,7 @@ export const ResumoSectionTitle = styled.div`
 
 export const ResumoGrid = styled.div`
   display: grid;
+  /* Duas colunas simétricas; cada item empilha label+value */
   grid-template-columns: 1fr 1fr;
   gap: 10px 16px;
   align-items: start;
@@ -434,6 +447,13 @@ export const ResumoValue = styled.span`
   overflow-wrap: anywhere;
 `;
 
+/* ─── Termos / Checkbox ──────────────────────────────────────── */
+
+/**
+ * Wrapper que reserva espaço fixo para o erro (min-height),
+ * impedindo que a página "empurre" conteúdo para baixo e
+ * acione a barra de rolagem.
+ */
 export const TermosArea = styled.div`
   display: flex;
   flex-direction: column;
@@ -441,6 +461,7 @@ export const TermosArea = styled.div`
 `;
 
 export const TermosErrorSlot = styled.div`
+  /* Reserva sempre o espaço do erro — sem reflow */
   min-height: 28px;
   display: flex;
   align-items: flex-start;
@@ -486,6 +507,8 @@ export const CheckboxLabel = styled.div`
   }
 `;
 
+/* ─── Nav buttons ────────────────────────────────────────────── */
+
 export const WizardNav = styled.div`
   display: flex;
   justify-content: space-between;
@@ -520,6 +543,8 @@ export const BackToLogin = styled.button`
   }
 `;
 
+/* ─── Success ────────────────────────────────────────────────── */
+
 export const SuccessWrapper = styled.div`
   display: flex;
   flex-direction: column;
@@ -531,8 +556,8 @@ export const SuccessWrapper = styled.div`
 `;
 
 export const SuccessIcon = styled.div`
-  width: 64px;
-  height: 64px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: rgba(187,161,136,0.15);
   border: 2px solid #BBA188;
@@ -568,6 +593,8 @@ export const SuccessBadge = styled.div`
   font-size: 0.8rem;
   font-weight: 600;
 `;
+
+/* ─── Input overrides ────────────────────────────────────────── */
 
 export const InputOverride = styled.div`
   input {

@@ -399,6 +399,7 @@ export default function Cadastro() {
               </S.ResumoSection>
             </S.ResumoBox>
 
+            {/* Checkbox + inline error — sem expansão de layout */}
             <S.TermosArea>
               <S.CheckboxRow onClick={() => handleChange('aceitaTermos', !form.aceitaTermos)}>
                 <S.CheckboxBox $checked={form.aceitaTermos}>
@@ -454,7 +455,7 @@ export default function Cadastro() {
             </S.LogoWrapper>
             <S.SuccessWrapper>
               <S.SuccessIcon>
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#BBA188" strokeWidth="2.5" strokeLinecap="round">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#BBA188" strokeWidth="2.5" strokeLinecap="round">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
               </S.SuccessIcon>
