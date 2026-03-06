@@ -222,6 +222,10 @@ export default function Login() {
                 {loading ? (<><S.Spinner />Entrando...</>) : 'Entrar'}
               </S.SubmitButton>
             </S.Form>
+            <S.RegisterLink type="button" onClick={() => router.push('/cadastro')}>
+              Não tem conta ainda?{' '}
+              <span>Cadastre-se</span>
+            </S.RegisterLink>
           </S.FormWrapper>
         </S.RightPanel>
       </S.Container>

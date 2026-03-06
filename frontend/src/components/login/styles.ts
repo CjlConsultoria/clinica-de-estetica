@@ -33,6 +33,9 @@ export const LeftPanel = styled.div`
     height: 35vh;
     flex-shrink: 0;
   }
+  @media (max-width: 480px) {
+    height: 22vh;
+  }
 `;
 
 export const PatternOverlay = styled.div`
@@ -59,6 +62,7 @@ export const RightPanel = styled.div`
     min-height: 0;
     padding: clamp(12px, 3vh, 40px) clamp(16px, 4vw, 30px);
     align-items: center;
+    overflow-y: auto;
   }
 `;
 
@@ -88,7 +92,7 @@ export const LogoImg = styled.img`
   max-width: 100%;
   object-fit: contain;
   @media (max-width: 968px) {
-    width: clamp(70px, 15vw, 160px);
+    width: clamp(110px, 30vw, 200px);
   }
 `;
 
@@ -267,4 +271,26 @@ export const Spinner = styled.div`
   border-top-color: #1a1a1a;
   border-radius: 50%;
   animation: ${spin} 0.8s linear infinite;
+`;
+
+export const RegisterLink = styled.button`
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: clamp(0.76rem, 1vw, 0.84rem);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: clamp(8px, 1.5vh, 14px);
+  width: 100%;
+  transition: color 0.2s;
+
+  span {
+    color: #BBA188;
+    font-weight: 600;
+  }
+
+  &:hover span { color: #d4a97a; }
 `;

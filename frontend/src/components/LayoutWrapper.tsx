@@ -16,7 +16,7 @@ const PageContent = styled.div<{ $isLogin: boolean }>`
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isLogin = pathname === '/login';
+  const isLogin = pathname === '/login' || pathname === '/cadastro';
 
   return (
     <>
