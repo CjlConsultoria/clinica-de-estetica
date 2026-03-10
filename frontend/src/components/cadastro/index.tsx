@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import * as S from './styles';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
@@ -49,8 +50,11 @@ const planConfig: Record<PlanType, { color: string; desc: string; popular?: bool
 const STEP_LABELS = ['Empresa', 'Acesso', 'Plano', 'Confirmar'];
 const TOTAL_STEPS = 4;
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
 export default function Cadastro() {
   const router = useRouter();
+  const { login } = useAuth();
   const [form, setForm] = useState<CadastroForm>(FORM_INITIAL);
   const [firstError, setFirstError] = useState<Partial<Record<keyof CadastroForm, string>>>({});
   const [step, setStep] = useState(1);
@@ -141,7 +145,30 @@ export default function Cadastro() {
     setLoading(true);
 
     try {
-      await new Promise(res => setTimeout(res, 1800));
+      const res = await fetch(`${API_BASE}/api/auth/cadastro`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nomeEmpresa:         form.nomeEmpresa,
+          cnpj:                form.cnpj,
+          telefoneEmpresa:     form.telefoneEmpresa,
+          nomeResponsavel:     form.nomeResponsavel,
+          email:               form.email,
+          telefoneResponsavel: form.telefoneResponsavel,
+          senha:               form.senha,
+          plano:               form.plano,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.mensagem || err.message || 'Erro ao criar conta. Tente novamente.');
+      }
+
+      const data = await res.json();
+      localStorage.setItem('clinica_token', data.token);
+
+      await login({ email: form.email, password: form.senha });
       setSuccess(true);
     } catch (err) {
       setSaveError(

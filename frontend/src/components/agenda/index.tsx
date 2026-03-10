@@ -14,6 +14,8 @@ import { useCurrentUser } from '@/components/ui/hooks/useCurrentUser';
 import AccessDenied from '@/components/ui/AccessDenied';
 import { listarAgendamentos, criarAgendamento, AgendamentoAPI } from '@/services/agendaService';
 import { listarPacientes, PacienteAPI } from '@/services/pacienteService';
+import { listarAreaTecnica, ProfissionalAPI } from '@/services/profissionalService';
+import { criarLancamento, pagarLancamento, listarLancamentos, LancamentoAPI } from '@/services/financeService';
 import {
   Container, Header, Title, ActionsRow,
   CalendarNav, CalendarTitle, CalendarGrid, DayHeader,
@@ -24,6 +26,25 @@ import {
 
 const NAV_MIN = { year: 2025, month: 0  };
 const NAV_MAX = { year: 2026, month: 11 };
+
+function PagamentoBadge({ status }: { status?: string }) {
+  if (!status) return null;
+  const isPago = status === 'PAGO';
+  return (
+    <span style={{
+      fontSize:      '0.6rem',
+      fontWeight:    700,
+      padding:       '1px 5px',
+      borderRadius:  4,
+      marginLeft:    4,
+      background:    isPago ? 'rgba(39,174,96,0.2)' : 'rgba(231,76,60,0.2)',
+      color:         isPago ? '#27ae60' : '#e74c3c',
+      whiteSpace:    'nowrap',
+    }}>
+      {isPago ? '✓ Pago' : '⏳ Pendente'}
+    </span>
+  );
+}
 
 const procedureOptions = [
   { value: 'botox',            label: 'Botox Facial'        },
@@ -40,6 +61,19 @@ const statusOptions = [
   { value: 'cancelado',  label: 'Cancelado'  },
 ];
 
+const pagamentoOptions = [
+  { value: 'PENDENTE', label: 'Pendente' },
+  { value: 'PAGO',     label: 'Pago'     },
+];
+
+const formaPagamentoOptions = [
+  { value: 'PIX',             label: 'PIX'             },
+  { value: 'DINHEIRO',        label: 'Dinheiro'        },
+  { value: 'CARTAO_CREDITO',  label: 'Cartão de Crédito' },
+  { value: 'CARTAO_DEBITO',   label: 'Cartão de Débito'  },
+  { value: 'TRANSFERENCIA',   label: 'Transferência'   },
+];
+
 const PROCEDURE_COLOR: Record<string, string> = {
   botox:            '#BBA188',
   toxina:           '#BBA188',
@@ -53,13 +87,21 @@ interface CalEvent {
   id: number; weekDay: number; hour: number;
   year: number; month: number; monthDay: number;
   name: string; procedure: string; color: string;
+  lancamentoId?: number;
+  pagamentoStatus?: string;
+  medicoId?: number;
+  pacienteId?: number;
+  valorLancamento?: number;
 }
 
-type AgendamentoField = 'nome' | 'telefone' | 'data' | 'horario' | 'procedimento' | 'status' | 'valor';
+type AgendamentoField = 'nome' | 'telefone' | 'data' | 'horario' | 'procedimento' | 'status' | 'valor' | 'medicoId' | 'pagamento';
 
 interface AgendamentoForm {
   nome: string; telefone: string; data: string; horario: string;
   procedimento: string; status: string; valor: string; observacoes: string;
+  medicoId: string;
+  pagamento: string;
+  formaPagamento: string;
 }
 
 const DAYS  = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -67,16 +109,8 @@ const HOURS = Array.from({ length: 11 }, (_, i) => `${i + 8}:00`);
 const FORM_INITIAL: AgendamentoForm = {
   nome: '', telefone: '', data: '', horario: '',
   procedimento: '', status: '', valor: '', observacoes: '',
+  medicoId: '', pagamento: '', formaPagamento: '',
 };
-
-const INITIAL_EVENTS: CalEvent[] = [
-  { id: 1, weekDay: 0, hour: 8,  year: 2026, month: 1, monthDay: 1,  name: 'Ana Beatriz',   procedure: 'Botox Facial',      color: '#BBA188' },
-  { id: 2, weekDay: 0, hour: 10, year: 2026, month: 1, monthDay: 1,  name: 'Carla M.',      procedure: 'Preenchimento',     color: '#EBD5B0' },
-  { id: 3, weekDay: 1, hour: 9,  year: 2026, month: 1, monthDay: 9,  name: 'Fernanda Lima', procedure: 'Bioestimulador',    color: '#1b1b1b' },
-  { id: 4, weekDay: 3, hour: 14, year: 2026, month: 1, monthDay: 11, name: 'Marina Souza',  procedure: 'Fio PDO',           color: '#a8906f' },
-  { id: 5, weekDay: 4, hour: 11, year: 2026, month: 1, monthDay: 19, name: 'Juliana R.',    procedure: 'Toxina Botulínica', color: '#BBA188' },
-  { id: 6, weekDay: 5, hour: 15, year: 2026, month: 1, monthDay: 20, name: 'Patrícia A.',   procedure: 'Microagulhamento',  color: '#8a7560' },
-];
 
 const VALIDATION_FIELDS = [
   { key: 'nome'         as AgendamentoField, validate: (v: string) => !v.trim() ? 'Nome do paciente é obrigatório'    : null },
@@ -84,23 +118,34 @@ const VALIDATION_FIELDS = [
   { key: 'data'         as AgendamentoField, validate: (v: string) => !v        ? 'Data é obrigatória'                : null },
   { key: 'horario'      as AgendamentoField, validate: (v: string) => !v        ? 'Horário é obrigatório'             : null },
   { key: 'procedimento' as AgendamentoField, validate: (v: string) => !v        ? 'Selecione um procedimento'         : null },
+  { key: 'medicoId'     as AgendamentoField, validate: (v: string) => !v        ? 'Selecione um profissional'         : null },
+  { key: 'pagamento'    as AgendamentoField, validate: (v: string) => !v        ? 'Selecione o status de pagamento'   : null },
   { key: 'status'       as AgendamentoField, validate: (v: string) => !v        ? 'Selecione um status'               : null },
   { key: 'valor'        as AgendamentoField, validate: (v: string) => !v.trim() || v === 'R$ 0,00' ? 'Informe o valor do procedimento' : null },
 ];
 
-function mapAgendamentoToCalEvent(apt: AgendamentoAPI): CalEvent {
+function parseMoedaToNumber(v: string): number {
+  return parseFloat(v.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+}
+
+function mapAgendamentoToCalEvent(apt: AgendamentoAPI, lancamento?: LancamentoAPI): CalEvent {
   const date = new Date(apt.dataHora);
   const proc = (apt.tipoConsulta || '').toLowerCase().replace(/ /g, '-');
   return {
-    id:        apt.id,
-    weekDay:   date.getDay(),
-    hour:      date.getHours(),
-    year:      date.getFullYear(),
-    month:     date.getMonth(),
-    monthDay:  date.getDate(),
-    name:      apt.pacienteNome,
-    procedure: apt.tipoConsulta || 'Consulta',
-    color:     PROCEDURE_COLOR[proc] ?? '#BBA188',
+    id:               apt.id,
+    weekDay:          date.getDay(),
+    hour:             date.getHours(),
+    year:             date.getFullYear(),
+    month:            date.getMonth(),
+    monthDay:         date.getDate(),
+    name:             apt.pacienteNome,
+    procedure:        apt.tipoConsulta || 'Consulta',
+    color:            PROCEDURE_COLOR[proc] ?? '#BBA188',
+    lancamentoId:     lancamento?.id,
+    pagamentoStatus:  lancamento?.status,
+    medicoId:         apt.medicoId,
+    pacienteId:       apt.pacienteId,
+    valorLancamento:  lancamento?.valor,
   };
 }
 
@@ -119,7 +164,8 @@ function getWeekDaysForMonth(year: number, month: number): Date[] {
 
 function isFormDirty(form: AgendamentoForm): boolean {
   return form.nome.trim() !== '' || form.telefone.trim() !== '' || form.data !== '' ||
-    form.horario !== '' || form.procedimento !== '' || form.status !== '' ||
+    form.horario !== '' || form.procedimento !== '' || form.medicoId !== '' ||
+    form.pagamento !== '' || form.status !== '' ||
     form.valor.trim() !== '' || form.observacoes.trim() !== '';
 }
 
@@ -132,7 +178,6 @@ export default function Agenda() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form,        setForm]        = useState<AgendamentoForm>(FORM_INITIAL);
   const [events,      setEvents]      = useState<CalEvent[]>([]);
-  const [nextId,      setNextId]      = useState(100);
   const [navYear,     setNavYear]     = useState(today.getFullYear());
   const [navMonth,    setNavMonth]    = useState(today.getMonth());
   const [weekOffset,  setWeekOffset]  = useState(0);
@@ -147,18 +192,45 @@ export default function Agenda() {
   const [selectedPacienteId, setSelectedPacienteId] = useState<number | null>(null);
   const patientDropRef = useRef<HTMLDivElement>(null);
 
+  const [profissionais, setProfissionais] = useState<ProfissionalAPI[]>([]);
+
+  // Marcar como pago
+  const [selectedEvent,      setSelectedEvent]      = useState<CalEvent | null>(null);
+  const [showPagarModal,     setShowPagarModal]     = useState(false);
+  const [formaPagarSelected, setFormaPagarSelected] = useState('');
+  const [valorPagar,         setValorPagar]         = useState('');
+  const [pagarError,         setPagarError]         = useState<string | null>(null);
+  const [loadingPagar,       setLoadingPagar]       = useState(false);
+
   const { errors, validate, clearError, clearAll } =
     useSequentialValidation<AgendamentoField>(VALIDATION_FIELDS);
 
-  useEffect(() => {
-    listarAgendamentos(0, 200).then(res => {
-      setEvents((res.content || []).map(mapAgendamentoToCalEvent));
-    }).catch(() => {});
-  }, []);
+  // Carrega agendamentos + lancamentos e cruza os dados
+  async function loadEvents() {
+    try {
+      const agendamentosRes = await listarAgendamentos(0, 200);
+      let lMap: Record<number, LancamentoAPI> = {};
+      try {
+        const lancamentosRes = await listarLancamentos(0, 1000);
+        (lancamentosRes.content || []).forEach(l => {
+          if (l.agendamentoId) lMap[l.agendamentoId] = l;
+        });
+      } catch { /* mostra agendamentos mesmo se lancamentos falhar */ }
+      setEvents((agendamentosRes.content || []).map(apt => mapAgendamentoToCalEvent(apt, lMap[apt.id])));
+    } catch {}
+  }
+
+  useEffect(() => { loadEvents(); }, []);
 
   useEffect(() => {
     listarPacientes('', 0, 1000).then(res => {
       setAllPacientes(res.content || []);
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    listarAreaTecnica().then(lista => {
+      setProfissionais(lista.filter(p => p.ativo));
     }).catch(() => {});
   }, []);
 
@@ -219,10 +291,19 @@ export default function Agenda() {
     setPatientDropOpen(false); setSelectedPacienteId(null);
   }
   function handleSaveClick() {
-    const isValid = validate({ nome: form.nome, telefone: form.telefone, data: form.data, horario: form.horario, procedimento: form.procedimento, status: form.status, valor: form.valor });
+    const isValid = validate({
+      nome: form.nome, telefone: form.telefone, data: form.data, horario: form.horario,
+      procedimento: form.procedimento, medicoId: form.medicoId,
+      pagamento: form.pagamento, status: form.status, valor: form.valor,
+    });
     if (!isValid) return;
+    if (form.pagamento === 'PAGO' && !form.formaPagamento) {
+      setAgendaError('Selecione a forma de pagamento.');
+      return;
+    }
     setShowConfirmModal(true);
   }
+
   async function handleConfirmSave() {
     setShowConfirmModal(false);
     setAgendaError(null);
@@ -243,21 +324,98 @@ export default function Agenda() {
       const dataHora = `${form.data}T${form.horario}:00`;
       const novoAgendamento = await criarAgendamento({
         pacienteId,
-        medicoId:     currentUser?.id ?? 1,
+        medicoId:     parseInt(form.medicoId, 10),
         dataHora,
         tipoConsulta: procedureLabel,
         observacoes:  form.observacoes,
       });
-      setEvents(prev => [...prev, mapAgendamentoToCalEvent(novoAgendamento)]);
+
+      // Cria o lançamento vinculado ao agendamento
+      const valorNumerico = parseMoedaToNumber(form.valor);
+      const lancamento = await criarLancamento({
+        pacienteId,
+        agendamentoId: novoAgendamento.id,
+        valor:         valorNumerico,
+        formaPagamento: form.pagamento === 'PAGO' ? form.formaPagamento : 'PIX',
+        dataVencimento: form.data,
+        descricao:      procedureLabel,
+      });
+
+      let lancamentoPago = lancamento;
+      if (form.pagamento === 'PAGO') {
+        lancamentoPago = await pagarLancamento(lancamento.id, form.formaPagamento);
+      }
+
+      await loadEvents();
       setIsModalOpen(false);
-      setSuccessMessage('Agendamento salvo com sucesso!');
+
+      const msg = form.pagamento === 'PAGO'
+        ? 'Agendamento salvo e pagamento registrado! Comissão gerada para o profissional.'
+        : 'Agendamento salvo com pagamento pendente.';
+      setSuccessMessage(msg);
       setShowSuccessModal(true);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erro ao salvar agendamento. Tente novamente.';
       setAgendaError(msg);
     }
   }
-  function handleSuccessClose() { setShowSuccessModal(false); setSuccessMessage(''); setAgendaError(null); setForm(FORM_INITIAL); clearAll(); setSelectedPacienteId(null); }
+
+  function handleSuccessClose() {
+    setShowSuccessModal(false); setSuccessMessage(''); setAgendaError(null);
+    setForm(FORM_INITIAL); clearAll(); setSelectedPacienteId(null);
+  }
+
+  // Marcar como pago a partir do calendário
+  function handleEventClick(ev: CalEvent) {
+    if (ev.pagamentoStatus === 'PAGO') return;
+    setSelectedEvent(ev);
+    setFormaPagarSelected('');
+    setValorPagar('');
+    setPagarError(null);
+    setShowPagarModal(true);
+  }
+
+  async function handleConfirmPagar() {
+    if (!selectedEvent) return;
+    if (!formaPagarSelected) { setPagarError('Selecione a forma de pagamento.'); return; }
+
+    setLoadingPagar(true);
+    setPagarError(null);
+    try {
+      let lancamentoId = selectedEvent.lancamentoId;
+
+      // Agendamento sem lançamento — cria o lançamento agora
+      if (!lancamentoId) {
+        const valorNum = parseMoedaToNumber(valorPagar);
+        if (!valorNum || valorNum <= 0) {
+          setPagarError('Informe o valor do procedimento.');
+          setLoadingPagar(false);
+          return;
+        }
+        const hoje = new Date().toISOString().split('T')[0];
+        const novoLancamento = await criarLancamento({
+          pacienteId:     selectedEvent.pacienteId!,
+          agendamentoId:  selectedEvent.id,
+          valor:          valorNum,
+          formaPagamento: formaPagarSelected,
+          dataVencimento: hoje,
+          descricao:      selectedEvent.procedure,
+        });
+        lancamentoId = novoLancamento.id;
+      }
+
+      await pagarLancamento(lancamentoId, formaPagarSelected);
+      await loadEvents();
+      setShowPagarModal(false);
+      setSelectedEvent(null);
+      setSuccessMessage('Pagamento registrado! Comissão gerada para o profissional.');
+      setShowSuccessModal(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao registrar pagamento.';
+      setPagarError(msg);
+    }
+    setLoadingPagar(false);
+  }
 
   const filteredPacientes = allPacientes.filter(p =>
     p.nome.toLowerCase().includes(form.nome.toLowerCase()) && p.ativo
@@ -313,6 +471,8 @@ export default function Agenda() {
         {[{ label: 'Botox/Toxina', color: '#BBA188' }, { label: 'Preenchimento', color: '#EBD5B0' }, { label: 'Bioestimulador', color: '#1b1b1b' }, { label: 'Outros', color: '#a8906f' }].map(l => (
           <LegendItem key={l.label}><LegendDot $color={l.color} />{l.label}</LegendItem>
         ))}
+        <LegendItem><LegendDot $color="#27ae60" />Pago</LegendItem>
+        <LegendItem><LegendDot $color="#e74c3c" />Pendente (clique para pagar)</LegendItem>
       </Legend>
 
       {view === 'mes' ? (
@@ -324,7 +484,24 @@ export default function Agenda() {
               const dayEvents = events.filter(e => e.year === navYear && e.month === navMonth && e.monthDay === day);
               return (
                 <DayCell key={i} $isToday={isToday} $isEmpty={!day}>
-                  {day && (<><DayNumber $isToday={isToday}>{day}</DayNumber><EventsWrap>{dayEvents.slice(0, 3).map(ev => <EventChip key={ev.id} $color={ev.color}>{ev.name.split(' ')[0]}</EventChip>)}{dayEvents.length > 3 && <EventChip $color="#999">+{dayEvents.length - 3}</EventChip>}</EventsWrap></>)}
+                  {day && (
+                    <>
+                      <DayNumber $isToday={isToday}>{day}</DayNumber>
+                      <EventsWrap>
+                        {dayEvents.slice(0, 3).map(ev => (
+                          <EventChip
+                            key={ev.id}
+                            $color={ev.pagamentoStatus === 'PAGO' ? '#27ae60' : ev.pagamentoStatus === 'PENDENTE' ? '#e74c3c' : ev.color}
+                            onClick={() => handleEventClick(ev)}
+                            style={{ cursor: ev.pagamentoStatus === 'PENDENTE' ? 'pointer' : 'default' }}
+                          >
+                            {ev.name.split(' ')[0]}
+                          </EventChip>
+                        ))}
+                        {dayEvents.length > 3 && <EventChip $color="#999">+{dayEvents.length - 3}</EventChip>}
+                      </EventsWrap>
+                    </>
+                  )}
                 </DayCell>
               );
             })}
@@ -347,7 +524,24 @@ export default function Agenda() {
                 <TimeLabel>{hour}</TimeLabel>
                 {weekDays.map((d, di) => {
                   const slotEvents = events.filter(e => e.year === d.getFullYear() && e.month === d.getMonth() && e.monthDay === d.getDate() && e.hour === hi + 8);
-                  return (<TimeSlot key={di}>{slotEvents.map(ev => <EventBlock key={ev.id} $color={ev.color}><strong>{ev.name}</strong><span>{ev.procedure}</span></EventBlock>)}</TimeSlot>);
+                  return (
+                    <TimeSlot key={di}>
+                      {slotEvents.map(ev => (
+                        <EventBlock
+                          key={ev.id}
+                          $color={ev.pagamentoStatus === 'PAGO' ? '#27ae60' : ev.pagamentoStatus === 'PENDENTE' ? '#e74c3c' : ev.color}
+                          onClick={() => handleEventClick(ev)}
+                          style={{ cursor: ev.pagamentoStatus === 'PENDENTE' ? 'pointer' : 'default' }}
+                        >
+                          <strong>{ev.name}</strong>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            {ev.procedure}
+                            <PagamentoBadge status={ev.pagamentoStatus} />
+                          </span>
+                        </EventBlock>
+                      ))}
+                    </TimeSlot>
+                  );
                 })}
               </SlotRow>
             ))}
@@ -355,6 +549,7 @@ export default function Agenda() {
         </WeekView>
       )}
 
+      {/* Modal: Novo Agendamento */}
       <Modal isOpen={isModalOpen} onClose={handleCancelClick} closeOnOverlayClick={false} title="Novo Agendamento" size="md"
         footer={<><Button variant="outline" onClick={handleCancelClick}>Cancelar</Button><Button variant="primary" onClick={handleSaveClick}>Salvar Agendamento</Button></>}
       >
@@ -364,7 +559,8 @@ export default function Agenda() {
           </div>
         )}
         <FormGrid>
-          <div style={{ position: 'relative' }} ref={patientDropRef}>
+          {/* Paciente com autocomplete */}
+          <div style={{ position: 'relative', gridColumn: 'span 2' }} ref={patientDropRef}>
             <Input
               label="Nome do Paciente *"
               placeholder="Digite o nome..."
@@ -376,97 +572,28 @@ export default function Agenda() {
               autoComplete="off"
             />
             {patientDropOpen && filteredPacientes.length > 0 && (
-              <div style={{
-                position:        'absolute',
-                top:             '100%',
-                left:            0,
-                right:           0,
-                zIndex:          9999,
-                background:      '#fff',
-                border:          '1.5px solid #e8e0d8',
-                borderRadius:    10,
-                boxShadow:       '0 8px 24px rgba(0,0,0,0.12)',
-                marginTop:       4,
-                overflowY:       'auto',
-                maxHeight:       `${4 * 52}px`,
-              }}>
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 9999, background: '#fff', border: '1.5px solid #e8e0d8', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', marginTop: 4, overflowY: 'auto', maxHeight: `${4 * 52}px` }}>
                 {filteredPacientes.map((paciente, idx) => (
                   <div
                     key={paciente.id}
                     onMouseDown={e => { e.preventDefault(); handleSelectPaciente(paciente); }}
-                    style={{
-                      display:       'flex',
-                      alignItems:    'center',
-                      gap:           10,
-                      padding:       '10px 14px',
-                      cursor:        'pointer',
-                      borderBottom:  idx < filteredPacientes.length - 1 ? '1px solid #f5f0eb' : 'none',
-                      background:    'transparent',
-                      transition:    'background 0.15s',
-                      minHeight:     52,
-                      boxSizing:     'border-box',
-                    }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', cursor: 'pointer', borderBottom: idx < filteredPacientes.length - 1 ? '1px solid #f5f0eb' : 'none', background: 'transparent', transition: 'background 0.15s', minHeight: 52, boxSizing: 'border-box' }}
                     onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = '#fdf9f5'; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
                   >
-                    <div style={{
-                      width:           32,
-                      height:          32,
-                      borderRadius:    '50%',
-                      background:      '#BBA188',
-                      display:         'flex',
-                      alignItems:      'center',
-                      justifyContent:  'center',
-                      fontSize:        '0.72rem',
-                      fontWeight:      700,
-                      color:           '#fff',
-                      flexShrink:      0,
-                      fontFamily:      'var(--font-metropolis-semibold), Metropolis, sans-serif',
-                    }}>
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#BBA188', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
                       {paciente.nome.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
-                      <span style={{
-                        fontSize:     '0.85rem',
-                        fontWeight:   600,
-                        color:        '#1a1a1a',
-                        fontFamily:   'var(--font-metropolis-semibold), Metropolis, sans-serif',
-                        whiteSpace:   'nowrap',
-                        overflow:     'hidden',
-                        textOverflow: 'ellipsis',
-                      }}>
-                        {paciente.nome}
-                      </span>
-                      <span style={{
-                        fontSize:   '0.73rem',
-                        color:      '#999',
-                        fontFamily: 'var(--font-roboto-medium), Roboto, sans-serif',
-                      }}>
-                        {paciente.telefone || paciente.celular || paciente.email || '—'}
-                      </span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{paciente.nome}</span>
+                      <span style={{ fontSize: '0.73rem', color: '#999' }}>{paciente.telefone || paciente.celular || paciente.email || '—'}</span>
                     </div>
                   </div>
                 ))}
               </div>
             )}
             {patientDropOpen && form.nome.trim().length > 0 && filteredPacientes.length === 0 && (
-              <div style={{
-                position:     'absolute',
-                top:          '100%',
-                left:         0,
-                right:        0,
-                zIndex:       9999,
-                background:   '#fff',
-                border:       '1.5px solid #e8e0d8',
-                borderRadius: 10,
-                boxShadow:    '0 8px 24px rgba(0,0,0,0.12)',
-                marginTop:    4,
-                padding:      '14px',
-                textAlign:    'center',
-                fontSize:     '0.82rem',
-                color:        '#aaa',
-                fontFamily:   'var(--font-metropolis-regular), Metropolis, sans-serif',
-              }}>
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 9999, background: '#fff', border: '1.5px solid #e8e0d8', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', marginTop: 4, padding: '14px', textAlign: 'center', fontSize: '0.82rem', color: '#aaa' }}>
                 Nenhum paciente encontrado
               </div>
             )}
@@ -475,11 +602,93 @@ export default function Agenda() {
           <Input label="Telefone *" mask="telefone" value={form.telefone} inputMode="numeric" maxLength={15} onValueChange={v => handleMaskedChange('telefone', v)} error={errors.telefone} />
           <Input label="Data *" type="date" value={form.data} onChange={e => handleDataChange(e.target.value)} error={errors.data} />
           <Input label="Horário *" type="time" value={form.horario} onChange={e => handleChange('horario', e.target.value)} error={errors.horario} />
-          <div style={{ gridColumn: 'span 2' }}><Select label="Procedimento *" placeholder="Selecione..." options={procedureOptions} value={form.procedimento} onChange={v => handleChange('procedimento', v)} error={errors.procedimento} /></div>
-          <Select label="Status *" placeholder="Selecione..." options={statusOptions} value={form.status} onChange={v => handleChange('status', v)} error={errors.status} />
           <Input label="Valor (R$) *" mask="moeda" value={form.valor} inputMode="numeric" maxLength={14} onValueChange={v => handleMaskedChange('valor', v)} error={errors.valor} />
-          <div style={{ gridColumn: 'span 2' }}><Input label="Observações" placeholder="Informações adicionais..." maxLength={300} value={form.observacoes} onChange={e => handleChange('observacoes', e.target.value)} /></div>
+
+          <div style={{ gridColumn: 'span 2' }}>
+            <Select label="Procedimento *" placeholder="Selecione..." options={procedureOptions} value={form.procedimento} onChange={v => handleChange('procedimento', v)} error={errors.procedimento} />
+          </div>
+          <div style={{ gridColumn: 'span 2' }}>
+            <Select label="Profissional *" placeholder="Selecione um profissional..." options={profissionais.map(p => ({ value: String(p.id), label: p.nome }))} value={form.medicoId} onChange={v => handleChange('medicoId', v)} error={errors.medicoId} />
+          </div>
+
+          {/* Pagamento */}
+          <Select
+            label="Pagamento *"
+            placeholder="Selecione..."
+            options={pagamentoOptions}
+            value={form.pagamento}
+            onChange={v => { handleChange('pagamento', v); if (v !== 'PAGO') handleChange('formaPagamento', ''); }}
+            error={errors.pagamento}
+          />
+          {form.pagamento === 'PAGO' ? (
+            <Select
+              label="Forma de Pagamento *"
+              placeholder="Selecione..."
+              options={formaPagamentoOptions}
+              value={form.formaPagamento}
+              onChange={v => handleChange('formaPagamento', v)}
+            />
+          ) : (
+            <div />
+          )}
+
+          <div style={{ gridColumn: 'span 2' }}>
+            <Select label="Status *" placeholder="Selecione..." options={statusOptions} value={form.status} onChange={v => handleChange('status', v)} error={errors.status} />
+          </div>
+          <div style={{ gridColumn: 'span 2' }}>
+            <Input label="Observações" placeholder="Informações adicionais..." maxLength={300} value={form.observacoes} onChange={e => handleChange('observacoes', e.target.value)} />
+          </div>
         </FormGrid>
+      </Modal>
+
+      {/* Modal: Confirmar pagamento de evento pendente */}
+      <Modal
+        isOpen={showPagarModal}
+        onClose={() => { setShowPagarModal(false); setSelectedEvent(null); }}
+        closeOnOverlayClick
+        title="Confirmar Pagamento"
+        size="sm"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => { setShowPagarModal(false); setSelectedEvent(null); }}>Cancelar</Button>
+            <Button variant="primary" onClick={handleConfirmPagar}>
+              {loadingPagar ? 'Registrando...' : 'Confirmar Pagamento'}
+            </Button>
+          </>
+        }
+      >
+        {selectedEvent && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ background: '#fdf9f5', borderRadius: 10, padding: '12px 16px' }}>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>Paciente</p>
+              <p style={{ margin: '2px 0 0', fontWeight: 600, color: '#1a1a1a' }}>{selectedEvent.name}</p>
+              <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: '#888' }}>{selectedEvent.procedure}</p>
+            </div>
+            {pagarError && (
+              <div style={{ padding: '10px 14px', background: '#fdecea', border: '1px solid #f5c6cb', borderRadius: 8, color: '#c0392b', fontSize: '0.85rem' }}>
+                {pagarError}
+              </div>
+            )}
+            {/* Só pede valor quando o agendamento ainda não tem lançamento */}
+            {!selectedEvent.lancamentoId && (
+              <Input
+                label="Valor do Procedimento (R$) *"
+                mask="moeda"
+                value={valorPagar}
+                inputMode="numeric"
+                maxLength={14}
+                onValueChange={v => { setValorPagar(v); setPagarError(null); }}
+              />
+            )}
+            <Select
+              label="Forma de Pagamento *"
+              placeholder="Selecione..."
+              options={formaPagamentoOptions}
+              value={formaPagarSelected}
+              onChange={v => { setFormaPagarSelected(v); setPagarError(null); }}
+            />
+          </div>
+        )}
       </Modal>
 
       <CancelModal isOpen={showCancelModal} title="Deseja cancelar?" message="Você preencheu alguns campos. Se continuar, todas as informações serão perdidas." onConfirm={forceClose} onCancel={() => setShowCancelModal(false)} />

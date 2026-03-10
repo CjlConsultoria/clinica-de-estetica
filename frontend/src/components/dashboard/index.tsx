@@ -37,14 +37,27 @@ const StatsGrid = styled.div`
   }
 `;
 
-const weekData = [
-  { day: 'Seg', value: 8,  max: 15 },
-  { day: 'Ter', value: 12, max: 15 },
-  { day: 'Qua', value: 10, max: 15 },
-  { day: 'Qui', value: 15, max: 15 },
-  { day: 'Sex', value: 11, max: 15 },
-  { day: 'Sáb', value: 6,  max: 15 },
-];
+const WEEK_DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+function buildWeekData(agendamentos: AgendamentoAPI[]) {
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0=Dom, 1=Seg...
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - ((dayOfWeek + 6) % 7));
+  monday.setHours(0, 0, 0, 0);
+
+  const counts = Array(6).fill(0); // Seg-Sáb
+  agendamentos.forEach(a => {
+    const d = new Date(a.dataHora);
+    const diff = Math.floor((d.getTime() - monday.getTime()) / 86400000);
+    if (diff >= 0 && diff < 6) counts[diff]++;
+  });
+
+  const max = Math.max(...counts, 1);
+  return ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, i) => ({
+    day, value: counts[i], max,
+  }));
+}
 
 const allQuickActions = [
   { key: 'agenda',    label: 'Novo Agendamento',     icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M12 14v4M10 16h4"/></svg>, color: '#BBA188', href: '/agenda'     },
@@ -75,13 +88,17 @@ export default function Dashboard() {
 
   const [dashData, setDashData] = useState<DashboardAPI | null>(null);
   const [todayAppointments, setTodayAppointments] = useState<AgendamentoAPI[]>([]);
+  const [weekData, setWeekData] = useState<{ day: string; value: number; max: number }[]>(
+    ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => ({ day, value: 0, max: 1 }))
+  );
 
   useEffect(() => {
     obterDashboard().then(setDashData).catch(() => {});
-    listarAgendamentos(0, 50).then(res => {
+    listarAgendamentos(0, 500).then(res => {
       const hoje = new Date().toISOString().split('T')[0];
-      const agendamentosHoje = (res.content || []).filter(a => a.dataHora.startsWith(hoje));
-      setTodayAppointments(agendamentosHoje.slice(0, 6));
+      const all = res.content || [];
+      setTodayAppointments(all.filter(a => a.dataHora.startsWith(hoje)).slice(0, 6));
+      setWeekData(buildWeekData(all));
     }).catch(() => {});
   }, []);
 

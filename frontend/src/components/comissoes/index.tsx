@@ -17,7 +17,7 @@ import {
   EmptyState, ProfCard, ProfGrid, ProfAvatar, ProfName, ProfRole, ProfStats,
   ProfStat, ProfStatLabel, ProfStatValue, ProgressBar, ProgressFill,
 } from './styles';
-import { listarComissoes, listarComissoesPorMedico, ComissaoAPI } from '@/services/comissaoService';
+import { listarComissoes, listarComissoesPorMedico, pagarComissao, ComissaoAPI } from '@/services/comissaoService';
 
 const filterMonths = ['Todos', 'Fevereiro 2025', 'Janeiro 2025', 'Dezembro 2024'];
 
@@ -74,51 +74,64 @@ export default function Comissoes() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [comissoes,        setComissoes]        = useState(mockComissoes);
   const [profCards,        setProfCards]        = useState(mockProfessionals);
+  const [payingId,         setPayingId]         = useState<number | null>(null);
+
+  const isOwnOnlyRef = React.useRef(false);
+  const ownIdRef     = React.useRef<number | undefined>(undefined);
+
+  async function loadComissoes() {
+    try {
+      const data: ComissaoAPI[] = isOwnOnlyRef.current && ownIdRef.current
+        ? await listarComissoesPorMedico(ownIdRef.current)
+        : await listarComissoes();
+      const mapped = data.map(c => ({
+        id:             c.id,
+        date:           c.criadoEm ? new Date(c.criadoEm).toLocaleDateString('pt-BR') : '',
+        professional:   c.usuarioNome,
+        professionalId: c.usuarioId,
+        procedure:      c.procedimento ?? '—',
+        patient:        c.pacienteNome ?? '—',
+        value:          c.valorBase,
+        percentual:     c.percentual,
+        comissao:       c.valorComissao,
+        status:         c.status?.toLowerCase() === 'pago' ? 'pago' as const : 'pendente' as const,
+      }));
+      setComissoes(mapped);
+      const byProf = new Map<number, typeof mapped>();
+      mapped.forEach(c => {
+        if (!byProf.has(c.professionalId)) byProf.set(c.professionalId, []);
+        byProf.get(c.professionalId)!.push(c);
+      });
+      const cards = Array.from(byProf.entries()).map(([profId, items], idx) => ({
+        id:         profId,
+        name:       items[0].professional,
+        role:       '',
+        avatar:     items[0].professional.split(' ').slice(0,2).map((n: string) => n[0]).join('').toUpperCase(),
+        color:      avatarColors[idx % avatarColors.length],
+        sessoes:    items.length,
+        receita:    items.reduce((s, c) => s + c.value, 0),
+        comissao:   items.reduce((s, c) => s + c.comissao, 0),
+        percentual: items[0].percentual,
+        meta:       Math.max(items.reduce((s, c) => s + c.comissao, 0) * 1.5, 1000),
+      }));
+      setProfCards(cards);
+    } catch {}
+  }
 
   useEffect(() => {
-    const _isOwnOnly = !isSuperAdmin && can('comissoes.read_own') && !can('comissoes.read');
-    const _ownId     = currentUser?.id;
-    const load = async () => {
-      try {
-        const data: ComissaoAPI[] = _isOwnOnly && _ownId
-          ? await listarComissoesPorMedico(_ownId)
-          : await listarComissoes();
-        const mapped = data.map(c => ({
-          id:             c.id,
-          date:           c.criadoEm ? new Date(c.criadoEm).toLocaleDateString('pt-BR') : '',
-          professional:   c.usuarioNome,
-          professionalId: c.usuarioId,
-          procedure:      '—',
-          patient:        '—',
-          value:          c.valorBase,
-          percentual:     c.percentual,
-          comissao:       c.valorComissao,
-          status:         c.status?.toLowerCase() === 'pago' ? 'pago' as const : 'pendente' as const,
-        }));
-        setComissoes(mapped);
-        const byProf = new Map<number, typeof mapped>();
-        mapped.forEach(c => {
-          if (!byProf.has(c.professionalId)) byProf.set(c.professionalId, []);
-          byProf.get(c.professionalId)!.push(c);
-        });
-        const cards = Array.from(byProf.entries()).map(([profId, items], idx) => ({
-          id:         profId,
-          name:       items[0].professional,
-          role:       '',
-          avatar:     items[0].professional.split(' ').slice(0,2).map((n: string) => n[0]).join('').toUpperCase(),
-          color:      avatarColors[idx % avatarColors.length],
-          sessoes:    items.length,
-          receita:    items.reduce((s, c) => s + c.value, 0),
-          comissao:   items.reduce((s, c) => s + c.comissao, 0),
-          percentual: items[0].percentual,
-          meta:       Math.max(items.reduce((s, c) => s + c.comissao, 0) * 1.5, 1000),
-        }));
-        setProfCards(cards);
-      } catch {}
-    };
-    load();
- 
+    isOwnOnlyRef.current = !isSuperAdmin && can('comissoes.read_own') && !can('comissoes.read');
+    ownIdRef.current     = currentUser?.id;
+    loadComissoes();
   }, []);
+
+  async function handlePagar(id: number) {
+    setPayingId(id);
+    try {
+      await pagarComissao(id);
+      await loadComissoes();
+    } catch {}
+    finally { setPayingId(null); }
+  }
 
   const hasAccess = isSuperAdmin || can('comissoes.read') || can('comissoes.read_own');
   if (!hasAccess) return <AccessDenied />;
@@ -274,7 +287,19 @@ export default function Comissoes() {
                     <Td style={{ fontWeight: 600 }}>R$ {fmt(c.value)}</Td>
                     <Td><Badge $bg="rgba(187,161,136,0.15)" $color="#BBA188">{c.percentual}%</Badge></Td>
                     <Td style={{ fontWeight: 700, color: barColor }}>R$ {fmt(c.comissao)}</Td>
-                    <Td><Badge $bg={statusColors[c.status].bg} $color={statusColors[c.status].color}>{c.status.charAt(0).toUpperCase() + c.status.slice(1)}</Badge></Td>
+                    <Td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Badge $bg={statusColors[c.status].bg} $color={statusColors[c.status].color}>{c.status.charAt(0).toUpperCase() + c.status.slice(1)}</Badge>
+                        {c.status === 'pendente' && !isOwnOnly && (
+                          <IconBtn onClick={() => handlePagar(c.id)} title="Marcar como pago" disabled={payingId === c.id} style={{ color: '#27ae60', border: '1px solid #27ae6040', borderRadius: 6, padding: '3px 6px' }}>
+                            {payingId === c.id
+                              ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                              : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            }
+                          </IconBtn>
+                        )}
+                      </div>
+                    </Td>
                   </Tr>
                 );
               })}

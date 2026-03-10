@@ -223,6 +223,7 @@ function isFormDirty(form: PacienteForm): boolean {
 
 export default function Patients() {
   const [patients,         setPatients]         = useState<Patient[]>([]);
+  const [novosMes,         setNovosMes]         = useState(0);
   const [loading,          setLoading]          = useState(false);
   const [search,           setSearch]           = useState('');
   const [filterSt,         setFilterSt]         = useState('Todos');
@@ -271,8 +272,16 @@ export default function Patients() {
     try {
       const response = await listarPacientes('', 0, 1000);
       setPatients(response.content.map(mapApiToPatient));
+      const now = new Date();
+      const novos = response.content.filter(p => {
+        if (!p.criadoEm) return false;
+        const d = new Date(p.criadoEm);
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+      }).length;
+      setNovosMes(novos);
     } catch {
       setPatients([]);
+      setNovosMes(0);
     } finally {
       setLoading(false);
     }
@@ -737,7 +746,7 @@ export default function Patients() {
         <StatCard label="Inativos" value={inativos} color="#EBD5B0"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>}
         />
-        <StatCard label="Novos este mês" value={3} color="#a8906f"
+        <StatCard label="Novos este mês" value={novosMes} color="#a8906f"
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>}
         />
       </StatsGrid>
