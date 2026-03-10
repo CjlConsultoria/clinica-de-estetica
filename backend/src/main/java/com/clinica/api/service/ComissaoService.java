@@ -9,11 +9,13 @@ import com.clinica.api.entity.ComissaoConfig;
 import com.clinica.api.entity.Lancamento;
 import com.clinica.api.entity.Usuario;
 import com.clinica.api.enums.StatusComissao;
+import com.clinica.api.enums.StatusPagamento;
 import com.clinica.api.exception.BusinessException;
 import com.clinica.api.exception.ExceptionMessages;
 import com.clinica.api.exception.ResourceNotFoundException;
 import com.clinica.api.repository.ComissaoConfigRepository;
 import com.clinica.api.repository.ComissaoRepository;
+import com.clinica.api.repository.LancamentoRepository;
 import com.clinica.api.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +37,7 @@ public class ComissaoService {
     private final ComissaoRepository comissaoRepository;
     private final ComissaoConfigRepository configRepository;
     private final UsuarioRepository usuarioRepository;
+    private final LancamentoRepository lancamentoRepository;
 
     private Long getEmpresaId() {
         Usuario u = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -73,7 +76,6 @@ public class ComissaoService {
         BigDecimal pendente = comissaoRepository.somarPendentesPorUsuario(usuarioId);
         long quantidade = comissaoRepository.findByUsuarioIdOrderByCriadoEmDesc(usuarioId)
                 .stream().filter(c -> c.getStatus() == StatusComissao.PENDENTE).count();
-
         return ComissaoResumoResponse.builder()
                 .usuarioId(usuarioId)
                 .usuarioNome(usuario.getNome())
@@ -91,7 +93,6 @@ public class ComissaoService {
         if (comissao.getStatus() != StatusComissao.PENDENTE) {
             throw new BusinessException(String.format(ExceptionMessages.COMISSAO_NAO_PENDENTE, comissao.getStatus()));
         }
-
         comissao.setStatus(StatusComissao.PAGO);
         comissao.setDataPagamento(LocalDate.now());
         return toResponse(comissaoRepository.save(comissao));
@@ -106,30 +107,42 @@ public class ComissaoService {
         config.setAtivo(true);
         return configRepository.save(config);
     }
-
     public Optional<ComissaoConfig> buscarConfig(Long usuarioId) {
         return configRepository.findByUsuarioId(usuarioId);
     }
 
     @Transactional
     public void calcularERegistrarComissao(Lancamento lancamento) {
-        if (lancamento.getAgendamento() == null) return;
-        if (comissaoRepository.existsByLancamentoId(lancamento.getId())) return;
-
+        if (lancamento.getAgendamento() == null) {
+            log.debug("Lançamento {} sem agendamento vinculado — comissão ignorada.", lancamento.getId());
+            return;
+        }
+        if (comissaoRepository.existsByLancamentoId(lancamento.getId())) {
+            log.debug("Comissão já registrada para lançamento {}.", lancamento.getId());
+            return;
+        }
         Usuario medico = lancamento.getAgendamento().getMedico();
+        if (medico == null) {
+            log.warn("Agendamento {} sem profissional atribuído — comissão NÃO gerada para lançamento {}.",
+                    lancamento.getAgendamento().getId(), lancamento.getId());
+            return;
+        }
         Optional<ComissaoConfig> config = configRepository.findByUsuarioId(medico.getId());
 
         if (config.isEmpty() || !config.get().isAtivo()) {
-            log.debug("Sem configuração de comissão para médico {}", medico.getId());
+            log.warn("Profissional '{}' (id={}) sem configuração de comissão ativa — comissão NÃO gerada para lançamento {}. " +
+                    "Configure o percentual em Profissionais.",
+                    medico.getNome(), medico.getId(), lancamento.getId());
             return;
         }
-
         BigDecimal percentual = config.get().getPercentualPadrao();
         BigDecimal desconto = lancamento.getValorDesconto() != null ? lancamento.getValorDesconto() : BigDecimal.ZERO;
         BigDecimal valorBase = lancamento.getValor().subtract(desconto);
+        if (valorBase.compareTo(BigDecimal.ZERO) < 0) {
+            valorBase = BigDecimal.ZERO;
+        }
         BigDecimal valorComissao = valorBase.multiply(percentual)
                 .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-
         Comissao comissao = Comissao.builder()
                 .usuario(medico)
                 .lancamento(lancamento)
@@ -138,11 +151,36 @@ public class ComissaoService {
                 .percentual(percentual)
                 .valorComissao(valorComissao)
                 .status(StatusComissao.PENDENTE)
+                .empresaId(lancamento.getEmpresaId())
                 .build();
 
         comissaoRepository.save(comissao);
-        log.info("Comissão de {} calculada para médico {}: R$ {}",
-                percentual + "%", medico.getNome(), valorComissao);
+        log.info("Comissão de {}% registrada para profissional '{}' (id={}): R$ {} — lançamento {}.",
+                percentual, medico.getNome(), medico.getId(), valorComissao, lancamento.getId());
+    }
+
+    @Transactional
+    public ComissaoResponse recalcularComissao(Long lancamentoId) {
+        Lancamento lancamento = lancamentoRepository.findById(lancamentoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Lançamento", lancamentoId));
+        if (lancamento.getStatus() != StatusPagamento.PAGO) {
+            throw new BusinessException(ExceptionMessages.LANCAMENTO_NAO_PAGO_RECALCULO);
+        }
+
+        Optional<Comissao> existente = comissaoRepository.findByLancamentoId(lancamentoId);
+        if (existente.isPresent()) {
+            if (existente.get().getStatus() == StatusComissao.PAGO) {
+                throw new BusinessException(ExceptionMessages.COMISSAO_JA_PAGA_RECALCULO);
+            }
+            comissaoRepository.delete(existente.get());
+            comissaoRepository.flush();
+        }
+
+        calcularERegistrarComissao(lancamento);
+
+        return comissaoRepository.findByLancamentoId(lancamentoId)
+                .map(this::toResponse)
+                .orElseThrow(() -> new BusinessException(ExceptionMessages.COMISSAO_CONFIG_AUSENTE));
     }
 
     private Usuario findUsuario(Long id) {

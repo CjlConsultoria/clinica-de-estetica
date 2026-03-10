@@ -1,25 +1,27 @@
-import { apiGet, apiPatch, apiPost } from '@/lib/api';
+import { apiGet, apiPatch, apiPost, apiFetch } from '@/lib/api';
 
 export interface ComissaoAPI {
   id: number;
   usuarioId: number;
   usuarioNome: string;
   lancamentoId: number;
-  agendamentoId: number;
+  agendamentoId: number | null;
+  procedimento: string | null;
+  pacienteNome: string | null;
   valorBase: number;
   percentual: number;
   valorComissao: number;
-  status: string;
+  status: 'PENDENTE' | 'PAGO' | 'CANCELADO';
   dataPagamento: string | null;
   criadoEm: string;
 }
 
 export interface ComissaoResumoAPI {
   usuarioId: number;
-  totalComissoes: number;
-  totalPago: number;
+  usuarioNome: string;
+  percentualPadrao: number;
   totalPendente: number;
-  percentualMedio: number;
+  quantidadePendente: number;
 }
 
 export interface ComissaoConfigAPI {
@@ -42,6 +44,10 @@ export async function resumoComissoes(medicoId: number): Promise<ComissaoResumoA
 
 export async function pagarComissao(id: number): Promise<ComissaoAPI> {
   return apiPatch<ComissaoAPI>(`/api/comissoes/${id}/pagar`);
+}
+
+export async function recalcularComissao(lancamentoId: number): Promise<ComissaoAPI> {
+  return apiFetch<ComissaoAPI>(`/api/comissoes/recalcular/${lancamentoId}`, { method: 'POST' });
 }
 
 export async function buscarComissaoConfig(usuarioId: number): Promise<ComissaoConfigAPI | null> {

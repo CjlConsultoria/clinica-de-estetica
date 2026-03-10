@@ -49,6 +49,10 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
 
     long countByDataHoraBetween(LocalDateTime inicio, LocalDateTime fim);
 
+    long countByEmpresaIdAndStatus(Long empresaId, StatusAgendamento status);
+
+    long countByEmpresaIdAndDataHoraBetween(Long empresaId, LocalDateTime inicio, LocalDateTime fim);
+
     long countByMedicoId(Long medicoId);
 
     Page<Agendamento> findByEmpresaId(Long empresaId, Pageable pageable);

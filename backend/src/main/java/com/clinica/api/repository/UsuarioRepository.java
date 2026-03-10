@@ -34,4 +34,5 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     List<Usuario> findByEmpresaIdAndAtivoTrue(Long empresaId);
     List<Usuario> findByEmpresaIdAndCargoAndAtivoTrue(Long empresaId, Cargo cargo);
     List<Usuario> findByEmpresaIdAndAreaProfissionalAndAtivoTrue(Long empresaId, AreaProfissional areaProfissional);
+    List<Usuario> findByEmpresaIdAndRoleAndAtivoTrue(Long empresaId, Role role);
 }

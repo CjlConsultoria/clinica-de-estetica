@@ -28,6 +28,9 @@ public final class ExceptionMessages {
     public static final String LANCAMENTO_NAO_CANCELAVEL   = "Não é possível cancelar um lançamento pago. Use estorno.";
 
     public static final String COMISSAO_NAO_PENDENTE       = "Comissão não está pendente: %s";
+    public static final String COMISSAO_JA_PAGA_RECALCULO  = "Comissão já foi paga e não pode ser recalculada.";
+    public static final String COMISSAO_CONFIG_AUSENTE     = "Profissional sem configuração de comissão ativa. Configure o percentual em Profissionais antes de recalcular.";
+    public static final String LANCAMENTO_NAO_PAGO_RECALCULO = "Comissão só pode ser recalculada para lançamentos com status PAGO.";
 
     public static final String FALHA_SALVAR_ARQUIVO        = "Falha ao salvar arquivo: %s";
 

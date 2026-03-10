@@ -58,4 +58,9 @@ public class ComissaoController {
     public ResponseEntity<ComissaoConfig> salvarConfig(@Valid @RequestBody ComissaoConfigRequest request) {
         return ResponseEntity.ok(comissaoService.salvarConfig(request));
     }
+
+    @PostMapping("/recalcular/{lancamentoId}")
+    public ResponseEntity<ComissaoResponse> recalcular(@PathVariable Long lancamentoId) {
+        return ResponseEntity.ok(comissaoService.recalcularComissao(lancamentoId));
+    }
 }

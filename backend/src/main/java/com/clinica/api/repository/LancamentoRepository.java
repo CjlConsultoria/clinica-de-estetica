@@ -42,6 +42,14 @@ public interface LancamentoRepository extends JpaRepository<Lancamento, Long> {
            "WHERE l.status = 'PENDENTE'")
     BigDecimal somarPendentes();
 
+    @Query("SELECT COALESCE(SUM(l.valor - l.valorDesconto), 0) FROM Lancamento l " +
+           "WHERE l.empresaId = :empresaId AND l.status = 'PAGO' AND l.dataPagamento BETWEEN :inicio AND :fim")
+    BigDecimal somarReceitasPorPeriodoEEmpresa(@Param("empresaId") Long empresaId, @Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
+
+    @Query("SELECT COALESCE(SUM(l.valor - l.valorDesconto), 0) FROM Lancamento l " +
+           "WHERE l.empresaId = :empresaId AND l.status = 'PENDENTE'")
+    BigDecimal somarPendentesEEmpresa(@Param("empresaId") Long empresaId);
+
     long countByStatus(StatusPagamento status);
 
     List<Lancamento> findByStatusAndDataVencimentoBefore(StatusPagamento status, LocalDate data);
